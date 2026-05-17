@@ -6,6 +6,14 @@ type RFQDetailPageProps = {
   params: Promise<{ id: string }>
 }
 
+export const dynamicParams = false
+
+export function generateStaticParams() {
+  return rfqs.map((rfq) => ({
+    id: String(rfq.id),
+  }))
+}
+
 export default async function RFQDetailPage({
   params,
 }: RFQDetailPageProps) {

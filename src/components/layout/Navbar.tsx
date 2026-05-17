@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 border-b border-white/10 bg-[#071b11]/80 backdrop-blur">
@@ -20,26 +22,29 @@ export default function Navbar() {
         </div>
 
         <div className="hidden items-center gap-8 md:flex">
-          <a className="text-gray-300 transition hover:text-white" href="#">
+          <Link className="text-gray-300 transition hover:text-white" href="/auth/signup">
             Suppliers
-          </a>
+          </Link>
 
-          <a className="text-gray-300 transition hover:text-white" href="#">
+          <Link className="text-gray-300 transition hover:text-white" href="/dashboard/rfqs">
             RFQs
-          </a>
+          </Link>
 
-          <a className="text-gray-300 transition hover:text-white" href="#">
+          <Link className="text-gray-300 transition hover:text-white" href="/dashboard/verification">
             Verification
-          </a>
+          </Link>
 
-          <a className="text-gray-300 transition hover:text-white" href="#">
+          <Link className="text-gray-300 transition hover:text-white" href="/dashboard">
             Dashboard
-          </a>
+          </Link>
         </div>
 
-        <button className="rounded-xl bg-green-500 px-5 py-3 font-semibold text-black transition hover:bg-green-400">
+        <Link
+          href="/auth/signup"
+          className="rounded-xl bg-green-500 px-5 py-3 font-semibold text-black transition hover:bg-green-400"
+        >
           Join Network
-        </button>
+        </Link>
 
       </div>
     </nav>

@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 export default function Hero() {
   return (
     <section className="mx-auto flex min-h-[90vh] max-w-7xl flex-col items-center justify-center px-6 text-center">
@@ -17,13 +19,19 @@ export default function Hero() {
 
       <div className="mt-10 flex flex-col gap-4 sm:flex-row">
 
-        <button className="rounded-2xl bg-green-500 px-8 py-4 font-semibold text-black transition hover:bg-green-400">
+        <Link
+          href="/auth/signup"
+          className="rounded-2xl bg-green-500 px-8 py-4 font-semibold text-black transition hover:bg-green-400"
+        >
           Become a Supplier
-        </button>
+        </Link>
 
-        <button className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 font-semibold text-white transition hover:bg-white/10">
+        <Link
+          href="/dashboard/rfqs"
+          className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 font-semibold text-white transition hover:bg-white/10"
+        >
           Explore Vendors
-        </button>
+        </Link>
 
       </div>
 
