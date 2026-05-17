@@ -1,4 +1,14 @@
-export const rfqs = [
+export type Rfq = {
+  id: number
+  title: string
+  description: string
+  region: string
+  category: string
+  budget: string
+  status: "Open" | "Closing Soon"
+}
+
+export const rfqs: Rfq[] = [
   {
     id: 1,
     title: "Electrical Maintenance RFQ",

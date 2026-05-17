@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { rfqs, type Rfq } from "@/data/rfqs"
+import { rfqs } from "@/data/rfqs"
 
 export default function RFQsPage() {
   return (
