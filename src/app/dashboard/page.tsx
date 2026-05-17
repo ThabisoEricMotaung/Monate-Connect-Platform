@@ -1,3 +1,5 @@
+import { dashboardStats } from "@/data/dashboard"
+
 export default function DashboardPage() {
   return (
     <>
@@ -9,24 +11,13 @@ export default function DashboardPage() {
 
       <div className="mt-10 grid gap-6 md:grid-cols-3">
 
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
-          <p className="text-xl text-gray-400">Verification Status</p>
+        {dashboardStats.map((stat) => (
+          <div key={stat.title} className="rounded-3xl border border-white/10 bg-white/5 p-8">
+            <p className="text-xl text-gray-400">{stat.title}</p>
 
-          <h2 className="mt-4 text-5xl font-bold text-green-400">Pending</h2>
-        </div>
-
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
-          <p className="text-xl text-gray-400">Active RFQs</p>
-
-          <h2 className="mt-4 text-5xl font-bold">12</h2>
-        </div>
-
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
-          <p className="text-xl text-gray-400">Submitted Quotes</p>
-
-          <h2 className="mt-4 text-5xl font-bold">4</h2>
-        </div>
-
+            <h2 className={`mt-4 text-5xl font-bold ${stat.color}`}>{stat.value}</h2>
+          </div>
+        ))}
       </div>
 
       <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8">

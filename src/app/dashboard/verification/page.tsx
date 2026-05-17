@@ -1,74 +1,37 @@
-import { dashboardStats } from "@/data/dashboard"
-
-export default function DashboardPage() {
+export default function VerificationPage() {
   return (
     <>
+      <h1 className="text-5xl font-bold">Supplier Verification</h1>
 
-      <h1 className="text-6xl font-bold">
-        Supplier Dashboard
-      </h1>
-
-      <p className="mt-4 text-2xl text-gray-400">
-        Manage procurement opportunities, verification, RFQs, and buyer engagement.
-      </p>
-
-      <div className="mt-10 grid gap-6 md:grid-cols-3">
-
-        {dashboardStats.map((stat) => (
-          <div
-            key={stat.title}
-            className="rounded-3xl border border-white/10 bg-white/5 p-8"
-          >
-
-            <p className="text-xl text-gray-400">
-              {stat.title}
-            </p>
-
-            <h2 className={`mt-4 text-5xl font-bold ${stat.color}`}>
-              {stat.value}
-            </h2>
-
-          </div>
-        ))}
-
-      </div>
+      <p className="mt-4 text-gray-400">Upload your compliance documents and track verification progress.</p>
 
       <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8">
 
-        <h2 className="text-4xl font-bold">
-          Procurement Opportunities
-        </h2>
+        <div className="space-y-6">
 
-        <div className="mt-8 space-y-6">
+          <div>
+            <label className="mb-2 block text-sm text-gray-400">Company Registration</label>
 
-          <div className="rounded-3xl border border-white/10 bg-black/20 p-6">
-
-            <h3 className="text-3xl font-semibold">
-              Electrical Maintenance RFQ
-            </h3>
-
-            <p className="mt-3 text-gray-400">
-              Mining contractor seeking certified township electrical suppliers in Mpumalanga.
-            </p>
-
+            <input type="file" className="w-full rounded-2xl border border-white/10 bg-black/20 px-5 py-4" />
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-black/20 p-6">
+          <div>
+            <label className="mb-2 block text-sm text-gray-400">Tax Clearance Certificate</label>
 
-            <h3 className="text-3xl font-semibold">
-              PPE Supply Contract
-            </h3>
-
-            <p className="mt-3 text-gray-400">
-              Infrastructure procurement opportunity for safety equipment vendors.
-            </p>
-
+            <input type="file" className="w-full rounded-2xl border border-white/10 bg-black/20 px-5 py-4" />
           </div>
+
+          <div>
+            <label className="mb-2 block text-sm text-gray-400">B-BBEE Certificate</label>
+
+            <input type="file" className="w-full rounded-2xl border border-white/10 bg-black/20 px-5 py-4" />
+          </div>
+
+          <button className="rounded-2xl bg-green-500 px-8 py-4 font-semibold text-black transition hover:bg-green-400">Submit Verification</button>
 
         </div>
 
       </div>
-
     </>
   )
 }

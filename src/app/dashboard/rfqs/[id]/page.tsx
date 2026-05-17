@@ -3,16 +3,14 @@ import { notFound } from "next/navigation"
 import { RfqDetailClient } from "./rfq-detail-client"
 
 type RFQDetailPageProps = {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
-export default async function RFQDetailPage({
+export default function RFQDetailPage({
   params,
 }: RFQDetailPageProps) {
-  const { id } = await params
-
   const rfq: Rfq | undefined = rfqs.find(
-    (item) => item.id === Number(id)
+    (item) => item.id === Number(params.id)
   )
 
   if (!rfq) {

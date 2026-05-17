@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { rfqs } from "@/data/rfqs"
+import { rfqs, type Rfq } from "@/data/rfqs"
 
 export default function RFQsPage() {
   return (
@@ -15,7 +15,7 @@ export default function RFQsPage() {
 
       <div className="mt-10 space-y-6">
 
-        {rfqs.map((rfq) => (
+        {rfqs.map((rfq: Rfq) => (
           <div
             key={rfq.id}
             className="rounded-3xl border border-white/10 bg-white/5 p-6"
