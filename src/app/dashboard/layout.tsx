@@ -1,69 +1,82 @@
+"use client"
+
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { ReactNode } from "react"
+
+const navigation = [
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+  },
+  {
+    name: "RFQs",
+    href: "/dashboard/rfqs",
+  },
+  {
+    name: "Quotes",
+    href: "/dashboard/quotes",
+  },
+  {
+    name: "Supplier Profile",
+    href: "/dashboard/profile",
+  },
+  {
+    name: "Verification",
+    href: "/dashboard/verification",
+  },
+]
 
 export default function DashboardLayout({
   children,
 }: {
   children: ReactNode
 }) {
+  const pathname = usePathname() || ""
+
   return (
-    <main className="flex min-h-screen bg-[#071b11] text-white">
+    <main className="flex min-h-screen bg-[#050c08] text-slate-100">
 
-      <aside className="w-[320px] border-r border-white/10 bg-black/20 p-6">
+      <aside className="w-full max-w-[280px] border-r border-slate-700 bg-[#08120e] p-5">
 
-        <div className="flex items-center gap-4">
-
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-green-500 text-4xl font-bold text-black">
+        <div className="mb-6 flex items-center gap-3 border-b border-slate-700 pb-5">
+          <div className="flex h-12 w-12 items-center justify-center rounded-md bg-green-500 font-semibold text-black">
             M
           </div>
-
           <div>
-            <h2 className="text-4xl font-bold leading-tight">
+            <p className="text-sm uppercase tracking-[0.24em] text-slate-300">
+              Supplier Workspace
+            </p>
+            <h2 className="text-xl font-semibold text-white">
               Monate Vendor Network
             </h2>
-
-            <p className="mt-1 text-gray-400">
-              Supplier Portal
-            </p>
           </div>
-
         </div>
 
-        <div className="mt-10 space-y-4">
+        <nav className="space-y-2">
+          {navigation.map((item) => {
+            const active =
+              pathname === item.href ||
+              (item.href !== "/dashboard" && pathname.startsWith(item.href))
 
-          <Link
-            href="/dashboard"
-            className="block rounded-2xl border border-white/10 bg-black/20 px-6 py-5 transition hover:border-green-500"
-          >
-            Dashboard
-          </Link>
-
-          <Link
-            href="/dashboard/rfqs"
-            className="block rounded-2xl border border-white/10 bg-black/20 px-6 py-5 transition hover:border-green-500"
-          >
-            RFQs
-          </Link>
-
-          <Link
-            href="/dashboard/profile"
-            className="block rounded-2xl border border-white/10 bg-black/20 px-6 py-5 transition hover:border-green-500"
-          >
-            Supplier Profile
-          </Link>
-
-          <Link
-            href="/dashboard/verification"
-            className="block rounded-2xl border border-white/10 bg-black/20 px-6 py-5 transition hover:border-green-500"
-          >
-            Verification
-          </Link>
-
-        </div>
-
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`block rounded-md border px-4 py-3 text-sm font-medium transition ${
+                  active
+                    ? "border-green-500/40 bg-[#0f1f18] text-white shadow-sm"
+                    : "border-transparent text-slate-300 hover:border-slate-600 hover:bg-[#07110d]"
+                }`}
+              >
+                {item.name}
+              </Link>
+            )
+          })}
+        </nav>
       </aside>
 
-      <section className="flex-1 p-10">
+      <section className="flex-1 p-6 md:p-8">
         {children}
       </section>
 

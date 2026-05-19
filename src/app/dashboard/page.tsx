@@ -1,54 +1,84 @@
-import { dashboardStats } from "@/data/dashboard"
+import { redirect } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect("/auth/login")
+  }
+
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single()
+
+  if (!existingProfile) {
+
+    await supabase
+      .from("profiles")
+      .insert([
+        {
+          id: user.id,
+          business_name:
+            user.user_metadata.business_name || "Supplier",
+          email: user.email,
+        },
+      ])
+  }
+
   return (
-    <>
-      <h1 className="text-6xl font-bold">Supplier Dashboard</h1>
+    <div>
 
-      <p className="mt-4 text-2xl text-gray-400">
-        Manage procurement opportunities, verification, RFQs, and buyer engagement.
-      </p>
-
-      <div className="mt-10 grid gap-6 md:grid-cols-3">
-
-        {dashboardStats.map((stat) => (
-          <div key={stat.title} className="rounded-3xl border border-white/10 bg-white/5 p-8">
-            <p className="text-xl text-gray-400">{stat.title}</p>
-
-            <h2 className={`mt-4 text-5xl font-bold ${stat.color}`}>{stat.value}</h2>
-          </div>
-        ))}
+      <div className="mb-8">
+        <p className="text-sm uppercase tracking-[0.24em] text-emerald-300">
+          Supplier dashboard
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold text-white">
+          Welcome back, {user.user_metadata.business_name || "Supplier"}
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
+          Review verification progress, active procurement requests, and submitted quote status from a stable supplier portal.
+        </p>
       </div>
 
-      <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8">
+      <div className="grid gap-4 xl:grid-cols-3">
+        <section className="rounded-lg border border-slate-700 bg-[#08120e] p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
+            Verification status
+          </p>
+          <p className="mt-4 text-3xl font-semibold text-green-300">Pending</p>
+          <p className="mt-2 text-sm text-slate-400">
+            Your compliance documents are under review by the procurement team.
+          </p>
+        </section>
 
-        <h2 className="text-4xl font-bold">Procurement Opportunities</h2>
+        <section className="rounded-lg border border-slate-700 bg-[#08120e] p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
+            Active RFQs
+          </p>
+          <p className="mt-4 text-3xl font-semibold text-white">12</p>
+          <p className="mt-2 text-sm text-slate-400">
+            Active requests for quotes currently available for supplier response.
+          </p>
+        </section>
 
-        <div className="mt-8 space-y-6">
-
-          <div className="rounded-3xl border border-white/10 bg-black/20 p-6">
-
-            <h3 className="text-3xl font-semibold">Electrical Maintenance RFQ</h3>
-
-            <p className="mt-3 text-gray-400">
-              Mining contractor seeking certified township electrical suppliers in Mpumalanga.
-            </p>
-
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-black/20 p-6">
-
-            <h3 className="text-3xl font-semibold">PPE Supply Contract</h3>
-
-            <p className="mt-3 text-gray-400">
-              Infrastructure procurement opportunity for safety equipment vendors.
-            </p>
-
-          </div>
-
-        </div>
+        <section className="rounded-lg border border-slate-700 bg-[#08120e] p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
+            Submitted quotes
+          </p>
+          <p className="mt-4 text-3xl font-semibold text-white">4</p>
+          <p className="mt-2 text-sm text-slate-400">
+            Quotes you have sent to prospective buyers and procurement teams.
+          </p>
+        </section>
 
       </div>
-    </>
+
+    </div>
   )
 }

@@ -1,31 +1,72 @@
 "use client"
 
 import { useState } from "react"
-import type { Rfq } from "@/data/rfqs"
+import { submitQuote } from "@/lib/quotes"
 
-type RfqDetailClientProps = {
-  rfq: Rfq
+interface RFQDetailClientProps {
+  rfq: {
+    id: number
+    title: string
+    description: string
+    region: string
+    category: string
+    budget: string
+    status: string
+  }
 }
 
-export function RfqDetailClient({ rfq }: RfqDetailClientProps) {
-  const [quote, setQuote] = useState("")
-  const [message, setMessage] = useState("")
-  const [submitted, setSubmitted] = useState(false)
+export default function RFQDetailClient({
+  rfq,
+}: RFQDetailClientProps) {
 
-  const handleSubmit = () => {
-    setSubmitted(true)
+  const [quoteAmount, setQuoteAmount] = useState("")
+  const [message, setMessage] = useState("")
+
+  const handleSubmitQuote = async () => {
+
+    try {
+
+      await submitQuote({
+        rfq_id: rfq.id,
+        supplier_name: "Monate Electrical Services",
+        amount: quoteAmount,
+        message: message,
+      })
+
+      alert("Quote submitted successfully!")
+
+      setQuoteAmount("")
+      setMessage("")
+
+    } catch (error) {
+
+      console.error(error)
+
+      alert("Failed to submit quote")
+    }
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-5xl font-bold">
-            {rfq.title}
-          </h1>
+    <div className="space-y-10">
+
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-10">
+
+        <div className="flex items-start justify-between">
+
+          <div>
+
+            <h1 className="text-6xl font-bold text-white">
+              {rfq.title}
+            </h1>
+
+            <p className="mt-6 text-2xl text-gray-300">
+              {rfq.description}
+            </p>
+
+          </div>
 
           <span
-            className={`rounded-full px-4 py-2 text-sm ${
+            className={`rounded-full px-6 py-3 text-lg ${
               rfq.status === "Open"
                 ? "bg-green-500/20 text-green-400"
                 : "bg-yellow-500/20 text-yellow-400"
@@ -33,57 +74,65 @@ export function RfqDetailClient({ rfq }: RfqDetailClientProps) {
           >
             {rfq.status}
           </span>
+
         </div>
 
-        <p className="mt-6 text-xl text-gray-300">
-          {rfq.description}
-        </p>
+        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
-            <p className="text-gray-400">
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-6">
+
+            <p className="text-lg text-gray-400">
               Region
             </p>
 
-            <p className="mt-2 text-lg font-semibold">
+            <p className="mt-3 text-2xl font-semibold text-white">
               {rfq.region}
             </p>
+
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
-            <p className="text-gray-400">
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-6">
+
+            <p className="text-lg text-gray-400">
               Category
             </p>
 
-            <p className="mt-2 text-lg font-semibold">
+            <p className="mt-3 text-2xl font-semibold text-white">
               {rfq.category}
             </p>
+
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
-            <p className="text-gray-400">
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-6">
+
+            <p className="text-lg text-gray-400">
               Budget
             </p>
 
-            <p className="mt-2 text-lg font-semibold">
+            <p className="mt-3 text-2xl font-semibold text-white">
               {rfq.budget}
             </p>
+
           </div>
+
         </div>
+
       </div>
 
-      <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8">
-        <h2 className="text-3xl font-bold">
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-10">
+
+        <h2 className="text-5xl font-bold text-white">
           Submit Your Quote
         </h2>
 
-        <div className="mt-6 space-y-5">
+        <div className="mt-8 space-y-6">
+
           <input
             type="text"
             placeholder="Quote Amount"
-            value={quote}
-            onChange={(e) => setQuote(e.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-black/20 px-5 py-4 text-white outline-none focus:border-green-500"
+            value={quoteAmount}
+            onChange={(e) => setQuoteAmount(e.target.value)}
+            className="w-full rounded-2xl border border-white/10 bg-black/20 px-6 py-5 text-xl text-white outline-none transition focus:border-green-500"
           />
 
           <textarea
@@ -91,23 +140,20 @@ export function RfqDetailClient({ rfq }: RfqDetailClientProps) {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={6}
-            className="w-full rounded-2xl border border-white/10 bg-black/20 px-5 py-4 text-white outline-none focus:border-green-500"
+            className="w-full rounded-2xl border border-white/10 bg-black/20 px-6 py-5 text-xl text-white outline-none transition focus:border-green-500"
           />
 
           <button
-            onClick={handleSubmit}
-            className="rounded-2xl bg-green-500 px-8 py-4 font-semibold text-black transition hover:bg-green-400"
+            onClick={handleSubmitQuote}
+            className="rounded-2xl bg-green-500 px-10 py-5 text-xl font-semibold text-black transition hover:bg-green-400"
           >
-            Submit Proposal
+            Submit Quote
           </button>
 
-          {submitted && (
-            <div className="rounded-2xl border border-green-500/30 bg-green-500/10 p-4 text-green-400">
-              Proposal submitted successfully.
-            </div>
-          )}
         </div>
+
       </div>
+
     </div>
   )
 }
