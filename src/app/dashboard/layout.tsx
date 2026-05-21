@@ -45,7 +45,7 @@ export default function DashboardLayout({
             href="/"
             className="text-accent transition hover:text-accent-strong"
           >
-            ← Back to Portal
+            Back to Portal
           </Link>
         </div>
 
@@ -76,10 +76,10 @@ export default function DashboardLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`block rounded-md border px-4 py-3 text-sm font-medium transition ${
+                className={`block rounded-md border px-4 py-3 text-sm font-semibold transition-colors ${
                   active
-                            ? "border-accent bg-surface text-primary shadow-sm"
-                    : "border-transparent text-secondary hover:border-panel hover-surface"
+                    ? "border-accent bg-surface text-primary shadow-sm"
+                    : "border-transparent text-secondary hover:bg-surface hover:text-primary"
                 }`}
               >
                 {item.name}

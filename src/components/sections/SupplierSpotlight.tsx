@@ -37,7 +37,7 @@ export default function SupplierSpotlight() {
         {suppliers.map((supplier) => (
           <div
             key={supplier.name}
-            className="rounded-3xl border border-panel bg-card p-8 transition hover:border-accent hover:bg-accent-soft"
+            className="rounded-3xl border border-panel bg-card p-8 transition-colors hover:border-accent/70"
           >
 
             <div className="mb-6 flex items-center justify-between">
@@ -67,7 +67,7 @@ export default function SupplierSpotlight() {
                 {supplier.location}
               </span>
 
-              <button className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong">
+              <button className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-button transition-colors hover:bg-accent-strong">
                 View Profile
               </button>
 

@@ -6,9 +6,9 @@ import { useTheme } from "@/components/theme/ThemeProvider"
 type ThemeMode = "dark" | "light" | "auto"
 
 const options: Array<{ value: ThemeMode; label: string; description: string }> = [
-  { value: "light", label: "☀ Light", description: "Procurement paperwork clarity" },
-  { value: "auto", label: "🌗 Auto", description: "System adaptive balance" },
-  { value: "dark", label: "☾ Dark", description: "Deep operations console" },
+  { value: "light", label: "Light", description: "Procurement paperwork clarity" },
+  { value: "auto", label: "Auto", description: "System adaptive balance" },
+  { value: "dark", label: "Dark", description: "Deep operations console" },
 ]
 
 export default function AppearanceCore() {
@@ -32,7 +32,7 @@ export default function AppearanceCore() {
   }, [open])
 
   const active = options.find((option) => option.value === theme)
-  const label = active?.label ?? "🌗 Auto"
+  const label = active?.label ?? "Auto"
 
   return (
     <div ref={containerRef} className="appearance-core">

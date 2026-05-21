@@ -8,9 +8,22 @@ const statusStyles: Record<string, string> = {
   "Under Review": "border-sky-500/25 bg-sky-500/10 text-sky-200",
 }
 
+type QuoteListItem = {
+  id: number
+  supplier_name: string
+  amount: string
+  message: string | null
+  status: string
+  submitted_at: string | null
+  rfqs?: {
+    id?: number
+    title?: string
+  } | null
+}
+
 export default async function QuotesPage() {
 
-  const quotes = await getQuotes()
+  const quotes = await getQuotes() as QuoteListItem[]
 
   return (
     <div>
@@ -28,10 +41,10 @@ export default async function QuotesPage() {
       </div>
 
       <div className="space-y-4">
-        {quotes.map((quote: any) => (
+        {quotes.map((quote) => (
           <article
             key={quote.id}
-            className="rounded-md border border-panel bg-card p-5 shadow-panel transition duration-150 hover:border-accent hover-surface"
+            className="rounded-md border border-panel bg-card p-5 shadow-panel transition-colors hover:border-accent/70 hover:bg-surface"
           >
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
@@ -97,7 +110,7 @@ export default async function QuotesPage() {
               </div>
               <Link
                 href={`/dashboard/rfqs/${quote.rfqs?.id}`}
-                className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong"
+                className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
               >
                 View RFQ
               </Link>

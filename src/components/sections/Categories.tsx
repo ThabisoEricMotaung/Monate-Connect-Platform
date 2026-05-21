@@ -31,10 +31,10 @@ export default function Categories() {
         {categories.map((category) => (
           <div
             key={category}
-            className="group cursor-pointer rounded-3xl border border-panel bg-card p-8 transition hover:border-accent hover:bg-accent-soft"
+            className="rounded-3xl border border-panel bg-card p-8 transition-colors hover:border-accent/70"
           >
 
-            <div className="mb-6 h-16 w-16 rounded-2xl bg-accent-soft transition group-hover:bg-accent" />
+            <div className="mb-6 h-16 w-16 rounded-2xl bg-accent-soft" />
 
             <h3 className="text-2xl font-semibold text-heading">
               {category}

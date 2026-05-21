@@ -2,11 +2,15 @@
 
 import Link from "next/link"
 import AppearanceCore from "@/components/theme/AppearanceCore"
+import { usePathname } from "next/navigation"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 export default function Navbar() {
   const router = useRouter()
+  const pathname = usePathname() || ""
+  const isActive = (href: string) =>
+    href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`)
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut()
@@ -21,7 +25,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="navbar sticky top-0 z-50 border-b border-panel bg-surface text-primary shadow-panel">
+    <nav className="navbar sticky top-0 z-50 border-b border-panel bg-panel text-primary shadow-sm">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
 
         <Link href="/" className="flex items-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
@@ -40,20 +44,20 @@ export default function Navbar() {
           </div>
         </Link>
 
-        <div className="flex flex-wrap items-center gap-4 text-sm md:gap-6">
-          <Link className="text-secondary transition hover:text-primary" href="/">
+        <div className="flex flex-wrap items-center gap-2 text-sm md:gap-3">
+          <Link className={`navbar-link ${isActive("/") ? "navbar-link--active" : ""}`} href="/">
             Home
           </Link>
-          <Link className="text-secondary transition hover:text-primary" href="/dashboard">
+          <Link className={`navbar-link ${isActive("/dashboard") ? "navbar-link--active" : ""}`} href="/dashboard">
             Dashboard
           </Link>
-          <Link className="text-secondary transition hover:text-primary" href="/dashboard/rfqs">
+          <Link className={`navbar-link ${isActive("/dashboard/rfqs") ? "navbar-link--active" : ""}`} href="/dashboard/rfqs">
             RFQs
           </Link>
           <button
             type="button"
             onClick={handleLogout}
-            className="text-secondary transition hover:text-primary"
+            className="navbar-link"
           >
             Logout
           </button>
@@ -63,13 +67,13 @@ export default function Navbar() {
           <AppearanceCore />
           <Link
             href="/auth/login"
-            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
           >
             Supplier Login
           </Link>
           <Link
             href="/auth/signup"
-            className="rounded-md border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-surface"
+            className="rounded-md border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition-colors hover:bg-surface"
           >
             Register Supplier
           </Link>

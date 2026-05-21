@@ -41,7 +41,7 @@ export default function Features() {
         {features.map((feature) => (
           <div
             key={feature.title}
-            className="rounded-3xl border border-panel bg-card p-8 transition hover:border-accent hover:bg-accent-soft"
+            className="rounded-3xl border border-panel bg-card p-8 transition-colors hover:border-accent/70"
           >
             <div className="mb-6 h-14 w-14 rounded-2xl bg-accent-soft" />
 

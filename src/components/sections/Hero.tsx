@@ -21,14 +21,14 @@ export default function Hero() {
 
         <Link
           href="/auth/login"
-          className="rounded-2xl bg-accent px-8 py-4 font-semibold text-button transition hover:bg-accent-strong"
+          className="rounded-2xl bg-accent px-8 py-4 font-semibold text-button transition-colors hover:bg-accent-strong"
         >
           Supplier Login
         </Link>
 
         <Link
           href="/auth/signup"
-          className="rounded-2xl border border-panel bg-panel px-8 py-4 font-semibold text-secondary transition hover:bg-surface"
+          className="rounded-2xl border border-panel bg-panel px-8 py-4 font-semibold text-secondary transition-colors hover:bg-surface"
         >
           Register Supplier
         </Link>
