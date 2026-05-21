@@ -19,7 +19,7 @@ export default function Categories() {
           Explore Supplier Categories
         </h2>
 
-        <p className="mx-auto mt-4 max-w-3xl text-lg text-gray-400">
+        <p className="mx-auto mt-4 max-w-3xl text-lg text-secondary">
           Discover verified suppliers across mining, infrastructure,
           logistics, construction, and township business ecosystems.
         </p>
@@ -31,16 +31,16 @@ export default function Categories() {
         {categories.map((category) => (
           <div
             key={category}
-            className="group cursor-pointer rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur transition hover:border-green-500/40 hover:bg-white/10"
+            className="group cursor-pointer rounded-3xl border border-panel bg-card p-8 transition hover:border-accent hover:bg-accent-soft"
           >
 
-            <div className="mb-6 h-16 w-16 rounded-2xl bg-green-500/20 transition group-hover:bg-green-500/30" />
+            <div className="mb-6 h-16 w-16 rounded-2xl bg-accent-soft transition group-hover:bg-accent" />
 
-            <h3 className="text-2xl font-semibold">
+            <h3 className="text-2xl font-semibold text-heading">
               {category}
             </h3>
 
-            <p className="mt-3 text-gray-400">
+            <p className="mt-3 text-secondary">
               Verified suppliers and procurement opportunities.
             </p>
 

@@ -1,4 +1,3 @@
-import Navbar from "@/components/layout/Navbar"
 import Hero from "@/components/sections/Hero"
 import Stats from "@/components/sections/Stats"
 import Features from "@/components/sections/Features"
@@ -7,10 +6,7 @@ import SupplierSpotlight from "@/components/sections/SupplierSpotlight"
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#071b11] text-white">
-
-      <Navbar />
-
+    <main className="min-h-screen bg-page text-primary">
       <Hero />
 
       <Stats />

@@ -1,81 +1,76 @@
-import { redirect } from "next/navigation"
-import { supabase } from "@/lib/supabase"
+"use client"
 
-export default async function DashboardPage() {
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const { data: existingProfile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single()
-
-  if (!existingProfile) {
-
-    await supabase
-      .from("profiles")
-      .insert([
-        {
-          id: user.id,
-          business_name:
-            user.user_metadata.business_name || "Supplier",
-          email: user.email,
-        },
-      ])
-  }
+export default function DashboardPage() {
 
   return (
     <div>
 
-      <div className="mb-8">
-        <p className="text-sm uppercase tracking-[0.24em] text-emerald-300">
-          Supplier dashboard
+      <div className="mb-10">
+
+        <p className="mb-3 text-sm uppercase tracking-[0.3em] text-accent">
+          Procurement Operations
         </p>
-        <h1 className="mt-3 text-3xl font-semibold text-white">
-          Welcome back, {user.user_metadata.business_name || "Supplier"}
+
+        <h1 className="text-5xl font-bold text-primary">
+          Supplier Dashboard
         </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
-          Review verification progress, active procurement requests, and submitted quote status from a stable supplier portal.
+
+        <p className="mt-4 max-w-3xl text-lg text-secondary">
+          Manage procurement opportunities, supplier verification,
+          RFQ participation, and quote submissions from your workspace.
         </p>
+
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <section className="rounded-lg border border-slate-700 bg-[#08120e] p-6">
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
-            Verification status
-          </p>
-          <p className="mt-4 text-3xl font-semibold text-green-300">Pending</p>
-          <p className="mt-2 text-sm text-slate-400">
-            Your compliance documents are under review by the procurement team.
-          </p>
-        </section>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
 
-        <section className="rounded-lg border border-slate-700 bg-[#08120e] p-6">
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
+        <div className="rounded-xl border border-panel bg-surface p-6 shadow-panel">
+
+          <p className="text-sm uppercase tracking-widest text-secondary">
+            Verification
+          </p>
+
+          <h2 className="mt-4 text-3xl font-bold text-accent">
+            Pending
+          </h2>
+
+        </div>
+
+        <div className="rounded-xl border border-panel bg-surface p-6 shadow-panel">
+
+          <p className="text-sm uppercase tracking-widest text-secondary">
             Active RFQs
           </p>
-          <p className="mt-4 text-3xl font-semibold text-white">12</p>
-          <p className="mt-2 text-sm text-slate-400">
-            Active requests for quotes currently available for supplier response.
-          </p>
-        </section>
 
-        <section className="rounded-lg border border-slate-700 bg-[#08120e] p-6">
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
-            Submitted quotes
+          <h2 className="mt-4 text-3xl font-bold text-primary">
+            12
+          </h2>
+
+        </div>
+
+        <div className="rounded-xl border border-panel bg-surface p-6 shadow-panel">
+
+          <p className="text-sm uppercase tracking-widest text-secondary">
+            Submitted Quotes
           </p>
-          <p className="mt-4 text-3xl font-semibold text-white">4</p>
-          <p className="mt-2 text-sm text-slate-400">
-            Quotes you have sent to prospective buyers and procurement teams.
+
+          <h2 className="mt-4 text-3xl font-bold text-primary">
+            4
+          </h2>
+
+        </div>
+
+        <div className="rounded-xl border border-panel bg-surface p-6 shadow-panel">
+
+          <p className="text-sm uppercase tracking-widest text-secondary">
+            Supplier Status
           </p>
-        </section>
+
+          <h2 className="mt-4 text-3xl font-bold text-accent">
+            Active
+          </h2>
+
+        </div>
 
       </div>
 

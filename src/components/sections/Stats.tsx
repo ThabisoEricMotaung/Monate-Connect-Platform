@@ -26,13 +26,13 @@ export default function Stats() {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur"
+            className="rounded-3xl border border-panel bg-card p-8 text-center"
           >
-            <h3 className="text-5xl font-bold text-green-400">
+            <h3 className="text-5xl font-bold text-accent">
               {stat.value}
             </h3>
 
-            <p className="mt-4 text-lg text-gray-400">
+            <p className="mt-4 text-lg text-secondary">
               {stat.label}
             </p>
           </div>

@@ -7,11 +7,20 @@ export async function submitQuote(data: {
   message: string
 }) {
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
+
   const { error } = await supabase
     .from("quotes")
     .insert([
       {
         ...data,
+        supplier_id: user.id,
         status: "Pending",
       },
     ])
@@ -24,6 +33,14 @@ export async function submitQuote(data: {
 
 export async function getQuotes() {
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return []
+  }
+
   const { data, error } = await supabase
     .from("quotes")
     .select(`
@@ -32,6 +49,7 @@ export async function getQuotes() {
         title
       )
     `)
+    .eq("supplier_id", user.id)
     .order("id", { ascending: false })
 
   if (error) {

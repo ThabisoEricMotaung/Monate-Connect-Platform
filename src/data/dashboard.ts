@@ -8,16 +8,16 @@ export const dashboardStats: DashboardStat[] = [
   {
     title: "Verification Status",
     value: "Pending",
-    color: "text-green-400",
+    color: "text-accent",
   },
   {
     title: "Active RFQs",
     value: "12",
-    color: "text-white",
+    color: "text-heading",
   },
   {
     title: "Submitted Quotes",
     value: "4",
-    color: "text-white",
+    color: "text-heading",
   },
 ]

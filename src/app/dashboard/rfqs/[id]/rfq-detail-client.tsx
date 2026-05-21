@@ -49,17 +49,17 @@ export default function RFQDetailClient({
   return (
     <div className="space-y-10">
 
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-10">
+      <div className="rounded-3xl border border-panel bg-card p-10">
 
         <div className="flex items-start justify-between">
 
           <div>
 
-            <h1 className="text-6xl font-bold text-white">
+            <h1 className="text-6xl font-bold text-heading">
               {rfq.title}
             </h1>
 
-            <p className="mt-6 text-2xl text-gray-300">
+            <p className="mt-6 text-2xl text-secondary">
               {rfq.description}
             </p>
 
@@ -68,8 +68,8 @@ export default function RFQDetailClient({
           <span
             className={`rounded-full px-6 py-3 text-lg ${
               rfq.status === "Open"
-                ? "bg-green-500/20 text-green-400"
-                : "bg-yellow-500/20 text-yellow-400"
+                ? "bg-accent-soft text-accent"
+                : "bg-warning-soft text-warning"
             }`}
           >
             {rfq.status}
@@ -79,37 +79,37 @@ export default function RFQDetailClient({
 
         <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
 
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-6">
+          <div className="rounded-2xl border border-panel bg-panel p-6">
 
-            <p className="text-lg text-gray-400">
+            <p className="text-lg text-secondary">
               Region
             </p>
 
-            <p className="mt-3 text-2xl font-semibold text-white">
+            <p className="mt-3 text-2xl font-semibold text-heading">
               {rfq.region}
             </p>
 
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-6">
+          <div className="rounded-2xl border border-panel bg-panel p-6">
 
-            <p className="text-lg text-gray-400">
+            <p className="text-lg text-secondary">
               Category
             </p>
 
-            <p className="mt-3 text-2xl font-semibold text-white">
+            <p className="mt-3 text-2xl font-semibold text-heading">
               {rfq.category}
             </p>
 
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-6">
+          <div className="rounded-2xl border border-panel bg-panel p-6">
 
-            <p className="text-lg text-gray-400">
+            <p className="text-lg text-secondary">
               Budget
             </p>
 
-            <p className="mt-3 text-2xl font-semibold text-white">
+            <p className="mt-3 text-2xl font-semibold text-heading">
               {rfq.budget}
             </p>
 
@@ -119,9 +119,9 @@ export default function RFQDetailClient({
 
       </div>
 
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-10">
+      <div className="rounded-3xl border border-panel bg-card p-10">
 
-        <h2 className="text-5xl font-bold text-white">
+        <h2 className="text-5xl font-bold text-heading">
           Submit Your Quote
         </h2>
 
@@ -132,7 +132,7 @@ export default function RFQDetailClient({
             placeholder="Quote Amount"
             value={quoteAmount}
             onChange={(e) => setQuoteAmount(e.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-black/20 px-6 py-5 text-xl text-white outline-none transition focus:border-green-500"
+            className="w-full rounded-2xl border border-panel bg-panel px-6 py-5 text-xl text-heading outline-none transition focus:border-accent"
           />
 
           <textarea
@@ -140,12 +140,12 @@ export default function RFQDetailClient({
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={6}
-            className="w-full rounded-2xl border border-white/10 bg-black/20 px-6 py-5 text-xl text-white outline-none transition focus:border-green-500"
+            className="w-full rounded-2xl border border-panel bg-panel px-6 py-5 text-xl text-heading outline-none transition focus:border-accent"
           />
 
           <button
             onClick={handleSubmitQuote}
-            className="rounded-2xl bg-green-500 px-10 py-5 text-xl font-semibold text-black transition hover:bg-green-400"
+            className="rounded-2xl bg-accent px-10 py-5 text-xl font-semibold text-button transition hover:bg-accent-strong"
           >
             Submit Quote
           </button>

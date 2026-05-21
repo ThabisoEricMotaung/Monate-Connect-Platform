@@ -26,7 +26,7 @@ export default function SupplierSpotlight() {
           Trusted Supplier Network
         </h2>
 
-        <p className="mx-auto mt-4 max-w-3xl text-lg text-gray-400">
+        <p className="mx-auto mt-4 max-w-3xl text-lg text-secondary">
           Discover emerging African suppliers ready for procurement opportunities.
         </p>
 
@@ -37,34 +37,37 @@ export default function SupplierSpotlight() {
         {suppliers.map((supplier) => (
           <div
             key={supplier.name}
-            className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur transition hover:border-green-500/40 hover:bg-white/10"
+            className="rounded-3xl border border-panel bg-card p-8 transition hover:border-accent hover:bg-accent-soft"
           >
 
             <div className="mb-6 flex items-center justify-between">
 
-              <div className="h-16 w-16 rounded-2xl bg-green-500/20" />
+              <div className="h-16 w-16 rounded-2xl bg-accent-soft supplier-logo meta-logo" />
 
-              <div className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm text-green-300">
-                Verified
+              <div className="verified-pill">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="inline-block mr-2" aria-hidden>
+                  <path d="M20 6L9 17l-5-5" stroke="rgba(255,255,255,0.95)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span>Verified</span>
               </div>
 
             </div>
 
-            <h3 className="text-2xl font-semibold">
+            <h3 className="text-2xl font-semibold text-heading">
               {supplier.name}
             </h3>
 
-            <p className="mt-3 text-gray-400">
+            <p className="mt-3 text-secondary">
               {supplier.category}
             </p>
 
             <div className="mt-6 flex items-center justify-between">
 
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted">
                 {supplier.location}
               </span>
 
-              <button className="rounded-xl bg-green-500 px-4 py-2 text-sm font-semibold text-black transition hover:bg-green-400">
+              <button className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong">
                 View Profile
               </button>
 

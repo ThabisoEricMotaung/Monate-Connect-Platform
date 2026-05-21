@@ -11,7 +11,7 @@ export default async function RFQDetailPage({
 
   if (!rfq) {
     return (
-      <div className="text-white">
+      <div className="text-heading">
         RFQ not found
       </div>
     )

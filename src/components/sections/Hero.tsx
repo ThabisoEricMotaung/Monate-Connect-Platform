@@ -4,33 +4,33 @@ export default function Hero() {
   return (
     <section className="mx-auto flex min-h-[90vh] max-w-7xl flex-col items-center justify-center px-6 text-center">
 
-      <div className="mb-6 rounded-full border border-green-500/30 bg-green-500/10 px-4 py-2 text-sm text-green-300 backdrop-blur">
-        Trusted African Vendor Infrastructure
+      <div className="mb-6 rounded-full border border-accent/30 bg-surface px-4 py-2 text-sm text-accent">
+        Enterprise supplier access
       </div>
 
-      <h1 className="max-w-5xl text-5xl font-bold leading-tight md:text-7xl">
-        Verified Vendors. Real Opportunities.
+      <h1 className="max-w-5xl text-5xl font-bold leading-tight md:text-7xl text-primary">
+        Operational supplier access for procurement teams
       </h1>
 
-      <p className="mt-6 max-w-3xl text-lg text-gray-300">
-        Supplier onboarding, RFQ readiness, verification, and buyer discovery
-        for mining, infrastructure, and Eskom ecosystems across Africa.
+      <p className="mt-6 max-w-3xl text-lg text-secondary">
+        Secure supplier login for RFQ response, verification workflow, compliance review,
+        and procurement readiness across mining and infrastructure sourcing.
       </p>
 
-      <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+      <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
 
         <Link
-          href="/auth/signup"
-          className="rounded-2xl bg-green-500 px-8 py-4 font-semibold text-black transition hover:bg-green-400"
+          href="/auth/login"
+          className="rounded-2xl bg-accent px-8 py-4 font-semibold text-button transition hover:bg-accent-strong"
         >
-          Become a Supplier
+          Supplier Login
         </Link>
 
         <Link
-          href="/dashboard/rfqs"
-          className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 font-semibold text-white transition hover:bg-white/10"
+          href="/auth/signup"
+          className="rounded-2xl border border-panel bg-panel px-8 py-4 font-semibold text-secondary transition hover:bg-surface"
         >
-          Explore Vendors
+          Register Supplier
         </Link>
 
       </div>
