@@ -13,6 +13,11 @@ export default function Navbar() {
     href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`)
 
   const handleLogout = async () => {
+    if (!supabase) {
+      alert("Supabase environment variables are not configured.")
+      return
+    }
+
     const { error } = await supabase.auth.signOut()
 
     if (error) {

@@ -6,6 +6,9 @@ export async function submitQuote(data: {
   amount: string
   message: string
 }) {
+  if (!supabase) {
+    throw new Error("Supabase environment variables are not configured")
+  }
 
   const {
     data: { user },
@@ -32,6 +35,9 @@ export async function submitQuote(data: {
 }
 
 export async function getQuotes() {
+  if (!supabase) {
+    return []
+  }
 
   const {
     data: { user },

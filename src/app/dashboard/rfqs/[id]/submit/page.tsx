@@ -18,6 +18,11 @@ export default function SubmitQuotePage() {
     setSubmitted(false)
     setErrorMessage("")
 
+    if (!supabase) {
+      setErrorMessage("Supabase environment variables are not configured.")
+      return
+    }
+
     const { error } = await supabase
       .from("quotes")
       .insert([
