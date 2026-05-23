@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem \"src\\\\app\\\\dashboard\\\\rfqs\\\\[id]\\\\submit\" -ErrorAction SilentlyContinue)"
+    ]
+  }
+}

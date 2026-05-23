@@ -4,6 +4,14 @@ import { supabase } from "@/lib/supabase"
 import { useParams } from "next/navigation"
 import { useState } from "react"
 
+function cleanAmountInput(value: string): string {
+  return value.replace(/[^\d]/g, "")
+}
+
+function cleanNumberInput(value: string): string {
+  return value.replace(/[^\d]/g, "")
+}
+
 export default function SubmitQuotePage() {
   const params = useParams<{ id: string }>()
   const [submitted, setSubmitted] = useState(false)
@@ -29,8 +37,8 @@ export default function SubmitQuotePage() {
         {
           rfq_id: Number(params.id),
           supplier_name: "Monate Electrical Services",
-          amount: quotedAmount,
-          timeline: deliveryTimeline,
+          amount: cleanAmountInput(quotedAmount),
+          timeline: `${cleanNumberInput(deliveryTimeline)} working days`,
           scope,
           supporting_notes: supportingNotes,
           status: "Pending",
@@ -76,13 +84,23 @@ export default function SubmitQuotePage() {
                 Quoted Amount (ZAR)
               </label>
 
-              <input
-                type="number"
-                placeholder="450000"
-                className="enterprise-input"
-                value={quotedAmount}
-                onChange={(e) => setQuotedAmount(e.target.value)}
-              />
+              <div className="flex overflow-hidden rounded-[14px] border border-panel bg-surface transition focus-within:border-accent focus-within:shadow-[0_0_0_3px_rgba(var(--accent-rgb),0.14)]">
+                <span className="flex items-center border-r border-panel bg-muted px-4 text-base font-bold text-secondary">
+                  R
+                </span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="450000"
+                  className="w-full bg-transparent px-4 py-4 text-heading outline-none"
+                  value={quotedAmount}
+                  onChange={(e) => setQuotedAmount(cleanAmountInput(e.target.value))}
+                />
+              </div>
+              <p className="text-xs text-muted">
+                Enter numbers only. Currency is applied automatically.
+              </p>
             </div>
 
             <div className="enterprise-field">
@@ -90,13 +108,23 @@ export default function SubmitQuotePage() {
                 Estimated Delivery Timeline
               </label>
 
-              <input
-                type="text"
-                placeholder="14 working days"
-                className="enterprise-input"
-                value={deliveryTimeline}
-                onChange={(e) => setDeliveryTimeline(e.target.value)}
-              />
+              <div className="flex overflow-hidden rounded-[14px] border border-panel bg-surface transition focus-within:border-accent focus-within:shadow-[0_0_0_3px_rgba(var(--accent-rgb),0.14)]">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="14"
+                  className="w-full bg-transparent px-4 py-4 text-heading outline-none"
+                  value={deliveryTimeline}
+                  onChange={(e) => setDeliveryTimeline(cleanNumberInput(e.target.value))}
+                />
+                <span className="flex items-center border-l border-panel bg-muted px-4 text-sm font-bold text-secondary">
+                  working days
+                </span>
+              </div>
+              <p className="text-xs text-muted">
+                Enter number of working days only. The system applies the label automatically.
+              </p>
             </div>
           </div>
 

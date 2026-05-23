@@ -15,6 +15,21 @@ interface RFQDetailClientProps {
   }
 }
 
+function cleanAmountInput(value: string): string {
+  return value.replace(/[^\d]/g, "")
+}
+
+function formatRand(amount: string): string {
+  const cleanAmount = cleanAmountInput(amount)
+  const numericAmount = Number(cleanAmount)
+
+  if (!cleanAmount || Number.isNaN(numericAmount)) return amount
+
+  return `R${numericAmount.toLocaleString("en-US", {
+    maximumFractionDigits: 0,
+  })}`
+}
+
 export default function RFQDetailClient({
   rfq,
 }: RFQDetailClientProps) {
@@ -106,11 +121,11 @@ export default function RFQDetailClient({
           <div className="rounded-2xl border border-panel bg-panel p-6">
 
             <p className="text-lg text-secondary">
-              Budget
+              Budget (ZAR)
             </p>
 
             <p className="mt-3 text-2xl font-semibold text-heading">
-              {rfq.budget}
+              {formatRand(rfq.budget)}
             </p>
 
           </div>
@@ -127,13 +142,28 @@ export default function RFQDetailClient({
 
         <div className="mt-8 space-y-6">
 
-          <input
-            type="text"
-            placeholder="Quote Amount"
-            value={quoteAmount}
-            onChange={(e) => setQuoteAmount(e.target.value)}
-            className="w-full rounded-2xl border border-panel bg-panel px-6 py-5 text-xl text-heading outline-none transition focus:border-accent"
-          />
+          <div>
+            <label className="mb-2 block text-lg text-secondary">
+              Quoted Amount (ZAR)
+            </label>
+            <div className="flex overflow-hidden rounded-2xl border border-panel bg-panel transition focus-within:border-accent">
+              <span className="flex items-center border-r border-panel bg-muted px-5 text-xl font-bold text-secondary">
+                R
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="450000"
+                value={quoteAmount}
+                onChange={(e) => setQuoteAmount(cleanAmountInput(e.target.value))}
+                className="w-full bg-transparent px-6 py-5 text-xl text-heading outline-none"
+              />
+            </div>
+            <p className="mt-2 text-xs text-muted">
+              Enter numbers only. Currency is applied automatically.
+            </p>
+          </div>
 
           <textarea
             placeholder="Describe your services, turnaround time, certifications, or experience..."

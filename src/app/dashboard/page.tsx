@@ -1,6 +1,56 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
+
 export default function DashboardPage() {
+
+  const router = useRouter()
+
+  useEffect(() => {
+    async function ensureSupplierProfile() {
+      if (!supabase) {
+        router.push("/auth/login")
+        return
+      }
+
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+
+      if (userError || !userData.user) {
+        router.push("/auth/login")
+        return
+      }
+
+      const user = userData.user
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle()
+
+      if (profile) {
+        return
+      }
+
+      await supabase
+        .from("profiles")
+        .insert([
+          {
+            id: user.id,
+            business_name: user.user_metadata.business_name,
+            email: user.email,
+            province: user.user_metadata.province,
+            industry: user.user_metadata.industry,
+            phone: user.user_metadata.phone,
+            verification_status: "Pending Review",
+          },
+        ])
+    }
+
+    ensureSupplierProfile()
+  }, [router])
 
   return (
     <div>
