@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -28,6 +28,16 @@ const CATEGORIES = [
 ]
 
 const STATUS_OPTIONS = ["Open", "Closing Soon", "Closed", "Awarded"]
+
+const ACCEPTED_ATTACHMENT_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]
+
+const ACCEPTED_ATTACHMENT_EXTENSIONS = [".pdf", ".doc", ".docx", ".xls", ".xlsx"]
 
 type FormState = {
   title: string
@@ -59,8 +69,25 @@ function cleanAmountInput(value: string): string {
   return value.replace(/[^\d]/g, "")
 }
 
+function cleanFileName(fileName: string): string {
+  return fileName
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+}
+
+function isAcceptedAttachment(file: File): boolean {
+  const lowerName = file.name.toLowerCase()
+  const extensionMatches = ACCEPTED_ATTACHMENT_EXTENSIONS.some((extension) =>
+    lowerName.endsWith(extension)
+  )
+
+  return ACCEPTED_ATTACHMENT_TYPES.includes(file.type) || extensionMatches
+}
+
 export default function NewRFQPage() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
+  const [attachment, setAttachment] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -75,6 +102,26 @@ export default function NewRFQPage() {
     setForm((prev) => ({ ...prev, [e.target.name]: value }))
     setSuccess(false)
     setError(null)
+  }
+
+  function handleAttachmentChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null
+    setSuccess(false)
+    setError(null)
+
+    if (!file) {
+      setAttachment(null)
+      return
+    }
+
+    if (!isAcceptedAttachment(file)) {
+      setAttachment(null)
+      e.target.value = ""
+      setError("RFQ attachment must be a PDF, DOC, DOCX, XLS, or XLSX file.")
+      return
+    }
+
+    setAttachment(file)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -94,6 +141,28 @@ export default function NewRFQPage() {
 
     setLoading(true)
 
+    let attachmentUrl: string | null = null
+
+    if (attachment) {
+      const filePath = `rfqs/${Date.now()}-${cleanFileName(attachment.name)}`
+
+      const { error: uploadError } = await supabase.storage
+        .from("rfq-documents")
+        .upload(filePath, attachment, { upsert: false })
+
+      if (uploadError) {
+        setLoading(false)
+        setError(uploadError.message)
+        return
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("rfq-documents")
+        .getPublicUrl(filePath)
+
+      attachmentUrl = publicUrlData.publicUrl
+    }
+
     const { error: insertError } = await supabase.from("rfqs").insert([
       {
         title: form.title.trim(),
@@ -103,6 +172,7 @@ export default function NewRFQPage() {
         budget: cleanAmountInput(form.budget),
         deadline: form.deadline || null,
         status: form.status,
+        attachment_url: attachmentUrl,
       },
     ])
 
@@ -115,6 +185,7 @@ export default function NewRFQPage() {
 
     setSuccess(true)
     setForm(EMPTY_FORM)
+    setAttachment(null)
   }
 
   return (
@@ -196,7 +267,7 @@ export default function NewRFQPage() {
           </div>
 
           <div className="mt-6 space-y-5">
-            {/* Title — full width */}
+            {/* Title - full width */}
             <div>
               <label htmlFor="title" className={labelClass}>
                 RFQ Title
@@ -205,7 +276,7 @@ export default function NewRFQPage() {
                 id="title"
                 name="title"
                 type="text"
-                placeholder="e.g. Supply of Electrical Equipment — Limpopo Region"
+                placeholder="e.g. Supply of Electrical Equipment - Limpopo Region"
                 value={form.title}
                 onChange={handleChange}
                 required
@@ -213,7 +284,7 @@ export default function NewRFQPage() {
               />
             </div>
 
-            {/* Description — full width */}
+            {/* Description - full width */}
             <div>
               <label htmlFor="description" className={labelClass}>
                 Description
@@ -376,6 +447,40 @@ export default function NewRFQPage() {
           </div>
         </section>
 
+        {/* Attachment card */}
+        <section className="mt-5 rounded-md border border-panel bg-panel p-6">
+          <div className="border-b border-panel pb-4">
+            <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">
+              RFQ documentation
+            </p>
+            <h2 className="mt-2 text-lg font-semibold text-heading">
+              Attachment
+            </h2>
+          </div>
+
+          <div className="mt-6 max-w-2xl">
+            <label htmlFor="attachment" className={labelClass}>
+              RFQ Attachment
+            </label>
+            <input
+              id="attachment"
+              name="attachment"
+              type="file"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              onChange={handleAttachmentChange}
+              className="block w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-secondary file:mr-4 file:rounded-md file:border-0 file:bg-accent file:px-4 file:py-2 file:text-sm file:font-semibold file:text-button hover:file:bg-accent-strong"
+            />
+            <p className="mt-2 text-xs text-muted">
+              Accepted formats: PDF, DOC, DOCX, XLS, XLSX.
+            </p>
+            {attachment && (
+              <p className="mt-2 text-xs font-semibold text-accent">
+                Selected file: {attachment.name}
+              </p>
+            )}
+          </div>
+        </section>
+
         {/* Submit action */}
         <div className="mt-6 flex items-center justify-between gap-4 rounded-md border border-panel bg-card px-5 py-4">
           <p className="text-xs text-muted">
@@ -407,7 +512,7 @@ export default function NewRFQPage() {
                 />
               </svg>
             )}
-            {loading ? "Creating RFQ…" : "Create RFQ"}
+            {loading ? "Creating RFQ..." : "Create RFQ"}
           </button>
         </div>
       </form>

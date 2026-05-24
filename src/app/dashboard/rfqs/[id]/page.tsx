@@ -18,6 +18,7 @@ type RFQ = {
   budget: string | null
   status: string | null
   deadline: string | null
+  attachment_url: string | null
 }
 
 function formatRand(amount: string | null): string {
@@ -164,6 +165,34 @@ export default async function RFQDetailPage({ params }: Props) {
         </p>
 
       </div>
+
+      {rfq.attachment_url && (
+        <div className="mt-8 rounded-md border border-panel bg-card p-6 shadow-panel">
+
+          <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">
+            RFQ Documents
+          </p>
+
+          <h2 className="mt-2 text-xl font-semibold text-heading">
+            Supporting attachment
+          </h2>
+
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-secondary">
+            Download the attached procurement document for full RFQ details,
+            supporting specifications, and submission context.
+          </p>
+
+          <a
+            href={rfq.attachment_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
+          >
+            Download RFQ Attachment
+          </a>
+
+        </div>
+      )}
 
       <div className="mt-8 flex flex-wrap gap-4 rounded-md border border-panel bg-card px-5 py-4">
 

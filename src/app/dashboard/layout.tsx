@@ -19,12 +19,31 @@ const navigation = [
     href: "/dashboard/quotes",
   },
   {
+    name: "Supplier Directory",
+    href: "/dashboard/suppliers",
+  },
+  {
     name: "Supplier Profile",
     href: "/dashboard/profile",
   },
   {
     name: "Verification",
     href: "/dashboard/verification",
+  },
+]
+
+const adminNavigation = [
+  {
+    name: "Create RFQ",
+    href: "/dashboard/admin/rfqs/new",
+  },
+  {
+    name: "Quote Review",
+    href: "/dashboard/admin/quotes",
+  },
+  {
+    name: "Verification Review",
+    href: "/dashboard/admin/verification",
   },
 ]
 
@@ -87,6 +106,33 @@ export default function DashboardLayout({
             )
           })}
         </nav>
+
+        <div className="mt-8 border-t border-panel pt-5">
+          <p className="mb-3 text-xs uppercase tracking-[0.24em] text-secondary">
+            Admin
+          </p>
+
+          <nav className="space-y-2">
+            {adminNavigation.map((item) => {
+              const active =
+                pathname === item.href || pathname.startsWith(item.href)
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`block rounded-md border px-4 py-3 text-sm font-semibold transition-colors ${
+                    active
+                      ? "border-accent bg-surface text-primary shadow-sm"
+                      : "border-transparent text-secondary hover:bg-surface hover:text-primary"
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
       </aside>
 
       <section className="flex-1 p-6 md:p-8">
