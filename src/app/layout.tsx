@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import Navbar from "@/components/layout/Navbar";
+import NewsTicker from "@/components/NewsTicker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,17 +46,16 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
-        <Script
-          id="theme-script"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: themeScript }}
-        />
-      </head>
+      <Script
+        id="theme-script"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{ __html: themeScript }}
+      />
       <body className="min-h-full bg-page text-primary font-sans">
         <ThemeProvider>
           <Navbar />
           {children}
+          <NewsTicker />
         </ThemeProvider>
       </body>
     </html>
