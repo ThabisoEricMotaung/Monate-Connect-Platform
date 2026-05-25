@@ -4,6 +4,14 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
+function isMissingRoleColumnError(error: { message?: string } | null): boolean {
+  return Boolean(
+    error?.message?.includes("'role' column") ||
+      error?.message?.includes("schema cache") ||
+      error?.message?.includes("profiles' in the schema")
+  )
+}
+
 export default function DashboardPage() {
 
   const router = useRouter()
@@ -34,20 +42,36 @@ export default function DashboardPage() {
         return
       }
 
-      await supabase
+      const profilePayload = {
+        id: user.id,
+        business_name: user.user_metadata.business_name,
+        email: user.email,
+        province: user.user_metadata.province,
+        industry: user.user_metadata.industry,
+        phone: user.user_metadata.phone,
+        role: user.user_metadata.role || "supplier",
+        verification_status: "Pending Review",
+      }
+
+      const { error: profileInsertError } = await supabase
         .from("profiles")
-        .insert([
-          {
-            id: user.id,
-            business_name: user.user_metadata.business_name,
-            email: user.email,
-            province: user.user_metadata.province,
-            industry: user.user_metadata.industry,
-            phone: user.user_metadata.phone,
-            role: user.user_metadata.role || "supplier",
-            verification_status: "Pending Review",
-          },
-        ])
+        .insert([profilePayload])
+
+      if (!profileInsertError || !isMissingRoleColumnError(profileInsertError)) {
+        return
+      }
+
+      const fallbackProfilePayload = {
+        id: profilePayload.id,
+        business_name: profilePayload.business_name,
+        email: profilePayload.email,
+        province: profilePayload.province,
+        industry: profilePayload.industry,
+        phone: profilePayload.phone,
+        verification_status: profilePayload.verification_status,
+      }
+
+      await supabase.from("profiles").insert([fallbackProfilePayload])
     }
 
     ensureSupplierProfile()

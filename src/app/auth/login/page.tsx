@@ -4,6 +4,22 @@ import { useState, type MouseEvent } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
+type LoginProfile = {
+  id: string
+  province: string | null
+  industry: string | null
+  phone: string | null
+  role?: string | null
+}
+
+function isMissingRoleColumnError(error: { message?: string } | null): boolean {
+  return Boolean(
+    error?.message?.includes("'role' column") ||
+      error?.message?.includes("schema cache") ||
+      error?.message?.includes("profiles' in the schema")
+  )
+}
+
 export default function LoginPage() {
 
   const router = useRouter()
@@ -44,27 +60,56 @@ export default function LoginPage() {
     if (user) {
       console.log("USER METADATA", user.user_metadata)
 
-      const { data: profile } = await supabase
+      const { data: profileWithRole, error: profileSelectError } = await supabase
         .from("profiles")
         .select("id, province, industry, phone, role")
         .eq("id", user.id)
         .maybeSingle()
+      let profile = profileWithRole as LoginProfile | null
+      let roleColumnAvailable = true
+
+      if (profileSelectError) {
+        if (!isMissingRoleColumnError(profileSelectError)) {
+          console.error(profileSelectError)
+          setErrorMessage(profileSelectError.message)
+          setLoading(false)
+          return
+        }
+
+        roleColumnAvailable = false
+
+        const { data: fallbackProfile, error: fallbackProfileError } =
+          await supabase
+            .from("profiles")
+            .select("id, province, industry, phone")
+            .eq("id", user.id)
+            .maybeSingle()
+
+        if (fallbackProfileError) {
+          console.error(fallbackProfileError)
+          setErrorMessage(fallbackProfileError.message)
+          setLoading(false)
+          return
+        }
+
+        profile = fallbackProfile as LoginProfile | null
+      }
 
       if (!profile) {
+        const profilePayload = {
+          id: user.id,
+          business_name: user.user_metadata?.business_name || "Supplier",
+          email: user.email,
+          province: user.user_metadata?.province || "",
+          industry: user.user_metadata?.industry || "",
+          phone: user.user_metadata?.phone || "",
+          verification_status: "Pending Review",
+          ...(roleColumnAvailable ? { role: "supplier" } : {}),
+        }
+
         const { error: profileInsertError } = await supabase
           .from("profiles")
-          .insert([
-            {
-              id: user.id,
-              business_name: user.user_metadata?.business_name || "Supplier",
-              email: user.email,
-              province: user.user_metadata?.province || "",
-              industry: user.user_metadata?.industry || "",
-              phone: user.user_metadata?.phone || "",
-              role: "supplier",
-              verification_status: "Pending Review",
-            },
-          ])
+          .insert([profilePayload])
 
         if (profileInsertError) {
           console.error(profileInsertError)
@@ -76,16 +121,18 @@ export default function LoginPage() {
         !profile.province ||
         !profile.industry ||
         !profile.phone ||
-        !profile.role
+        (roleColumnAvailable && !profile.role)
       ) {
+        const profileUpdatePayload = {
+          province: profile.province || user.user_metadata?.province || "",
+          industry: profile.industry || user.user_metadata?.industry || "",
+          phone: profile.phone || user.user_metadata?.phone || "",
+          ...(roleColumnAvailable ? { role: profile.role || "supplier" } : {}),
+        }
+
         const { error: profileUpdateError } = await supabase
           .from("profiles")
-          .update({
-            province: profile.province || user.user_metadata?.province || "",
-            industry: profile.industry || user.user_metadata?.industry || "",
-            phone: profile.phone || user.user_metadata?.phone || "",
-            role: profile.role || "supplier",
-          })
+          .update(profileUpdatePayload)
           .eq("id", user.id)
 
         if (profileUpdateError) {

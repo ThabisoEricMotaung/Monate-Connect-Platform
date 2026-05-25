@@ -8,6 +8,14 @@ export type AuthProfile = {
   role: ProfileRole | string | null
 }
 
+function isMissingRoleColumnError(error: { message?: string } | null): boolean {
+  return Boolean(
+    error?.message?.includes("'role' column") ||
+      error?.message?.includes("schema cache") ||
+      error?.message?.includes("profiles' in the schema")
+  )
+}
+
 export async function getCurrentUser(): Promise<User | null> {
   if (!supabase) return null
 
@@ -34,7 +42,24 @@ export async function getCurrentProfile(): Promise<AuthProfile | null> {
     .eq("id", user.id)
     .maybeSingle()
 
-  if (error || !data) return null
+  if (error) {
+    if (!isMissingRoleColumnError(error)) return null
+
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle()
+
+    if (fallbackError || !fallbackData) return null
+
+    return {
+      id: fallbackData.id as string,
+      role: "supplier",
+    }
+  }
+
+  if (!data) return null
 
   return data as AuthProfile
 }
