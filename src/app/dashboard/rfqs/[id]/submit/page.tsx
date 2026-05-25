@@ -1,8 +1,17 @@
 "use client"
 
+import { logActivity } from "@/lib/activity"
+import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { supabase } from "@/lib/supabase"
 import { useParams } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+
+type RFQSubmissionState = {
+  id: number
+  title: string | null
+  deadline: string | null
+  status: string | null
+}
 
 function cleanAmountInput(value: string): string {
   return value.replace(/[^\d]/g, "")
@@ -12,26 +21,79 @@ function cleanNumberInput(value: string): string {
   return value.replace(/[^\d]/g, "")
 }
 
+function formatDeadline(dateStr: string | null): string {
+  if (!dateStr) return "-"
+
+  return new Date(dateStr).toLocaleDateString("en-ZA", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
+}
+
 export default function SubmitQuotePage() {
   const params = useParams<{ id: string }>()
+  const [rfq, setRfq] = useState<RFQSubmissionState | null>(null)
+  const [loadingRfq, setLoadingRfq] = useState(true)
   const [submitted, setSubmitted] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [quotedAmount, setQuotedAmount] = useState("")
   const [deliveryTimeline, setDeliveryTimeline] = useState("")
   const [scope, setScope] = useState("")
   const [supportingNotes, setSupportingNotes] = useState("")
+  const displayStatus = rfq
+    ? getRFQDisplayStatus(rfq.status, rfq.deadline)
+    : "Open"
+  const isClosed = displayStatus === "Closed"
+
+  useEffect(() => {
+    async function loadRfq() {
+      if (!supabase) {
+        setErrorMessage("Supabase environment variables are not configured.")
+        setLoadingRfq(false)
+        return
+      }
+
+      const { data, error } = await supabase
+        .from("rfqs")
+        .select("id, title, deadline, status")
+        .eq("id", Number(params.id))
+        .single()
+
+      if (error) {
+        setErrorMessage(error.message)
+        setLoadingRfq(false)
+        return
+      }
+
+      setRfq(data as RFQSubmissionState)
+      setLoadingRfq(false)
+    }
+
+    loadRfq()
+  }, [params.id])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitted(false)
     setErrorMessage("")
 
+    if (loadingRfq) {
+      setErrorMessage("RFQ details are still loading. Please try again.")
+      return
+    }
+
+    if (isClosed) {
+      setErrorMessage("This RFQ has closed and no longer accepts submissions.")
+      return
+    }
+
     if (!supabase) {
       setErrorMessage("Supabase environment variables are not configured.")
       return
     }
 
-    const { error } = await supabase
+    const { data: quoteData, error } = await supabase
       .from("quotes")
       .insert([
         {
@@ -44,11 +106,28 @@ export default function SubmitQuotePage() {
           status: "Pending",
         },
       ])
+      .select("id")
+      .single()
 
     if (error) {
       console.error(error)
       setErrorMessage(error.message)
       return
+    }
+
+    try {
+      await logActivity({
+        action: "quote.submitted",
+        entity_type: "quote",
+        entity_id: quoteData?.id ?? null,
+        metadata: {
+          rfq_id: Number(params.id),
+          amount: cleanAmountInput(quotedAmount),
+          timeline: `${cleanNumberInput(deliveryTimeline)} working days`,
+        },
+      })
+    } catch (activityError) {
+      console.error(activityError)
     }
 
     setSubmitted(true)
@@ -77,6 +156,50 @@ export default function SubmitQuotePage() {
       </div>
 
       <div className="enterprise-card">
+        {rfq && (
+          <div className="mb-6 rounded-md border border-panel bg-panel p-4">
+            <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
+              RFQ
+            </p>
+            <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-heading">
+                  {rfq.title || `RFQ-${rfq.id}`}
+                </p>
+                <p className="mt-1 text-xs font-medium text-secondary">
+                  Deadline: {formatDeadline(rfq.deadline)}
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 sm:items-end">
+                <span
+                  className={`inline-flex w-fit rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] ${
+                    displayStatus === "Open"
+                      ? "border-sky-500/30 bg-sky-500/10 text-sky-700"
+                      : displayStatus === "Closing Soon"
+                        ? "border-warning bg-warning-soft text-warning"
+                        : displayStatus === "Awarded"
+                          ? "border-success bg-success-soft text-success"
+                          : "border-rose-500/30 bg-rose-500/10 text-rose-700"
+                  }`}
+                >
+                  {displayStatus}
+                </span>
+                <span className="text-xs text-muted">
+                  Deadline status
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isClosed && (
+          <div className="mb-6 rounded-md border border-rose-500/25 bg-rose-500/10 px-5 py-4">
+            <p className="text-sm font-semibold text-rose-700">
+              This RFQ has closed and no longer accepts submissions.
+            </p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="enterprise-grid enterprise-grid-2">
             <div className="enterprise-field">
@@ -96,6 +219,7 @@ export default function SubmitQuotePage() {
                   className="w-full bg-transparent px-4 py-4 text-heading outline-none"
                   value={quotedAmount}
                   onChange={(e) => setQuotedAmount(cleanAmountInput(e.target.value))}
+                  disabled={isClosed}
                 />
               </div>
               <p className="text-xs text-muted">
@@ -117,6 +241,7 @@ export default function SubmitQuotePage() {
                   className="w-full bg-transparent px-4 py-4 text-heading outline-none"
                   value={deliveryTimeline}
                   onChange={(e) => setDeliveryTimeline(cleanNumberInput(e.target.value))}
+                  disabled={isClosed}
                 />
                 <span className="flex items-center border-l border-panel bg-muted px-4 text-sm font-bold text-secondary">
                   working days
@@ -137,6 +262,7 @@ export default function SubmitQuotePage() {
               className="enterprise-textarea"
               value={scope}
               onChange={(e) => setScope(e.target.value)}
+              disabled={isClosed}
             />
           </div>
 
@@ -149,14 +275,16 @@ export default function SubmitQuotePage() {
               className="enterprise-textarea"
               value={supportingNotes}
               onChange={(e) => setSupportingNotes(e.target.value)}
+              disabled={isClosed}
             />
           </div>
 
           <button
             type="submit"
-            className="enterprise-primary-button"
+            disabled={loadingRfq || isClosed}
+            className="enterprise-primary-button disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Submit Enterprise Quote
+            {isClosed ? "Submissions Closed" : "Submit Enterprise Quote"}
           </button>
         </form>
 

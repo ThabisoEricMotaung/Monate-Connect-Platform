@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ReactNode } from "react"
+import { ReactNode, useEffect, useState } from "react"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
+import { getCurrentProfile } from "@/lib/auth"
 
 const navigation = [
   {
@@ -45,6 +46,26 @@ const adminNavigation = [
     name: "Verification Review",
     href: "/dashboard/admin/verification",
   },
+  {
+    name: "Analytics",
+    href: "/dashboard/admin/analytics",
+  },
+  {
+    name: "Purchase Orders",
+    href: "/dashboard/admin/purchase-orders",
+  },
+  {
+    name: "Supplier Reviews",
+    href: "/dashboard/admin/supplier-reviews",
+  },
+  {
+    name: "Activity Log",
+    href: "/dashboard/admin/activity",
+  },
+  {
+    name: "Saved Suppliers",
+    href: "/dashboard/admin/saved-suppliers",
+  },
 ]
 
 export default function DashboardLayout({
@@ -53,6 +74,18 @@ export default function DashboardLayout({
   children: ReactNode
 }) {
   const pathname = usePathname() || ""
+  const [role, setRole] = useState<string | null>(null)
+  const canViewAdminNavigation = role === "admin" || role === "buyer"
+
+  useEffect(() => {
+    async function loadRole() {
+      const profile = await getCurrentProfile()
+
+      setRole(profile?.role ?? "supplier")
+    }
+
+    loadRole()
+  }, [])
 
   return (
     <main className="flex min-h-screen bg-page text-primary">
@@ -107,32 +140,34 @@ export default function DashboardLayout({
           })}
         </nav>
 
-        <div className="mt-8 border-t border-panel pt-5">
-          <p className="mb-3 text-xs uppercase tracking-[0.24em] text-secondary">
-            Admin
-          </p>
+        {canViewAdminNavigation && (
+          <div className="mt-8 border-t border-panel pt-5">
+            <p className="mb-3 text-xs uppercase tracking-[0.24em] text-secondary">
+              Admin
+            </p>
 
-          <nav className="space-y-2">
-            {adminNavigation.map((item) => {
-              const active =
-                pathname === item.href || pathname.startsWith(item.href)
+            <nav className="space-y-2">
+              {adminNavigation.map((item) => {
+                const active =
+                  pathname === item.href || pathname.startsWith(item.href)
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`block rounded-md border px-4 py-3 text-sm font-semibold transition-colors ${
-                    active
-                      ? "border-accent bg-surface text-primary shadow-sm"
-                      : "border-transparent text-secondary hover:bg-surface hover:text-primary"
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              )
-            })}
-          </nav>
-        </div>
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`block rounded-md border px-4 py-3 text-sm font-semibold transition-colors ${
+                      active
+                        ? "border-accent bg-surface text-primary shadow-sm"
+                        : "border-transparent text-secondary hover:bg-surface hover:text-primary"
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                )
+              })}
+            </nav>
+          </div>
+        )}
       </aside>
 
       <section className="flex-1 p-6 md:p-8">

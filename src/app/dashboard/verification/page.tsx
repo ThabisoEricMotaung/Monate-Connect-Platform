@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
+import { logActivity } from "@/lib/activity"
 import { supabase } from "@/lib/supabase"
 
 type VerificationForm = {
@@ -244,6 +245,25 @@ export default function VerificationPage() {
       ...prev,
       [documentConfig.field]: publicUrl,
     }))
+
+    try {
+      await logActivity({
+        action: "document.uploaded",
+        entity_type: "supplier_document",
+        entity_id: userId,
+        metadata: {
+          document_label: documentConfig.label,
+          document_type: documentConfig.documentType,
+          profile_field: documentConfig.field,
+          file_name: file.name,
+          bucket: "supplier-documents",
+          file_path: filePath,
+        },
+      })
+    } catch (activityError) {
+      console.error(activityError)
+    }
+
     setSuccessMessage(`${documentConfig.label} uploaded successfully.`)
     event.target.value = ""
   }
@@ -292,6 +312,25 @@ export default function VerificationPage() {
     if (error) {
       setErrorMessage(error.message)
       return
+    }
+
+    try {
+      await logActivity({
+        action: "supplier.verification_submitted",
+        entity_type: "supplier_profile",
+        entity_id: userId,
+        metadata: {
+          previous_status: verificationStatus,
+          new_status: "Under Review",
+          csd_number: form.csd_number.trim(),
+          bbbee_level: form.bbbee_level,
+          tax_status: form.tax_status,
+          company_registration: form.company_registration.trim(),
+          cidb_grade: form.cidb_grade.trim(),
+        },
+      })
+    } catch (activityError) {
+      console.error(activityError)
     }
 
     setVerificationStatus("Under Review")

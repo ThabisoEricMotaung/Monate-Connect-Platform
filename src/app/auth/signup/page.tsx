@@ -127,6 +127,7 @@ export default function SignupPage() {
           province: province,
           industry: industry,
           phone: phone,
+          role: "supplier",
         },
       },
     })

@@ -46,7 +46,7 @@ export default function LoginPage() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, province, industry, phone")
+        .select("id, province, industry, phone, role")
         .eq("id", user.id)
         .maybeSingle()
 
@@ -61,6 +61,7 @@ export default function LoginPage() {
               province: user.user_metadata?.province || "",
               industry: user.user_metadata?.industry || "",
               phone: user.user_metadata?.phone || "",
+              role: "supplier",
               verification_status: "Pending Review",
             },
           ])
@@ -71,13 +72,19 @@ export default function LoginPage() {
           setLoading(false)
           return
         }
-      } else if (!profile.province || !profile.industry || !profile.phone) {
+      } else if (
+        !profile.province ||
+        !profile.industry ||
+        !profile.phone ||
+        !profile.role
+      ) {
         const { error: profileUpdateError } = await supabase
           .from("profiles")
           .update({
             province: profile.province || user.user_metadata?.province || "",
             industry: profile.industry || user.user_metadata?.industry || "",
             phone: profile.phone || user.user_metadata?.phone || "",
+            role: profile.role || "supplier",
           })
           .eq("id", user.id)
 

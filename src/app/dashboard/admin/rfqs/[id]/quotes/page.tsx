@@ -1,10 +1,20 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
+import { logActivity } from "@/lib/activity"
+import { requireAdminOrBuyer } from "@/lib/auth"
+import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { supabase } from "@/lib/supabase"
 
-type QuoteStatus = "Pending" | "Under Review" | "Shortlisted" | "Awarded" | "Rejected"
+type QuoteStatus =
+  | "Pending"
+  | "Under Review"
+  | "Shortlisted"
+  | "Awarded"
+  | "Not Awarded"
+  | "Rejected"
 
 type SortMode = "newest" | "amount"
 
@@ -20,7 +30,9 @@ type RFQ = {
 
 type Quote = {
   id: number
+  supplier_id: string | null
   supplier_name: string | null
+  supplier_phone: string | null
   amount: string | null
   timeline: string | null
   status: string | null
@@ -29,10 +41,15 @@ type Quote = {
   created_at: string | null
 }
 
+type PurchaseOrder = {
+  id: number
+  po_number: string | null
+  quote_id: number | null
+}
+
 const REVIEW_STATUSES: QuoteStatus[] = [
   "Under Review",
   "Shortlisted",
-  "Awarded",
   "Rejected",
 ]
 
@@ -41,10 +58,11 @@ const statusStyles: Record<string, string> = {
   "Under Review": "border-sky-500/30 bg-sky-500/10 text-sky-700",
   Shortlisted: "border-accent-soft bg-accent-soft text-accent-strong",
   Awarded: "border-success bg-success-soft text-success",
+  "Not Awarded": "border-panel bg-panel text-secondary",
   Rejected: "border-rose-500/30 bg-rose-500/10 text-rose-700",
-  Open: "border-success bg-success-soft text-success",
+  Open: "border-sky-500/30 bg-sky-500/10 text-sky-700",
   "Closing Soon": "border-warning bg-warning-soft text-warning",
-  Closed: "border-panel bg-panel text-secondary",
+  Closed: "border-rose-500/30 bg-rose-500/10 text-rose-700",
 }
 
 const filterClass =
@@ -88,19 +106,51 @@ function formatDate(dateStr: string | null): string {
   })
 }
 
+function formatWhatsAppPhone(phone: string | null): string | null {
+  const cleanedPhone = (phone ?? "")
+    .replace(/\s/g, "")
+    .replace(/\+/g, "")
+    .replace(/[^\d]/g, "")
+
+  if (!cleanedPhone) return null
+
+  return cleanedPhone.startsWith("0")
+    ? `27${cleanedPhone.slice(1)}`
+    : cleanedPhone
+}
+
+function createWhatsAppLink(phone: string | null, message: string): string | null {
+  const formattedPhone = formatWhatsAppPhone(phone)
+
+  if (!formattedPhone) return null
+
+  return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`
+}
+
 export default function AdminRFQQuotesPage() {
   const params = useParams<{ id: string }>()
+  const router = useRouter()
   const rfqId = Number(params.id)
   const [rfq, setRfq] = useState<RFQ | null>(null)
   const [quotes, setQuotes] = useState<Quote[]>([])
   const [sortMode, setSortMode] = useState<SortMode>("newest")
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
+  const [awardingId, setAwardingId] = useState<number | null>(null)
+  const [generatingPOId, setGeneratingPOId] = useState<number | null>(null)
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
   const [errorMessage, setErrorMessage] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
 
   useEffect(() => {
     async function loadComparisonData() {
+      const authorizedProfile = await requireAdminOrBuyer()
+
+      if (!authorizedProfile) {
+        router.replace("/dashboard")
+        return
+      }
+
       if (!supabase) {
         setErrorMessage("Supabase environment variables are not configured.")
         setLoading(false)
@@ -127,7 +177,7 @@ export default function AdminRFQQuotesPage() {
 
       const { data: quoteData, error: quoteError } = await supabase
         .from("quotes")
-        .select("id, supplier_name, amount, timeline, status, scope, supporting_notes, created_at")
+        .select("id, supplier_id, supplier_name, amount, timeline, status, scope, supporting_notes, created_at")
         .eq("rfq_id", rfqId)
         .order("created_at", { ascending: false })
 
@@ -137,13 +187,62 @@ export default function AdminRFQQuotesPage() {
         return
       }
 
+      const quoteRows = (quoteData ?? []) as Omit<Quote, "supplier_phone">[]
+      const supplierIds = Array.from(
+        new Set(
+          quoteRows
+            .map((quote) => quote.supplier_id)
+            .filter((supplierId): supplierId is string => Boolean(supplierId))
+        )
+      )
+      let phoneBySupplierId = new Map<string, string | null>()
+
+      if (supplierIds.length > 0) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, phone")
+          .in("id", supplierIds)
+
+        if (profileError) {
+          setErrorMessage(profileError.message)
+          setLoading(false)
+          return
+        }
+
+        phoneBySupplierId = new Map(
+          (profileData ?? []).map((profile) => [
+            profile.id as string,
+            profile.phone as string | null,
+          ])
+        )
+      }
+
+      const { data: purchaseOrderData, error: purchaseOrderError } = await supabase
+        .from("purchase_orders")
+        .select("id, po_number, quote_id")
+        .eq("rfq_id", rfqId)
+
+      if (purchaseOrderError) {
+        setErrorMessage(purchaseOrderError.message)
+        setLoading(false)
+        return
+      }
+
       setRfq(rfqData as RFQ)
-      setQuotes((quoteData ?? []) as Quote[])
+      setQuotes(
+        quoteRows.map((quote) => ({
+          ...quote,
+          supplier_phone: quote.supplier_id
+            ? phoneBySupplierId.get(quote.supplier_id) ?? null
+            : null,
+          }))
+      )
+      setPurchaseOrders((purchaseOrderData ?? []) as PurchaseOrder[])
       setLoading(false)
     }
 
     loadComparisonData()
-  }, [rfqId])
+  }, [rfqId, router])
 
   const sortedQuotes = useMemo(() => {
     return [...quotes].sort((a, b) => {
@@ -157,6 +256,49 @@ export default function AdminRFQQuotesPage() {
       )
     })
   }, [quotes, sortMode])
+  const rfqDisplayStatus = rfq
+    ? getRFQDisplayStatus(rfq.status, rfq.deadline)
+    : null
+  const rfqIsAwarded = rfqDisplayStatus === "Awarded"
+  const purchaseOrderByQuoteId = useMemo(
+    () =>
+      new Map(
+        purchaseOrders
+          .filter((purchaseOrder) => purchaseOrder.quote_id != null)
+          .map((purchaseOrder) => [
+            purchaseOrder.quote_id as number,
+            purchaseOrder,
+          ])
+      ),
+    [purchaseOrders]
+  )
+
+  async function getNextPONumber(): Promise<string> {
+    if (!supabase) {
+      throw new Error("Supabase environment variables are not configured.")
+    }
+
+    const year = new Date().getFullYear()
+    const prefix = `PO-${year}-`
+    const { data, error } = await supabase
+      .from("purchase_orders")
+      .select("po_number")
+      .like("po_number", `${prefix}%`)
+      .order("po_number", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (error) {
+      throw error
+    }
+
+    const lastNumber = data?.po_number
+      ? Number(String(data.po_number).replace(prefix, ""))
+      : 0
+    const nextNumber = Number.isFinite(lastNumber) ? lastNumber + 1 : 1
+
+    return `${prefix}${String(nextNumber).padStart(4, "0")}`
+  }
 
   async function updateQuoteStatus(quoteId: number, status: QuoteStatus) {
     if (!supabase) {
@@ -180,12 +322,198 @@ export default function AdminRFQQuotesPage() {
       return
     }
 
+    const updatedQuote = quotes.find((quote) => quote.id === quoteId)
+
+    try {
+      await logActivity({
+        action: "quote.status_updated",
+        entity_type: "quote",
+        entity_id: quoteId,
+        metadata: {
+          previous_status: updatedQuote?.status ?? null,
+          new_status: status,
+          rfq_id: rfqId,
+          supplier_name: updatedQuote?.supplier_name ?? null,
+        },
+      })
+    } catch (activityError) {
+      console.error(activityError)
+    }
+
     setQuotes((currentQuotes) =>
       currentQuotes.map((quote) =>
         quote.id === quoteId ? { ...quote, status } : quote
       )
     )
     setSuccessMessage(`Quote ${quoteId} marked as ${status}.`)
+  }
+
+  async function awardQuote(selectedQuoteId: number) {
+    if (!supabase) {
+      setErrorMessage("Supabase environment variables are not configured.")
+      return
+    }
+
+    if (!rfq) {
+      setErrorMessage("RFQ details are not available.")
+      return
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to award this RFQ to this supplier?"
+    )
+
+    if (!confirmed) return
+
+    setAwardingId(selectedQuoteId)
+    setErrorMessage("")
+    setSuccessMessage("")
+
+    const { error: selectedQuoteError } = await supabase
+      .from("quotes")
+      .update({ status: "Awarded" })
+      .eq("id", selectedQuoteId)
+      .eq("rfq_id", rfqId)
+
+    if (selectedQuoteError) {
+      setAwardingId(null)
+      setErrorMessage(selectedQuoteError.message)
+      return
+    }
+
+    const { error: otherQuotesError } = await supabase
+      .from("quotes")
+      .update({ status: "Not Awarded" })
+      .eq("rfq_id", rfqId)
+      .neq("id", selectedQuoteId)
+
+    if (otherQuotesError) {
+      setAwardingId(null)
+      setErrorMessage(otherQuotesError.message)
+      return
+    }
+
+    const { error: rfqError } = await supabase
+      .from("rfqs")
+      .update({ status: "Awarded" })
+      .eq("id", rfqId)
+
+    setAwardingId(null)
+
+    if (rfqError) {
+      setErrorMessage(rfqError.message)
+      return
+    }
+
+    try {
+      await logActivity({
+        action: "RFQ awarded",
+        entity_type: "rfq",
+        entity_id: params.id,
+        metadata: { quote_id: selectedQuoteId },
+      })
+    } catch (activityError) {
+      console.error(activityError)
+    }
+
+    setRfq((currentRfq) =>
+      currentRfq ? { ...currentRfq, status: "Awarded" } : currentRfq
+    )
+    setQuotes((currentQuotes) =>
+      currentQuotes.map((quote) => ({
+        ...quote,
+        status: quote.id === selectedQuoteId ? "Awarded" : "Not Awarded",
+      }))
+    )
+    setSuccessMessage(`RFQ-${rfq.id} has been awarded to quote ${selectedQuoteId}.`)
+  }
+
+  async function generatePurchaseOrder(selectedQuoteId: number) {
+    if (!supabase) {
+      setErrorMessage("Supabase environment variables are not configured.")
+      return
+    }
+
+    if (!rfq) {
+      setErrorMessage("RFQ details are not available.")
+      return
+    }
+
+    const selectedQuote = quotes.find((quote) => quote.id === selectedQuoteId)
+
+    if (!selectedQuote) {
+      setErrorMessage("The awarded quote could not be found.")
+      return
+    }
+
+    const existingPurchaseOrder = purchaseOrderByQuoteId.get(selectedQuoteId)
+
+    if (existingPurchaseOrder) {
+      setSuccessMessage(
+        `${existingPurchaseOrder.po_number || "Purchase order"} has already been generated for this quote.`
+      )
+      return
+    }
+
+    setGeneratingPOId(selectedQuoteId)
+    setErrorMessage("")
+    setSuccessMessage("")
+
+    try {
+      const poNumber = await getNextPONumber()
+      const { data, error } = await supabase
+        .from("purchase_orders")
+        .insert([
+          {
+            po_number: poNumber,
+            rfq_id: rfq.id,
+            quote_id: selectedQuote.id,
+            supplier_id: selectedQuote.supplier_id,
+            supplier_name: selectedQuote.supplier_name,
+            amount: selectedQuote.amount,
+            timeline: selectedQuote.timeline,
+            title: rfq.title || `RFQ-${rfq.id}`,
+            status: "Generated",
+            generated_at: new Date().toISOString(),
+          },
+        ])
+        .select("id, po_number, quote_id")
+        .single()
+
+      if (error) {
+        throw error
+      }
+
+      try {
+        await logActivity({
+          action: "Purchase order generated",
+          entity_type: "purchase_order",
+          entity_id: data.id,
+          metadata: {
+            po_number: data.po_number,
+            rfq_id: rfq.id,
+            quote_id: selectedQuote.id,
+            supplier_name: selectedQuote.supplier_name,
+          },
+        })
+      } catch (activityError) {
+        console.error(activityError)
+      }
+
+      setPurchaseOrders((currentPurchaseOrders) => [
+        data as PurchaseOrder,
+        ...currentPurchaseOrders,
+      ])
+      setSuccessMessage(`${data.po_number} has been generated.`)
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Purchase order generation failed."
+      )
+    } finally {
+      setGeneratingPOId(null)
+    }
   }
 
   return (
@@ -237,7 +565,7 @@ export default function AdminRFQQuotesPage() {
         </div>
       )}
 
-      {!loading && rfq && (
+      {!loading && rfq && rfqDisplayStatus && (
         <>
           <section className="rounded-md border border-panel bg-card p-6 shadow-panel">
             <div className="flex flex-col gap-4 border-b border-panel pb-5 lg:flex-row lg:items-start lg:justify-between">
@@ -250,9 +578,9 @@ export default function AdminRFQQuotesPage() {
                 </h2>
               </div>
               <span
-                className={`inline-flex w-fit rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] ${statusBadgeClass(rfq.status)}`}
+                className={`inline-flex w-fit rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] ${statusBadgeClass(rfqDisplayStatus)}`}
               >
-                {rfq.status || "Open"}
+                {rfqDisplayStatus}
               </span>
             </div>
 
@@ -289,6 +617,14 @@ export default function AdminRFQQuotesPage() {
                   {formatDate(rfq.deadline)}
                 </p>
               </div>
+              <div className="rounded-md border border-panel bg-panel p-4">
+                <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
+                  Deadline Status
+                </p>
+                <p className="mt-2 text-sm font-semibold text-heading">
+                  {rfqDisplayStatus}
+                </p>
+              </div>
               <div className="rounded-md border border-panel bg-panel p-4 md:col-span-2">
                 <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
                   RFQ ID
@@ -300,8 +636,16 @@ export default function AdminRFQQuotesPage() {
             </div>
           </section>
 
+          {rfqIsAwarded && (
+            <div className="mt-6 rounded-md border border-success bg-success-soft px-5 py-4">
+              <p className="text-sm font-semibold text-success">
+                This RFQ has been awarded.
+              </p>
+            </div>
+          )}
+
           <section className="mt-6 rounded-md border border-panel bg-card p-5 shadow-panel">
-            <div className="grid gap-4 md:grid-cols-[1fr_260px] md:items-end">
+            <div className="grid gap-4 md:grid-cols-[1fr_auto_260px] md:items-end">
               <div>
                 <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">
                   Quote Controls
@@ -310,6 +654,12 @@ export default function AdminRFQQuotesPage() {
                   Supplier comparison queue
                 </h2>
               </div>
+              <Link
+                href={`/dashboard/admin/rfqs/${rfq.id}/questions`}
+                className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
+              >
+                Manage Questions
+              </Link>
               <div>
                 <label
                   htmlFor="quote-sort"
@@ -342,11 +692,12 @@ export default function AdminRFQQuotesPage() {
           ) : (
             <section className="mt-6 overflow-hidden rounded-md border border-panel bg-card shadow-panel">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1120px] text-sm">
+                <table className="w-full min-w-[1240px] text-sm">
                   <thead>
                     <tr className="border-b border-panel bg-panel">
                       {[
                         "Supplier",
+                        "WhatsApp",
                         "Amount",
                         "Timeline",
                         "Status",
@@ -379,6 +730,34 @@ export default function AdminRFQQuotesPage() {
                           </p>
                         </td>
                         <td className="px-4 py-4">
+                          {(() => {
+                            const supplierName = quote.supplier_name || "Supplier"
+                            const whatsappLink = createWhatsAppLink(
+                              quote.supplier_phone,
+                              `Hi ${supplierName}, we reviewed your quote for RFQ #${rfq.id}. Please confirm availability for next steps.`
+                            )
+
+                            return whatsappLink ? (
+                              <a
+                                href={whatsappLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex whitespace-nowrap rounded-md border border-success bg-success-soft px-3 py-2 text-xs font-semibold text-success transition hover:bg-success/10"
+                              >
+                                Contact on WhatsApp
+                              </a>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled
+                                className="inline-flex cursor-not-allowed whitespace-nowrap rounded-md border border-panel bg-panel px-3 py-2 text-xs font-semibold text-muted opacity-70"
+                              >
+                                No WhatsApp number
+                              </button>
+                            )
+                          })()}
+                        </td>
+                        <td className="px-4 py-4">
                           <span className="font-semibold text-heading">
                             {formatAmount(quote.amount)}
                           </span>
@@ -407,13 +786,54 @@ export default function AdminRFQQuotesPage() {
                           {formatDate(quote.created_at)}
                         </td>
                         <td className="px-4 py-4">
-                          <div className="flex min-w-[260px] flex-wrap gap-2">
+                          <div className="flex min-w-[320px] flex-wrap gap-2">
+                            {quote.status === "Awarded" &&
+                              (() => {
+                                const purchaseOrder =
+                                  purchaseOrderByQuoteId.get(quote.id)
+
+                                return purchaseOrder ? (
+                                  <Link
+                                    href={`/dashboard/admin/purchase-orders/${purchaseOrder.id}`}
+                                    className="rounded-md border border-accent bg-accent px-3 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong"
+                                  >
+                                    View PO
+                                  </Link>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={generatingPOId === quote.id}
+                                    onClick={() => generatePurchaseOrder(quote.id)}
+                                    className="rounded-md border border-accent bg-accent px-3 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    {generatingPOId === quote.id
+                                      ? "Generating..."
+                                      : "Generate Purchase Order"}
+                                  </button>
+                                )
+                              })()}
+                            <button
+                              type="button"
+                              disabled={
+                                rfqIsAwarded ||
+                                awardingId === quote.id ||
+                                updatingId === quote.id
+                              }
+                              onClick={() => awardQuote(quote.id)}
+                              className="rounded-md border border-success bg-success px-3 py-2 text-xs font-semibold text-button transition hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {awardingId === quote.id
+                                ? "Awarding..."
+                                : "Award Quote"}
+                            </button>
                             {REVIEW_STATUSES.map((status) => (
                               <button
                                 key={status}
                                 type="button"
                                 disabled={
+                                  rfqIsAwarded ||
                                   updatingId === quote.id ||
+                                  awardingId === quote.id ||
                                   quote.status === status
                                 }
                                 onClick={() => updateQuoteStatus(quote.id, status)}

@@ -1,5 +1,11 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import SaveSupplierControl from "@/components/suppliers/SaveSupplierControl"
+import {
+  calculateSupplierPerformance,
+  type SupplierPerformanceReview,
+} from "@/lib/supplierPerformance"
+import { calculateSupplierScore } from "@/lib/supplierScore"
 import { supabase } from "@/lib/supabase"
 
 type Props = {
@@ -43,6 +49,109 @@ function statusBadgeClass(status: string | null): string {
   return statusStyles[status || ""] ?? "border-panel bg-panel text-secondary"
 }
 
+function scoreTone(score: number): string {
+  if (score <= 39) return "border-rose-500/30 bg-rose-500/10 text-rose-700"
+  if (score <= 69) return "border-warning bg-warning-soft text-warning"
+  if (score <= 89) return "border-sky-500/30 bg-sky-500/10 text-sky-700"
+  return "border-success bg-success-soft text-success"
+}
+
+function scoreBar(score: number): string {
+  if (score <= 39) return "bg-rose-500"
+  if (score <= 69) return "bg-warning"
+  if (score <= 89) return "bg-sky-500"
+  return "bg-success"
+}
+
+function ReadinessScore({ supplier }: { supplier: SupplierProfile }) {
+  const readiness = calculateSupplierScore(supplier)
+
+  return (
+    <div className="rounded-md border border-panel bg-panel p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
+            Readiness Score
+          </p>
+          <p className="mt-2 text-2xl font-semibold text-heading">
+            {readiness.score}/100
+          </p>
+        </div>
+        <span
+          className={`inline-flex w-fit rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] ${scoreTone(readiness.score)}`}
+        >
+          {readiness.label}
+        </span>
+      </div>
+      <div className="mt-4 h-2 overflow-hidden rounded-full bg-card">
+        <div
+          className={`h-full rounded-full ${scoreBar(readiness.score)}`}
+          style={{ width: `${readiness.score}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function performanceTone(score: number | null): string {
+  if (score === null) return "border-panel bg-card text-muted"
+  if (score < 2.5) return "border-rose-500/30 bg-rose-500/10 text-rose-700"
+  if (score < 3.5) return "border-warning bg-warning-soft text-warning"
+  if (score < 4.5) return "border-sky-500/30 bg-sky-500/10 text-sky-700"
+  return "border-success bg-success-soft text-success"
+}
+
+function performanceBar(score: number | null): string {
+  if (score === null) return "bg-muted"
+  if (score < 2.5) return "bg-rose-500"
+  if (score < 3.5) return "bg-warning"
+  if (score < 4.5) return "bg-sky-500"
+  return "bg-success"
+}
+
+function PerformanceScore({
+  reviews,
+}: {
+  reviews: SupplierPerformanceReview[]
+}) {
+  const performance = calculateSupplierPerformance(reviews)
+  const width = performance.averageScore
+    ? `${(performance.averageScore / 5) * 100}%`
+    : "0%"
+
+  return (
+    <div className="rounded-md border border-panel bg-panel p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
+            Performance Score
+          </p>
+          <p className="mt-2 text-2xl font-semibold text-heading">
+            {performance.averageScore === null
+              ? "Not rated"
+              : `${performance.averageScore}/5`}
+          </p>
+          <p className="mt-1 text-xs text-muted">
+            {performance.reviewCount} review
+            {performance.reviewCount !== 1 ? "s" : ""}
+          </p>
+        </div>
+        <span
+          className={`inline-flex w-fit rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] ${performanceTone(performance.averageScore)}`}
+        >
+          {performance.label}
+        </span>
+      </div>
+      <div className="mt-4 h-2 overflow-hidden rounded-full bg-card">
+        <div
+          className={`h-full rounded-full ${performanceBar(performance.averageScore)}`}
+          style={{ width }}
+        />
+      </div>
+    </div>
+  )
+}
+
 function valueOrDash(value: string | null): string {
   return value || "-"
 }
@@ -55,6 +164,27 @@ function formatDate(dateStr: string | null): string {
     month: "short",
     day: "numeric",
   })
+}
+
+function formatWhatsAppPhone(phone: string | null): string | null {
+  const cleanedPhone = (phone ?? "")
+    .replace(/\s/g, "")
+    .replace(/\+/g, "")
+    .replace(/[^\d]/g, "")
+
+  if (!cleanedPhone) return null
+
+  return cleanedPhone.startsWith("0")
+    ? `27${cleanedPhone.slice(1)}`
+    : cleanedPhone
+}
+
+function createWhatsAppLink(phone: string | null, message: string): string | null {
+  const formattedPhone = formatWhatsAppPhone(phone)
+
+  if (!formattedPhone) return null
+
+  return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`
 }
 
 export default async function DashboardSupplierDetailPage({ params }: Props) {
@@ -74,7 +204,18 @@ export default async function DashboardSupplierDetailPage({ params }: Props) {
     notFound()
   }
 
+  const { data: reviewData } = await supabase
+    .from("supplier_reviews")
+    .select("rating, delivery_score, price_score, compliance_score, communication_score, quality_score")
+    .eq("supplier_id", id)
+
   const supplier = data as SupplierProfile
+  const reviews = (reviewData ?? []) as SupplierPerformanceReview[]
+  const businessName = supplier.business_name || "Supplier Profile"
+  const whatsappLink = createWhatsAppLink(
+    supplier.phone,
+    `Hi ${businessName}, we found your supplier profile on Monate Vendor Network and would like to discuss procurement opportunities.`
+  )
   const documents = [
     {
       label: "CSD Document",
@@ -111,7 +252,7 @@ export default async function DashboardSupplierDetailPage({ params }: Props) {
         <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h1 className="text-4xl font-semibold text-heading">
-              {supplier.business_name || "Supplier Profile"}
+              {businessName}
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-secondary">
               Review supplier business details, contact information, compliance
@@ -184,6 +325,8 @@ export default async function DashboardSupplierDetailPage({ params }: Props) {
           </div>
 
           <div className="mt-5 space-y-3">
+            <ReadinessScore supplier={supplier} />
+            <PerformanceScore reviews={reviews} />
             <div className="rounded-md border border-panel bg-panel p-4">
               <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
                 Current State
@@ -239,6 +382,26 @@ export default async function DashboardSupplierDetailPage({ params }: Props) {
               {valueOrDash(supplier.phone)}
             </p>
           </div>
+        </div>
+        <div className="mt-5 border-t border-panel pt-5">
+          {whatsappLink ? (
+            <a
+              href={whatsappLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-md border border-success bg-success-soft px-5 py-2.5 text-sm font-semibold text-success transition hover:bg-success/10"
+            >
+              Contact on WhatsApp
+            </a>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="inline-flex cursor-not-allowed items-center justify-center rounded-md border border-panel bg-panel px-5 py-2.5 text-sm font-semibold text-muted opacity-70"
+            >
+              No WhatsApp number
+            </button>
+          )}
         </div>
       </section>
 
@@ -339,6 +502,7 @@ export default async function DashboardSupplierDetailPage({ params }: Props) {
       </section>
 
       <div className="mt-8 flex flex-wrap gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
+        <SaveSupplierControl supplierId={supplier.id} compact />
         <Link
           href="/dashboard/suppliers"
           className="inline-flex items-center justify-center rounded-md border border-panel bg-surface px-5 py-2.5 text-sm font-semibold text-secondary transition hover:bg-panel"

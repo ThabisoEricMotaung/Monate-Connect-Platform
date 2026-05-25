@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { submitQuote } from "@/lib/quotes"
 
 interface RFQDetailClientProps {
@@ -12,6 +13,7 @@ interface RFQDetailClientProps {
     category: string
     budget: string
     status: string
+    deadline?: string | null
   }
 }
 
@@ -30,14 +32,30 @@ function formatRand(amount: string): string {
   })}`
 }
 
+function formatDeadline(dateStr: string | null | undefined): string {
+  if (!dateStr) return "-"
+
+  return new Date(dateStr).toLocaleDateString("en-ZA", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
+}
+
 export default function RFQDetailClient({
   rfq,
 }: RFQDetailClientProps) {
 
   const [quoteAmount, setQuoteAmount] = useState("")
   const [message, setMessage] = useState("")
+  const displayStatus = getRFQDisplayStatus(rfq.status, rfq.deadline)
+  const isClosed = displayStatus === "Closed"
 
   const handleSubmitQuote = async () => {
+    if (isClosed) {
+      alert("This RFQ has closed and no longer accepts submissions.")
+      return
+    }
 
     try {
 
@@ -82,12 +100,16 @@ export default function RFQDetailClient({
 
           <span
             className={`rounded-full px-6 py-3 text-lg ${
-              rfq.status === "Open"
-                ? "bg-accent-soft text-accent"
-                : "bg-warning-soft text-warning"
+              displayStatus === "Open"
+                ? "bg-sky-500/10 text-sky-700"
+                : displayStatus === "Closing Soon"
+                  ? "bg-warning-soft text-warning"
+                  : displayStatus === "Awarded"
+                    ? "bg-success-soft text-success"
+                    : "bg-rose-500/10 text-rose-700"
             }`}
           >
-            {rfq.status}
+            {displayStatus}
           </span>
 
         </div>
@@ -121,6 +143,18 @@ export default function RFQDetailClient({
           <div className="rounded-2xl border border-panel bg-panel p-6">
 
             <p className="text-lg text-secondary">
+              Deadline
+            </p>
+
+            <p className="mt-3 text-2xl font-semibold text-heading">
+              {formatDeadline(rfq.deadline)}
+            </p>
+
+          </div>
+
+          <div className="rounded-2xl border border-panel bg-panel p-6">
+
+            <p className="text-lg text-secondary">
               Budget (ZAR)
             </p>
 
@@ -141,6 +175,13 @@ export default function RFQDetailClient({
         </h2>
 
         <div className="mt-8 space-y-6">
+          {isClosed && (
+            <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-6 py-5">
+              <p className="text-lg font-semibold text-rose-700">
+                This RFQ has closed and no longer accepts submissions.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="mb-2 block text-lg text-secondary">
@@ -157,6 +198,7 @@ export default function RFQDetailClient({
                 placeholder="450000"
                 value={quoteAmount}
                 onChange={(e) => setQuoteAmount(cleanAmountInput(e.target.value))}
+                disabled={isClosed}
                 className="w-full bg-transparent px-6 py-5 text-xl text-heading outline-none"
               />
             </div>
@@ -169,15 +211,17 @@ export default function RFQDetailClient({
             placeholder="Describe your services, turnaround time, certifications, or experience..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+            disabled={isClosed}
             rows={6}
             className="w-full rounded-2xl border border-panel bg-panel px-6 py-5 text-xl text-heading outline-none transition focus:border-accent"
           />
 
           <button
             onClick={handleSubmitQuote}
-            className="rounded-2xl bg-accent px-10 py-5 text-xl font-semibold text-button transition hover:bg-accent-strong"
+            disabled={isClosed}
+            className="rounded-2xl bg-accent px-10 py-5 text-xl font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Submit Quote
+            {isClosed ? "Submissions Closed" : "Submit Quote"}
           </button>
 
         </div>

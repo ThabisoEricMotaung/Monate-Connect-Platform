@@ -1,6 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { logActivity } from "@/lib/activity"
+import { requireAdminOrBuyer } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 
 const SA_PROVINCES = [
@@ -86,11 +89,28 @@ function isAcceptedAttachment(file: File): boolean {
 }
 
 export default function NewRFQPage() {
+  const router = useRouter()
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [attachment, setAttachment] = useState<File | null>(null)
+  const [checkingAccess, setCheckingAccess] = useState(true)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function checkAccess() {
+      const authorizedProfile = await requireAdminOrBuyer()
+
+      if (!authorizedProfile) {
+        router.replace("/dashboard")
+        return
+      }
+
+      setCheckingAccess(false)
+    }
+
+    checkAccess()
+  }, [router])
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -129,6 +149,11 @@ export default function NewRFQPage() {
     setError(null)
     setSuccess(false)
 
+    if (checkingAccess) {
+      setError("Access is still being verified. Please try again.")
+      return
+    }
+
     if (!form.title.trim()) {
       setError("Title is required.")
       return
@@ -161,26 +186,64 @@ export default function NewRFQPage() {
         .getPublicUrl(filePath)
 
       attachmentUrl = publicUrlData.publicUrl
+
+      try {
+        await logActivity({
+          action: "document.uploaded",
+          entity_type: "rfq_document",
+          entity_id: filePath,
+          metadata: {
+            bucket: "rfq-documents",
+            file_name: attachment.name,
+            file_path: filePath,
+            document_url: attachmentUrl,
+          },
+        })
+      } catch (activityError) {
+        console.error(activityError)
+      }
     }
 
-    const { error: insertError } = await supabase.from("rfqs").insert([
-      {
-        title: form.title.trim(),
-        description: form.description.trim(),
-        province: form.province,
-        category: form.category,
-        budget: cleanAmountInput(form.budget),
-        deadline: form.deadline || null,
-        status: form.status,
-        attachment_url: attachmentUrl,
-      },
-    ])
+    const { data: rfqData, error: insertError } = await supabase
+      .from("rfqs")
+      .insert([
+        {
+          title: form.title.trim(),
+          description: form.description.trim(),
+          province: form.province,
+          category: form.category,
+          budget: cleanAmountInput(form.budget),
+          deadline: form.deadline || null,
+          status: form.status,
+          attachment_url: attachmentUrl,
+        },
+      ])
+      .select("id")
+      .single()
 
     setLoading(false)
 
     if (insertError) {
       setError(insertError.message)
       return
+    }
+
+    try {
+      await logActivity({
+        action: "rfq.created",
+        entity_type: "rfq",
+        entity_id: rfqData?.id ?? null,
+        metadata: {
+          title: form.title.trim(),
+          province: form.province,
+          category: form.category,
+          deadline: form.deadline || null,
+          status: form.status,
+          has_attachment: Boolean(attachmentUrl),
+        },
+      })
+    } catch (activityError) {
+      console.error(activityError)
     }
 
     setSuccess(true)
@@ -254,6 +317,16 @@ export default function NewRFQPage() {
         </div>
       )}
 
+      {checkingAccess ? (
+        <div className="rounded-md border border-panel bg-card p-16 text-center shadow-panel">
+          <p className="text-sm font-semibold text-heading">
+            Verifying procurement access...
+          </p>
+          <p className="mt-2 text-xs text-muted">
+            Admin and buyer permissions are required to create RFQs.
+          </p>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit}>
         {/* Main details card */}
         <section className="rounded-md border border-panel bg-panel p-6">
@@ -516,6 +589,7 @@ export default function NewRFQPage() {
           </button>
         </div>
       </form>
+      )}
     </div>
   )
 }

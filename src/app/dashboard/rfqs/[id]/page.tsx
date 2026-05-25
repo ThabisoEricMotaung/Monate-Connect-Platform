@@ -1,5 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import RFQClarifications from "@/components/rfqs/RFQClarifications"
+import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { supabase } from "@/lib/supabase"
 
 type Props = {
@@ -19,6 +21,13 @@ type RFQ = {
   status: string | null
   deadline: string | null
   attachment_url: string | null
+}
+
+const statusStyles: Record<string, string> = {
+  Open: "border-sky-500/30 bg-sky-500/10 text-sky-700",
+  "Closing Soon": "border-warning bg-warning-soft text-warning",
+  Closed: "border-rose-500/30 bg-rose-500/10 text-rose-700",
+  Awarded: "border-success/30 bg-success-soft text-success",
 }
 
 function formatRand(amount: string | null): string {
@@ -63,6 +72,8 @@ export default async function RFQDetailPage({ params }: Props) {
   }
 
   const rfq = data as RFQ
+  const displayStatus = getRFQDisplayStatus(rfq.status, rfq.deadline)
+  const isClosed = displayStatus === "Closed"
 
   return (
 
@@ -77,6 +88,17 @@ export default async function RFQDetailPage({ params }: Props) {
         <h1 className="mt-3 text-4xl font-semibold text-heading">
           {rfq.title}
         </h1>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <span
+            className={`inline-flex rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] ${statusStyles[displayStatus] ?? "border-panel bg-panel text-secondary"}`}
+          >
+            {displayStatus}
+          </span>
+          <span className="text-sm font-medium text-secondary">
+            Deadline: {formatDeadline(rfq.deadline)}
+          </span>
+        </div>
 
         {rfq.description && (
           <p className="mt-4 max-w-4xl text-sm leading-7 text-secondary">
@@ -127,12 +149,14 @@ export default async function RFQDetailPage({ params }: Props) {
         <div className="rounded-md border border-panel bg-card p-6 shadow-panel">
 
           <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-            Status
+            Deadline Status
           </p>
 
-          <p className="mt-3 text-lg font-semibold text-accent">
-            {rfq.status || "-"}
-          </p>
+          <span
+            className={`mt-3 inline-flex rounded-md border px-3 py-1 text-[0.75rem] font-semibold uppercase tracking-[0.18em] ${statusStyles[displayStatus] ?? "border-panel bg-panel text-secondary"}`}
+          >
+            {displayStatus}
+          </span>
 
         </div>
 
@@ -194,14 +218,31 @@ export default async function RFQDetailPage({ params }: Props) {
         </div>
       )}
 
+      <RFQClarifications rfqId={rfq.id} />
+
       <div className="mt-8 flex flex-wrap gap-4 rounded-md border border-panel bg-card px-5 py-4">
 
-        <Link
-          href={`/dashboard/rfqs/${id}/submit`}
-          className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
+        {isClosed ? (
+          <div className="rounded-md border border-rose-500/25 bg-rose-500/10 px-5 py-3">
+            <p className="text-sm font-semibold text-rose-700">
+              This RFQ has closed and no longer accepts submissions.
+            </p>
+          </div>
+        ) : (
+          <Link
+            href={`/dashboard/rfqs/${id}/submit`}
+            className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
+          >
+            Submit Quote
+          </Link>
+        )}
+
+        <a
+          href="#rfq-clarifications"
+          className="inline-flex items-center justify-center rounded-md border border-panel bg-surface px-5 py-2.5 text-sm font-semibold text-secondary transition hover:bg-panel"
         >
-          Submit Quote
-        </Link>
+          View Clarifications
+        </a>
 
         <Link
           href="/dashboard/rfqs"

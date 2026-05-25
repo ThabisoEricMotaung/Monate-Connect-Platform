@@ -1,7 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
+import {
+  calculateRFQMatchScore,
+  isRFQIndustryMatch,
+  isRFQLocalMatch,
+  type RFQMatchScore,
+} from "@/lib/rfqMatch"
 import { supabase } from "@/lib/supabase"
 
 type RFQ = {
@@ -23,11 +30,11 @@ type SupplierProfile = {
 }
 
 const statusStyles: Record<string, string> = {
-  Open: "border-success/30 bg-success-soft text-success",
+  Open: "border-sky-500/30 bg-sky-500/10 text-sky-700",
   Draft: "border-panel bg-panel text-secondary",
   "Closing Soon": "border-warning bg-warning-soft text-warning",
   "Under Review": "border-sky-500/25 bg-sky-500/10 text-sky-200",
-  Closed: "border-rose-500/25 bg-rose-500/10 text-rose-200",
+  Closed: "border-rose-500/30 bg-rose-500/10 text-rose-700",
   Awarded: "border-success/30 bg-success-soft text-success",
 }
 
@@ -53,34 +60,33 @@ function formatRand(amount: string | null): string {
   })}`
 }
 
-function normalizeMatchValue(value: string | null | undefined): string {
-  return (value ?? "").trim().toLowerCase()
+function scoreTone(score: number): string {
+  if (score >= 80) return "border-success bg-success-soft text-success"
+  if (score >= 50) return "border-sky-500/30 bg-sky-500/10 text-sky-700"
+  if (score >= 20) return "border-warning bg-warning-soft text-warning"
+  return "border-panel bg-panel text-secondary"
 }
 
-function getMatchType(rfq: RFQ, profile: SupplierProfile | null): string | null {
-  if (!profile) return null
-
-  const supplierProvince = normalizeMatchValue(profile.province)
-  const supplierIndustry = normalizeMatchValue(profile.industry)
-  const rfqProvince = normalizeMatchValue(rfq.province ?? rfq.region)
-  const rfqCategory = normalizeMatchValue(rfq.category)
-  const localMatch = Boolean(supplierProvince && rfqProvince === supplierProvince)
-  const industryMatch = Boolean(supplierIndustry && rfqCategory === supplierIndustry)
-
-  if (localMatch && industryMatch) return "Local + Industry Match"
-  if (localMatch) return "Local Match"
-  if (industryMatch) return "Industry Match"
-
-  return null
+function scoreBar(score: number): string {
+  if (score >= 80) return "bg-success"
+  if (score >= 50) return "bg-sky-500"
+  if (score >= 20) return "bg-warning"
+  return "bg-muted"
 }
 
 function RFQCard({
   rfq,
-  matchBadge,
+  matchScore,
+  hasLocalMatch,
+  hasIndustryMatch,
 }: {
   rfq: RFQ
-  matchBadge?: string | null
+  matchScore: RFQMatchScore
+  hasLocalMatch: boolean
+  hasIndustryMatch: boolean
 }) {
+  const displayStatus = getRFQDisplayStatus(rfq.status, rfq.deadline)
+
   return (
     <article className="rounded-md border border-panel bg-card p-6 shadow-panel transition-colors hover:border-accent/60 hover:bg-surface">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -89,9 +95,14 @@ function RFQCard({
             <p className="text-[0.65rem] uppercase tracking-[0.28em] text-secondary">
               RFQ #{rfq.id}
             </p>
-            {matchBadge && (
+            {hasLocalMatch && (
               <span className="inline-flex rounded-md border border-accent-soft bg-accent-soft px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-heading">
-                {matchBadge}
+                Local Match
+              </span>
+            )}
+            {hasIndustryMatch && (
+              <span className="inline-flex rounded-md border border-success bg-success-soft px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-success">
+                Industry Match
               </span>
             )}
           </div>
@@ -105,11 +116,18 @@ function RFQCard({
           )}
         </div>
         <div className="shrink-0">
-          <span
-            className={"inline-flex rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] " + (statusStyles[rfq.status] ?? "border-panel bg-panel text-secondary")}
-          >
-            {rfq.status}
-          </span>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <span
+              className={"inline-flex rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] " + (statusStyles[displayStatus] ?? "border-panel bg-panel text-secondary")}
+            >
+              {displayStatus}
+            </span>
+            <span
+              className={`inline-flex rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${scoreTone(matchScore.score)}`}
+            >
+              {matchScore.score}% - {matchScore.label}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -129,6 +147,24 @@ function RFQCard({
         <div className="rounded-md border border-panel bg-panel p-4">
           <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Deadline</p>
           <p className="mt-2 text-sm font-semibold text-heading">{formatDeadline(rfq.deadline)}</p>
+        </div>
+        <div className="rounded-md border border-panel bg-panel p-4">
+          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Deadline Status</p>
+          <p className="mt-2 text-sm font-semibold text-heading">{displayStatus}</p>
+        </div>
+        <div className="rounded-md border border-panel bg-panel p-4 sm:col-span-2 lg:col-span-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Match Score</p>
+            <p className="text-sm font-semibold text-heading">
+              {matchScore.score}% - {matchScore.label}
+            </p>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-card">
+            <div
+              className={`h-full rounded-full ${scoreBar(matchScore.score)}`}
+              style={{ width: `${matchScore.score}%` }}
+            />
+          </div>
         </div>
       </div>
 
@@ -234,18 +270,28 @@ export default function RFQsPage() {
     loadSupplierRFQs()
   }, [])
 
-  const recommendedRFQs = rfqs
-    .map((rfq) => ({
-      rfq,
-      matchBadge: getMatchType(rfq, profile),
-    }))
-    .filter((item) => item.matchBadge)
+  const scoredRFQs = useMemo(
+    () =>
+      rfqs
+        .map((rfq) => ({
+          rfq,
+          matchScore: calculateRFQMatchScore(profile, rfq),
+          hasLocalMatch: isRFQLocalMatch(profile, rfq),
+          hasIndustryMatch: isRFQIndustryMatch(profile, rfq),
+        }))
+        .sort(
+          (a, b) =>
+            b.matchScore.score - a.matchScore.score ||
+            new Date(b.rfq.created_at ?? 0).getTime() -
+              new Date(a.rfq.created_at ?? 0).getTime()
+        ),
+    [profile, rfqs]
+  )
 
-  const otherRFQs = recommendedRFQs.length > 0
-    ? rfqs
-      .filter((rfq) => !getMatchType(rfq, profile))
-      .map((rfq) => ({ rfq, matchBadge: null }))
-    : rfqs.map((rfq) => ({ rfq, matchBadge: null }))
+  const recommendedRFQs = scoredRFQs.filter(
+    (item) => item.matchScore.score >= 20
+  )
+  const otherRFQs = scoredRFQs.filter((item) => item.matchScore.score < 20)
 
   return (
     <div>
@@ -315,8 +361,8 @@ export default function RFQsPage() {
                 </p>
               </div>
               <div className="space-y-5">
-                {recommendedRFQs.map(({ rfq, matchBadge }) => (
-                  <RFQCard key={rfq.id} rfq={rfq} matchBadge={matchBadge} />
+                {recommendedRFQs.map((item) => (
+                  <RFQCard key={item.rfq.id} {...item} />
                 ))}
               </div>
             </section>
@@ -330,8 +376,8 @@ export default function RFQsPage() {
                 </p>
               </div>
               <div className="space-y-5">
-                {otherRFQs.map(({ rfq, matchBadge }) => (
-                  <RFQCard key={rfq.id} rfq={rfq} matchBadge={matchBadge} />
+                {otherRFQs.map((item) => (
+                  <RFQCard key={item.rfq.id} {...item} />
                 ))}
               </div>
             </section>

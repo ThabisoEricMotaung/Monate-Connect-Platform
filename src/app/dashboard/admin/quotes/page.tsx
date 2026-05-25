@@ -1,6 +1,9 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import { logActivity } from "@/lib/activity"
+import { requireAdminOrBuyer } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 
 type QuoteStatus = "Pending" | "Under Review" | "Shortlisted" | "Awarded" | "Rejected"
@@ -8,7 +11,9 @@ type QuoteStatus = "Pending" | "Under Review" | "Shortlisted" | "Awarded" | "Rej
 type Quote = {
   id: number
   rfq_id: number | null
+  supplier_id: string | null
   supplier_name: string | null
+  supplier_phone: string | null
   amount: string | null
   timeline: string | null
   status: string | null
@@ -66,7 +71,29 @@ function normalizeSearch(value: string | null): string {
   return (value ?? "").toLowerCase().trim()
 }
 
+function formatWhatsAppPhone(phone: string | null): string | null {
+  const cleanedPhone = (phone ?? "")
+    .replace(/\s/g, "")
+    .replace(/\+/g, "")
+    .replace(/[^\d]/g, "")
+
+  if (!cleanedPhone) return null
+
+  return cleanedPhone.startsWith("0")
+    ? `27${cleanedPhone.slice(1)}`
+    : cleanedPhone
+}
+
+function createWhatsAppLink(phone: string | null, message: string): string | null {
+  const formattedPhone = formatWhatsAppPhone(phone)
+
+  if (!formattedPhone) return null
+
+  return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`
+}
+
 export default function AdminQuotesPage() {
+  const router = useRouter()
   const [quotes, setQuotes] = useState<Quote[]>([])
   const [statusFilter, setStatusFilter] = useState("")
   const [rfqFilter, setRfqFilter] = useState("")
@@ -78,6 +105,13 @@ export default function AdminQuotesPage() {
 
   useEffect(() => {
     async function loadQuotes() {
+      const authorizedProfile = await requireAdminOrBuyer()
+
+      if (!authorizedProfile) {
+        router.replace("/dashboard")
+        return
+      }
+
       if (!supabase) {
         setErrorMessage("Supabase environment variables are not configured.")
         setLoading(false)
@@ -86,7 +120,7 @@ export default function AdminQuotesPage() {
 
       const { data, error } = await supabase
         .from("quotes")
-        .select("id, rfq_id, supplier_name, amount, timeline, status, scope, supporting_notes, created_at")
+        .select("id, rfq_id, supplier_id, supplier_name, amount, timeline, status, scope, supporting_notes, created_at")
         .order("created_at", { ascending: false })
 
       if (error) {
@@ -95,12 +129,49 @@ export default function AdminQuotesPage() {
         return
       }
 
-      setQuotes((data ?? []) as Quote[])
+      const quoteRows = (data ?? []) as Omit<Quote, "supplier_phone">[]
+      const supplierIds = Array.from(
+        new Set(
+          quoteRows
+            .map((quote) => quote.supplier_id)
+            .filter((supplierId): supplierId is string => Boolean(supplierId))
+        )
+      )
+      let phoneBySupplierId = new Map<string, string | null>()
+
+      if (supplierIds.length > 0) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, phone")
+          .in("id", supplierIds)
+
+        if (profileError) {
+          setErrorMessage(profileError.message)
+          setLoading(false)
+          return
+        }
+
+        phoneBySupplierId = new Map(
+          (profileData ?? []).map((profile) => [
+            profile.id as string,
+            profile.phone as string | null,
+          ])
+        )
+      }
+
+      setQuotes(
+        quoteRows.map((quote) => ({
+          ...quote,
+          supplier_phone: quote.supplier_id
+            ? phoneBySupplierId.get(quote.supplier_id) ?? null
+            : null,
+        }))
+      )
       setLoading(false)
     }
 
     loadQuotes()
-  }, [])
+  }, [router])
 
   const statusOptions = useMemo(
     () =>
@@ -156,6 +227,24 @@ export default function AdminQuotesPage() {
     if (error) {
       setErrorMessage(error.message)
       return
+    }
+
+    const updatedQuote = quotes.find((quote) => quote.id === quoteId)
+
+    try {
+      await logActivity({
+        action: "quote.status_updated",
+        entity_type: "quote",
+        entity_id: quoteId,
+        metadata: {
+          previous_status: updatedQuote?.status ?? null,
+          new_status: status,
+          rfq_id: updatedQuote?.rfq_id ?? null,
+          supplier_name: updatedQuote?.supplier_name ?? null,
+        },
+      })
+    } catch (activityError) {
+      console.error(activityError)
     }
 
     setQuotes((currentQuotes) =>
@@ -310,6 +399,7 @@ export default function AdminQuotesPage() {
                     "Quote ID",
                     "RFQ ID",
                     "Supplier",
+                    "WhatsApp",
                     "Amount",
                     "Timeline",
                     "Status",
@@ -344,6 +434,36 @@ export default function AdminQuotesPage() {
                       <p className="font-semibold text-heading">
                         {quote.supplier_name || "-"}
                       </p>
+                    </td>
+                    <td className="px-4 py-4">
+                      {(() => {
+                        const supplierName = quote.supplier_name || "Supplier"
+                        const rfqReference =
+                          quote.rfq_id != null ? quote.rfq_id : "unknown"
+                        const whatsappLink = createWhatsAppLink(
+                          quote.supplier_phone,
+                          `Hi ${supplierName}, we reviewed your quote for RFQ #${rfqReference}. Please confirm availability for next steps.`
+                        )
+
+                        return whatsappLink ? (
+                          <a
+                            href={whatsappLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex whitespace-nowrap rounded-md border border-success bg-success-soft px-3 py-2 text-xs font-semibold text-success transition hover:bg-success/10"
+                          >
+                            Contact on WhatsApp
+                          </a>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled
+                            className="inline-flex cursor-not-allowed whitespace-nowrap rounded-md border border-panel bg-panel px-3 py-2 text-xs font-semibold text-muted opacity-70"
+                          >
+                            No WhatsApp number
+                          </button>
+                        )
+                      })()}
                     </td>
                     <td className="px-4 py-4">
                       <span className="font-semibold text-heading">

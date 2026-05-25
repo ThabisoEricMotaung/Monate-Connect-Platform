@@ -1,4 +1,5 @@
 import { supabase } from "./supabase"
+import { logActivity } from "./activity"
 
 export async function submitQuote(data: {
   rfq_id: number
@@ -18,7 +19,7 @@ export async function submitQuote(data: {
     throw new Error("User not authenticated")
   }
 
-  const { error } = await supabase
+  const { data: quoteData, error } = await supabase
     .from("quotes")
     .insert([
       {
@@ -27,11 +28,24 @@ export async function submitQuote(data: {
         status: "Pending",
       },
     ])
+    .select("id")
+    .single()
 
   if (error) {
     console.error(error)
     throw error
   }
+
+  await logActivity({
+    action: "quote.submitted",
+    entity_type: "quote",
+    entity_id: quoteData?.id ?? null,
+    metadata: {
+      rfq_id: data.rfq_id,
+      supplier_name: data.supplier_name,
+      amount: data.amount,
+    },
+  })
 }
 
 export async function getQuotes() {

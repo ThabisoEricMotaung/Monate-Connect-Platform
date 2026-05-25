@@ -1,6 +1,15 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import SaveSupplierControl from "@/components/suppliers/SaveSupplierControl"
+import { logActivity } from "@/lib/activity"
+import { requireAdminOrBuyer } from "@/lib/auth"
+import {
+  calculateSupplierPerformance,
+  type SupplierPerformanceReview,
+} from "@/lib/supplierPerformance"
+import { calculateSupplierScore } from "@/lib/supplierScore"
 import { supabase } from "@/lib/supabase"
 
 type SupplierProfile = {
@@ -8,6 +17,7 @@ type SupplierProfile = {
   business_name: string | null
   province: string | null
   industry: string | null
+  phone: string | null
   verification_status: string | null
   csd_number: string | null
   bbbee_level: string | null
@@ -15,6 +25,16 @@ type SupplierProfile = {
   company_registration: string | null
   cidb_grade: string | null
   created_at: string | null
+  csd_document_url: string | null
+  bbbee_document_url: string | null
+  tax_document_url: string | null
+  company_registration_url: string | null
+  cidb_document_url: string | null
+  capability_statement_url: string | null
+}
+
+type SupplierReview = SupplierPerformanceReview & {
+  supplier_id: string | null
 }
 
 const statusStyles: Record<string, string> = {
@@ -42,11 +62,114 @@ function statusBadgeClass(status: string | null): string {
   return statusStyles[status || ""] ?? "border-panel bg-panel text-secondary"
 }
 
+function scoreTone(score: number): string {
+  if (score <= 39) return "border-rose-500/30 bg-rose-500/10 text-rose-700"
+  if (score <= 69) return "border-warning bg-warning-soft text-warning"
+  if (score <= 89) return "border-sky-500/30 bg-sky-500/10 text-sky-700"
+  return "border-success bg-success-soft text-success"
+}
+
+function scoreBar(score: number): string {
+  if (score <= 39) return "bg-rose-500"
+  if (score <= 69) return "bg-warning"
+  if (score <= 89) return "bg-sky-500"
+  return "bg-success"
+}
+
+function ReadinessScore({ profile }: { profile: SupplierProfile }) {
+  const readiness = calculateSupplierScore(profile)
+
+  return (
+    <div className="rounded-md border border-panel bg-panel p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
+            Readiness Score
+          </p>
+          <p className="mt-2 text-lg font-semibold text-heading">
+            {readiness.score}/100
+          </p>
+        </div>
+        <span
+          className={`inline-flex w-fit rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] ${scoreTone(readiness.score)}`}
+        >
+          {readiness.label}
+        </span>
+      </div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-card">
+        <div
+          className={`h-full rounded-full ${scoreBar(readiness.score)}`}
+          style={{ width: `${readiness.score}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function performanceTone(score: number | null): string {
+  if (score === null) return "border-panel bg-card text-muted"
+  if (score < 2.5) return "border-rose-500/30 bg-rose-500/10 text-rose-700"
+  if (score < 3.5) return "border-warning bg-warning-soft text-warning"
+  if (score < 4.5) return "border-sky-500/30 bg-sky-500/10 text-sky-700"
+  return "border-success bg-success-soft text-success"
+}
+
+function performanceBar(score: number | null): string {
+  if (score === null) return "bg-muted"
+  if (score < 2.5) return "bg-rose-500"
+  if (score < 3.5) return "bg-warning"
+  if (score < 4.5) return "bg-sky-500"
+  return "bg-success"
+}
+
+function PerformanceScore({ reviews }: { reviews: SupplierPerformanceReview[] }) {
+  const performance = calculateSupplierPerformance(reviews)
+  const width = performance.averageScore
+    ? `${(performance.averageScore / 5) * 100}%`
+    : "0%"
+
+  return (
+    <div className="rounded-md border border-panel bg-panel p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
+            Performance Score
+          </p>
+          <p className="mt-2 text-lg font-semibold text-heading">
+            {performance.averageScore === null
+              ? "Not rated"
+              : `${performance.averageScore}/5`}
+          </p>
+          <p className="mt-1 text-xs text-muted">
+            {performance.reviewCount} review
+            {performance.reviewCount !== 1 ? "s" : ""}
+          </p>
+        </div>
+        <span
+          className={`inline-flex w-fit rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] ${performanceTone(performance.averageScore)}`}
+        >
+          {performance.label}
+        </span>
+      </div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-card">
+        <div
+          className={`h-full rounded-full ${performanceBar(performance.averageScore)}`}
+          style={{ width }}
+        />
+      </div>
+    </div>
+  )
+}
+
 export default function AdminVerificationPage() {
+  const router = useRouter()
   const [profiles, setProfiles] = useState<SupplierProfile[]>([])
   const [provinceFilter, setProvinceFilter] = useState("")
   const [industryFilter, setIndustryFilter] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
+  const [reviewsBySupplier, setReviewsBySupplier] = useState<
+    Record<string, SupplierPerformanceReview[]>
+  >({})
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
@@ -54,6 +177,13 @@ export default function AdminVerificationPage() {
 
   useEffect(() => {
     async function loadProfiles() {
+      const authorizedProfile = await requireAdminOrBuyer()
+
+      if (!authorizedProfile) {
+        router.replace("/dashboard")
+        return
+      }
+
       if (!supabase) {
         setErrorMessage("Supabase environment variables are not configured.")
         setLoading(false)
@@ -62,7 +192,7 @@ export default function AdminVerificationPage() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, business_name, province, industry, verification_status, csd_number, bbbee_level, tax_status, company_registration, cidb_grade, created_at")
+        .select("id, business_name, province, industry, phone, verification_status, csd_number, bbbee_level, tax_status, company_registration, cidb_grade, created_at, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url")
         .order("created_at", { ascending: false })
 
       if (error) {
@@ -71,12 +201,36 @@ export default function AdminVerificationPage() {
         return
       }
 
+      const { data: reviewData, error: reviewError } = await supabase
+        .from("supplier_reviews")
+        .select("supplier_id, rating, delivery_score, price_score, compliance_score, communication_score, quality_score")
+
+      if (reviewError) {
+        setErrorMessage(reviewError.message)
+        setLoading(false)
+        return
+      }
+
+      const groupedReviews = ((reviewData ?? []) as SupplierReview[]).reduce<
+        Record<string, SupplierPerformanceReview[]>
+      >((reviews, review) => {
+        if (!review.supplier_id) return reviews
+
+        reviews[review.supplier_id] = [
+          ...(reviews[review.supplier_id] ?? []),
+          review,
+        ]
+
+        return reviews
+      }, {})
+
       setProfiles((data ?? []) as SupplierProfile[])
+      setReviewsBySupplier(groupedReviews)
       setLoading(false)
     }
 
     loadProfiles()
-  }, [])
+  }, [router])
 
   const provinceOptions = useMemo(
     () => Array.from(new Set(profiles.map((profile) => profile.province).filter(Boolean))).sort() as string[],
@@ -121,6 +275,23 @@ export default function AdminVerificationPage() {
     if (error) {
       setErrorMessage(error.message)
       return
+    }
+
+    const updatedProfile = profiles.find((profile) => profile.id === profileId)
+
+    try {
+      await logActivity({
+        action: "supplier.verification_updated",
+        entity_type: "supplier_profile",
+        entity_id: profileId,
+        metadata: {
+          business_name: updatedProfile?.business_name ?? null,
+          previous_status: updatedProfile?.verification_status ?? null,
+          new_status: verificationStatus,
+        },
+      })
+    } catch (activityError) {
+      console.error(activityError)
     }
 
     setProfiles((currentProfiles) =>
@@ -282,6 +453,14 @@ export default function AdminVerificationPage() {
               </div>
 
               <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <div className="md:col-span-2 xl:col-span-4">
+                  <ReadinessScore profile={profile} />
+                </div>
+                <div className="md:col-span-2 xl:col-span-4">
+                  <PerformanceScore
+                    reviews={reviewsBySupplier[profile.id] ?? []}
+                  />
+                </div>
                 <div className="rounded-md border border-panel bg-panel p-4">
                   <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Province</p>
                   <p className="mt-2 text-sm font-semibold text-heading">{profile.province || "-"}</p>
@@ -317,6 +496,7 @@ export default function AdminVerificationPage() {
               </div>
 
               <div className="mt-5 flex flex-wrap gap-3 border-t border-panel pt-5">
+                <SaveSupplierControl supplierId={profile.id} compact />
                 <button
                   type="button"
                   disabled={updatingId === profile.id}

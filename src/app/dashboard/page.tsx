@@ -44,6 +44,7 @@ export default function DashboardPage() {
             province: user.user_metadata.province,
             industry: user.user_metadata.industry,
             phone: user.user_metadata.phone,
+            role: user.user_metadata.role || "supplier",
             verification_status: "Pending Review",
           },
         ])
