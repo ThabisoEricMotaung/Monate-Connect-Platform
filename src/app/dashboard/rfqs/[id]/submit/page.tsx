@@ -1,6 +1,7 @@
 "use client"
 
 import { logActivity } from "@/lib/activity"
+import { useI18n } from "@/lib/i18n"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { supabase } from "@/lib/supabase"
 import { useParams } from "next/navigation"
@@ -32,6 +33,7 @@ function formatDeadline(dateStr: string | null): string {
 }
 
 export default function SubmitQuotePage() {
+  const { t } = useI18n()
   const params = useParams<{ id: string }>()
   const [rfq, setRfq] = useState<RFQSubmissionState | null>(null)
   const [loadingRfq, setLoadingRfq] = useState(true)
@@ -136,7 +138,7 @@ export default function SubmitQuotePage() {
   return (
     <section className="enterprise-main-panel">
       <div className="enterprise-breadcrumbs">
-        Home / Dashboard / RFQs / Submit Quote
+        {t("home")} / {t("dashboard")} / {t("rfqs")} / {t("submitQuote")}
       </div>
 
       <div className="enterprise-section-heading">
@@ -167,7 +169,7 @@ export default function SubmitQuotePage() {
                   {rfq.title || `RFQ-${rfq.id}`}
                 </p>
                 <p className="mt-1 text-xs font-medium text-secondary">
-                  Deadline: {formatDeadline(rfq.deadline)}
+                  {t("deadline")}: {formatDeadline(rfq.deadline)}
                 </p>
               </div>
               <div className="flex flex-col gap-2 sm:items-end">
@@ -185,7 +187,7 @@ export default function SubmitQuotePage() {
                   {displayStatus}
                 </span>
                 <span className="text-xs text-muted">
-                  Deadline status
+                  {t("deadline")} {t("status").toLowerCase()}
                 </span>
               </div>
             </div>
@@ -204,7 +206,7 @@ export default function SubmitQuotePage() {
           <div className="enterprise-grid enterprise-grid-2">
             <div className="enterprise-field">
               <label>
-                Quoted Amount (ZAR)
+                {t("amount")} (ZAR)
               </label>
 
               <div className="flex overflow-hidden rounded-[14px] border border-panel bg-surface transition focus-within:border-accent focus-within:shadow-[0_0_0_3px_rgba(var(--accent-rgb),0.14)]">
@@ -244,7 +246,7 @@ export default function SubmitQuotePage() {
                   disabled={isClosed}
                 />
                 <span className="flex items-center border-l border-panel bg-muted px-4 text-sm font-bold text-secondary">
-                  working days
+                  {t("workingDays").toLowerCase()}
                 </span>
               </div>
               <p className="text-xs text-muted">
@@ -284,7 +286,7 @@ export default function SubmitQuotePage() {
             disabled={loadingRfq || isClosed}
             className="enterprise-primary-button disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isClosed ? "Submissions Closed" : "Submit Enterprise Quote"}
+            {isClosed ? "Submissions Closed" : t("submitQuote")}
           </button>
         </form>
 

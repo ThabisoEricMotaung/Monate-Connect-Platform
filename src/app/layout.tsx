@@ -3,6 +3,8 @@ import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { I18nProvider } from "@/lib/i18n";
+import AccessibilityPanel from "@/components/AccessibilityPanel";
 import Navbar from "@/components/layout/Navbar";
 import NewsTicker from "@/components/NewsTicker";
 
@@ -36,6 +38,22 @@ const themeScript = `(function() {
   } catch (e) {}
 })();`;
 
+const accessibilityScript = `(function() {
+  try {
+    var raw = window.localStorage.getItem('monate-accessibility');
+    var prefs = raw ? JSON.parse(raw) : {};
+    var root = document.documentElement;
+    var fontSize = prefs.fontSize === 'large' || prefs.fontSize === 'extra-large'
+      ? prefs.fontSize
+      : 'normal';
+    root.dataset.fontSize = fontSize;
+    root.dataset.contrast = prefs.highContrast ? 'high' : 'standard';
+    root.dataset.motion = prefs.reducedMotion ? 'reduced' : 'standard';
+    root.dataset.readingMode = prefs.readingMode ? 'on' : 'off';
+    root.dataset.lowData = prefs.lowData ? 'on' : 'off';
+  } catch (e) {}
+})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -44,6 +62,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-font-size="normal"
+      data-contrast="standard"
+      data-motion="standard"
+      data-reading-mode="off"
+      data-low-data="off"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <Script
@@ -51,11 +75,19 @@ export default function RootLayout({
         strategy="beforeInteractive"
         dangerouslySetInnerHTML={{ __html: themeScript }}
       />
+      <Script
+        id="accessibility-script"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{ __html: accessibilityScript }}
+      />
       <body className="min-h-full bg-page text-primary font-sans">
         <ThemeProvider>
-          <Navbar />
-          {children}
-          <NewsTicker />
+          <I18nProvider>
+            <Navbar />
+            {children}
+            <AccessibilityPanel />
+            <NewsTicker />
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>

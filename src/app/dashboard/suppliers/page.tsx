@@ -7,6 +7,7 @@ import {
   calculateSupplierPerformance,
   type SupplierPerformanceReview,
 } from "@/lib/supplierPerformance"
+import { useI18n } from "@/lib/i18n"
 import { calculateSupplierScore } from "@/lib/supplierScore"
 import { supabase } from "@/lib/supabase"
 
@@ -185,6 +186,7 @@ function createWhatsAppLink(phone: string | null, message: string): string | nul
 }
 
 export default function SuppliersDirectoryPage() {
+  const { t } = useI18n()
   const [suppliers, setSuppliers] = useState<SupplierProfile[]>([])
   const [search, setSearch] = useState("")
   const [provinceFilter, setProvinceFilter] = useState("")
@@ -299,7 +301,7 @@ export default function SuppliersDirectoryPage() {
           Procurement / Supplier Network
         </p>
         <h1 className="mt-3 text-2xl font-semibold text-heading">
-          Supplier Directory
+          {t("supplierDirectory")}
         </h1>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-secondary">
           Search and review registered suppliers by region, industry, and
@@ -340,7 +342,7 @@ export default function SuppliersDirectoryPage() {
               htmlFor="province-filter"
               className="mb-1.5 block text-[0.68rem] uppercase tracking-[0.24em] text-secondary"
             >
-              Province
+              {t("province")}
             </label>
             <select
               id="province-filter"
@@ -362,7 +364,7 @@ export default function SuppliersDirectoryPage() {
               htmlFor="industry-filter"
               className="mb-1.5 block text-[0.68rem] uppercase tracking-[0.24em] text-secondary"
             >
-              Industry
+              {t("industry")}
             </label>
             <select
               id="industry-filter"
@@ -384,7 +386,7 @@ export default function SuppliersDirectoryPage() {
               htmlFor="status-filter"
               className="mb-1.5 block text-[0.68rem] uppercase tracking-[0.24em] text-secondary"
             >
-              Verification
+              {t("verification")}
             </label>
             <select
               id="status-filter"
@@ -449,7 +451,7 @@ export default function SuppliersDirectoryPage() {
       {!loading && filteredSuppliers.length > 0 && (
         <div className="grid gap-4 xl:grid-cols-2">
           {filteredSuppliers.map((supplier) => {
-            const businessName = supplier.business_name || "Supplier Profile"
+            const businessName = supplier.business_name || t("supplierProfile")
             const whatsappLink = createWhatsAppLink(
               supplier.phone,
               `Hi ${businessName}, we found your supplier profile on Monate Vendor Network and would like to discuss procurement opportunities.`
@@ -482,7 +484,7 @@ export default function SuppliersDirectoryPage() {
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   <div className="rounded-md border border-panel bg-panel p-4">
                     <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                      Province
+                      {t("province")}
                     </p>
                     <p className="mt-2 text-sm font-semibold text-heading">
                       {supplier.province || "-"}
@@ -490,7 +492,7 @@ export default function SuppliersDirectoryPage() {
                   </div>
                   <div className="rounded-md border border-panel bg-panel p-4">
                     <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                      Industry
+                      {t("industry")}
                     </p>
                     <p className="mt-2 text-sm font-semibold text-heading">
                       {supplier.industry || "-"}
@@ -529,7 +531,7 @@ export default function SuppliersDirectoryPage() {
                     href={`/dashboard/suppliers/${supplier.id}`}
                     className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
                   >
-                    View Profile
+                    {t("viewProfile")}
                   </Link>
                   {whatsappLink ? (
                     <a

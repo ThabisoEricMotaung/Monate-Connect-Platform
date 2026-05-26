@@ -9,6 +9,7 @@ import {
   isRFQLocalMatch,
   type RFQMatchScore,
 } from "@/lib/rfqMatch"
+import { useI18n } from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
 
 type RFQ = {
@@ -85,6 +86,7 @@ function RFQCard({
   hasLocalMatch: boolean
   hasIndustryMatch: boolean
 }) {
+  const { t } = useI18n()
   const displayStatus = getRFQDisplayStatus(rfq.status, rfq.deadline)
 
   return (
@@ -141,15 +143,15 @@ function RFQCard({
           <p className="mt-2 text-sm font-semibold text-heading">{rfq.category || "-"}</p>
         </div>
         <div className="rounded-md border border-panel bg-panel p-4">
-          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Budget (ZAR)</p>
+          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">{t("budget")} (ZAR)</p>
           <p className="mt-2 text-sm font-semibold text-heading">{formatRand(rfq.budget)}</p>
         </div>
         <div className="rounded-md border border-panel bg-panel p-4">
-          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Deadline</p>
+          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">{t("deadline")}</p>
           <p className="mt-2 text-sm font-semibold text-heading">{formatDeadline(rfq.deadline)}</p>
         </div>
         <div className="rounded-md border border-panel bg-panel p-4">
-          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Deadline Status</p>
+          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">{t("deadline")} {t("status")}</p>
           <p className="mt-2 text-sm font-semibold text-heading">{displayStatus}</p>
         </div>
         <div className="rounded-md border border-panel bg-panel p-4 sm:col-span-2 lg:col-span-3">
@@ -176,7 +178,7 @@ function RFQCard({
           href={"/dashboard/rfqs/" + rfq.id}
           className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
         >
-          View RFQ
+          {t("viewRFQ")}
         </Link>
       </div>
     </article>
@@ -215,6 +217,7 @@ function RFQListSkeleton() {
 }
 
 export default function RFQsPage() {
+  const { t } = useI18n()
   const [rfqs, setRfqs] = useState<RFQ[]>([])
   const [profile, setProfile] = useState<SupplierProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -313,7 +316,7 @@ export default function RFQsPage() {
             href="/dashboard/admin/rfqs/new"
             className="mt-1 inline-flex shrink-0 items-center justify-center rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
           >
-            Create RFQ
+            {t("createRFQ")}
           </Link>
         </div>
       </div>

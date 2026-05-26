@@ -6,6 +6,7 @@ import {
   saveSupplier,
   unsaveSupplier,
 } from "@/lib/savedSuppliers"
+import { useI18n } from "@/lib/i18n"
 
 type SaveSupplierControlProps = {
   supplierId: string
@@ -18,6 +19,7 @@ export default function SaveSupplierControl({
   compact = false,
   onRemoved,
 }: SaveSupplierControlProps) {
+  const { t } = useI18n()
   const [saved, setSaved] = useState(false)
   const [notes, setNotes] = useState("")
   const [loading, setLoading] = useState(true)
@@ -101,7 +103,7 @@ export default function SaveSupplierControl({
             onClick={handleSave}
             className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? "Checking..." : "Save Supplier"}
+            {loading ? "Checking..." : t("save")}
           </button>
         )}
       </div>

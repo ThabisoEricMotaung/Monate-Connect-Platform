@@ -5,53 +5,54 @@ import { usePathname } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import { getCurrentProfile } from "@/lib/auth"
+import { useI18n, type TranslationKey } from "@/lib/i18n"
 
-const navigation = [
+const navigation: { name: TranslationKey; href: string }[] = [
   {
-    name: "Dashboard",
+    name: "dashboard",
     href: "/dashboard",
   },
   {
-    name: "RFQs",
+    name: "rfqs",
     href: "/dashboard/rfqs",
   },
   {
-    name: "Quotes",
+    name: "quotes",
     href: "/dashboard/quotes",
   },
   {
-    name: "Supplier Directory",
+    name: "supplierDirectory",
     href: "/dashboard/suppliers",
   },
   {
-    name: "Supplier Profile",
+    name: "supplierProfile",
     href: "/dashboard/profile",
   },
   {
-    name: "Verification",
+    name: "verification",
     href: "/dashboard/verification",
   },
 ]
 
-const adminNavigation = [
+const adminNavigation: { name: TranslationKey | "Supplier Reviews"; href: string }[] = [
   {
-    name: "Create RFQ",
+    name: "createRFQ",
     href: "/dashboard/admin/rfqs/new",
   },
   {
-    name: "Quote Review",
+    name: "quoteReview",
     href: "/dashboard/admin/quotes",
   },
   {
-    name: "Verification Review",
+    name: "verificationReview",
     href: "/dashboard/admin/verification",
   },
   {
-    name: "Analytics",
+    name: "analytics",
     href: "/dashboard/admin/analytics",
   },
   {
-    name: "Purchase Orders",
+    name: "purchaseOrders",
     href: "/dashboard/admin/purchase-orders",
   },
   {
@@ -59,11 +60,11 @@ const adminNavigation = [
     href: "/dashboard/admin/supplier-reviews",
   },
   {
-    name: "Activity Log",
+    name: "activityLog",
     href: "/dashboard/admin/activity",
   },
   {
-    name: "Saved Suppliers",
+    name: "savedSuppliers",
     href: "/dashboard/admin/saved-suppliers",
   },
 ]
@@ -73,6 +74,7 @@ export default function DashboardLayout({
 }: {
   children: ReactNode
 }) {
+  const { t } = useI18n()
   const pathname = usePathname() || ""
   const [role, setRole] = useState<string | null>(null)
   const canViewAdminNavigation = role === "admin" || role === "buyer"
@@ -134,7 +136,7 @@ export default function DashboardLayout({
                     : "border-transparent text-secondary hover:bg-surface hover:text-primary"
                 }`}
               >
-                {item.name}
+                {t(item.name)}
               </Link>
             )
           })}
@@ -161,7 +163,7 @@ export default function DashboardLayout({
                         : "border-transparent text-secondary hover:bg-surface hover:text-primary"
                     }`}
                   >
-                    {item.name}
+                    {item.name === "Supplier Reviews" ? item.name : t(item.name)}
                   </Link>
                 )
               })}

@@ -2,16 +2,21 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useI18n, type TranslationKey } from "@/lib/i18n"
 
-const labelMap: Record<string, string> = {
-  dashboard: "Dashboard",
-  rfqs: "RFQs",
-  quotes: "Quotes",
-  profile: "Supplier Profile",
-  verification: "Verification",
+const labelMap: Record<string, TranslationKey> = {
+  dashboard: "dashboard",
+  rfqs: "rfqs",
+  quotes: "quotes",
+  profile: "supplierProfile",
+  verification: "verification",
+  suppliers: "supplierDirectory",
+  analytics: "analytics",
+  activity: "activityLog",
 }
 
 export default function Breadcrumbs() {
+  const { t } = useI18n()
   const pathname = usePathname() || "/"
   const segments = pathname
     .split("/")
@@ -24,14 +29,14 @@ export default function Breadcrumbs() {
   const items = segments.map((segment, index) => {
     const path = `/${segments.slice(0, index + 1).join("/")}`
     const isLast = index === segments.length - 1
-    let label = labelMap[segment] || segment
+    let label = labelMap[segment] ? t(labelMap[segment]) : segment
 
     if (segment.match(/^\d+$/) && segments[index - 1] === "rfqs") {
       label = `RFQ #${segment}`
     }
 
     if (segment === "dashboard" && index === 0) {
-      label = "Dashboard"
+      label = t("dashboard")
     }
 
     return {
@@ -45,7 +50,7 @@ export default function Breadcrumbs() {
     <div className="mb-6 rounded-2xl border border-panel bg-surface p-4 text-sm text-secondary shadow-sm">
       <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2">
         <Link href="/" className="text-accent transition-colors hover:text-accent-strong">
-          Home
+          {t("home")}
         </Link>
         <span className="text-secondary">/</span>
         {items.map((item, index) => (
