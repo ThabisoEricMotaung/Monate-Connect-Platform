@@ -4,13 +4,25 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
+import NotificationBell from "@/components/NotificationBell"
 import { getCurrentProfile } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
 
-const navigation: { name: TranslationKey; href: string }[] = [
+const navigation: {
+  name: TranslationKey | "Assistant" | "Calendar" | "Messages"
+  href: string
+}[] = [
   {
     name: "dashboard",
     href: "/dashboard",
+  },
+  {
+    name: "Calendar",
+    href: "/dashboard/calendar",
+  },
+  {
+    name: "Messages",
+    href: "/dashboard/messages",
   },
   {
     name: "rfqs",
@@ -32,9 +44,17 @@ const navigation: { name: TranslationKey; href: string }[] = [
     name: "verification",
     href: "/dashboard/verification",
   },
+  {
+    name: "savedRFQs",
+    href: "/dashboard/saved-rfqs",
+  },
+  {
+    name: "Assistant",
+    href: "/dashboard/assistant",
+  },
 ]
 
-const adminNavigation: { name: TranslationKey | "Supplier Reviews"; href: string }[] = [
+const adminNavigation: { name: TranslationKey | "Supplier Reviews" | "Compliance Risk"; href: string }[] = [
   {
     name: "createRFQ",
     href: "/dashboard/admin/rfqs/new",
@@ -49,7 +69,7 @@ const adminNavigation: { name: TranslationKey | "Supplier Reviews"; href: string
   },
   {
     name: "analytics",
-    href: "/dashboard/admin/analytics",
+    href: "/dashboard/analytics",
   },
   {
     name: "purchaseOrders",
@@ -58,6 +78,10 @@ const adminNavigation: { name: TranslationKey | "Supplier Reviews"; href: string
   {
     name: "Supplier Reviews",
     href: "/dashboard/admin/supplier-reviews",
+  },
+  {
+    name: "Compliance Risk",
+    href: "/dashboard/admin/compliance-risk",
   },
   {
     name: "activityLog",
@@ -136,7 +160,11 @@ export default function DashboardLayout({
                     : "border-transparent text-secondary hover:bg-surface hover:text-primary"
                 }`}
               >
-                {t(item.name)}
+                {item.name === "Assistant" ||
+                item.name === "Calendar" ||
+                item.name === "Messages"
+                  ? item.name
+                  : t(item.name)}
               </Link>
             )
           })}
@@ -163,7 +191,7 @@ export default function DashboardLayout({
                         : "border-transparent text-secondary hover:bg-surface hover:text-primary"
                     }`}
                   >
-                    {item.name === "Supplier Reviews" ? item.name : t(item.name)}
+                    {item.name === "Supplier Reviews" || item.name === "Compliance Risk" ? item.name : t(item.name)}
                   </Link>
                 )
               })}
@@ -173,6 +201,17 @@ export default function DashboardLayout({
       </aside>
 
       <section className="flex-1 p-6 md:p-8">
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
+          <div>
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-secondary">
+              Live Procurement
+            </p>
+            <p className="mt-1 text-sm font-semibold text-heading">
+              Notification Center
+            </p>
+          </div>
+          <NotificationBell />
+        </div>
         <Breadcrumbs />
         {children}
       </section>

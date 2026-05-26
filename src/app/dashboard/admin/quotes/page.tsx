@@ -1,9 +1,11 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { logActivity } from "@/lib/activity"
 import { requireAdminOrBuyer } from "@/lib/auth"
+import { createNotification } from "@/lib/notifications"
 import { supabase } from "@/lib/supabase"
 
 type QuoteStatus = "Pending" | "Under Review" | "Shortlisted" | "Awarded" | "Rejected"
@@ -245,6 +247,22 @@ export default function AdminQuotesPage() {
       })
     } catch (activityError) {
       console.error(activityError)
+    }
+
+    if (status === "Awarded" && updatedQuote?.supplier_id) {
+      await createNotification({
+        recipientId: updatedQuote.supplier_id,
+        type: "Quote Awarded",
+        title: "Your quote was awarded",
+        message: `Your quote ${quoteId} has been marked as awarded.`,
+        link: updatedQuote.rfq_id
+          ? `/dashboard/rfqs/${updatedQuote.rfq_id}`
+          : "/dashboard/quotes",
+        metadata: {
+          quote_id: quoteId,
+          rfq_id: updatedQuote.rfq_id,
+        },
+      })
     }
 
     setQuotes((currentQuotes) =>
@@ -493,6 +511,22 @@ export default function AdminQuotesPage() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex min-w-[260px] flex-wrap gap-2">
+                        {quote.supplier_id ? (
+                          <Link
+                            href={`/dashboard/messages?receiver_id=${quote.supplier_id}&rfq_id=${quote.rfq_id ?? ""}&quote_id=${quote.id}&subject=${encodeURIComponent(`Quote Q-${quote.id} review`)}`}
+                            className="rounded-md border border-accent bg-accent px-3 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong"
+                          >
+                            Message Supplier
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled
+                            className="rounded-md border border-panel bg-panel px-3 py-2 text-xs font-semibold text-muted opacity-70"
+                          >
+                            No Supplier ID
+                          </button>
+                        )}
                         {REVIEW_STATUSES.map((status) => (
                           <button
                             key={status}

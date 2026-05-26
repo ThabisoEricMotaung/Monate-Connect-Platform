@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import SaveSupplierControl from "@/components/suppliers/SaveSupplierControl"
+import { getComplianceStatus } from "@/lib/complianceStatus"
 import {
   calculateSupplierPerformance,
   type SupplierPerformanceReview,
@@ -35,6 +36,10 @@ type SupplierProfile = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
+  tax_expiry_date: string | null
+  bbbee_expiry_date: string | null
+  csd_expiry_date: string | null
+  cidb_expiry_date: string | null
 }
 
 const statusStyles: Record<string, string> = {
@@ -196,7 +201,7 @@ export default async function DashboardSupplierDetailPage({ params }: Props) {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, business_name, province, industry, phone, email, verification_status, csd_number, bbbee_level, tax_status, company_registration, cidb_grade, verification_notes, created_at, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url")
+    .select("id, business_name, province, industry, phone, email, verification_status, csd_number, bbbee_level, tax_status, company_registration, cidb_grade, verification_notes, created_at, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date")
     .eq("id", id)
     .single()
 
@@ -217,31 +222,41 @@ export default async function DashboardSupplierDetailPage({ params }: Props) {
     `Hi ${businessName}, we found your supplier profile on Monate Vendor Network and would like to discuss procurement opportunities.`
   )
   const documents = [
-    {
-      label: "CSD Document",
-      url: supplier.csd_document_url,
-    },
-    {
-      label: "B-BBEE Certificate",
-      url: supplier.bbbee_document_url,
-    },
-    {
-      label: "Tax Clearance Document",
-      url: supplier.tax_document_url,
-    },
-    {
-      label: "Company Registration Document",
-      url: supplier.company_registration_url,
-    },
-    {
-      label: "CIDB Certificate",
-      url: supplier.cidb_document_url,
-    },
-    {
-      label: "Capability Statement",
-      url: supplier.capability_statement_url,
-    },
+    { label: "CSD Document", url: supplier.csd_document_url },
+    { label: "B-BBEE Certificate", url: supplier.bbbee_document_url },
+    { label: "Tax Clearance Document", url: supplier.tax_document_url },
+    { label: "Company Registration Document", url: supplier.company_registration_url },
+    { label: "CIDB Certificate", url: supplier.cidb_document_url },
+    { label: "Capability Statement", url: supplier.capability_statement_url },
   ].filter((document) => Boolean(document.url))
+
+  const complianceItems = [
+    {
+      label: "CSD Number",
+      value: supplier.csd_number,
+      expiryDate: supplier.csd_expiry_date,
+    },
+    {
+      label: "B-BBEE Level",
+      value: supplier.bbbee_level,
+      expiryDate: supplier.bbbee_expiry_date,
+    },
+    {
+      label: "Tax Status",
+      value: supplier.tax_status,
+      expiryDate: supplier.tax_expiry_date,
+    },
+    {
+      label: "Company Registration",
+      value: supplier.company_registration,
+      expiryDate: null,
+    },
+    {
+      label: "CIDB Grade",
+      value: supplier.cidb_grade,
+      expiryDate: supplier.cidb_expiry_date,
+    },
+  ]
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -416,46 +431,26 @@ export default async function DashboardSupplierDetailPage({ params }: Props) {
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <div className="rounded-md border border-panel bg-panel p-4">
-            <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-              CSD Number
-            </p>
-            <p className="mt-2 text-sm font-semibold text-heading">
-              {valueOrDash(supplier.csd_number)}
-            </p>
-          </div>
-          <div className="rounded-md border border-panel bg-panel p-4">
-            <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-              B-BBEE Level
-            </p>
-            <p className="mt-2 text-sm font-semibold text-heading">
-              {valueOrDash(supplier.bbbee_level)}
-            </p>
-          </div>
-          <div className="rounded-md border border-panel bg-panel p-4">
-            <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-              Tax Status
-            </p>
-            <p className="mt-2 text-sm font-semibold text-heading">
-              {valueOrDash(supplier.tax_status)}
-            </p>
-          </div>
-          <div className="rounded-md border border-panel bg-panel p-4">
-            <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-              Company Registration
-            </p>
-            <p className="mt-2 text-sm font-semibold text-heading">
-              {valueOrDash(supplier.company_registration)}
-            </p>
-          </div>
-          <div className="rounded-md border border-panel bg-panel p-4">
-            <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-              CIDB Grade
-            </p>
-            <p className="mt-2 text-sm font-semibold text-heading">
-              {valueOrDash(supplier.cidb_grade)}
-            </p>
-          </div>
+          {complianceItems.map(({ label, value, expiryDate }) => {
+            const cs = expiryDate !== null ? getComplianceStatus(expiryDate) : null
+            return (
+              <div key={label} className="rounded-md border border-panel bg-panel p-4">
+                <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
+                  {label}
+                </p>
+                <p className="mt-2 text-sm font-semibold text-heading">
+                  {valueOrDash(value)}
+                </p>
+                {cs && (
+                  <span
+                    className={`mt-2 inline-flex rounded-md border px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.12em] ${cs.badgeClass}`}
+                  >
+                    {cs.label}
+                  </span>
+                )}
+              </div>
+            )
+          })}
         </div>
 
         <div className="mt-4 rounded-md border border-panel bg-panel p-4">
@@ -503,6 +498,12 @@ export default async function DashboardSupplierDetailPage({ params }: Props) {
 
       <div className="mt-8 flex flex-wrap gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
         <SaveSupplierControl supplierId={supplier.id} compact />
+        <Link
+          href={`/dashboard/messages?receiver_id=${supplier.id}&subject=${encodeURIComponent(`Message ${businessName}`)}`}
+          className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition hover:bg-accent-strong"
+        >
+          Message Supplier
+        </Link>
         <Link
           href="/dashboard/suppliers"
           className="inline-flex items-center justify-center rounded-md border border-panel bg-surface px-5 py-2.5 text-sm font-semibold text-secondary transition hover:bg-panel"

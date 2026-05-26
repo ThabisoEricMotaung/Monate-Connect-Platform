@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { logActivity } from "@/lib/activity"
 import { requireAdminOrBuyer } from "@/lib/auth"
+import { createNotification } from "@/lib/notifications"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { supabase } from "@/lib/supabase"
 
@@ -416,6 +417,22 @@ export default function AdminRFQQuotesPage() {
       console.error(activityError)
     }
 
+    const selectedQuote = quotes.find((quote) => quote.id === selectedQuoteId)
+
+    if (selectedQuote?.supplier_id) {
+      await createNotification({
+        recipientId: selectedQuote.supplier_id,
+        type: "Quote Awarded",
+        title: "Your quote was awarded",
+        message: `Your quote for ${rfq.title || `RFQ-${rfq.id}`} has been awarded.`,
+        link: `/dashboard/rfqs/${rfq.id}`,
+        metadata: {
+          quote_id: selectedQuoteId,
+          rfq_id: rfq.id,
+        },
+      })
+    }
+
     setRfq((currentRfq) =>
       currentRfq ? { ...currentRfq, status: "Awarded" } : currentRfq
     )
@@ -498,6 +515,22 @@ export default function AdminRFQQuotesPage() {
         })
       } catch (activityError) {
         console.error(activityError)
+      }
+
+      if (selectedQuote.supplier_id) {
+        await createNotification({
+          recipientId: selectedQuote.supplier_id,
+          type: "Purchase Order Issued",
+          title: "Purchase order issued",
+          message: `${data.po_number} has been issued for ${rfq.title || `RFQ-${rfq.id}`}.`,
+          link: `/dashboard/rfqs/${rfq.id}`,
+          metadata: {
+            purchase_order_id: data.id,
+            po_number: data.po_number,
+            quote_id: selectedQuote.id,
+            rfq_id: rfq.id,
+          },
+        })
       }
 
       setPurchaseOrders((currentPurchaseOrders) => [
@@ -787,6 +820,22 @@ export default function AdminRFQQuotesPage() {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex min-w-[320px] flex-wrap gap-2">
+                            {quote.supplier_id ? (
+                              <Link
+                                href={`/dashboard/messages?receiver_id=${quote.supplier_id}&rfq_id=${rfq.id}&quote_id=${quote.id}&subject=${encodeURIComponent(`RFQ-${rfq.id} quote discussion`)}`}
+                                className="rounded-md border border-accent bg-accent px-3 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong"
+                              >
+                                Message Supplier
+                              </Link>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled
+                                className="rounded-md border border-panel bg-panel px-3 py-2 text-xs font-semibold text-muted opacity-70"
+                              >
+                                No Supplier ID
+                              </button>
+                            )}
                             {quote.status === "Awarded" &&
                               (() => {
                                 const purchaseOrder =

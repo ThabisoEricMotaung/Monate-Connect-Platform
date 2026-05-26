@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
+import { createNotification } from "@/lib/notifications"
 import {
   answerRFQQuestion,
   getRFQQuestions,
@@ -113,6 +114,19 @@ export default function AdminRFQQuestionsPage() {
         ...currentAnswers,
         [questionId]: "",
       }))
+      if (updatedQuestion.supplier_id) {
+        await createNotification({
+          recipientId: updatedQuestion.supplier_id,
+          type: "Clarification Response",
+          title: "Clarification response published",
+          message: `A buyer response was published for RFQ-${updatedQuestion.rfq_id}.`,
+          link: `/dashboard/rfqs/${updatedQuestion.rfq_id}#rfq-clarifications`,
+          metadata: {
+            question_id: updatedQuestion.id,
+            rfq_id: updatedQuestion.rfq_id,
+          },
+        })
+      }
       setSuccessMessage("Question answered successfully.")
     } catch (error) {
       setErrorMessage(

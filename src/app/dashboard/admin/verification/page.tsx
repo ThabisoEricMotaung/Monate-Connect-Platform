@@ -2,9 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import SaveSupplierControl from "@/components/suppliers/SaveSupplierControl"
 import { logActivity } from "@/lib/activity"
 import { requireAdminOrBuyer } from "@/lib/auth"
+import { getComplianceStatus, hasComplianceWarning } from "@/lib/complianceStatus"
+import { createNotification } from "@/lib/notifications"
 import {
   calculateSupplierPerformance,
   type SupplierPerformanceReview,
@@ -31,10 +34,24 @@ type SupplierProfile = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
+  tax_expiry_date: string | null
+  bbbee_expiry_date: string | null
+  csd_expiry_date: string | null
+  cidb_expiry_date: string | null
 }
 
 type SupplierReview = SupplierPerformanceReview & {
   supplier_id: string | null
+}
+
+type ComplianceIssue = {
+  doc: string
+  status: ReturnType<typeof getComplianceStatus>
+}
+
+type ExpiringEntry = {
+  profile: SupplierProfile
+  issues: ComplianceIssue[]
 }
 
 const statusStyles: Record<string, string> = {
@@ -161,6 +178,18 @@ function PerformanceScore({ reviews }: { reviews: SupplierPerformanceReview[] })
   )
 }
 
+function getProfileExpiryIssues(profile: SupplierProfile): ComplianceIssue[] {
+  const checks = [
+    { doc: "Tax Clearance", date: profile.tax_expiry_date },
+    { doc: "B-BBEE Certificate", date: profile.bbbee_expiry_date },
+    { doc: "CSD Registration", date: profile.csd_expiry_date },
+    { doc: "CIDB Certificate", date: profile.cidb_expiry_date },
+  ]
+  return checks
+    .map(({ doc, date }) => ({ doc, status: getComplianceStatus(date) }))
+    .filter(({ status }) => status.status === "expired" || status.status === "expiring_soon")
+}
+
 export default function AdminVerificationPage() {
   const router = useRouter()
   const [profiles, setProfiles] = useState<SupplierProfile[]>([])
@@ -192,7 +221,7 @@ export default function AdminVerificationPage() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, business_name, province, industry, phone, verification_status, csd_number, bbbee_level, tax_status, company_registration, cidb_grade, created_at, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url")
+        .select("id, business_name, province, industry, phone, verification_status, csd_number, bbbee_level, tax_status, company_registration, cidb_grade, created_at, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date")
         .order("created_at", { ascending: false })
 
       if (error) {
@@ -233,19 +262,35 @@ export default function AdminVerificationPage() {
   }, [router])
 
   const provinceOptions = useMemo(
-    () => Array.from(new Set(profiles.map((profile) => profile.province).filter(Boolean))).sort() as string[],
+    () => Array.from(new Set(profiles.map((p) => p.province).filter(Boolean))).sort() as string[],
     [profiles]
   )
 
   const industryOptions = useMemo(
-    () => Array.from(new Set(profiles.map((profile) => profile.industry).filter(Boolean))).sort() as string[],
+    () => Array.from(new Set(profiles.map((p) => p.industry).filter(Boolean))).sort() as string[],
     [profiles]
   )
 
   const statusOptions = useMemo(
-    () => Array.from(new Set(profiles.map((profile) => profile.verification_status).filter(Boolean))).sort() as string[],
+    () => Array.from(new Set(profiles.map((p) => p.verification_status).filter(Boolean))).sort() as string[],
     [profiles]
   )
+
+  const expiringCompliance = useMemo<ExpiringEntry[]>(() => {
+    return profiles
+      .filter((profile) =>
+        hasComplianceWarning([
+          profile.tax_expiry_date,
+          profile.bbbee_expiry_date,
+          profile.csd_expiry_date,
+          profile.cidb_expiry_date,
+        ])
+      )
+      .map((profile) => ({
+        profile,
+        issues: getProfileExpiryIssues(profile),
+      }))
+  }, [profiles])
 
   const filteredProfiles = profiles.filter((profile) => {
     const provinceMatches = !provinceFilter || profile.province === provinceFilter
@@ -294,6 +339,29 @@ export default function AdminVerificationPage() {
       console.error(activityError)
     }
 
+    if (verificationStatus === "Verified" || verificationStatus === "Rejected") {
+      await createNotification({
+        recipientId: profileId,
+        type:
+          verificationStatus === "Verified"
+            ? "Verification Approved"
+            : "Verification Rejected",
+        title:
+          verificationStatus === "Verified"
+            ? "Verification approved"
+            : "Verification rejected",
+        message:
+          verificationStatus === "Verified"
+            ? "Your supplier verification has been approved."
+            : "Your supplier verification has been rejected. Review your profile for next steps.",
+        link: "/dashboard/profile",
+        metadata: {
+          previous_status: updatedProfile?.verification_status ?? null,
+          new_status: verificationStatus,
+        },
+      })
+    }
+
     setProfiles((currentProfiles) =>
       currentProfiles.map((profile) =>
         profile.id === profileId
@@ -330,6 +398,66 @@ export default function AdminVerificationPage() {
         <div className="mb-6 rounded-md border border-success bg-success-soft px-5 py-4">
           <p className="text-sm font-semibold text-success">{successMessage}</p>
         </div>
+      )}
+
+      {/* Compliance Expiring Soon warning section */}
+      {!loading && expiringCompliance.length > 0 && (
+        <section className="mb-8 rounded-md border border-warning/40 bg-warning-soft p-5 shadow-panel">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[0.68rem] uppercase tracking-[0.24em] text-warning">
+                Compliance Alert
+              </p>
+              <h2 className="mt-1 text-lg font-semibold text-heading">
+                Compliance Expiring Soon
+              </h2>
+            </div>
+            <span className="inline-flex w-fit rounded-md border border-warning bg-warning-soft px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-warning">
+              {expiringCompliance.length} supplier{expiringCompliance.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+          <p className="mb-4 max-w-2xl text-sm text-secondary">
+            The following suppliers have compliance documents that are expired or
+            expiring within 30 days. Contact them to prevent procurement disruptions.
+          </p>
+          <div className="space-y-3">
+            {expiringCompliance.map(({ profile, issues }) => (
+              <div
+                key={profile.id}
+                className="rounded-md border border-panel bg-card p-4 shadow-sm"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-heading">
+                      {profile.business_name || "Supplier"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted">
+                      {profile.province || "-"} &middot; {profile.industry || "-"}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {issues.map(({ doc, status }) => (
+                      <span
+                        key={doc}
+                        className={`inline-flex rounded-md border px-2.5 py-0.5 text-[0.62rem] font-semibold uppercase tracking-[0.12em] ${status.badgeClass}`}
+                      >
+                        {doc}: {status.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2 border-t border-panel pt-3">
+                  <Link
+                    href={`/dashboard/suppliers/${profile.id}`}
+                    className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-3 py-1.5 text-xs font-semibold text-button transition hover:bg-accent-strong"
+                  >
+                    View Profile
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       <section className="mb-6 rounded-md border border-panel bg-card p-5 shadow-panel">
@@ -428,102 +556,147 @@ export default function AdminVerificationPage() {
 
       {!loading && filteredProfiles.length > 0 && (
         <div className="space-y-5">
-          {filteredProfiles.map((profile) => (
-            <article
-              key={profile.id}
-              className="rounded-md border border-panel bg-card p-6 shadow-panel"
-            >
-              <div className="flex flex-col gap-4 border-b border-panel pb-5 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                  <p className="text-[0.65rem] uppercase tracking-[0.28em] text-secondary">
-                    Supplier Profile
-                  </p>
-                  <h2 className="mt-2 text-xl font-semibold text-heading">
-                    {profile.business_name || "Supplier"}
-                  </h2>
-                  <p className="mt-1 text-sm text-muted">
-                    Created {formatDate(profile.created_at)}
-                  </p>
-                </div>
-                <span
-                  className={`inline-flex w-fit rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] ${statusBadgeClass(profile.verification_status)}`}
-                >
-                  {profile.verification_status || "Pending Review"}
-                </span>
-              </div>
+          {filteredProfiles.map((profile) => {
+            const complianceIssues = getProfileExpiryIssues(profile)
+            const hasIssues = complianceIssues.length > 0
 
-              <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <div className="md:col-span-2 xl:col-span-4">
-                  <ReadinessScore profile={profile} />
+            return (
+              <article
+                key={profile.id}
+                className="rounded-md border border-panel bg-card p-6 shadow-panel"
+              >
+                <div className="flex flex-col gap-4 border-b border-panel pb-5 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="text-[0.65rem] uppercase tracking-[0.28em] text-secondary">
+                      Supplier Profile
+                    </p>
+                    <h2 className="mt-2 text-xl font-semibold text-heading">
+                      {profile.business_name || "Supplier"}
+                    </h2>
+                    <p className="mt-1 text-sm text-muted">
+                      Created {formatDate(profile.created_at)}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-start gap-2">
+                    <span
+                      className={`inline-flex w-fit rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] ${statusBadgeClass(profile.verification_status)}`}
+                    >
+                      {profile.verification_status || "Pending Review"}
+                    </span>
+                    {hasIssues && (
+                      <span className="inline-flex w-fit rounded-md border border-warning bg-warning-soft px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-warning">
+                        Compliance Alert
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="md:col-span-2 xl:col-span-4">
-                  <PerformanceScore
-                    reviews={reviewsBySupplier[profile.id] ?? []}
-                  />
-                </div>
-                <div className="rounded-md border border-panel bg-panel p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Province</p>
-                  <p className="mt-2 text-sm font-semibold text-heading">{profile.province || "-"}</p>
-                </div>
-                <div className="rounded-md border border-panel bg-panel p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Industry</p>
-                  <p className="mt-2 text-sm font-semibold text-heading">{profile.industry || "-"}</p>
-                </div>
-                <div className="rounded-md border border-panel bg-panel p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">CSD Number</p>
-                  <p className="mt-2 text-sm font-semibold text-heading">{profile.csd_number || "-"}</p>
-                </div>
-                <div className="rounded-md border border-panel bg-panel p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">B-BBEE Level</p>
-                  <p className="mt-2 text-sm font-semibold text-heading">{profile.bbbee_level || "-"}</p>
-                </div>
-                <div className="rounded-md border border-panel bg-panel p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Tax Status</p>
-                  <p className="mt-2 text-sm font-semibold text-heading">{profile.tax_status || "-"}</p>
-                </div>
-                <div className="rounded-md border border-panel bg-panel p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Company Registration</p>
-                  <p className="mt-2 text-sm font-semibold text-heading">{profile.company_registration || "-"}</p>
-                </div>
-                <div className="rounded-md border border-panel bg-panel p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">CIDB Grade</p>
-                  <p className="mt-2 text-sm font-semibold text-heading">{profile.cidb_grade || "-"}</p>
-                </div>
-                <div className="rounded-md border border-panel bg-panel p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Created At</p>
-                  <p className="mt-2 text-sm font-semibold text-heading">{formatDate(profile.created_at)}</p>
-                </div>
-              </div>
 
-              <div className="mt-5 flex flex-wrap gap-3 border-t border-panel pt-5">
-                <SaveSupplierControl supplierId={profile.id} compact />
-                <button
-                  type="button"
-                  disabled={updatingId === profile.id}
-                  onClick={() => updateVerificationStatus(profile.id, "Verified")}
-                  className="rounded-md border border-success bg-success px-4 py-2 text-sm font-semibold text-button transition disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Verify Supplier
-                </button>
-                <button
-                  type="button"
-                  disabled={updatingId === profile.id}
-                  onClick={() => updateVerificationStatus(profile.id, "Rejected")}
-                  className="rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Reject Supplier
-                </button>
-                <button
-                  type="button"
-                  disabled={updatingId === profile.id}
-                  onClick={() => updateVerificationStatus(profile.id, "Pending Review")}
-                  className="rounded-md border border-panel bg-surface px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-panel disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Mark Pending
-                </button>
-              </div>
-            </article>
-          ))}
+                {hasIssues && (
+                  <div className="mt-4 flex flex-wrap gap-2 rounded-md border border-warning/30 bg-warning-soft px-4 py-3">
+                    {complianceIssues.map(({ doc, status }) => (
+                      <span
+                        key={doc}
+                        className={`inline-flex rounded-md border px-2.5 py-0.5 text-[0.62rem] font-semibold uppercase tracking-[0.12em] ${status.badgeClass}`}
+                      >
+                        {doc}: {status.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="md:col-span-2 xl:col-span-4">
+                    <ReadinessScore profile={profile} />
+                  </div>
+                  <div className="md:col-span-2 xl:col-span-4">
+                    <PerformanceScore
+                      reviews={reviewsBySupplier[profile.id] ?? []}
+                    />
+                  </div>
+                  <div className="rounded-md border border-panel bg-panel p-4">
+                    <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Province</p>
+                    <p className="mt-2 text-sm font-semibold text-heading">{profile.province || "-"}</p>
+                  </div>
+                  <div className="rounded-md border border-panel bg-panel p-4">
+                    <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Industry</p>
+                    <p className="mt-2 text-sm font-semibold text-heading">{profile.industry || "-"}</p>
+                  </div>
+                  <div className="rounded-md border border-panel bg-panel p-4">
+                    <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">CSD Number</p>
+                    <p className="mt-2 text-sm font-semibold text-heading">{profile.csd_number || "-"}</p>
+                    {profile.csd_expiry_date && (
+                      <span className={`mt-2 inline-flex rounded-md border px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.1em] ${getComplianceStatus(profile.csd_expiry_date).badgeClass}`}>
+                        {getComplianceStatus(profile.csd_expiry_date).label}
+                      </span>
+                    )}
+                  </div>
+                  <div className="rounded-md border border-panel bg-panel p-4">
+                    <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">B-BBEE Level</p>
+                    <p className="mt-2 text-sm font-semibold text-heading">{profile.bbbee_level || "-"}</p>
+                    {profile.bbbee_expiry_date && (
+                      <span className={`mt-2 inline-flex rounded-md border px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.1em] ${getComplianceStatus(profile.bbbee_expiry_date).badgeClass}`}>
+                        {getComplianceStatus(profile.bbbee_expiry_date).label}
+                      </span>
+                    )}
+                  </div>
+                  <div className="rounded-md border border-panel bg-panel p-4">
+                    <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Tax Status</p>
+                    <p className="mt-2 text-sm font-semibold text-heading">{profile.tax_status || "-"}</p>
+                    {profile.tax_expiry_date && (
+                      <span className={`mt-2 inline-flex rounded-md border px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.1em] ${getComplianceStatus(profile.tax_expiry_date).badgeClass}`}>
+                        {getComplianceStatus(profile.tax_expiry_date).label}
+                      </span>
+                    )}
+                  </div>
+                  <div className="rounded-md border border-panel bg-panel p-4">
+                    <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Company Registration</p>
+                    <p className="mt-2 text-sm font-semibold text-heading">{profile.company_registration || "-"}</p>
+                  </div>
+                  <div className="rounded-md border border-panel bg-panel p-4">
+                    <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">CIDB Grade</p>
+                    <p className="mt-2 text-sm font-semibold text-heading">{profile.cidb_grade || "-"}</p>
+                    {profile.cidb_expiry_date && (
+                      <span className={`mt-2 inline-flex rounded-md border px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.1em] ${getComplianceStatus(profile.cidb_expiry_date).badgeClass}`}>
+                        {getComplianceStatus(profile.cidb_expiry_date).label}
+                      </span>
+                    )}
+                  </div>
+                  <div className="rounded-md border border-panel bg-panel p-4">
+                    <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Created At</p>
+                    <p className="mt-2 text-sm font-semibold text-heading">{formatDate(profile.created_at)}</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-3 border-t border-panel pt-5">
+                  <SaveSupplierControl supplierId={profile.id} compact />
+                  <button
+                    type="button"
+                    disabled={updatingId === profile.id}
+                    onClick={() => updateVerificationStatus(profile.id, "Verified")}
+                    className="rounded-md border border-success bg-success px-4 py-2 text-sm font-semibold text-button transition disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Verify Supplier
+                  </button>
+                  <button
+                    type="button"
+                    disabled={updatingId === profile.id}
+                    onClick={() => updateVerificationStatus(profile.id, "Rejected")}
+                    className="rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Reject Supplier
+                  </button>
+                  <button
+                    type="button"
+                    disabled={updatingId === profile.id}
+                    onClick={() => updateVerificationStatus(profile.id, "Pending Review")}
+                    className="rounded-md border border-panel bg-surface px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-panel disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Mark Pending
+                  </button>
+                </div>
+              </article>
+            )
+          })}
         </div>
       )}
     </div>

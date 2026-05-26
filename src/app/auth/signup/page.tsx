@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
+import { useMemo, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useAutosave } from "@/hooks/useAutosave"
 import { supabase } from "@/lib/supabase"
 
 const provinceIndustryMap: Record<string, string[]> = {
@@ -88,6 +89,14 @@ const provinceIndustryMap: Record<string, string[]> = {
 
 const provinces = Object.keys(provinceIndustryMap)
 
+type SignupDraft = {
+  businessName: string
+  email: string
+  industry: string
+  phone: string
+  province: string
+}
+
 export default function SignupPage() {
 
   const router = useRouter()
@@ -102,6 +111,28 @@ export default function SignupPage() {
   const [successMessage, setSuccessMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
   const industryOptions = province ? provinceIndustryMap[province] : []
+  const signupDraft = useMemo<SignupDraft>(
+    () => ({
+      businessName,
+      email,
+      industry,
+      phone,
+      province,
+    }),
+    [businessName, email, industry, phone, province]
+  )
+  const autosave = useAutosave<SignupDraft>({
+    key: "monate-draft-supplier-registration",
+    value: signupDraft,
+    enabled: !successMessage,
+    onRestore: (draft) => {
+      setBusinessName(draft.businessName)
+      setEmail(draft.email)
+      setProvince(draft.province)
+      setIndustry(draft.industry)
+      setPhone(draft.phone)
+    },
+  })
 
   const handleSignup = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -150,6 +181,7 @@ export default function SignupPage() {
     setLoading(false)
 
     setSuccessMessage("Account created. Please check your email to verify your account, then login.")
+    autosave.clearDraft()
     setBusinessName("")
     setEmail("")
     setPassword("")
@@ -177,6 +209,46 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSignup} className="space-y-5">
+          {autosave.showRecoveryDialog && (
+            <div className="rounded-2xl border border-accent bg-surface px-5 py-4 shadow-sm">
+              <p className="text-sm font-semibold text-heading">
+                Restore previous draft?
+              </p>
+              <p className="mt-1 text-xs leading-5 text-secondary">
+                We found saved supplier registration progress. Passwords are never saved.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={autosave.restoreDraft}
+                  className="rounded-2xl border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong"
+                >
+                  Restore Draft
+                </button>
+                <button
+                  type="button"
+                  onClick={autosave.discardDraft}
+                  className="rounded-2xl border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-surface"
+                >
+                  Discard Draft
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-panel bg-surface px-5 py-3">
+            <p className="text-xs font-semibold text-success">
+              {autosave.status === "saved" ? "✓ Draft saved" : "Draft autosaves every 5 seconds"}
+            </p>
+            <button
+              type="button"
+              onClick={autosave.discardDraft}
+              className="rounded-xl border border-panel bg-panel px-3 py-1.5 text-xs font-semibold text-secondary transition hover:bg-surface"
+            >
+              Discard Draft
+            </button>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-secondary">Business name</label>
             <input

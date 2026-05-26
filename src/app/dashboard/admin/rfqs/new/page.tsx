@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useAutosave } from "@/hooks/useAutosave"
 import { logActivity } from "@/lib/activity"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
@@ -96,6 +97,12 @@ export default function NewRFQPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const autosave = useAutosave<FormState>({
+    key: "monate-draft-rfq-create",
+    value: form,
+    enabled: !checkingAccess && !success,
+    onRestore: setForm,
+  })
 
   useEffect(() => {
     async function checkAccess() {
@@ -247,6 +254,7 @@ export default function NewRFQPage() {
     }
 
     setSuccess(true)
+    autosave.clearDraft()
     setForm(EMPTY_FORM)
     setAttachment(null)
   }
@@ -328,6 +336,50 @@ export default function NewRFQPage() {
         </div>
       ) : (
       <form onSubmit={handleSubmit}>
+        {autosave.showRecoveryDialog && (
+          <div className="mb-5 rounded-md border border-accent bg-surface p-5 shadow-panel">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-heading">
+                  Restore previous draft?
+                </p>
+                <p className="mt-1 text-xs leading-5 text-secondary">
+                  We found saved RFQ progress from your last session.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={autosave.restoreDraft}
+                  className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong"
+                >
+                  Restore Draft
+                </button>
+                <button
+                  type="button"
+                  onClick={autosave.discardDraft}
+                  className="rounded-md border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-surface"
+                >
+                  Discard Draft
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-md border border-panel bg-card px-5 py-3 shadow-sm">
+          <p className="text-xs font-semibold text-success">
+            {autosave.status === "saved" ? "✓ Draft saved" : "Draft autosaves every 5 seconds"}
+          </p>
+          <button
+            type="button"
+            onClick={autosave.discardDraft}
+            className="rounded-md border border-panel bg-panel px-3 py-1.5 text-xs font-semibold text-secondary transition hover:bg-surface"
+          >
+            Discard Draft
+          </button>
+        </div>
+
         {/* Main details card */}
         <section className="rounded-md border border-panel bg-panel p-6">
           <div className="border-b border-panel pb-4">

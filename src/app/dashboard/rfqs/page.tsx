@@ -10,6 +10,7 @@ import {
   type RFQMatchScore,
 } from "@/lib/rfqMatch"
 import { useI18n } from "@/lib/i18n"
+import SaveRFQControl from "@/components/rfqs/SaveRFQControl"
 import { supabase } from "@/lib/supabase"
 
 type RFQ = {
@@ -180,6 +181,7 @@ function RFQCard({
         >
           {t("viewRFQ")}
         </Link>
+        <SaveRFQControl rfqId={rfq.id} compact />
       </div>
     </article>
   )

@@ -1,7 +1,10 @@
 "use client"
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react"
+import { useAutosave } from "@/hooks/useAutosave"
 import { logActivity } from "@/lib/activity"
+import { getComplianceStatus } from "@/lib/complianceStatus"
+import { createNotification } from "@/lib/notifications"
 import { supabase } from "@/lib/supabase"
 
 type VerificationForm = {
@@ -11,6 +14,10 @@ type VerificationForm = {
   company_registration: string
   cidb_grade: string
   verification_notes: string
+  tax_expiry_date: string
+  bbbee_expiry_date: string
+  csd_expiry_date: string
+  cidb_expiry_date: string
 }
 
 type DocumentField =
@@ -30,6 +37,11 @@ type DocumentConfig = {
 
 type DocumentUrls = Record<DocumentField, string>
 
+type VerificationDraft = {
+  documentUrls: DocumentUrls
+  form: VerificationForm
+}
+
 const EMPTY_FORM: VerificationForm = {
   csd_number: "",
   bbbee_level: "",
@@ -37,6 +49,10 @@ const EMPTY_FORM: VerificationForm = {
   company_registration: "",
   cidb_grade: "",
   verification_notes: "",
+  tax_expiry_date: "",
+  bbbee_expiry_date: "",
+  csd_expiry_date: "",
+  cidb_expiry_date: "",
 }
 
 const EMPTY_DOCUMENT_URLS: DocumentUrls = {
@@ -111,6 +127,23 @@ export default function VerificationPage() {
   const [uploadingField, setUploadingField] = useState<DocumentField | null>(null)
   const [successMessage, setSuccessMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
+  const [submittedSuccessfully, setSubmittedSuccessfully] = useState(false)
+  const verificationDraft = useMemo<VerificationDraft>(
+    () => ({
+      documentUrls,
+      form,
+    }),
+    [documentUrls, form]
+  )
+  const autosave = useAutosave<VerificationDraft>({
+    key: "monate-draft-supplier-verification",
+    value: verificationDraft,
+    enabled: !loading && !submitting && !submittedSuccessfully,
+    onRestore: (draft) => {
+      setForm(draft.form)
+      setDocumentUrls(draft.documentUrls)
+    },
+  })
 
   useEffect(() => {
     async function loadProfile() {
@@ -139,7 +172,7 @@ export default function VerificationPage() {
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select(
-          "verification_status, csd_number, bbbee_level, tax_status, company_registration, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url"
+          "verification_status, csd_number, bbbee_level, tax_status, company_registration, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date"
         )
         .eq("id", userData.user.id)
         .maybeSingle()
@@ -159,6 +192,10 @@ export default function VerificationPage() {
           company_registration: profile.company_registration || "",
           cidb_grade: profile.cidb_grade || "",
           verification_notes: profile.verification_notes || "",
+          tax_expiry_date: profile.tax_expiry_date || "",
+          bbbee_expiry_date: profile.bbbee_expiry_date || "",
+          csd_expiry_date: profile.csd_expiry_date || "",
+          cidb_expiry_date: profile.cidb_expiry_date || "",
         })
         setDocumentUrls({
           csd_document_url: profile.csd_document_url || "",
@@ -185,6 +222,7 @@ export default function VerificationPage() {
     }))
     setSuccessMessage("")
     setErrorMessage("")
+    setSubmittedSuccessfully(false)
   }
 
   async function handleDocumentUpload(
@@ -197,6 +235,7 @@ export default function VerificationPage() {
 
     setSuccessMessage("")
     setErrorMessage("")
+    setSubmittedSuccessfully(false)
 
     if (!supabase) {
       setErrorMessage("Supabase environment variables are not configured.")
@@ -304,6 +343,10 @@ export default function VerificationPage() {
         capability_statement_url:
           documentUrls.capability_statement_url || null,
         verification_status: "Under Review",
+        tax_expiry_date: form.tax_expiry_date || null,
+        bbbee_expiry_date: form.bbbee_expiry_date || null,
+        csd_expiry_date: form.csd_expiry_date || null,
+        cidb_expiry_date: form.cidb_expiry_date || null,
       })
       .eq("id", userId)
 
@@ -333,11 +376,49 @@ export default function VerificationPage() {
       console.error(activityError)
     }
 
+    // Notify supplier if any compliance document is expiring or expired
+    const complianceChecks = [
+      { label: "Tax Clearance Certificate", date: form.tax_expiry_date },
+      { label: "B-BBEE Certificate", date: form.bbbee_expiry_date },
+      { label: "CSD Registration", date: form.csd_expiry_date },
+      { label: "CIDB Certificate", date: form.cidb_expiry_date },
+    ]
+
+    for (const check of complianceChecks) {
+      const { status } = getComplianceStatus(check.date)
+      if (status === "expired" || status === "expiring_soon") {
+        try {
+          await createNotification({
+            recipientId: userId,
+            type: "Compliance Expiry Warning",
+            title: status === "expired" ? `${check.label} has expired` : `${check.label} expiring soon`,
+            message:
+              status === "expired"
+                ? `Your ${check.label} has expired. Please renew it as soon as possible to avoid procurement delays.`
+                : `Your ${check.label} is expiring within 30 days. Renew it promptly to stay procurement-ready.`,
+            link: "/dashboard/verification",
+            metadata: { document: check.label, expiry_date: check.date },
+          })
+        } catch (notifyError) {
+          console.error(notifyError)
+        }
+      }
+    }
+
     setVerificationStatus("Under Review")
+    autosave.clearDraft()
+    setSubmittedSuccessfully(true)
     setSuccessMessage(
       "Verification details submitted successfully. Your profile is now under review."
     )
   }
+
+  const expiryFields = [
+    { key: "tax_expiry_date" as const, label: "Tax Clearance Expiry Date" },
+    { key: "bbbee_expiry_date" as const, label: "B-BBEE Certificate Expiry Date" },
+    { key: "csd_expiry_date" as const, label: "CSD Expiry Date" },
+    { key: "cidb_expiry_date" as const, label: "CIDB Certificate Expiry Date" },
+  ]
 
   return (
     <>
@@ -364,6 +445,50 @@ export default function VerificationPage() {
           <span className="inline-flex rounded-2xl border border-accent-soft bg-accent-soft px-4 py-2 text-sm font-semibold text-heading">
             Supplier Compliance
           </span>
+        </div>
+
+        {autosave.showRecoveryDialog && (
+          <div className="mb-6 rounded-2xl border border-accent bg-surface px-5 py-4 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-heading">
+                  Restore previous draft?
+                </p>
+                <p className="mt-1 text-xs leading-5 text-secondary">
+                  We found saved verification progress from your last session.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={autosave.restoreDraft}
+                  className="rounded-2xl border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong"
+                >
+                  Restore Draft
+                </button>
+                <button
+                  type="button"
+                  onClick={autosave.discardDraft}
+                  className="rounded-2xl border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-surface"
+                >
+                  Discard Draft
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-panel bg-surface px-5 py-3">
+          <p className="text-xs font-semibold text-success">
+            {autosave.status === "saved" ? "✓ Draft saved" : "Draft autosaves every 5 seconds"}
+          </p>
+          <button
+            type="button"
+            onClick={autosave.discardDraft}
+            className="rounded-xl border border-panel bg-panel px-3 py-1.5 text-xs font-semibold text-secondary transition hover:bg-surface"
+          >
+            Discard Draft
+          </button>
         </div>
 
         {errorMessage && (
@@ -489,6 +614,51 @@ export default function VerificationPage() {
                   onChange={handleChange}
                   className={inputClass}
                 />
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-panel bg-panel p-6">
+              <div className="mb-6 border-b border-panel pb-4">
+                <p className="text-xs uppercase tracking-[0.26em] text-accent">
+                  Document Expiry Dates
+                </p>
+                <h2 className="mt-2 text-xl font-semibold text-heading">
+                  Compliance validity tracking
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-secondary">
+                  Enter expiry dates so the system can warn you before documents
+                  lapse and affect procurement eligibility.
+                </p>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                {expiryFields.map(({ key, label }) => {
+                  const status = getComplianceStatus(form[key])
+                  return (
+                    <div key={key}>
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <label htmlFor={key} className="block text-sm font-medium text-secondary">
+                          {label}
+                        </label>
+                        {form[key] && (
+                          <span
+                            className={`inline-flex rounded-md border px-2.5 py-0.5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] ${status.badgeClass}`}
+                          >
+                            {status.label}
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        id={key}
+                        name={key}
+                        type="date"
+                        value={form[key]}
+                        onChange={handleChange}
+                        className={inputClass}
+                      />
+                    </div>
+                  )
+                })}
               </div>
             </section>
 

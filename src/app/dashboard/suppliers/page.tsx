@@ -10,6 +10,7 @@ import {
 import { useI18n } from "@/lib/i18n"
 import { calculateSupplierScore } from "@/lib/supplierScore"
 import { supabase } from "@/lib/supabase"
+import { hasComplianceWarning } from "@/lib/complianceStatus"
 
 type SupplierProfile = {
   id: string
@@ -30,6 +31,10 @@ type SupplierProfile = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
+  tax_expiry_date: string | null
+  bbbee_expiry_date: string | null
+  csd_expiry_date: string | null
+  cidb_expiry_date: string | null
 }
 
 type SupplierReview = SupplierPerformanceReview & {
@@ -208,7 +213,7 @@ export default function SuppliersDirectoryPage() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, business_name, province, industry, phone, email, verification_status, created_at, csd_number, bbbee_level, tax_status, company_registration, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url")
+        .select("id, business_name, province, industry, phone, email, verification_status, created_at, csd_number, bbbee_level, tax_status, company_registration, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date")
         .order("business_name", { ascending: true })
 
       if (error) {
@@ -479,6 +484,11 @@ export default function SuppliersDirectoryPage() {
                   >
                     {supplier.verification_status || "Pending Review"}
                   </span>
+                    {hasComplianceWarning([supplier.tax_expiry_date, supplier.bbbee_expiry_date, supplier.csd_expiry_date, supplier.cidb_expiry_date]) && (
+                      <span className="inline-flex w-fit rounded-md border border-warning/40 bg-warning-soft px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-warning">
+                        Compliance Alert
+                      </span>
+                    )}
                 </div>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">

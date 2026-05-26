@@ -44,6 +44,7 @@ export type TranslationKey =
   | "activityLog"
   | "purchaseOrders"
   | "savedSuppliers"
+  | "savedRFQs"
   | "supplierLogin"
   | "registerSupplier"
   | "logout"
@@ -81,6 +82,7 @@ export const translations: Record<LanguageCode, Record<TranslationKey, string>> 
     activityLog: "Activity Log",
     purchaseOrders: "Purchase Orders",
     savedSuppliers: "Saved Suppliers",
+    savedRFQs: "Saved RFQs",
     supplierLogin: "Supplier Login",
     registerSupplier: "Register Supplier",
     logout: "Logout",
@@ -117,6 +119,7 @@ export const translations: Record<LanguageCode, Record<TranslationKey, string>> 
     activityLog: "Aktiwiteitslog",
     purchaseOrders: "Aankoopbestellings",
     savedSuppliers: "Gestoorde Verskaffers",
+    savedRFQs: "Gestoorde RFQs",
     supplierLogin: "Verskaffer-aanmelding",
     registerSupplier: "Registreer Verskaffer",
     logout: "Meld af",
@@ -153,6 +156,7 @@ export const translations: Record<LanguageCode, Record<TranslationKey, string>> 
     activityLog: "Irekhodi Lomsebenzi",
     purchaseOrders: "Ama-oda Wokuthenga",
     savedSuppliers: "Abanikeli Abagciniwe",
+    savedRFQs: "Ama-RFQ Agciniwe",
     supplierLogin: "Ukungena Komnikeli",
     registerSupplier: "Bhalisa Umnikeli",
     logout: "Phuma",
@@ -189,6 +193,7 @@ export const translations: Record<LanguageCode, Record<TranslationKey, string>> 
     activityLog: "Ingxelo Yomsebenzi",
     purchaseOrders: "Iiodolo Zokuthenga",
     savedSuppliers: "Ababoneleli Abagciniweyo",
+    savedRFQs: "ii-RFQ Ezigciniweyo",
     supplierLogin: "Ngena Njengomboneleli",
     registerSupplier: "Bhalisa Umboneleli",
     logout: "Phuma",
@@ -225,6 +230,7 @@ export const translations: Record<LanguageCode, Record<TranslationKey, string>> 
     activityLog: "Ilogi Yomsebenzi",
     purchaseOrders: "Ama-oda Okuthenga",
     savedSuppliers: "Abaphakeli Abagciniwe",
+    savedRFQs: "Ama-RFQ Agciniwe",
     supplierLogin: "Ukungena Komphakeli",
     registerSupplier: "Bhalisa Umphakeli",
     logout: "Phuma",
@@ -261,6 +267,7 @@ export const translations: Record<LanguageCode, Record<TranslationKey, string>> 
     activityLog: "Loge ya Mediro",
     purchaseOrders: "Ditaelo tsa Theko",
     savedSuppliers: "Bafepedi ba Bolokilwego",
+    savedRFQs: "Di-RFQ tse Bolokilwego",
     supplierLogin: "Tsena bjalo ka Mofepedi",
     registerSupplier: "Ngwadisa Mofepedi",
     logout: "Tswa",
@@ -297,6 +304,7 @@ export const translations: Record<LanguageCode, Record<TranslationKey, string>> 
     activityLog: "Log ya Mesebetsi",
     purchaseOrders: "Ditaelo tsa Theko",
     savedSuppliers: "Bafani ba Bolokilweng",
+    savedRFQs: "Di-RFQ tse Bolokilweng",
     supplierLogin: "Kena Jwalo ka Mofani",
     registerSupplier: "Ngodisa Mofani",
     logout: "Tsoa",
@@ -333,6 +341,7 @@ export const translations: Record<LanguageCode, Record<TranslationKey, string>> 
     activityLog: "Loko ya Ditiro",
     purchaseOrders: "Ditaelo tsa Theko",
     savedSuppliers: "Batlamedi ba ba Bolokilweng",
+    savedRFQs: "Di-RFQ tse Bolokilweng",
     supplierLogin: "Tsena jaaka Motlamedi",
     registerSupplier: "Kwadisa Motlamedi",
     logout: "Tswa",
@@ -369,6 +378,7 @@ export const translations: Record<LanguageCode, Record<TranslationKey, string>> 
     activityLog: "Ilogi Yemsebenti",
     purchaseOrders: "Ema-oda Ekutsenga",
     savedSuppliers: "Bahlinzeki Labagciniwe",
+    savedRFQs: "Ema-RFQ Lagciniwe",
     supplierLogin: "Ngena Njengemhlinzeki",
     registerSupplier: "Bhalisa Umhlinzeki",
     logout: "Phuma",
@@ -405,6 +415,7 @@ export const translations: Record<LanguageCode, Record<TranslationKey, string>> 
     activityLog: "Logi ya Mishumo",
     purchaseOrders: "Oda dza u Renga",
     savedSuppliers: "Vhanetshedzi vho Vhulungwaho",
+    savedRFQs: "Dzi-RFQ dzo Vhulungwaho",
     supplierLogin: "U Dzhena ha Munetshedzi",
     registerSupplier: "Nwalisa Munetshedzi",
     logout: "Buda",
@@ -441,6 +452,7 @@ export const translations: Record<LanguageCode, Record<TranslationKey, string>> 
     activityLog: "Logi ya Mintirho",
     purchaseOrders: "Ti-oda ta ku Xava",
     savedSuppliers: "Vaphakeri lava Hlayisiweke",
+    savedRFQs: "Ti-RFQ ta Hlayisiweke",
     supplierLogin: "Nghena tani hi Muphakeri",
     registerSupplier: "Tsarisa Muphakeri",
     logout: "Huma",

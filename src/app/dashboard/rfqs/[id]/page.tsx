@@ -1,6 +1,8 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import RFQClarifications from "@/components/rfqs/RFQClarifications"
+import SaveRFQControl from "@/components/rfqs/SaveRFQControl"
+import RFQIntelligence from "@/components/rfqs/RFQIntelligence"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { supabase } from "@/lib/supabase"
 
@@ -218,6 +220,16 @@ export default async function RFQDetailPage({ params }: Props) {
         </div>
       )}
 
+      <RFQIntelligence
+        title={rfq.title}
+        description={rfq.description}
+        category={rfq.category}
+        province={rfq.province}
+        budget={rfq.budget}
+        deadline={rfq.deadline}
+        attachment_url={rfq.attachment_url}
+      />
+
       <RFQClarifications rfqId={rfq.id} />
 
       <div className="mt-8 flex flex-wrap gap-4 rounded-md border border-panel bg-card px-5 py-4">
@@ -245,11 +257,20 @@ export default async function RFQDetailPage({ params }: Props) {
         </a>
 
         <Link
+          href={`/dashboard/messages?receiver_role=buyer-admin&rfq_id=${rfq.id}&subject=${encodeURIComponent(`RFQ-${rfq.id} question`)}`}
+          className="inline-flex items-center justify-center rounded-md border border-panel bg-surface px-5 py-2.5 text-sm font-semibold text-secondary transition hover:bg-panel"
+        >
+          Message Buyer/Admin
+        </Link>
+
+        <Link
           href="/dashboard/rfqs"
           className="inline-flex items-center justify-center rounded-md border border-panel bg-surface px-5 py-2.5 text-sm font-semibold text-secondary transition hover:bg-panel"
         >
           Back to RFQs
         </Link>
+
+        <SaveRFQControl rfqId={rfq.id} compact />
 
       </div>
 

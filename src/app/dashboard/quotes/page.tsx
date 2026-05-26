@@ -1,4 +1,5 @@
 ﻿import { Suspense } from "react"
+import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
 type Quote = {
@@ -112,6 +113,9 @@ async function QuotesTable() {
               <th className="px-5 py-3.5 text-left text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-secondary">
                 Created At
               </th>
+              <th className="px-5 py-3.5 text-left text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-secondary">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-panel">
@@ -139,6 +143,14 @@ async function QuotesTable() {
                 </td>
                 <td className="px-5 py-4 text-secondary">
                   {formatDate(quote.created_at ?? quote.submitted_at)}
+                </td>
+                <td className="px-5 py-4">
+                  <Link
+                    href={`/dashboard/messages?receiver_role=buyer-admin&rfq_id=${quote.rfq_id ?? ""}&quote_id=${quote.id}&subject=${encodeURIComponent(`Quote Q-${quote.id} question`)}`}
+                    className="inline-flex whitespace-nowrap rounded-md border border-accent bg-accent px-3 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong"
+                  >
+                    Message Buyer/Admin
+                  </Link>
                 </td>
               </tr>
             ))}
