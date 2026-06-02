@@ -527,6 +527,14 @@ export default function AdminQuotesPage() {
                             No Supplier ID
                           </button>
                         )}
+                        {quote.status === "Awarded" && quote.rfq_id != null && (
+                          <Link
+                            href={`/dashboard/admin/rfqs/${quote.rfq_id}/quotes`}
+                            className="rounded-md border border-success bg-success-soft px-3 py-2 text-xs font-semibold text-success transition hover:bg-success/10"
+                          >
+                            Generate Purchase Order
+                          </Link>
+                        )}
                         {REVIEW_STATUSES.map((status) => (
                           <button
                             key={status}

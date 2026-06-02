@@ -41,11 +41,11 @@ export default function Features() {
         {features.map((feature) => (
           <div
             key={feature.title}
-            className="rounded-3xl border border-panel bg-card p-8 transition-colors hover:border-accent/70"
+            className="tactile-card"
           >
-            <div className="mb-6 h-14 w-14 rounded-2xl bg-accent-soft" />
+            <div className="mb-6 tactile-icon" />
 
-            <h3 className="text-2xl font-semibold text-heading">
+            <h3 className="text-2xl font-semibold text-heading mt-6">
               {feature.title}
             </h3>
 

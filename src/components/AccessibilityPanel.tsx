@@ -145,7 +145,11 @@ export default function AccessibilityPanel() {
   )
 
   return (
-    <div ref={panelRef} className="accessibility-panel">
+    <div
+      ref={panelRef}
+      className="accessibility-panel"
+      style={{ position: "fixed", right: 18, bottom: "calc(var(--news-ticker-height) + 84px)", zIndex: 80, pointerEvents: "none" }}
+    >
       <button
         type="button"
         aria-expanded={open}
@@ -153,8 +157,13 @@ export default function AccessibilityPanel() {
         aria-label="Open accessibility controls"
         onClick={() => setOpen((current) => !current)}
         className="accessibility-panel__trigger"
+        style={{ minHeight: 34, fontSize: "0.78rem", padding: "0.38rem 0.6rem", gap: "0.45rem" }}
       >
-        <span className="accessibility-panel__trigger-mark" aria-hidden="true">
+        <span
+          className="accessibility-panel__trigger-mark"
+          aria-hidden="true"
+          style={{ width: 22, height: 22, fontSize: "0.76rem" }}
+        >
           Aa
         </span>
         <span className="accessibility-panel__trigger-text">Access</span>

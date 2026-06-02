@@ -318,7 +318,7 @@ export default function ProcurementCalendarPage() {
           type: "Purchase Order" as CalendarEventType,
           status: purchaseOrder.status || "Generated",
           province: null,
-          link: `/dashboard/admin/purchase-orders/${purchaseOrder.id}`,
+          link: `/dashboard/purchase-orders/${purchaseOrder.id}`,
         }
       })
       .filter(isCalendarEvent)

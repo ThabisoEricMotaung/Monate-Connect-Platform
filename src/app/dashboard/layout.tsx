@@ -33,6 +33,10 @@ const navigation: {
     href: "/dashboard/quotes",
   },
   {
+    name: "purchaseOrders",
+    href: "/dashboard/purchase-orders",
+  },
+  {
     name: "supplierDirectory",
     href: "/dashboard/suppliers",
   },

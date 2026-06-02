@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { I18nProvider } from "@/lib/i18n";
@@ -11,6 +11,12 @@ import NewsTicker from "@/components/NewsTicker";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair-display",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -68,7 +74,7 @@ export default function RootLayout({
       data-reading-mode="off"
       data-low-data="off"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${playfair.variable} ${geistMono.variable} h-full antialiased`}
     >
       <Script
         id="theme-script"

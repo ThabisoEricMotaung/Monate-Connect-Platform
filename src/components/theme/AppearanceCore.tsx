@@ -73,7 +73,12 @@ export default function AppearanceCore() {
   const label = active?.label ?? "Auto"
 
   return (
-    <div ref={containerRef} className="appearance-core" data-theme-mode={theme}>
+    <div
+      ref={containerRef}
+      className="appearance-core"
+      data-theme-mode={theme}
+      style={{ position: "fixed", right: 18, bottom: "calc(var(--news-ticker-height) + 16px)", zIndex: 80 }}
+    >
       <button
         type="button"
         aria-expanded={open}
@@ -81,6 +86,7 @@ export default function AppearanceCore() {
         aria-label={`Appearance mode: ${label}. Open theme selector.`}
         onClick={() => setOpen((current) => !current)}
         className="appearance-core__button"
+        style={{ width: 50, height: 50 }}
       >
         <span className="appearance-core__aura" />
         <span className="appearance-core__glass" />

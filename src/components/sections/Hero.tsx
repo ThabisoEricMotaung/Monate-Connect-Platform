@@ -1,40 +1,65 @@
 import Link from "next/link"
 
+const notices = [
+  {
+    label: "RFQ Alert",
+    text: "New maintenance RFQs available in Mpumalanga — submission deadline approaching",
+  },
+  {
+    label: "Compliance",
+    text: "BBBEE certification renewal required for all Q2 2026 tender submissions",
+  },
+  {
+    label: "Tender Notice",
+    text: "Infrastructure tender TDR-2026-0441 now open for verified suppliers",
+  },
+  {
+    label: "System Update",
+    text: "Supplier profile verification processing time: 24 to 48 hours",
+  },
+]
+
 export default function Hero() {
   return (
-    <section className="mx-auto flex min-h-[90vh] max-w-7xl flex-col items-center justify-center px-6 text-center">
+    <section className="newspaper-hero">
+      <div className="newspaper-hero__main">
+        <p className="newspaper-kicker">Enterprise Access &middot; Tender Readiness</p>
 
-      <div className="mb-6 rounded-full border border-accent/30 bg-surface px-4 py-2 text-sm text-accent">
-        Enterprise supplier access
+        <h1 className="newspaper-headline">
+          Operational supplier access for procurement teams
+        </h1>
+
+        <p className="newspaper-body newspaper-drop-cap">
+          Secure supplier login for RFQ response, verification workflow, compliance
+          review, and procurement readiness across mining and infrastructure sourcing.
+        </p>
+
+        <div className="newspaper-hero__actions">
+          <Link href="/auth/login" className="masthead__btn-primary">
+            Supplier Login
+          </Link>
+          <Link href="/auth/signup" className="masthead__btn-secondary">
+            Register Supplier
+          </Link>
+        </div>
       </div>
 
-      <h1 className="max-w-5xl text-5xl font-bold leading-tight md:text-7xl text-primary">
-        Operational supplier access for procurement teams
-      </h1>
-
-      <p className="mt-6 max-w-3xl text-lg text-secondary">
-        Secure supplier login for RFQ response, verification workflow, compliance review,
-        and procurement readiness across mining and infrastructure sourcing.
-      </p>
-
-      <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
-
-        <Link
-          href="/auth/login"
-          className="rounded-2xl bg-accent px-8 py-4 font-semibold text-button transition-colors hover:bg-accent-strong"
-        >
-          Supplier Login
-        </Link>
-
-        <Link
-          href="/auth/signup"
-          className="rounded-2xl border border-panel bg-panel px-8 py-4 font-semibold text-secondary transition-colors hover:bg-surface"
-        >
-          Register Supplier
-        </Link>
-
-      </div>
-
+      <aside className="newspaper-hero__sidebar">
+        <h2 className="newspaper-sidebar__heading">Latest Notices &amp; Briefs</h2>
+        <hr className="newspaper-sidebar__rule" />
+        <ul className="newspaper-sidebar__list">
+          {notices.map((notice) => (
+            <li key={notice.label} className="newspaper-sidebar__item">
+              <span className="newspaper-sidebar__tag">{notice.label}</span>
+              <p className="newspaper-sidebar__text">{notice.text}</p>
+            </li>
+          ))}
+        </ul>
+        <hr className="newspaper-sidebar__rule" />
+        <p className="newspaper-sidebar__footer">
+          All procurement activity is subject to compliance verification.
+        </p>
+      </aside>
     </section>
   )
 }

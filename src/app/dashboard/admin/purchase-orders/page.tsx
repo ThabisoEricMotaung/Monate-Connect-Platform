@@ -200,7 +200,7 @@ export default function AdminPurchaseOrdersPage() {
                     </td>
                     <td className="px-4 py-4">
                       <Link
-                        href={`/dashboard/admin/purchase-orders/${purchaseOrder.id}`}
+                        href={`/dashboard/purchase-orders/${purchaseOrder.id}`}
                         className="inline-flex rounded-md border border-accent bg-accent px-4 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong"
                       >
                         View PO

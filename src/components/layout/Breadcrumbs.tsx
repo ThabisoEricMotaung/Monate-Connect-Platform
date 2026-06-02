@@ -13,6 +13,7 @@ const labelMap: Record<string, TranslationKey> = {
   suppliers: "supplierDirectory",
   analytics: "analytics",
   activity: "activityLog",
+  "purchase-orders": "purchaseOrders",
 }
 
 export default function Breadcrumbs() {

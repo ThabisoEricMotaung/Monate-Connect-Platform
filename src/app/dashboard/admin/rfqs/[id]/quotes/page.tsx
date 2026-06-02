@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation"
 import { logActivity } from "@/lib/activity"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { createNotification } from "@/lib/notifications"
+import { createPurchaseOrder } from "@/lib/purchaseOrders"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { supabase } from "@/lib/supabase"
 
@@ -274,33 +275,6 @@ export default function AdminRFQQuotesPage() {
     [purchaseOrders]
   )
 
-  async function getNextPONumber(): Promise<string> {
-    if (!supabase) {
-      throw new Error("Supabase environment variables are not configured.")
-    }
-
-    const year = new Date().getFullYear()
-    const prefix = `PO-${year}-`
-    const { data, error } = await supabase
-      .from("purchase_orders")
-      .select("po_number")
-      .like("po_number", `${prefix}%`)
-      .order("po_number", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (error) {
-      throw error
-    }
-
-    const lastNumber = data?.po_number
-      ? Number(String(data.po_number).replace(prefix, ""))
-      : 0
-    const nextNumber = Number.isFinite(lastNumber) ? lastNumber + 1 : 1
-
-    return `${prefix}${String(nextNumber).padStart(4, "0")}`
-  }
-
   async function updateQuoteStatus(quoteId: number, status: QuoteStatus) {
     if (!supabase) {
       setErrorMessage("Supabase environment variables are not configured.")
@@ -477,64 +451,18 @@ export default function AdminRFQQuotesPage() {
     setSuccessMessage("")
 
     try {
-      const poNumber = await getNextPONumber()
-      const { data, error } = await supabase
-        .from("purchase_orders")
-        .insert([
-          {
-            po_number: poNumber,
-            rfq_id: rfq.id,
-            quote_id: selectedQuote.id,
-            supplier_id: selectedQuote.supplier_id,
-            supplier_name: selectedQuote.supplier_name,
-            amount: selectedQuote.amount,
-            timeline: selectedQuote.timeline,
-            title: rfq.title || `RFQ-${rfq.id}`,
-            status: "Generated",
-            generated_at: new Date().toISOString(),
-          },
-        ])
-        .select("id, po_number, quote_id")
-        .single()
-
-      if (error) {
-        throw error
-      }
-
-      try {
-        await logActivity({
-          action: "Purchase order generated",
-          entity_type: "purchase_order",
-          entity_id: data.id,
-          metadata: {
-            po_number: data.po_number,
-            rfq_id: rfq.id,
-            quote_id: selectedQuote.id,
-            supplier_name: selectedQuote.supplier_name,
-          },
-        })
-      } catch (activityError) {
-        console.error(activityError)
-      }
-
-      if (selectedQuote.supplier_id) {
-        await createNotification({
-          recipientId: selectedQuote.supplier_id,
-          type: "Purchase Order Issued",
-          title: "Purchase order issued",
-          message: `${data.po_number} has been issued for ${rfq.title || `RFQ-${rfq.id}`}.`,
-          link: `/dashboard/rfqs/${rfq.id}`,
-          metadata: {
-            purchase_order_id: data.id,
-            po_number: data.po_number,
-            quote_id: selectedQuote.id,
-            rfq_id: rfq.id,
-          },
-        })
-      }
+      const data = await createPurchaseOrder({
+        rfqId: rfq.id,
+        quoteId: selectedQuote.id,
+        supplierId: selectedQuote.supplier_id,
+        supplierName: selectedQuote.supplier_name,
+        amount: selectedQuote.amount,
+        timeline: selectedQuote.timeline,
+        title: rfq.title || `RFQ-${rfq.id}`,
+      })
 
       setPurchaseOrders((currentPurchaseOrders) => [
-        data as PurchaseOrder,
+        data,
         ...currentPurchaseOrders,
       ])
       setSuccessMessage(`${data.po_number} has been generated.`)
@@ -678,7 +606,7 @@ export default function AdminRFQQuotesPage() {
           )}
 
           <section className="mt-6 rounded-md border border-panel bg-card p-5 shadow-panel">
-            <div className="grid gap-4 md:grid-cols-[1fr_auto_260px] md:items-end">
+            <div className="grid gap-4 md:grid-cols-[1fr_auto_auto_260px] md:items-end">
               <div>
                 <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">
                   Quote Controls
@@ -692,6 +620,12 @@ export default function AdminRFQQuotesPage() {
                 className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
               >
                 Manage Questions
+              </Link>
+              <Link
+                href={`/dashboard/admin/rfqs/${rfq.id}/document-pack`}
+                className="inline-flex items-center justify-center rounded-md border border-panel bg-surface px-5 py-2.5 text-sm font-semibold text-secondary transition hover:bg-panel"
+              >
+                Tender Pack
               </Link>
               <div>
                 <label
@@ -843,7 +777,7 @@ export default function AdminRFQQuotesPage() {
 
                                 return purchaseOrder ? (
                                   <Link
-                                    href={`/dashboard/admin/purchase-orders/${purchaseOrder.id}`}
+                                    href={`/dashboard/purchase-orders/${purchaseOrder.id}`}
                                     className="rounded-md border border-accent bg-accent px-3 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong"
                                   >
                                     View PO
