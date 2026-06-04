@@ -2,15 +2,17 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
+import SmartScoreCircle from "@/components/SmartScoreCircle"
 import SaveSupplierControl from "@/components/suppliers/SaveSupplierControl"
 import {
   calculateSupplierPerformance,
   type SupplierPerformanceReview,
 } from "@/lib/supplierPerformance"
 import { useI18n } from "@/lib/i18n"
-import { calculateSupplierScore } from "@/lib/supplierScore"
+import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import { hasComplianceWarning } from "@/lib/complianceStatus"
+import { createWhatsAppLink } from "@/lib/whatsapp"
 
 type SupplierProfile = {
   id: string
@@ -70,47 +72,28 @@ function normalize(value: string | null): string {
   return (value ?? "").toLowerCase().trim()
 }
 
-function scoreTone(score: number): string {
-  if (score <= 39) return "border-rose-500/30 bg-rose-500/10 text-rose-700"
-  if (score <= 69) return "border-warning bg-warning-soft text-warning"
-  if (score <= 89) return "border-sky-500/30 bg-sky-500/10 text-sky-700"
-  return "border-success bg-success-soft text-success"
-}
-
-function scoreBar(score: number): string {
-  if (score <= 39) return "bg-rose-500"
-  if (score <= 69) return "bg-warning"
-  if (score <= 89) return "bg-sky-500"
-  return "bg-success"
-}
-
-function ReadinessScore({ supplier }: { supplier: SupplierProfile }) {
-  const readiness = calculateSupplierScore(supplier)
+function ReadinessScore({
+  supplier,
+  reviews,
+}: {
+  supplier: SupplierProfile
+  reviews: SupplierPerformanceReview[]
+}) {
+  const performance = calculateSupplierPerformance(reviews)
+  const score = calculateSupplierSmartScore(supplier, {
+    reviewCount: performance.reviewCount,
+    averageRating: performance.averageScore,
+    recentActivityCount: performance.reviewCount,
+  })
 
   return (
-    <div className="rounded-md border border-panel bg-panel p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-            Readiness Score
-          </p>
-          <p className="mt-2 text-sm font-semibold text-heading">
-            {readiness.score}/100
-          </p>
-        </div>
-        <span
-          className={`inline-flex rounded-md border px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.14em] ${scoreTone(readiness.score)}`}
-        >
-          {readiness.label}
-        </span>
-      </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-card">
-        <div
-          className={`h-full rounded-full ${scoreBar(readiness.score)}`}
-          style={{ width: `${readiness.score}%` }}
-        />
-      </div>
-    </div>
+    <SmartScoreCircle
+      score={score}
+      label="Supplier SmartScore"
+      size="sm"
+      compact
+      className="max-w-none bg-panel"
+    />
   )
 }
 
@@ -167,27 +150,6 @@ function PerformanceScore({ reviews }: { reviews: SupplierPerformanceReview[] })
       </div>
     </div>
   )
-}
-
-function formatWhatsAppPhone(phone: string | null): string | null {
-  const cleanedPhone = (phone ?? "")
-    .replace(/\s/g, "")
-    .replace(/\+/g, "")
-    .replace(/[^\d]/g, "")
-
-  if (!cleanedPhone) return null
-
-  return cleanedPhone.startsWith("0")
-    ? `27${cleanedPhone.slice(1)}`
-    : cleanedPhone
-}
-
-function createWhatsAppLink(phone: string | null, message: string): string | null {
-  const formattedPhone = formatWhatsAppPhone(phone)
-
-  if (!formattedPhone) return null
-
-  return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`
 }
 
 export default function SuppliersDirectoryPage() {
@@ -457,10 +419,10 @@ export default function SuppliersDirectoryPage() {
         <div className="grid gap-4 xl:grid-cols-2">
           {filteredSuppliers.map((supplier) => {
             const businessName = supplier.business_name || t("supplierProfile")
-            const whatsappLink = createWhatsAppLink(
-              supplier.phone,
-              `Hi ${businessName}, we found your supplier profile on Monate Vendor Network and would like to discuss procurement opportunities.`
-            )
+            const whatsappLink = createWhatsAppLink({
+              phone: supplier.phone,
+              message: `Hi ${businessName}, we found your supplier profile on Monate Vendor Network and would like to discuss procurement opportunities.`,
+            })
 
             return (
               <article
@@ -527,7 +489,10 @@ export default function SuppliersDirectoryPage() {
                 </div>
 
                 <div className="mt-3">
-                  <ReadinessScore supplier={supplier} />
+                  <ReadinessScore
+                    supplier={supplier}
+                    reviews={reviewsBySupplier[supplier.id] ?? []}
+                  />
                 </div>
                 <div className="mt-3">
                   <PerformanceScore

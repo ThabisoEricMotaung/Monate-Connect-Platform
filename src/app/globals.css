@@ -2388,3 +2388,100 @@ html[data-low-data="on"] .news-ticker__track {
     );
   border-color: rgba(var(--accent-rgb), 0.20);
 }
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  body {
+    padding-bottom: 0 !important;
+    color: #111827 !important;
+  }
+
+  .masthead,
+  .dashboard-sidebar,
+  .dashboard-chrome,
+  .dashboard-breadcrumbs,
+  .enterprise-sidebar,
+  .enterprise-breadcrumbs,
+  .news-ticker,
+  .accessibility-panel,
+  .appearance-core,
+  .print-hidden,
+  [data-print-hidden="true"] {
+    display: none !important;
+  }
+
+  main,
+  main > section,
+  .enterprise-shell,
+  .enterprise-main-panel {
+    display: block !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .print-document {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+  }
+
+  .print-document *,
+  .print-document *::before,
+  .print-document *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .print-document .bg-card,
+  .print-document .bg-panel,
+  .print-document .bg-surface,
+  .print-document .border.bg-card,
+  .print-document .border.bg-panel,
+  .print-document .border.bg-surface,
+  .print-document .rounded-md.bg-card,
+  .print-document .rounded-md.bg-panel,
+  .print-document .rounded-md.bg-surface {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    transform: none !important;
+  }
+
+  .print-document .text-heading,
+  .print-document .text-primary,
+  .print-document .text-secondary,
+  .print-document .text-muted,
+  .print-document .text-accent,
+  .print-document .text-success,
+  .print-document .text-warning {
+    color: #111827 !important;
+  }
+
+  .print-document a {
+    color: #111827 !important;
+    text-decoration: underline;
+  }
+
+  .print-document button,
+  .print-document input,
+  .print-document textarea,
+  .print-document select {
+    display: none !important;
+  }
+
+  @page {
+    margin: 14mm;
+  }
+}

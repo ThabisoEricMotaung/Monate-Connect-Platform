@@ -8,6 +8,22 @@ export type AuthProfile = {
   role: ProfileRole | string | null
 }
 
+export function normalizeProfileRole(
+  role: ProfileRole | string | null | undefined
+): ProfileRole | string | null {
+  if (!role) return null
+
+  return role.trim().toLowerCase()
+}
+
+export function hasAdminOrBuyerAccess(
+  profile: AuthProfile | null | undefined
+): boolean {
+  const role = normalizeProfileRole(profile?.role)
+
+  return role === "admin" || role === "buyer"
+}
+
 function isMissingRoleColumnError(error: { message?: string } | null): boolean {
   return Boolean(
     error?.message?.includes("'role' column") ||
@@ -70,9 +86,8 @@ export async function requireAuth(): Promise<User | null> {
 
 export async function requireAdminOrBuyer(): Promise<AuthProfile | null> {
   const profile = await getCurrentProfile()
-  const role = profile?.role
 
-  if (role === "admin" || role === "buyer") {
+  if (hasAdminOrBuyerAccess(profile)) {
     return profile
   }
 

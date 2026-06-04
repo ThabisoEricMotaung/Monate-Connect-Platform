@@ -246,7 +246,7 @@ export default function AdminPurchaseOrderDetailPage() {
 
   return (
     <div>
-      <div className="mb-8 flex flex-col gap-5 border-b border-panel pb-6 lg:flex-row lg:items-start lg:justify-between">
+      <div className="mb-8 flex flex-col gap-5 border-b border-panel pb-6 lg:flex-row lg:items-start lg:justify-between print:hidden">
         <div>
           <p className="text-xs uppercase tracking-[0.28em] text-accent">
             Admin / Purchase Order
@@ -298,7 +298,7 @@ export default function AdminPurchaseOrderDetailPage() {
       )}
 
       {!loading && !errorMessage && purchaseOrder && (
-        <div className="space-y-6">
+        <div className="print-document space-y-6">
           <section className="rounded-md border border-panel bg-card p-6 shadow-panel">
             <div className="flex flex-col gap-4 border-b border-panel pb-5 lg:flex-row lg:items-start lg:justify-between">
               <div>

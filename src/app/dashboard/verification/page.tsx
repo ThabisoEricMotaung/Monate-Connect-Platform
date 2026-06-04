@@ -6,6 +6,7 @@ import { logActivity } from "@/lib/activity"
 import { getComplianceStatus } from "@/lib/complianceStatus"
 import { createNotification } from "@/lib/notifications"
 import { supabase } from "@/lib/supabase"
+import ComplianceChecklist from "@/components/compliance/ComplianceChecklist"
 
 type VerificationForm = {
   csd_number: string
@@ -118,6 +119,8 @@ function cleanFileName(fileName: string): string {
 
 export default function VerificationPage() {
   const [userId, setUserId] = useState("")
+  const [supplierIndustry, setSupplierIndustry] = useState<string | null>(null)
+  const [supplierProvince, setSupplierProvince] = useState<string | null>(null)
   const [verificationStatus, setVerificationStatus] = useState("Pending Review")
   const [form, setForm] = useState<VerificationForm>(EMPTY_FORM)
   const [documentUrls, setDocumentUrls] =
@@ -172,7 +175,7 @@ export default function VerificationPage() {
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select(
-          "verification_status, csd_number, bbbee_level, tax_status, company_registration, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date"
+          "verification_status, industry, province, csd_number, bbbee_level, tax_status, company_registration, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date"
         )
         .eq("id", userData.user.id)
         .maybeSingle()
@@ -185,6 +188,8 @@ export default function VerificationPage() {
 
       if (profile) {
         setVerificationStatus(profile.verification_status || "Pending Review")
+        setSupplierIndustry(profile.industry || null)
+        setSupplierProvince(profile.province || null)
         setForm({
           csd_number: profile.csd_number || "",
           bbbee_level: profile.bbbee_level || "",
@@ -446,6 +451,18 @@ export default function VerificationPage() {
             Supplier Compliance
           </span>
         </div>
+
+        {!loading && (
+          <div className="mb-6">
+            <ComplianceChecklist
+              industry={supplierIndustry}
+              province={supplierProvince}
+              title="Documents Required for Verification"
+              description="Prepare and upload all Required items below. Recommended items strengthen your profile score and improve your chances in competitive evaluations."
+              collapsible
+            />
+          </div>
+        )}
 
         {autosave.showRecoveryDialog && (
           <div className="mb-6 rounded-2xl border border-accent bg-surface px-5 py-4 shadow-sm">

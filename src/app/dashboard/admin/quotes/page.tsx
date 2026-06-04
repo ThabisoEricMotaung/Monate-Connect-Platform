@@ -4,8 +4,9 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { logActivity } from "@/lib/activity"
+import { logAuditAction } from "@/lib/audit"
+import { notifyQuoteAwarded } from "@/lib/automationRules"
 import { requireAdminOrBuyer } from "@/lib/auth"
-import { createNotification } from "@/lib/notifications"
 import { supabase } from "@/lib/supabase"
 
 type QuoteStatus = "Pending" | "Under Review" | "Shortlisted" | "Awarded" | "Rejected"
@@ -139,7 +140,18 @@ export default function AdminQuotesPage() {
             .filter((supplierId): supplierId is string => Boolean(supplierId))
         )
       )
+      const supplierEmails = Array.from(
+        new Set(
+          quoteRows
+            .filter((quote) => !quote.supplier_id && quote.supplier_name?.includes("@"))
+            .map((quote) => quote.supplier_name as string)
+        )
+      )
       let phoneBySupplierId = new Map<string, string | null>()
+      let profileByEmail = new Map<
+        string,
+        { id: string; business_name: string | null; phone: string | null }
+      >()
 
       if (supplierIds.length > 0) {
         const { data: profileData, error: profileError } = await supabase
@@ -161,13 +173,49 @@ export default function AdminQuotesPage() {
         )
       }
 
+      if (supplierEmails.length > 0) {
+        const { data: emailProfileData, error: emailProfileError } = await supabase
+          .from("profiles")
+          .select("id, business_name, email, phone")
+          .in("email", supplierEmails)
+
+        if (emailProfileError) {
+          setErrorMessage(emailProfileError.message)
+          setLoading(false)
+          return
+        }
+
+        profileByEmail = new Map(
+          (emailProfileData ?? []).map((profile) => [
+            profile.email as string,
+            {
+              id: profile.id as string,
+              business_name: profile.business_name as string | null,
+              phone: profile.phone as string | null,
+            },
+          ])
+        )
+      }
+
       setQuotes(
-        quoteRows.map((quote) => ({
-          ...quote,
-          supplier_phone: quote.supplier_id
-            ? phoneBySupplierId.get(quote.supplier_id) ?? null
-            : null,
-        }))
+        quoteRows.map((quote) => {
+          const emailProfile = quote.supplier_name
+            ? profileByEmail.get(quote.supplier_name)
+            : undefined
+          const supplierId = quote.supplier_id || emailProfile?.id || null
+
+          return {
+            ...quote,
+            supplier_id: supplierId,
+            supplier_name:
+              quote.supplier_name?.includes("@") && emailProfile?.business_name
+                ? emailProfile.business_name
+                : quote.supplier_name,
+            supplier_phone: supplierId
+              ? phoneBySupplierId.get(supplierId) ?? emailProfile?.phone ?? null
+              : null,
+          }
+        })
       )
       setLoading(false)
     }
@@ -234,6 +282,22 @@ export default function AdminQuotesPage() {
     const updatedQuote = quotes.find((quote) => quote.id === quoteId)
 
     try {
+      await logAuditAction({
+        action: status === "Awarded" ? "quote.awarded" : "quote.evaluated",
+        entity_type: "quote",
+        entity_id: quoteId,
+        old_values: {
+          status: updatedQuote?.status ?? null,
+        },
+        new_values: {
+          status,
+        },
+        metadata: {
+          rfq_id: updatedQuote?.rfq_id ?? null,
+          supplier_id: updatedQuote?.supplier_id ?? null,
+          supplier_name: updatedQuote?.supplier_name ?? null,
+        },
+      })
       await logActivity({
         action: "quote.status_updated",
         entity_type: "quote",
@@ -246,22 +310,14 @@ export default function AdminQuotesPage() {
         },
       })
     } catch (activityError) {
-      console.error(activityError)
+      console.warn("Quote status audit/activity logging failed:", activityError)
     }
 
-    if (status === "Awarded" && updatedQuote?.supplier_id) {
-      await createNotification({
-        recipientId: updatedQuote.supplier_id,
-        type: "Quote Awarded",
-        title: "Your quote was awarded",
-        message: `Your quote ${quoteId} has been marked as awarded.`,
-        link: updatedQuote.rfq_id
-          ? `/dashboard/rfqs/${updatedQuote.rfq_id}`
-          : "/dashboard/quotes",
-        metadata: {
-          quote_id: quoteId,
-          rfq_id: updatedQuote.rfq_id,
-        },
+    if (status === "Awarded" && updatedQuote) {
+      await notifyQuoteAwarded({
+        ...updatedQuote,
+        id: quoteId,
+        status,
       })
     }
 

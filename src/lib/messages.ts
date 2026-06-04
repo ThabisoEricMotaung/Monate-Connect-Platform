@@ -8,7 +8,7 @@ export type ProcurementMessage = {
   message: string
   rfq_id: number | null
   quote_id: number | null
-  read: boolean
+  is_read: boolean
   created_at: string | null
 }
 
@@ -16,12 +16,46 @@ export type SendMessageInput = {
   receiverId: string
   subject: string
   message: string
-  rfqId?: number | null
-  quoteId?: number | null
+  rfqId?: number | string | null
+  quoteId?: number | string | null
 }
 
 const messageSelect =
-  "id, sender_id, receiver_id, subject, message, rfq_id, quote_id, read, created_at"
+  "id, sender_id, receiver_id, subject, message, rfq_id, quote_id, is_read, created_at"
+
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+function describeSupabaseError(error: {
+  message?: string
+  code?: string
+  details?: string | null
+  hint?: string | null
+}) {
+  return [
+    error.message,
+    error.code ? `Code: ${error.code}` : null,
+    error.details ? `Details: ${error.details}` : null,
+    error.hint ? `Hint: ${error.hint}` : null,
+  ]
+    .filter(Boolean)
+    .join(" | ")
+}
+
+function normalizeOptionalNumericId(
+  value: number | string | null | undefined,
+  label: string
+): number | null {
+  if (value == null || value === "") return null
+
+  const numericValue = typeof value === "number" ? value : Number(value)
+
+  if (!Number.isSafeInteger(numericValue) || numericValue < 1) {
+    throw new Error(`${label} must be a number.`)
+  }
+
+  return numericValue
+}
 
 export async function sendMessage({
   receiverId,
@@ -29,37 +63,75 @@ export async function sendMessage({
   message,
   rfqId = null,
   quoteId = null,
-}: SendMessageInput): Promise<ProcurementMessage | null> {
-  if (!supabase || !receiverId || !subject.trim() || !message.trim()) {
-    return null
+}: SendMessageInput): Promise<ProcurementMessage> {
+  if (!supabase) {
+    throw new Error("Supabase environment variables are not configured.")
   }
+
+  if (!receiverId.trim()) {
+    throw new Error("Receiver ID is required.")
+  }
+
+  if (!subject.trim()) {
+    throw new Error("Subject is required.")
+  }
+
+  if (!message.trim()) {
+    throw new Error("Message body is required.")
+  }
+
+  const normalizedReceiverId = receiverId.trim()
+
+  if (!uuidPattern.test(normalizedReceiverId)) {
+    throw new Error("Receiver ID must be a valid UUID.")
+  }
+
+  const normalizedRfqId = normalizeOptionalNumericId(rfqId, "RFQ ID")
+  const normalizedQuoteId = normalizeOptionalNumericId(quoteId, "Quote ID")
 
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser()
 
-  if (userError || !user) return null
+  if (userError) {
+    console.error("Message auth lookup failed:", userError)
+    throw new Error(describeSupabaseError(userError))
+  }
+
+  if (!user) {
+    throw new Error("User not authenticated.")
+  }
+
+  const payload = {
+    sender_id: user.id,
+    receiver_id: normalizedReceiverId,
+    rfq_id: normalizedRfqId,
+    quote_id: normalizedQuoteId,
+    subject: subject.trim(),
+    message: message.trim(),
+    is_read: false,
+  }
+
+  console.log("Message insert payload:", {
+    table: "messages",
+    payload,
+  })
 
   const { data, error } = await supabase
     .from("messages")
-    .insert([
-      {
-        sender_id: user.id,
-        receiver_id: receiverId,
-        subject: subject.trim(),
-        message: message.trim(),
-        rfq_id: rfqId,
-        quote_id: quoteId,
-        read: false,
-      },
-    ])
+    .insert([payload])
     .select(messageSelect)
     .single()
 
   if (error) {
-    console.error("Message send failed:", error)
-    return null
+    console.error("Message insert error:", error)
+    console.error("Message send failed:", {
+      table: "messages",
+      payload,
+      error,
+    })
+    throw new Error(error.message)
   }
 
   return data as ProcurementMessage
@@ -125,7 +197,7 @@ export async function markMessageRead(messageId: number): Promise<void> {
 
   const { error } = await supabase
     .from("messages")
-    .update({ read: true })
+    .update({ is_read: true })
     .eq("id", messageId)
     .eq("receiver_id", user.id)
 

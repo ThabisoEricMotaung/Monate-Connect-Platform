@@ -1,13 +1,15 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import SmartScoreCircle from "@/components/SmartScoreCircle"
 import SaveSupplierControl from "@/components/suppliers/SaveSupplierControl"
 import { getComplianceStatus } from "@/lib/complianceStatus"
 import {
   calculateSupplierPerformance,
   type SupplierPerformanceReview,
 } from "@/lib/supplierPerformance"
-import { calculateSupplierScore } from "@/lib/supplierScore"
+import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
+import { createWhatsAppLink } from "@/lib/whatsapp"
 
 type Props = {
   params: Promise<{
@@ -52,50 +54,6 @@ const statusStyles: Record<string, string> = {
 
 function statusBadgeClass(status: string | null): string {
   return statusStyles[status || ""] ?? "border-panel bg-panel text-secondary"
-}
-
-function scoreTone(score: number): string {
-  if (score <= 39) return "border-rose-500/30 bg-rose-500/10 text-rose-700"
-  if (score <= 69) return "border-warning bg-warning-soft text-warning"
-  if (score <= 89) return "border-sky-500/30 bg-sky-500/10 text-sky-700"
-  return "border-success bg-success-soft text-success"
-}
-
-function scoreBar(score: number): string {
-  if (score <= 39) return "bg-rose-500"
-  if (score <= 69) return "bg-warning"
-  if (score <= 89) return "bg-sky-500"
-  return "bg-success"
-}
-
-function ReadinessScore({ supplier }: { supplier: SupplierProfile }) {
-  const readiness = calculateSupplierScore(supplier)
-
-  return (
-    <div className="rounded-md border border-panel bg-panel p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-            Readiness Score
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-heading">
-            {readiness.score}/100
-          </p>
-        </div>
-        <span
-          className={`inline-flex w-fit rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] ${scoreTone(readiness.score)}`}
-        >
-          {readiness.label}
-        </span>
-      </div>
-      <div className="mt-4 h-2 overflow-hidden rounded-full bg-card">
-        <div
-          className={`h-full rounded-full ${scoreBar(readiness.score)}`}
-          style={{ width: `${readiness.score}%` }}
-        />
-      </div>
-    </div>
-  )
 }
 
 function performanceTone(score: number | null): string {
@@ -171,27 +129,6 @@ function formatDate(dateStr: string | null): string {
   })
 }
 
-function formatWhatsAppPhone(phone: string | null): string | null {
-  const cleanedPhone = (phone ?? "")
-    .replace(/\s/g, "")
-    .replace(/\+/g, "")
-    .replace(/[^\d]/g, "")
-
-  if (!cleanedPhone) return null
-
-  return cleanedPhone.startsWith("0")
-    ? `27${cleanedPhone.slice(1)}`
-    : cleanedPhone
-}
-
-function createWhatsAppLink(phone: string | null, message: string): string | null {
-  const formattedPhone = formatWhatsAppPhone(phone)
-
-  if (!formattedPhone) return null
-
-  return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`
-}
-
 export default async function DashboardSupplierDetailPage({ params }: Props) {
   const { id } = await params
 
@@ -216,11 +153,17 @@ export default async function DashboardSupplierDetailPage({ params }: Props) {
 
   const supplier = data as SupplierProfile
   const reviews = (reviewData ?? []) as SupplierPerformanceReview[]
+  const performance = calculateSupplierPerformance(reviews)
+  const smartScore = calculateSupplierSmartScore(supplier, {
+    reviewCount: performance.reviewCount,
+    averageRating: performance.averageScore,
+    recentActivityCount: performance.reviewCount,
+  })
   const businessName = supplier.business_name || "Supplier Profile"
-  const whatsappLink = createWhatsAppLink(
-    supplier.phone,
-    `Hi ${businessName}, we found your supplier profile on Monate Vendor Network and would like to discuss procurement opportunities.`
-  )
+  const whatsappLink = createWhatsAppLink({
+    phone: supplier.phone,
+    message: `Hi ${businessName}, we found your supplier profile on Monate Vendor Network and would like to discuss procurement opportunities.`,
+  })
   const documents = [
     { label: "CSD Document", url: supplier.csd_document_url },
     { label: "B-BBEE Certificate", url: supplier.bbbee_document_url },
@@ -340,7 +283,11 @@ export default async function DashboardSupplierDetailPage({ params }: Props) {
           </div>
 
           <div className="mt-5 space-y-3">
-            <ReadinessScore supplier={supplier} />
+            <SmartScoreCircle
+              score={smartScore}
+              label="Supplier SmartScore"
+              className="max-w-none bg-panel"
+            />
             <PerformanceScore reviews={reviews} />
             <div className="rounded-md border border-panel bg-panel p-4">
               <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">

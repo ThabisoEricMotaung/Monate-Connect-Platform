@@ -8,10 +8,30 @@ import { usePathname } from "next/navigation"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
+const publicHeaderRoutes = new Set([
+  "/",
+  "/opportunities",
+  "/suppliers",
+  "/trust",
+  "/pricing",
+  "/demo-pack",
+  "/demo-walkthrough",
+  "/contact",
+  "/help",
+  "/privacy",
+  "/terms",
+  "/cookie-policy",
+  "/data-protection",
+])
+
 export default function Navbar() {
   const { t } = useI18n()
   const router = useRouter()
   const pathname = usePathname() || ""
+
+  if (publicHeaderRoutes.has(pathname)) {
+    return null
+  }
 
   const isActive = (href: string) =>
     href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`)

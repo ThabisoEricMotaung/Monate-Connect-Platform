@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { calculateSupplierScore } from "@/lib/supplierScore"
+import SmartScoreCircle from "@/components/SmartScoreCircle"
+import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 
 type SupplierProfile = {
@@ -29,50 +30,6 @@ type SupplierProfile = {
 
 function valueOrDash(value: string | null | undefined): string {
   return value || "-"
-}
-
-function scoreTone(score: number): string {
-  if (score <= 39) return "border-rose-500/30 bg-rose-500/10 text-rose-700"
-  if (score <= 69) return "border-warning bg-warning-soft text-warning"
-  if (score <= 89) return "border-sky-500/30 bg-sky-500/10 text-sky-700"
-  return "border-success bg-success-soft text-success"
-}
-
-function scoreBar(score: number): string {
-  if (score <= 39) return "bg-rose-500"
-  if (score <= 69) return "bg-warning"
-  if (score <= 89) return "bg-sky-500"
-  return "bg-success"
-}
-
-function ReadinessScore({ profile }: { profile: SupplierProfile }) {
-  const readiness = calculateSupplierScore(profile)
-
-  return (
-    <div className="rounded-md border border-panel bg-card p-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-            Procurement readiness score
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-heading">
-            {readiness.score}/100
-          </p>
-        </div>
-        <span
-          className={`inline-flex w-fit rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] ${scoreTone(readiness.score)}`}
-        >
-          {readiness.label}
-        </span>
-      </div>
-      <div className="mt-4 h-2 overflow-hidden rounded-full bg-panel">
-        <div
-          className={`h-full rounded-full ${scoreBar(readiness.score)}`}
-          style={{ width: `${readiness.score}%` }}
-        />
-      </div>
-    </div>
-  )
 }
 
 export default function ProfilePage() {
@@ -233,7 +190,11 @@ export default function ProfilePage() {
               </div>
 
               <div className="mt-6">
-                <ReadinessScore profile={profile} />
+                <SmartScoreCircle
+                  score={calculateSupplierSmartScore(profile)}
+                  label="Supplier SmartScore"
+                  className="max-w-none"
+                />
               </div>
             </section>
 

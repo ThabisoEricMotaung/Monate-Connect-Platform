@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import SmartScoreCircle from "@/components/SmartScoreCircle"
 import SaveSupplierControl from "@/components/suppliers/SaveSupplierControl"
 import { logActivity } from "@/lib/activity"
+import { logAuditAction } from "@/lib/audit"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { getComplianceStatus, hasComplianceWarning } from "@/lib/complianceStatus"
 import { createNotification } from "@/lib/notifications"
@@ -12,7 +14,7 @@ import {
   calculateSupplierPerformance,
   type SupplierPerformanceReview,
 } from "@/lib/supplierPerformance"
-import { calculateSupplierScore } from "@/lib/supplierScore"
+import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 
 type SupplierProfile = {
@@ -79,47 +81,28 @@ function statusBadgeClass(status: string | null): string {
   return statusStyles[status || ""] ?? "border-panel bg-panel text-secondary"
 }
 
-function scoreTone(score: number): string {
-  if (score <= 39) return "border-rose-500/30 bg-rose-500/10 text-rose-700"
-  if (score <= 69) return "border-warning bg-warning-soft text-warning"
-  if (score <= 89) return "border-sky-500/30 bg-sky-500/10 text-sky-700"
-  return "border-success bg-success-soft text-success"
-}
-
-function scoreBar(score: number): string {
-  if (score <= 39) return "bg-rose-500"
-  if (score <= 69) return "bg-warning"
-  if (score <= 89) return "bg-sky-500"
-  return "bg-success"
-}
-
-function ReadinessScore({ profile }: { profile: SupplierProfile }) {
-  const readiness = calculateSupplierScore(profile)
+function ReadinessScore({
+  profile,
+  reviews,
+}: {
+  profile: SupplierProfile
+  reviews: SupplierPerformanceReview[]
+}) {
+  const performance = calculateSupplierPerformance(reviews)
+  const smartScore = calculateSupplierSmartScore(profile, {
+    reviewCount: performance.reviewCount,
+    averageRating: performance.averageScore,
+    recentActivityCount: performance.reviewCount,
+  })
 
   return (
-    <div className="rounded-md border border-panel bg-panel p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-            Readiness Score
-          </p>
-          <p className="mt-2 text-lg font-semibold text-heading">
-            {readiness.score}/100
-          </p>
-        </div>
-        <span
-          className={`inline-flex w-fit rounded-md border px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.18em] ${scoreTone(readiness.score)}`}
-        >
-          {readiness.label}
-        </span>
-      </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-card">
-        <div
-          className={`h-full rounded-full ${scoreBar(readiness.score)}`}
-          style={{ width: `${readiness.score}%` }}
-        />
-      </div>
-    </div>
+    <SmartScoreCircle
+      score={smartScore}
+      label="Supplier SmartScore"
+      size="sm"
+      compact
+      className="max-w-none bg-panel"
+    />
   )
 }
 
@@ -325,6 +308,20 @@ export default function AdminVerificationPage() {
     const updatedProfile = profiles.find((profile) => profile.id === profileId)
 
     try {
+      await logAuditAction({
+        action: "supplier.verification_updated",
+        entity_type: "supplier_profile",
+        entity_id: profileId,
+        old_values: {
+          verification_status: updatedProfile?.verification_status ?? null,
+        },
+        new_values: {
+          verification_status: verificationStatus,
+        },
+        metadata: {
+          business_name: updatedProfile?.business_name ?? null,
+        },
+      })
       await logActivity({
         action: "supplier.verification_updated",
         entity_type: "supplier_profile",
@@ -336,7 +333,7 @@ export default function AdminVerificationPage() {
         },
       })
     } catch (activityError) {
-      console.error(activityError)
+      console.warn("Supplier verification audit/activity logging failed:", activityError)
     }
 
     if (verificationStatus === "Verified" || verificationStatus === "Rejected") {
@@ -606,7 +603,10 @@ export default function AdminVerificationPage() {
 
                 <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                   <div className="md:col-span-2 xl:col-span-4">
-                    <ReadinessScore profile={profile} />
+                    <ReadinessScore
+                      profile={profile}
+                      reviews={reviewsBySupplier[profile.id] ?? []}
+                    />
                   </div>
                   <div className="md:col-span-2 xl:col-span-4">
                     <PerformanceScore

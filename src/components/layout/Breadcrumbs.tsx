@@ -48,7 +48,7 @@ export default function Breadcrumbs() {
   })
 
   return (
-    <div className="mb-6 rounded-2xl border border-panel bg-surface p-4 text-sm text-secondary shadow-sm">
+    <div className="dashboard-breadcrumbs mb-6 rounded-2xl border border-panel bg-surface p-4 text-sm text-secondary shadow-sm">
       <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2">
         <Link href="/" className="text-accent transition-colors hover:text-accent-strong">
           {t("home")}

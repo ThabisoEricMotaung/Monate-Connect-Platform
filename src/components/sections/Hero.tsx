@@ -35,6 +35,21 @@ export default function Hero() {
         </p>
 
         <div className="newspaper-hero__actions">
+          <Link href="/pricing" className="masthead__btn-secondary">
+            Pricing / Pilot Packages
+          </Link>
+          <Link href="/trust" className="masthead__btn-secondary">
+            Trust Centre
+          </Link>
+          <Link href="/opportunities" className="masthead__btn-secondary">
+            Opportunities
+          </Link>
+          <Link href="/suppliers" className="masthead__btn-secondary">
+            Supplier Marketplace
+          </Link>
+          <Link href="/demo-pack" className="masthead__btn-secondary">
+            Pilot Demo Pack
+          </Link>
           <Link href="/auth/login" className="masthead__btn-primary">
             Supplier Login
           </Link>

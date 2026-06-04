@@ -1,5 +1,7 @@
 import { supabase } from "./supabase"
 import { logActivity } from "./activity"
+import { logAuditAction } from "./audit"
+import { notifyQuoteSubmitted } from "./automationRules"
 
 export async function submitQuote(data: {
   rfq_id: number
@@ -36,15 +38,42 @@ export async function submitQuote(data: {
     throw error
   }
 
-  await logActivity({
-    action: "quote.submitted",
-    entity_type: "quote",
-    entity_id: quoteData?.id ?? null,
-    metadata: {
-      rfq_id: data.rfq_id,
-      supplier_name: data.supplier_name,
-      amount: data.amount,
-    },
+  try {
+    await logAuditAction({
+      action: "quote.submitted",
+      entity_type: "quote",
+      entity_id: quoteData?.id ?? null,
+      old_values: null,
+      new_values: {
+        ...data,
+        supplier_id: user.id,
+        status: "Pending",
+      },
+      metadata: {
+        rfq_id: data.rfq_id,
+        supplier_name: data.supplier_name,
+        amount: data.amount,
+      },
+    })
+    await logActivity({
+      action: "quote.submitted",
+      entity_type: "quote",
+      entity_id: quoteData?.id ?? null,
+      metadata: {
+        rfq_id: data.rfq_id,
+        supplier_name: data.supplier_name,
+        amount: data.amount,
+      },
+    })
+  } catch (auditError) {
+    console.warn("Quote submission audit/activity logging failed:", auditError)
+  }
+
+  await notifyQuoteSubmitted({
+    id: quoteData?.id ?? null,
+    ...data,
+    supplier_id: user.id,
+    status: "Pending",
   })
 }
 

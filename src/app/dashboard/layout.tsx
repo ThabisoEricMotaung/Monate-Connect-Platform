@@ -5,11 +5,20 @@ import { usePathname } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
-import { getCurrentProfile } from "@/lib/auth"
+import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
 
 const navigation: {
-  name: TranslationKey | "Assistant" | "Calendar" | "Messages"
+  name:
+    | TranslationKey
+    | "Assistant"
+    | "Calendar"
+    | "Messages"
+    | "Contracts"
+    | "Invoices"
+    | "Payments"
+    | "Onboarding"
+    | "Banking Details"
   href: string
 }[] = [
   {
@@ -37,12 +46,32 @@ const navigation: {
     href: "/dashboard/purchase-orders",
   },
   {
+    name: "Contracts",
+    href: "/dashboard/contracts",
+  },
+  {
+    name: "Invoices",
+    href: "/dashboard/invoices",
+  },
+  {
+    name: "Payments",
+    href: "/dashboard/payments",
+  },
+  {
     name: "supplierDirectory",
     href: "/dashboard/suppliers",
   },
   {
     name: "supplierProfile",
     href: "/dashboard/profile",
+  },
+  {
+    name: "Banking Details",
+    href: "/dashboard/banking",
+  },
+  {
+    name: "Onboarding",
+    href: "/dashboard/onboarding",
   },
   {
     name: "verification",
@@ -58,10 +87,70 @@ const navigation: {
   },
 ]
 
-const adminNavigation: { name: TranslationKey | "Supplier Reviews" | "Compliance Risk"; href: string }[] = [
+const intelligenceNavigation: { name: string; href: string }[] = [
+  { name: "Executive Dashboard", href: "/dashboard/intelligence/executive" },
+  { name: "Supplier Intelligence", href: "/dashboard/intelligence/suppliers" },
+  { name: "Supplier Performance", href: "/dashboard/intelligence/supplier-performance" },
+  { name: "Procurement Analytics", href: "/dashboard/intelligence/procurement" },
+  { name: "Regional Insights", href: "/dashboard/intelligence/regions" },
+]
+
+const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Board Pack" | "System Health" | "Production Readiness" | "Demo Mode" | "Demo Story Pack" | "Pilot Requests" | "Audit Trail" | "Automation Rules" | "Reports" | "Settings" | "WhatsApp Network" | "Contract Renewals" | "Supplier Reviews" | "Compliance Risk" | "Buyer Onboarding" | "RFQ Templates" | "Banking Review" | "Supplier Risk" | "Decision Board" | "Workflow Rules" | "Overrides" | "Approval Matrix" | "Delegation Authority"; href: string }[] = [
+  {
+    name: "Executive Command Centre",
+    href: "/dashboard/executive",
+  },
   {
     name: "createRFQ",
     href: "/dashboard/admin/rfqs/new",
+  },
+  {
+    name: "RFQ Templates",
+    href: "/dashboard/admin/rfq-templates",
+  },
+  {
+    name: "Audit Trail",
+    href: "/dashboard/admin/audit",
+  },
+  {
+    name: "Automation Rules",
+    href: "/dashboard/admin/automation",
+  },
+  {
+    name: "Reports",
+    href: "/dashboard/admin/reports",
+  },
+  {
+    name: "Board Pack",
+    href: "/dashboard/admin/board-pack",
+  },
+  {
+    name: "System Health",
+    href: "/dashboard/admin/system-health",
+  },
+  {
+    name: "Production Readiness",
+    href: "/dashboard/admin/production-readiness",
+  },
+  {
+    name: "Demo Mode",
+    href: "/dashboard/admin/demo-mode",
+  },
+  {
+    name: "Demo Story Pack",
+    href: "/dashboard/admin/demo-story",
+  },
+  {
+    name: "Pilot Requests",
+    href: "/dashboard/admin/pilot-requests",
+  },
+  {
+    name: "Settings",
+    href: "/dashboard/admin/settings",
+  },
+  {
+    name: "WhatsApp Network",
+    href: "/dashboard/admin/whatsapp",
   },
   {
     name: "quoteReview",
@@ -80,6 +169,10 @@ const adminNavigation: { name: TranslationKey | "Supplier Reviews" | "Compliance
     href: "/dashboard/admin/purchase-orders",
   },
   {
+    name: "Contract Renewals",
+    href: "/dashboard/admin/contract-renewals",
+  },
+  {
     name: "Supplier Reviews",
     href: "/dashboard/admin/supplier-reviews",
   },
@@ -95,6 +188,38 @@ const adminNavigation: { name: TranslationKey | "Supplier Reviews" | "Compliance
     name: "savedSuppliers",
     href: "/dashboard/admin/saved-suppliers",
   },
+  {
+    name: "Buyer Onboarding",
+    href: "/dashboard/admin/onboarding",
+  },
+  {
+    name: "Banking Review",
+    href: "/dashboard/admin/banking",
+  },
+  {
+    name: "Supplier Risk",
+    href: "/dashboard/admin/supplier-risk",
+  },
+  {
+    name: "Decision Board",
+    href: "/dashboard/admin/decision-board",
+  },
+  {
+    name: "Workflow Rules",
+    href: "/dashboard/admin/workflow-rules",
+  },
+  {
+    name: "Overrides",
+    href: "/dashboard/admin/overrides",
+  },
+  {
+    name: "Approval Matrix",
+    href: "/dashboard/admin/approval-matrix",
+  },
+  {
+    name: "Delegation Authority",
+    href: "/dashboard/admin/delegation-authority",
+  },
 ]
 
 export default function DashboardLayout({
@@ -105,7 +230,9 @@ export default function DashboardLayout({
   const { t } = useI18n()
   const pathname = usePathname() || ""
   const [role, setRole] = useState<string | null>(null)
-  const canViewAdminNavigation = role === "admin" || role === "buyer"
+  const canViewAdminNavigation = hasAdminOrBuyerAccess(
+    role ? { id: "", role } : null
+  )
 
   useEffect(() => {
     async function loadRole() {
@@ -120,7 +247,7 @@ export default function DashboardLayout({
   return (
     <main className="flex min-h-screen bg-page text-primary">
 
-      <aside className="w-full max-w-[280px] border-r border-panel bg-panel p-5">
+      <aside className="dashboard-sidebar w-full max-w-[280px] border-r border-panel bg-panel p-5">
 
         <div className="mb-4 rounded-2xl border border-panel bg-surface p-4 text-sm">
           <Link
@@ -166,13 +293,45 @@ export default function DashboardLayout({
               >
                 {item.name === "Assistant" ||
                 item.name === "Calendar" ||
-                item.name === "Messages"
+                item.name === "Messages" ||
+                item.name === "Contracts" ||
+                item.name === "Invoices" ||
+                item.name === "Payments" ||
+                item.name === "Onboarding" ||
+                item.name === "Banking Details"
                   ? item.name
                   : t(item.name)}
               </Link>
             )
           })}
         </nav>
+
+        {canViewAdminNavigation && (
+          <div className="mt-8 border-t border-panel pt-5">
+            <p className="mb-3 text-xs uppercase tracking-[0.24em] text-secondary">
+              Intelligence
+            </p>
+            <nav className="space-y-2">
+              {intelligenceNavigation.map((item) => {
+                const active =
+                  pathname === item.href || pathname.startsWith(item.href)
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`block rounded-md border px-4 py-3 text-sm font-semibold transition-colors ${
+                      active
+                        ? "border-accent bg-surface text-primary shadow-sm"
+                        : "border-transparent text-secondary hover:bg-surface hover:text-primary"
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                )
+              })}
+            </nav>
+          </div>
+        )}
 
         {canViewAdminNavigation && (
           <div className="mt-8 border-t border-panel pt-5">
@@ -195,7 +354,7 @@ export default function DashboardLayout({
                         : "border-transparent text-secondary hover:bg-surface hover:text-primary"
                     }`}
                   >
-                    {item.name === "Supplier Reviews" || item.name === "Compliance Risk" ? item.name : t(item.name)}
+                    {item.name === "Executive Command Centre" || item.name === "Board Pack" || item.name === "System Health" || item.name === "Production Readiness" || item.name === "Demo Mode" || item.name === "Demo Story Pack" || item.name === "Pilot Requests" || item.name === "Audit Trail" || item.name === "Automation Rules" || item.name === "Reports" || item.name === "Settings" || item.name === "WhatsApp Network" || item.name === "Contract Renewals" || item.name === "Supplier Reviews" || item.name === "Compliance Risk" || item.name === "Buyer Onboarding" || item.name === "RFQ Templates" || item.name === "Banking Review" || item.name === "Supplier Risk" || item.name === "Decision Board" || item.name === "Workflow Rules" || item.name === "Overrides" || item.name === "Approval Matrix" || item.name === "Delegation Authority" ? item.name : t(item.name)}
                   </Link>
                 )
               })}
@@ -205,7 +364,7 @@ export default function DashboardLayout({
       </aside>
 
       <section className="flex-1 p-6 md:p-8">
-        <div className="mb-6 flex items-center justify-between gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
+        <div className="dashboard-chrome mb-6 flex items-center justify-between gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
           <div>
             <p className="text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-secondary">
               Live Procurement

@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { supabase } from "@/lib/supabase"
+import ComplianceChecklist from "@/components/compliance/ComplianceChecklist"
 
 type RFQ = {
   id: number
@@ -63,15 +64,6 @@ const NOTE_FIELDS: Array<{
     placeholder:
       "Add contract-specific conditions, delivery constraints, or mandatory declarations...",
   },
-]
-
-const COMPLIANCE_REQUIREMENTS = [
-  "Valid Central Supplier Database (CSD) registration report",
-  "SARS tax compliance status PIN or valid tax clearance evidence",
-  "B-BBEE certificate or sworn affidavit, where applicable",
-  "Company registration documentation and authorised signatory details",
-  "Proof of relevant licences, certifications, or professional registrations",
-  "Declaration of interests and confirmation of procurement eligibility",
 ]
 
 const SUBMISSION_CHECKLIST = [
@@ -282,7 +274,7 @@ export default function TenderDocumentPackPage() {
         </div>
       )}
 
-      <section className="overflow-hidden rounded-md border border-panel bg-card shadow-panel print:border-0 print:bg-white print:shadow-none">
+      <section className="print-document overflow-hidden rounded-md border border-panel bg-card shadow-panel print:border-0 print:bg-white print:shadow-none">
         <div className="border-b border-panel bg-panel px-6 py-6 sm:px-8 print:border-slate-300 print:bg-white">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -340,10 +332,12 @@ export default function TenderDocumentPackPage() {
           </section>
 
           <div className="grid gap-5 lg:grid-cols-2 print:grid-cols-2">
-            <ListSection
-              eyebrow="Section 02"
-              title="Compliance requirements"
-              items={COMPLIANCE_REQUIREMENTS}
+            <ComplianceChecklist
+              category={rfq.category}
+              province={rfq.province ?? rfq.region}
+              title="Compliance Requirements"
+              description="Required and recommended documents for this procurement category and province."
+              printMode
             />
             <ListSection
               eyebrow="Section 03"

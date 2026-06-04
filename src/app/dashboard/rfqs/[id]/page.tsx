@@ -3,7 +3,10 @@ import { notFound } from "next/navigation"
 import RFQClarifications from "@/components/rfqs/RFQClarifications"
 import SaveRFQControl from "@/components/rfqs/SaveRFQControl"
 import RFQIntelligence from "@/components/rfqs/RFQIntelligence"
+import ComplianceChecklist from "@/components/compliance/ComplianceChecklist"
+import ComplianceBanner from "@/components/compliance/ComplianceBanner"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
+import { checkRFQCompliance } from "@/lib/policyCompliance"
 import { supabase } from "@/lib/supabase"
 
 type Props = {
@@ -76,6 +79,7 @@ export default async function RFQDetailPage({ params }: Props) {
   const rfq = data as RFQ
   const displayStatus = getRFQDisplayStatus(rfq.status, rfq.deadline)
   const isClosed = displayStatus === "Closed"
+  const rfqCompliance = checkRFQCompliance(rfq)
 
   return (
 
@@ -220,6 +224,22 @@ export default async function RFQDetailPage({ params }: Props) {
         </div>
       )}
 
+      <ComplianceBanner
+        result={rfqCompliance}
+        title="RFQ Policy Compliance"
+        collapsible
+        hideWhenCompliant
+        className="mt-6"
+      />
+
+      <ComplianceChecklist
+        category={rfq.category}
+        province={rfq.province ?? rfq.region}
+        title="Supplier Compliance Requirements"
+        description="Documents and certifications you will need to submit a complete, compliant quote for this RFQ. Requirements are generated based on the RFQ category and province."
+        collapsible
+      />
+
       <RFQIntelligence
         title={rfq.title}
         description={rfq.description}
@@ -261,6 +281,13 @@ export default async function RFQDetailPage({ params }: Props) {
           className="inline-flex items-center justify-center rounded-md border border-panel bg-surface px-5 py-2.5 text-sm font-semibold text-secondary transition hover:bg-panel"
         >
           Message Buyer/Admin
+        </Link>
+
+        <Link
+          href={`/dashboard/admin/whatsapp?rfq_id=${rfq.id}`}
+          className="inline-flex items-center justify-center rounded-md border border-success bg-success-soft px-5 py-2.5 text-sm font-semibold text-success transition hover:bg-success/10"
+        >
+          Send RFQ WhatsApp Alert
         </Link>
 
         <Link

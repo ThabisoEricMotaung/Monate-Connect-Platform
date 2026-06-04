@@ -50,12 +50,17 @@ function formatDate(dateStr: string | null): string {
   })
 }
 
-function parseOptionalNumber(value: string): number | null {
+function parseOptionalNumber(value: string, label: "RFQ ID" | "Quote ID"): number | null {
   const trimmed = value.trim()
   if (!trimmed) return null
 
   const numericValue = Number(trimmed)
-  return Number.isFinite(numericValue) ? numericValue : null
+
+  if (!Number.isSafeInteger(numericValue) || numericValue < 1) {
+    throw new Error(`${label} must be a number.`)
+  }
+
+  return numericValue
 }
 
 function displayProfile(id: string, profiles: Record<string, ProfileSummary>) {
@@ -198,7 +203,7 @@ export default function MessagesPage() {
 
   const visibleMessages = activeTab === "inbox" ? inboxMessages : sentMessages
   const unreadCount = useMemo(
-    () => inboxMessages.filter((message) => !message.read).length,
+    () => inboxMessages.filter((message) => !message.is_read).length,
     [inboxMessages]
   )
 
@@ -215,23 +220,27 @@ export default function MessagesPage() {
     setErrorMessage("")
     setSuccessMessage("")
 
-    const sentMessage = await sendMessage({
-      receiverId: composer.receiverId,
-      subject: composer.subject,
-      message: composer.message,
-      rfqId: parseOptionalNumber(composer.rfqId),
-      quoteId: parseOptionalNumber(composer.quoteId),
-    })
+    try {
+      const rfqId = parseOptionalNumber(composer.rfqId, "RFQ ID")
+      const quoteId = parseOptionalNumber(composer.quoteId, "Quote ID")
 
-    setSending(false)
-
-    if (!sentMessage) {
+      await sendMessage({
+        receiverId: composer.receiverId,
+        subject: composer.subject,
+        message: composer.message,
+        rfqId,
+        quoteId,
+      })
+    } catch (error) {
+      console.error("Message submission failed:", error)
       setErrorMessage(
-        "Message could not be sent. Confirm the receiver ID, subject, and message."
+        error instanceof Error ? error.message : "Message could not be sent."
       )
+      setSending(false)
       return
     }
 
+    setSending(false)
     setSuccessMessage("Message sent and recorded in the procurement history.")
     setComposer((currentComposer) => ({
       ...emptyComposer,
@@ -245,7 +254,7 @@ export default function MessagesPage() {
     await markMessageRead(messageId)
     setInboxMessages((currentMessages) =>
       currentMessages.map((message) =>
-        message.id === messageId ? { ...message, read: true } : message
+        message.id === messageId ? { ...message, is_read: true } : message
       )
     )
   }
@@ -473,12 +482,12 @@ export default function MessagesPage() {
                       </h3>
                       <span
                         className={`rounded-md border px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${
-                          message.read
+                          message.is_read
                             ? "border-panel bg-panel text-secondary"
                             : "border-accent bg-accent text-button"
                         }`}
                       >
-                        {message.read ? "Read" : "Unread"}
+                        {message.is_read ? "Read" : "Unread"}
                       </span>
                     </div>
                     <p className="mt-2 text-sm leading-7 text-secondary">
@@ -500,7 +509,7 @@ export default function MessagesPage() {
                     <p className="text-xs font-medium text-secondary">
                       {formatDate(message.created_at)}
                     </p>
-                    {activeTab === "inbox" && !message.read ? (
+                    {activeTab === "inbox" && !message.is_read ? (
                       <button
                         type="button"
                         onClick={() => handleMarkRead(message.id)}

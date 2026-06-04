@@ -8,6 +8,9 @@ export type NotificationType =
   | "Verification Approved"
   | "Verification Rejected"
   | "Purchase Order Issued"
+  | "Contract Expiring"
+  | "Invoice Approved"
+  | "Payment Paid"
   | "Clarification Response"
   | "Compliance Expiry Warning"
 

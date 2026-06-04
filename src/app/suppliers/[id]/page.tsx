@@ -1,5 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import SmartScoreCircle from "@/components/SmartScoreCircle"
+import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 
 type Props = {
@@ -22,6 +24,13 @@ type SupplierProfile = {
   company_registration: string | null
   cidb_grade: string | null
   verification_notes: string | null
+  csd_document_url: string | null
+  bbbee_document_url: string | null
+  tax_document_url: string | null
+  company_registration_url: string | null
+  cidb_document_url: string | null
+  capability_statement_url: string | null
+  updated_at?: string | null
 }
 
 const statusStyles: Record<string, string> = {
@@ -49,7 +58,7 @@ export default async function SupplierDetailPage({ params }: Props) {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, business_name, province, industry, phone, email, verification_status, csd_number, bbbee_level, tax_status, company_registration, cidb_grade, verification_notes")
+    .select("id, business_name, province, industry, phone, email, verification_status, csd_number, bbbee_level, tax_status, company_registration, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, updated_at")
     .eq("id", id)
     .single()
 
@@ -58,6 +67,7 @@ export default async function SupplierDetailPage({ params }: Props) {
   }
 
   const supplier = data as SupplierProfile
+  const smartScore = calculateSupplierSmartScore(supplier)
 
   return (
     <main className="min-h-screen bg-page px-6 py-10 text-primary">
@@ -125,6 +135,11 @@ export default async function SupplierDetailPage({ params }: Props) {
             </div>
 
             <div className="mt-5 space-y-3">
+              <SmartScoreCircle
+                score={smartScore}
+                label="Supplier SmartScore"
+                className="max-w-none bg-panel"
+              />
               <div className="rounded-md border border-panel bg-panel p-4">
                 <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Verification</p>
                 <p className="mt-2 text-sm font-semibold text-heading">{supplier.verification_status || "Pending Review"}</p>
