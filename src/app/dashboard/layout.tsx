@@ -89,13 +89,14 @@ const navigation: {
 
 const intelligenceNavigation: { name: string; href: string }[] = [
   { name: "Executive Dashboard", href: "/dashboard/intelligence/executive" },
+  { name: "Opportunity Matching", href: "/dashboard/intelligence/matches" },
   { name: "Supplier Intelligence", href: "/dashboard/intelligence/suppliers" },
   { name: "Supplier Performance", href: "/dashboard/intelligence/supplier-performance" },
   { name: "Procurement Analytics", href: "/dashboard/intelligence/procurement" },
   { name: "Regional Insights", href: "/dashboard/intelligence/regions" },
 ]
 
-const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Board Pack" | "System Health" | "Production Readiness" | "Demo Mode" | "Demo Story Pack" | "Pilot Requests" | "Audit Trail" | "Automation Rules" | "Reports" | "Settings" | "WhatsApp Network" | "Contract Renewals" | "Supplier Reviews" | "Compliance Risk" | "Buyer Onboarding" | "RFQ Templates" | "Banking Review" | "Supplier Risk" | "Decision Board" | "Workflow Rules" | "Overrides" | "Approval Matrix" | "Delegation Authority"; href: string }[] = [
+const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Board Pack" | "System Health" | "Production Readiness" | "Demo Mode" | "Demo Story Pack" | "Pilot Requests" | "Pilot Feedback" | "Audit Trail" | "Automation Rules" | "Reports" | "Settings" | "WhatsApp Network" | "Contract Renewals" | "Supplier Reviews" | "Compliance Risk" | "Buyer Onboarding" | "RFQ Templates" | "Banking Review" | "Supplier Risk" | "Decision Board" | "Workflow Rules" | "Overrides" | "Approval Matrix" | "Delegation Authority"; href: string }[] = [
   {
     name: "Executive Command Centre",
     href: "/dashboard/executive",
@@ -143,6 +144,10 @@ const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Bo
   {
     name: "Pilot Requests",
     href: "/dashboard/admin/pilot-requests",
+  },
+  {
+    name: "Pilot Feedback",
+    href: "/dashboard/admin/feedback",
   },
   {
     name: "Settings",
@@ -354,7 +359,7 @@ export default function DashboardLayout({
                         : "border-transparent text-secondary hover:bg-surface hover:text-primary"
                     }`}
                   >
-                    {item.name === "Executive Command Centre" || item.name === "Board Pack" || item.name === "System Health" || item.name === "Production Readiness" || item.name === "Demo Mode" || item.name === "Demo Story Pack" || item.name === "Pilot Requests" || item.name === "Audit Trail" || item.name === "Automation Rules" || item.name === "Reports" || item.name === "Settings" || item.name === "WhatsApp Network" || item.name === "Contract Renewals" || item.name === "Supplier Reviews" || item.name === "Compliance Risk" || item.name === "Buyer Onboarding" || item.name === "RFQ Templates" || item.name === "Banking Review" || item.name === "Supplier Risk" || item.name === "Decision Board" || item.name === "Workflow Rules" || item.name === "Overrides" || item.name === "Approval Matrix" || item.name === "Delegation Authority" ? item.name : t(item.name)}
+                    {item.name === "Executive Command Centre" || item.name === "Board Pack" || item.name === "System Health" || item.name === "Production Readiness" || item.name === "Demo Mode" || item.name === "Demo Story Pack" || item.name === "Pilot Requests" || item.name === "Pilot Feedback" || item.name === "Audit Trail" || item.name === "Automation Rules" || item.name === "Reports" || item.name === "Settings" || item.name === "WhatsApp Network" || item.name === "Contract Renewals" || item.name === "Supplier Reviews" || item.name === "Compliance Risk" || item.name === "Buyer Onboarding" || item.name === "RFQ Templates" || item.name === "Banking Review" || item.name === "Supplier Risk" || item.name === "Decision Board" || item.name === "Workflow Rules" || item.name === "Overrides" || item.name === "Approval Matrix" || item.name === "Delegation Authority" ? item.name : t(item.name)}
                   </Link>
                 )
               })}

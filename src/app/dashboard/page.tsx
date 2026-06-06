@@ -1,9 +1,11 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import SmartScoreCircle from "@/components/SmartScoreCircle"
 import { getCurrentProfile } from "@/lib/auth"
+import { getSupplierMatches, type SupplierMatchResult } from "@/lib/matchingEngine"
 import {
   getPurchaseOrders,
   normalizePurchaseOrderStatus,
@@ -23,10 +25,24 @@ function isMissingRoleColumnError(error: { message?: string } | null): boolean {
   )
 }
 
+function formatDeadline(dateStr: string | null | undefined): string {
+  if (!dateStr) return "-"
+  const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return "-"
+
+  return date.toLocaleDateString("en-ZA", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
+}
+
 export default function DashboardPage() {
 
   const router = useRouter()
   const [smartScore, setSmartScore] = useState<SmartScoreResult | null>(null)
+  const [recommendedOpportunities, setRecommendedOpportunities] = useState<SupplierMatchResult[]>([])
+  const [opportunitiesLoading, setOpportunitiesLoading] = useState(true)
   const [purchaseOrderMetrics, setPurchaseOrderMetrics] = useState({
     active: 0,
     delivered: 0,
@@ -230,6 +246,32 @@ export default function DashboardPage() {
     loadPurchaseOrderMetrics()
   }, [])
 
+  useEffect(() => {
+    async function loadRecommendedOpportunities() {
+      const profile = await getCurrentProfile()
+
+      if (!profile?.id || profile.role === "admin" || profile.role === "buyer") {
+        setOpportunitiesLoading(false)
+        return
+      }
+
+      try {
+        const matches = await getSupplierMatches(profile.id)
+        setRecommendedOpportunities(
+          matches
+            .filter((match) => match.match_score >= 40)
+            .slice(0, 5)
+        )
+      } catch (error) {
+        console.error("Recommended opportunities failed:", error)
+      } finally {
+        setOpportunitiesLoading(false)
+      }
+    }
+
+    loadRecommendedOpportunities()
+  }, [])
+
   return (
     <div>
 
@@ -281,6 +323,102 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <section className="mb-8 rounded-xl border border-panel bg-card p-6 shadow-panel">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-panel pb-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.24em] text-secondary">
+              Supplier Intelligence
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-heading">
+              Recommended Opportunities
+            </h2>
+          </div>
+          <Link
+            href="/dashboard/rfqs"
+            className="rounded-md border border-panel bg-surface px-4 py-2 text-sm font-semibold text-secondary transition hover:border-accent hover:text-accent"
+          >
+            View All RFQs
+          </Link>
+        </div>
+
+        {opportunitiesLoading ? (
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="h-28 animate-pulse rounded-md bg-panel" />
+            ))}
+          </div>
+        ) : recommendedOpportunities.length === 0 ? (
+          <p className="mt-5 text-sm leading-7 text-secondary">
+            No recommended opportunities are available yet. Complete your supplier
+            profile, province, industry, and compliance details to improve matching.
+          </p>
+        ) : (
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            {recommendedOpportunities.map((match) => (
+              <article
+                key={match.rfq.id}
+                className="rounded-md border border-panel bg-panel p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold text-heading">
+                      {match.rfq.title ?? `RFQ-${match.rfq.id}`}
+                    </h3>
+                    <p className="mt-1 text-xs text-secondary">
+                      {match.rfq.category ?? "No category"}{" "}
+                      <span aria-hidden="true">&middot;</span>{" "}
+                      {match.rfq.province ?? match.rfq.region ?? "No province"}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-heading">{match.match_score}%</p>
+                    <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-secondary">
+                      Match
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <p className="text-[0.62rem] uppercase tracking-[0.18em] text-muted">
+                      Province
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-heading">
+                      {match.rfq.province ?? match.rfq.region ?? "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[0.62rem] uppercase tracking-[0.18em] text-muted">
+                      Category
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-heading">
+                      {match.rfq.category ?? "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[0.62rem] uppercase tracking-[0.18em] text-muted">
+                      Deadline
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-heading">
+                      {formatDeadline(match.rfq.deadline)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <Link
+                    href={`/dashboard/rfqs/${match.rfq.id}`}
+                    className="inline-flex rounded-md border border-accent bg-accent px-3 py-2 text-xs font-bold text-button transition hover:bg-accent-strong"
+                  >
+                    View RFQ
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
 

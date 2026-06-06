@@ -6,8 +6,10 @@ import RFQIntelligence from "@/components/rfqs/RFQIntelligence"
 import ComplianceChecklist from "@/components/compliance/ComplianceChecklist"
 import ComplianceBanner from "@/components/compliance/ComplianceBanner"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
+import { getRFQMatches, type MatchLevel } from "@/lib/matchingEngine"
 import { checkRFQCompliance } from "@/lib/policyCompliance"
 import { supabase } from "@/lib/supabase"
+import { createRFQWhatsAppMessage, createWhatsAppLink } from "@/lib/whatsapp"
 
 type Props = {
   params: Promise<{
@@ -33,6 +35,13 @@ const statusStyles: Record<string, string> = {
   "Closing Soon": "border-warning bg-warning-soft text-warning",
   Closed: "border-rose-500/30 bg-rose-500/10 text-rose-700",
   Awarded: "border-success/30 bg-success-soft text-success",
+}
+
+const matchLevelStyles: Record<MatchLevel, string> = {
+  "Excellent Match": "border-success/40 bg-success/10 text-success",
+  "Strong Match": "border-accent/40 bg-accent/10 text-accent-strong",
+  "Moderate Match": "border-warning/40 bg-warning/10 text-warning",
+  "Weak Match": "border-panel bg-panel text-muted",
 }
 
 function formatRand(amount: string | null): string {
@@ -80,6 +89,7 @@ export default async function RFQDetailPage({ params }: Props) {
   const displayStatus = getRFQDisplayStatus(rfq.status, rfq.deadline)
   const isClosed = displayStatus === "Closed"
   const rfqCompliance = checkRFQCompliance(rfq)
+  const recommendedSuppliers = (await getRFQMatches(rfq.id)).slice(0, 5)
 
   return (
 
@@ -249,6 +259,109 @@ export default async function RFQDetailPage({ params }: Props) {
         deadline={rfq.deadline}
         attachment_url={rfq.attachment_url}
       />
+
+      <section className="mt-8 rounded-md border border-panel bg-card p-6 shadow-panel">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-panel pb-4">
+          <div>
+            <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">
+              Supplier Intelligence
+            </p>
+            <h2 className="mt-2 text-xl font-semibold text-heading">
+              Recommended Suppliers
+            </h2>
+          </div>
+          <Link
+            href={`/dashboard/intelligence/matches`}
+            className="rounded-md border border-panel bg-surface px-4 py-2 text-sm font-semibold text-secondary transition hover:border-accent hover:text-accent"
+          >
+            View Matching Engine
+          </Link>
+        </div>
+
+        {recommendedSuppliers.length === 0 ? (
+          <p className="mt-5 text-sm leading-7 text-secondary">
+            No supplier recommendations are available yet. Supplier profiles and RFQ
+            categories are used to build matches automatically.
+          </p>
+        ) : (
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            {recommendedSuppliers.map((match) => {
+              const whatsappLink = createWhatsAppLink({
+                phone: match.supplier.phone,
+                message: createRFQWhatsAppMessage(match.rfq, match.supplier, "New RFQ"),
+              })
+
+              return (
+                <article
+                  key={match.supplier.id}
+                  className="rounded-md border border-panel bg-panel p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-heading">
+                        {match.supplier.business_name ?? "Unnamed Supplier"}
+                      </h3>
+                      <p className="mt-1 text-xs text-secondary">
+                        {match.supplier.verification_status ?? "Verification pending"}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-heading">{match.match_score}%</p>
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-[0.65rem] font-bold ${matchLevelStyles[match.match_level]}`}
+                      >
+                        {match.match_level}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-md border border-panel bg-surface p-3">
+                      <p className="text-[0.62rem] uppercase tracking-[0.18em] text-muted">
+                        SmartScore
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-heading">
+                        {match.smartscore}
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-panel bg-surface p-3">
+                      <p className="text-[0.62rem] uppercase tracking-[0.18em] text-muted">
+                        Industry
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-heading">
+                        {match.supplier.industry ?? "-"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Link
+                      href={`/dashboard/messages?receiver_id=${match.supplier.id}&rfq_id=${rfq.id}&subject=${encodeURIComponent(`RFQ-${rfq.id} supplier enquiry`)}`}
+                      className="rounded-md border border-panel bg-surface px-3 py-2 text-xs font-bold text-secondary hover:border-accent hover:text-accent"
+                    >
+                      Contact Supplier
+                    </Link>
+                    {whatsappLink ? (
+                      <a
+                        href={whatsappLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-md border border-success bg-success-soft px-3 py-2 text-xs font-bold text-success hover:bg-success/10"
+                      >
+                        Send WhatsApp Alert
+                      </a>
+                    ) : (
+                      <span className="rounded-md border border-panel bg-surface px-3 py-2 text-xs font-semibold text-muted">
+                        No WhatsApp
+                      </span>
+                    )}
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        )}
+      </section>
 
       <RFQClarifications rfqId={rfq.id} />
 

@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
+import { createMatchAlertDrafts, type MatchAlertResult } from "@/lib/matchAlerts"
 import { saveSupplier, unsaveSupplier, isSupplierSaved } from "@/lib/savedSuppliers"
 import {
   getRecommendedSuppliersForRFQ,
@@ -80,10 +81,14 @@ function SupplierCard({
   result,
   rfqId,
   rfqTitle,
+  selected,
+  onToggleSelected,
 }: {
   result: SupplierMatchResult
   rfqId: number
   rfqTitle: string | null
+  selected: boolean
+  onToggleSelected: () => void
 }) {
   const { supplier, stats, score, label, reasons, scoreBreakdown } = result
   const [saved, setSaved] = useState(false)
@@ -132,6 +137,21 @@ function SupplierCard({
 
   return (
     <div className="enterprise-card flex flex-col gap-4">
+      <div className="flex items-center justify-between rounded-lg border border-panel bg-surface px-3.5 py-2">
+        <label className="flex cursor-pointer items-center gap-2 text-xs font-bold text-secondary">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggleSelected}
+            className="h-4 w-4 rounded border-panel accent-accent"
+          />
+          Select for alert
+        </label>
+        <span className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted">
+          Draft only
+        </span>
+      </div>
+
       {/* Header row */}
       <div className="flex items-start gap-4">
         {/* Score ring */}
@@ -403,6 +423,10 @@ export default function SupplierMatchingPage() {
   const [results, setResults] = useState<SupplierMatchResult[]>([])
   const [activeTab, setActiveTab] = useState<FilterTab>("All")
   const [showWeak, setShowWeak] = useState(false)
+  const [selectedSupplierIds, setSelectedSupplierIds] = useState<string[]>([])
+  const [alerting, setAlerting] = useState(false)
+  const [alertSuccess, setAlertSuccess] = useState("")
+  const [alertError, setAlertError] = useState("")
 
   useEffect(() => {
     async function load() {
@@ -442,7 +466,64 @@ export default function SupplierMatchingPage() {
     return list
   }, [results, activeTab, showWeak])
 
+  const selectedResults = useMemo(
+    () => results.filter((result) => selectedSupplierIds.includes(result.supplier.id)),
+    [results, selectedSupplierIds]
+  )
+
+  const strongResults = useMemo(
+    () => results.filter((result) => result.label === "Excellent Match" || result.label === "Strong Match"),
+    [results]
+  )
+
   const tabs: FilterTab[] = ["All", ...LABEL_ORDER]
+
+  function toggleSelectedSupplier(supplierId: string) {
+    setSelectedSupplierIds((current) =>
+      current.includes(supplierId)
+        ? current.filter((id) => id !== supplierId)
+        : [...current, supplierId]
+    )
+  }
+
+  function summarizeAlertResult(result: MatchAlertResult): string {
+    return `${result.notificationsCreated} notification(s) and ${result.whatsappDraftsCreated} WhatsApp draft(s) created.`
+  }
+
+  async function notifyResults(targetResults: SupplierMatchResult[]) {
+    if (!rfq || targetResults.length === 0) {
+      setAlertError("Select at least one supplier match to notify.")
+      setAlertSuccess("")
+      return
+    }
+
+    setAlerting(true)
+    setAlertError("")
+    setAlertSuccess("")
+
+    try {
+      const result = await createMatchAlertDrafts(
+        targetResults.map((match) => ({
+          supplier: match.supplier,
+          rfq: {
+            id: rfq.id,
+            title: rfq.title,
+            deadline: rfq.deadline,
+          },
+          matchScore: match.score,
+        }))
+      )
+
+      if (result.errors.length > 0) {
+        setAlertError(result.errors.join(" "))
+      }
+      setAlertSuccess(summarizeAlertResult(result))
+    } catch (err) {
+      setAlertError(err instanceof Error ? err.message : "Failed to create match alerts.")
+    } finally {
+      setAlerting(false)
+    }
+  }
 
   return (
     <div>
@@ -473,6 +554,20 @@ export default function SupplierMatchingPage() {
         <div className="mb-6 rounded-md border border-rose-500/25 bg-rose-500/10 px-5 py-4">
           <p className="text-sm font-semibold text-rose-700">Matching failed</p>
           <p className="mt-1 text-xs text-rose-600">{error}</p>
+        </div>
+      )}
+
+      {alertError && (
+        <div className="mb-6 rounded-md border border-rose-500/25 bg-rose-500/10 px-5 py-4">
+          <p className="text-sm font-semibold text-rose-700">Match alert workflow</p>
+          <p className="mt-1 text-xs text-rose-600">{alertError}</p>
+        </div>
+      )}
+
+      {alertSuccess && (
+        <div className="mb-6 rounded-md border border-success/30 bg-success-soft px-5 py-4">
+          <p className="text-sm font-semibold text-success">Draft alerts created</p>
+          <p className="mt-1 text-xs text-success">{alertSuccess}</p>
         </div>
       )}
 
@@ -538,6 +633,38 @@ export default function SupplierMatchingPage() {
             </div>
           </div>
 
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-md border border-panel bg-card px-4 py-3 shadow-panel">
+            <p className="text-xs font-semibold text-secondary">
+              {selectedResults.length} selected &middot; WhatsApp remains draft-only
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => notifyResults(selectedResults)}
+                disabled={alerting || selectedResults.length === 0}
+                className="rounded-md border border-accent bg-accent px-3 py-2 text-xs font-bold text-button disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Notify Selected
+              </button>
+              <button
+                type="button"
+                onClick={() => notifyResults(strongResults)}
+                disabled={alerting || strongResults.length === 0}
+                className="rounded-md border border-panel bg-surface px-3 py-2 text-xs font-bold text-secondary hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Notify All Strong Matches
+              </button>
+              <button
+                type="button"
+                onClick={() => notifyResults(selectedResults.length > 0 ? selectedResults : strongResults)}
+                disabled={alerting || (selectedResults.length === 0 && strongResults.length === 0)}
+                className="rounded-md border border-success bg-success-soft px-3 py-2 text-xs font-bold text-success disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Create WhatsApp Drafts
+              </button>
+            </div>
+          </div>
+
           {/* Filter tabs */}
           <div className="mb-5 flex flex-wrap gap-2">
             {tabs.map((tab) => {
@@ -584,6 +711,8 @@ export default function SupplierMatchingPage() {
                   result={result}
                   rfqId={rfqId}
                   rfqTitle={rfq.title}
+                  selected={selectedSupplierIds.includes(result.supplier.id)}
+                  onToggleSelected={() => toggleSelectedSupplier(result.supplier.id)}
                 />
               ))}
             </div>

@@ -15,6 +15,8 @@ const footerSections = [
     links: [
       { label: "Help Centre", href: "/help" },
       { label: "Contact", href: "/contact" },
+      { label: "Pilot Launch", href: "/pilot-launch" },
+      { label: "Feedback", href: "/feedback" },
       { label: "Demo Pack", href: "/demo-pack" },
       { label: "Demo Walkthrough", href: "/demo-walkthrough" },
     ],

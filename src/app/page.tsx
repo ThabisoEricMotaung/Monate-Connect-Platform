@@ -14,6 +14,8 @@ const quickLinks = [
   { label: "Browse Verified Suppliers", href: "/suppliers" },
   { label: "Trust Centre", href: "/trust" },
   { label: "Request Pilot Demo", href: "/contact" },
+  { label: "Pilot Launch", href: "/pilot-launch" },
+  { label: "Feedback", href: "/feedback" },
 ]
 
 function EntryButton({
