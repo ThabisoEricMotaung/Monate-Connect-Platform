@@ -20,6 +20,24 @@ function isMissingRoleColumnError(error: { message?: string } | null): boolean {
   )
 }
 
+function getPostLoginPath(role?: string | null): string {
+  const normalizedRole = role?.trim().toLowerCase()
+
+  if (!normalizedRole) {
+    return "/dashboard/onboarding"
+  }
+
+  if (normalizedRole === "admin" || normalizedRole === "buyer") {
+    return "/dashboard/executive"
+  }
+
+  if (normalizedRole === "supplier") {
+    return "/dashboard"
+  }
+
+  return "/dashboard/onboarding"
+}
+
 export default function LoginPage() {
 
   const router = useRouter()
@@ -27,17 +45,20 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [loadingMessage, setLoadingMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
 
   const handleLogin = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
 
     setLoading(true)
+    setLoadingMessage("Signing in...")
     setErrorMessage("")
 
     if (!supabase) {
       setErrorMessage("Supabase environment variables are not configured.")
       setLoading(false)
+      setLoadingMessage("")
       return
     }
 
@@ -51,11 +72,15 @@ export default function LoginPage() {
       setErrorMessage(error.message)
 
       setLoading(false)
+      setLoadingMessage("")
 
       return
     }
 
+    setLoadingMessage("Checking your access...")
+
     const { data: { user } } = await supabase.auth.getUser()
+    let postLoginPath = "/dashboard/onboarding"
 
     if (user) {
       console.log("USER METADATA", user.user_metadata)
@@ -73,6 +98,7 @@ export default function LoginPage() {
           console.error(profileSelectError)
           setErrorMessage(profileSelectError.message)
           setLoading(false)
+          setLoadingMessage("")
           return
         }
 
@@ -89,11 +115,14 @@ export default function LoginPage() {
           console.error(fallbackProfileError)
           setErrorMessage(fallbackProfileError.message)
           setLoading(false)
+          setLoadingMessage("")
           return
         }
 
         profile = fallbackProfile as LoginProfile | null
       }
+
+      postLoginPath = getPostLoginPath(profile?.role)
 
       if (!profile) {
         const profilePayload = {
@@ -115,8 +144,11 @@ export default function LoginPage() {
           console.error(profileInsertError)
           setErrorMessage(profileInsertError.message)
           setLoading(false)
+          setLoadingMessage("")
           return
         }
+
+        postLoginPath = getPostLoginPath(roleColumnAvailable ? "supplier" : null)
       } else if (
         !profile.province ||
         !profile.industry ||
@@ -139,13 +171,14 @@ export default function LoginPage() {
           console.error(profileUpdateError)
           setErrorMessage(profileUpdateError.message)
           setLoading(false)
+          setLoadingMessage("")
           return
         }
       }
     }
 
-    setLoading(false)
-    router.push("/dashboard")
+    setLoadingMessage("Opening your workspace...")
+    router.push(postLoginPath)
   }
 
   return (
@@ -214,8 +247,14 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50"
           >
-            {loading ? "Signing in..." : "Login"}
+            {loading ? loadingMessage : "Login"}
           </button>
+
+          {loading && (
+            <p className="text-center text-sm font-semibold text-secondary" role="status" aria-live="polite">
+              {loadingMessage}
+            </p>
+          )}
 
         </div>
 

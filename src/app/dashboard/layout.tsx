@@ -247,7 +247,7 @@ export default function DashboardLayout({
   return (
     <main className="flex min-h-screen bg-page text-primary">
 
-      <aside className="dashboard-sidebar w-full max-w-[280px] border-r border-panel bg-panel p-5">
+      <aside className="dashboard-sidebar print:hidden w-full max-w-[280px] border-r border-panel bg-panel p-5">
 
         <div className="mb-4 rounded-2xl border border-panel bg-surface p-4 text-sm">
           <Link
@@ -363,8 +363,8 @@ export default function DashboardLayout({
         )}
       </aside>
 
-      <section className="flex-1 p-6 md:p-8">
-        <div className="dashboard-chrome mb-6 flex items-center justify-between gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
+      <section className="flex-1 min-w-0 overflow-x-hidden p-6 md:p-8">
+        <div className="dashboard-chrome print:hidden mb-6 flex items-center justify-between gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
           <div>
             <p className="text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-secondary">
               Live Procurement
@@ -375,7 +375,7 @@ export default function DashboardLayout({
           </div>
           <NotificationBell />
         </div>
-        <Breadcrumbs />
+        <div className="print:hidden"><Breadcrumbs /></div>
         {children}
       </section>
 

@@ -158,7 +158,7 @@ export default function AdminWhatsAppNetworkPage() {
       }
 
       setSuppliers(
-        ((supplierResult.data ?? []) as Omit<SupplierProfile, "smartScore">[]).map(
+        ((supplierResult.data ?? []) as unknown as Omit<SupplierProfile, "smartScore">[]).map(
           (supplier) => ({
             ...supplier,
             smartScore: calculateSupplierSmartScore(supplier),

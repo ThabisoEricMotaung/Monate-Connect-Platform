@@ -147,41 +147,23 @@ async function listBuckets(): Promise<{ buckets: string[]; error: string | null 
   return { buckets: (data ?? []).map((bucket) => bucket.name), error: null }
 }
 
-async function getRlsTables(): Promise<{ enabled: string[]; error: string | null }> {
-  if (!supabase) return { enabled: [], error: "Supabase is not configured." }
-
-  const { data, error } = await supabase
-    .from("pg_tables")
-    .select("tablename,rowsecurity")
-    .eq("schemaname", "public")
-
-  if (error) return { enabled: [], error: formatError(error) }
-
-  const enabled = ((data ?? []) as { tablename?: string; rowsecurity?: boolean }[])
-    .filter((row) => row.rowsecurity)
-    .map((row) => row.tablename ?? "")
-    .filter(Boolean)
-
-  return { enabled, error: null }
+// pg_tables and pg_policies are Postgres system catalog views that are not
+// accessible from the browser-side Supabase anon client. RLS metadata checks
+// must be performed server-side (e.g. via a Supabase Edge Function or the
+// Supabase Dashboard). These stubs return a safe informational status instead
+// of attempting the failing query.
+function getRlsTables(): Promise<{ enabled: string[]; error: string | null }> {
+  return Promise.resolve({
+    enabled: [],
+    error: "RLS metadata requires a server-side check — verify in Supabase Dashboard → Authentication → Policies.",
+  })
 }
 
-async function getPolicyTables(): Promise<{ tables: string[]; error: string | null }> {
-  if (!supabase) return { tables: [], error: "Supabase is not configured." }
-
-  const { data, error } = await supabase
-    .from("pg_policies")
-    .select("tablename")
-    .eq("schemaname", "public")
-
-  if (error) return { tables: [], error: formatError(error) }
-
-  const tables = Array.from(new Set(
-    ((data ?? []) as { tablename?: string }[])
-      .map((row) => row.tablename ?? "")
-      .filter(Boolean)
-  ))
-
-  return { tables, error: null }
+function getPolicyTables(): Promise<{ tables: string[]; error: string | null }> {
+  return Promise.resolve({
+    tables: [],
+    error: "Policy metadata requires a server-side check — verify in Supabase Dashboard → Authentication → Policies.",
+  })
 }
 
 function readinessStatus(score: number): string {

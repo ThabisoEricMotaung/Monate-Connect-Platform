@@ -969,7 +969,7 @@ export default function BuyerOnboardingPage() {
                     Organisation Details
                   </h2>
                   <p className="mt-1 text-sm text-secondary">
-                    Enter your organisation's information. This populates buyer
+                    Enter your organisation&apos;s information. This populates buyer
                     context across RFQs and procurement communications.
                   </p>
                 </div>
@@ -1193,7 +1193,7 @@ export default function BuyerOnboardingPage() {
                   </h2>
                   <p className="mt-1 text-sm text-secondary">
                     Set default values that pre-populate new RFQs. These are your
-                    organisation's standard procurement starting point.
+                    organisation&apos;s standard procurement starting point.
                   </p>
                 </div>
 
@@ -1240,7 +1240,7 @@ export default function BuyerOnboardingPage() {
                   <div>
                     <label className={labelCls}>Standard Compliance Requirements</label>
                     <p className="mb-3 text-xs text-muted">
-                      These appear in every new RFQ's compliance section. Edit or remove items to match your organisation's standard.
+                      These appear in every new RFQ&apos;s compliance section. Edit or remove items to match your organisation&apos;s standard.
                     </p>
                     <EditableList
                       items={step3.standard_compliance_requirements}

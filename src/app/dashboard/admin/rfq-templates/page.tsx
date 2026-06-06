@@ -5,10 +5,7 @@ import { useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { logActivity } from "@/lib/activity"
 import { supabase } from "@/lib/supabase"
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-export const TEMPLATE_APPLY_KEY = "monate-rfq-template-apply"
+import { TEMPLATE_APPLY_KEY } from "@/lib/rfqTemplateKeys"
 
 const SA_PROVINCES = [
   "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal",

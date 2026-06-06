@@ -258,7 +258,7 @@ async function safeFetch(
     .limit(500)
 
   if (!error) {
-    const rows = ((data ?? []) as Record<string, unknown>[]).sort((a, b) => {
+    const rows = ((data ?? []) as unknown as Record<string, unknown>[]).sort((a, b) => {
       const left = getDate(a)?.getTime() ?? 0
       const right = getDate(b)?.getTime() ?? 0
       return right - left

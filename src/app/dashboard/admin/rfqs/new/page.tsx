@@ -14,7 +14,7 @@ import {
   type AuthProfile,
 } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
-import { TEMPLATE_APPLY_KEY } from "@/app/dashboard/admin/rfq-templates/page"
+import { TEMPLATE_APPLY_KEY } from "@/lib/rfqTemplateKeys"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -377,6 +377,18 @@ function buildRFQDraft(
   }
 
   // ── Description ─────────────────────────────────────────────────────────────
+  const detectedVerb = lower.includes("supply") || lower.includes("procurement")
+    ? "Supply"
+    : lower.includes("install")
+      ? "Installation"
+      : lower.includes("mainten")
+        ? "Maintenance"
+        : lower.includes("develop") || lower.includes("design")
+          ? "Development"
+          : lower.includes("consult") || lower.includes("advisory")
+            ? "Consulting"
+            : "Procurement"
+
   const scopeExtract =
     trimmed.length > 30
       ? `${trimmed.slice(0, 220).replace(/\n/g, " ").trim()}${trimmed.length > 220 ? "…" : ""}`

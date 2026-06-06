@@ -904,7 +904,7 @@ export default function OnboardingPage() {
                     Business Information
                   </h2>
                   <p className="mt-1 text-sm text-secondary">
-                    Enter your company's core details. This information appears
+                    Enter your company&apos;s core details. This information appears
                     on your supplier profile and is used for RFQ matching.
                   </p>
                 </div>
@@ -1333,7 +1333,7 @@ export default function OnboardingPage() {
                         Ready to submit?
                       </p>
                       <p className="mt-1 text-xs leading-5 text-secondary">
-                        Submitting will set your profile status to "Under Review". A
+                        Submitting will set your profile status to &ldquo;Under Review&rdquo;. A
                         procurement team member will review your documents and verify
                         your profile.
                         {score < 70 && (
