@@ -120,6 +120,20 @@ function cleanFileName(fileName: string): string {
     .replace(/-+/g, "-")
 }
 
+function formatStorageUploadError(error: { message?: string; statusCode?: string } | null): string {
+  const message = error?.message ?? ""
+
+  if (
+    error?.statusCode === "404" ||
+    message.toLowerCase().includes("bucket") ||
+    message.toLowerCase().includes("not found")
+  ) {
+    return "Manual setup required: create the rfq-documents bucket in Supabase Storage, then try the upload again."
+  }
+
+  return message || "RFQ attachment upload failed. Please try again."
+}
+
 function isAcceptedAttachment(file: File): boolean {
   const lowerName = file.name.toLowerCase()
   return (
@@ -728,7 +742,7 @@ export default function NewRFQPage() {
         .from("rfq-documents")
         .upload(filePath, attachment, { upsert: false })
 
-      if (uploadError) { setLoading(false); setError(uploadError.message); return }
+      if (uploadError) { setLoading(false); setError(formatStorageUploadError(uploadError)); return }
 
       const { data: publicUrlData } = supabase.storage
         .from("rfq-documents")

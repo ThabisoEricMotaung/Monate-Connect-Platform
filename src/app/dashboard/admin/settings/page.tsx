@@ -373,7 +373,7 @@ export default function AdminSettingsPage() {
       if (error) {
         if (isMissingSettingsTable(error)) {
           setTableMissing(true)
-          setErrorMessage("platform_settings table is not available. Run the SQL migration below, then reload this page.")
+          setErrorMessage("platform_settings table is not available. Run database/migrations/schema_stabilization_v2.sql, then reload this page.")
         } else {
           setErrorMessage(error.message)
         }
@@ -457,7 +457,7 @@ export default function AdminSettingsPage() {
     if (error) {
       if (isMissingSettingsTable(error)) {
         setTableMissing(true)
-        setErrorMessage("platform_settings table is not available. Run the SQL migration below, then reload this page.")
+        setErrorMessage("platform_settings table is not available. Run database/migrations/schema_stabilization_v2.sql, then reload this page.")
       } else {
         setErrorMessage(error.message)
       }
@@ -515,6 +515,7 @@ export default function AdminSettingsPage() {
   setting_value jsonb,
   category text,
   description text,
+  created_at timestamptz default timezone('utc', now()),
   updated_at timestamptz default timezone('utc', now())
 );
 

@@ -117,6 +117,20 @@ function cleanFileName(fileName: string): string {
     .replace(/-+/g, "-")
 }
 
+function formatStorageUploadError(error: { message?: string; statusCode?: string } | null): string {
+  const message = error?.message ?? ""
+
+  if (
+    error?.statusCode === "404" ||
+    message.toLowerCase().includes("bucket") ||
+    message.toLowerCase().includes("not found")
+  ) {
+    return "Manual setup required: create the supplier-documents bucket in Supabase Storage, then try the upload again."
+  }
+
+  return message || "Document upload failed. Please try again."
+}
+
 export default function VerificationPage() {
   const [userId, setUserId] = useState("")
   const [supplierIndustry, setSupplierIndustry] = useState<string | null>(null)
@@ -262,7 +276,7 @@ export default function VerificationPage() {
       .upload(filePath, file, { upsert: true })
 
     if (uploadError) {
-      setErrorMessage(uploadError.message)
+      setErrorMessage(formatStorageUploadError(uploadError))
       setUploadingField(null)
       return
     }

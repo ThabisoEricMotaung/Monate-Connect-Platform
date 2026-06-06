@@ -30,17 +30,35 @@ export async function saveRFQ(rfqId: number, notes = ""): Promise<void> {
   }
 
   const userId = await getCurrentUserId()
+  const cleanedNotes = notes.trim() || null
 
-  const { error } = await supabase.from("saved_rfqs").upsert(
-    [
-      {
-        user_id: userId,
-        rfq_id: rfqId,
-        notes: notes.trim() || null,
-      },
-    ],
-    { onConflict: "user_id,rfq_id" }
-  )
+  const { data: existing, error: lookupError } = await supabase
+    .from("saved_rfqs")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("rfq_id", rfqId)
+    .limit(1)
+    .maybeSingle()
+
+  if (lookupError) throw lookupError
+
+  if (existing?.id) {
+    const { error } = await supabase
+      .from("saved_rfqs")
+      .update({ notes: cleanedNotes })
+      .eq("id", existing.id)
+
+    if (error) throw error
+    return
+  }
+
+  const { error } = await supabase.from("saved_rfqs").insert([
+    {
+      user_id: userId,
+      rfq_id: rfqId,
+      notes: cleanedNotes,
+    },
+  ])
 
   if (error) throw error
 }
@@ -91,6 +109,7 @@ export async function isRFQSaved(rfqId: number): Promise<boolean> {
     .select("id")
     .eq("user_id", userId)
     .eq("rfq_id", rfqId)
+    .limit(1)
     .maybeSingle()
 
   if (error) throw error

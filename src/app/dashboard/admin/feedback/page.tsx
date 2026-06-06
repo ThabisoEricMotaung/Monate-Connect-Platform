@@ -97,6 +97,25 @@ function priorityClass(priority: string | null): string {
   return "border-panel bg-panel text-muted"
 }
 
+function getFeedbackErrorMessage(error: { message?: string; code?: string } | null): string {
+  const message = error?.message ?? ""
+
+  if (error?.code === "42P01" || message.includes("pilot_feedback") || message.includes("does not exist")) {
+    return "Pilot feedback storage is not available yet. Run database/migrations/schema_stabilization_v2.sql and refresh this page."
+  }
+
+  if (
+    message.includes("issue_category") ||
+    message.includes("admin_notes") ||
+    message.includes("assigned_to") ||
+    message.includes("schema cache")
+  ) {
+    return "The pilot issue tracker columns are not available yet. Run database/migrations/schema_stabilization_v2.sql and try again."
+  }
+
+  return message || "Feedback could not be loaded or updated. Please try again."
+}
+
 export default function AdminFeedbackPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -132,7 +151,7 @@ export default function AdminFeedbackPage() {
         .order("created_at", { ascending: false })
 
       if (feedbackError) {
-        setError(feedbackError.message)
+        setError(getFeedbackErrorMessage(feedbackError))
       } else {
         const rows = (data ?? []) as PilotFeedback[]
         setFeedback(rows)
@@ -207,7 +226,7 @@ export default function AdminFeedbackPage() {
       .eq("id", id)
 
     if (updateError) {
-      setError(updateError.message)
+      setError(getFeedbackErrorMessage(updateError))
       setSavingId(null)
       return
     }

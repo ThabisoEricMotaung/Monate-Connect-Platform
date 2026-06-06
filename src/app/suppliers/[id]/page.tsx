@@ -197,7 +197,7 @@ export default async function SupplierDetailPage({ params }: Props) {
 
         <div className="mt-8 flex flex-wrap gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
           <Link
-            href="/#suppliers"
+            href="/suppliers"
             className="inline-flex items-center justify-center rounded-md border border-panel bg-surface px-5 py-2.5 text-sm font-semibold text-secondary transition hover:bg-panel"
           >
             Back to Suppliers

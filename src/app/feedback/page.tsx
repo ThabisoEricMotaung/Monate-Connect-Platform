@@ -18,6 +18,21 @@ const initialForm = {
   message: "",
 }
 
+function getFeedbackErrorMessage(error: { message?: string; code?: string } | null): string {
+  const message = error?.message ?? ""
+
+  if (
+    error?.code === "42P01" ||
+    message.includes("pilot_feedback") ||
+    message.includes("schema cache") ||
+    message.includes("does not exist")
+  ) {
+    return "Feedback could not be saved because the pilot feedback table is not available yet. Ask an admin to run database/migrations/schema_stabilization_v2.sql, then try again."
+  }
+
+  return message || "Feedback could not be submitted. Please try again."
+}
+
 export default function FeedbackPage() {
   const [form, setForm] = useState(initialForm)
   const [submitting, setSubmitting] = useState(false)
@@ -56,7 +71,7 @@ export default function FeedbackPage() {
     ])
 
     if (insertError) {
-      setError(insertError.message)
+      setError(getFeedbackErrorMessage(insertError))
       setSubmitting(false)
       return
     }

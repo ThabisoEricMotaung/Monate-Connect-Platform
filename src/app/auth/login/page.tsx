@@ -79,12 +79,21 @@ export default function LoginPage() {
 
     setLoadingMessage("Checking your access...")
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+
+    if (userError) {
+      setErrorMessage(userError.message)
+      setLoading(false)
+      setLoadingMessage("")
+      return
+    }
+
     let postLoginPath = "/dashboard/onboarding"
 
     if (user) {
-      console.log("USER METADATA", user.user_metadata)
-
       const { data: profileWithRole, error: profileSelectError } = await supabase
         .from("profiles")
         .select("id, province, industry, phone, role")

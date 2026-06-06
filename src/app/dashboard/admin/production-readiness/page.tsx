@@ -228,16 +228,16 @@ async function runReadinessChecks(): Promise<ReadinessCheck[]> {
 
   const buckets = await listBuckets()
   if (buckets.error) {
-    checks.push(check("Environment", "Required storage buckets exist", "Warning", `Storage bucket metadata could not be verified: ${buckets.error}`))
+    checks.push(check("Environment", "Required storage buckets exist", "Warning", `Manual setup required: storage bucket metadata could not be verified from this client. Create ${REQUIRED_BUCKETS.join(" and ")} in Supabase Storage. ${buckets.error}`))
   } else {
     const missingBuckets = REQUIRED_BUCKETS.filter((bucket) => !buckets.buckets.includes(bucket))
     checks.push(check(
       "Environment",
       "Required storage buckets exist",
-      missingBuckets.length === 0 ? "Passed" : "Failed",
+      missingBuckets.length === 0 ? "Passed" : "Warning",
       missingBuckets.length === 0
         ? `Storage buckets found: ${REQUIRED_BUCKETS.join(", ")}.`
-        : `Missing buckets: ${missingBuckets.join(", ")}.`
+        : `Manual setup required: create missing Supabase Storage bucket(s): ${missingBuckets.join(", ")}.`
     ))
   }
 

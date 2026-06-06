@@ -237,6 +237,15 @@ export default function PublicSupplierMarketplacePage() {
                       </p>
                     </div>
                   </div>
+
+                  <div className="mt-5 border-t border-panel pt-5">
+                    <Link
+                      href={`/suppliers/${supplier.id}`}
+                      className="inline-flex w-full items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
+                    >
+                      View Supplier Profile
+                    </Link>
+                  </div>
                 </article>
               )
             })}
