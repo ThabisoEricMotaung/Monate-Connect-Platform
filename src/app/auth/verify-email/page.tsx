@@ -1,11 +1,19 @@
 ﻿"use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
-export default function VerifyEmailPage() {
+function VerifyEmailLoading() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-page px-6 text-primary">
+      <p className="text-sm text-secondary">Checking your account status…</p>
+    </main>
+  )
+}
+
+function VerifyEmailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get("email") ?? ""
@@ -46,11 +54,7 @@ export default function VerifyEmailPage() {
   }
 
   if (checking) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-page px-6 text-primary">
-        <p className="text-sm text-secondary">Checking your account status…</p>
-      </main>
-    )
+    return <VerifyEmailLoading />
   }
 
   return (
@@ -119,5 +123,13 @@ export default function VerifyEmailPage() {
 
       </div>
     </main>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<VerifyEmailLoading />}>
+      <VerifyEmailContent />
+    </Suspense>
   )
 }
