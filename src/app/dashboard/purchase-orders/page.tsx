@@ -49,6 +49,10 @@ function MetricCard({ label, value }: { label: string; value: number }) {
 
 export default function PurchaseOrdersPage() {
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
+  const [sortBy, setSortBy] = useState<"newest" | "value">("newest")
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
 
@@ -84,6 +88,31 @@ export default function PurchaseOrdersPage() {
       completed: statuses.filter((status) => status === "Completed").length,
     }
   }, [purchaseOrders])
+
+  const filteredPurchaseOrders = useMemo(() => {
+    return purchaseOrders
+      .filter((purchaseOrder) => {
+        const status = normalizePurchaseOrderStatus(purchaseOrder.status).toLowerCase()
+        const statusMatch = statusFilter === "all" || status === statusFilter
+        const issuedAt = purchaseOrder.generated_at
+          ? new Date(purchaseOrder.generated_at).getTime()
+          : 0
+        const fromMatch = !dateFrom || issuedAt >= new Date(`${dateFrom}T00:00:00`).getTime()
+        const toMatch = !dateTo || issuedAt <= new Date(`${dateTo}T23:59:59`).getTime()
+
+        return statusMatch && fromMatch && toMatch
+      })
+      .sort((a, b) => {
+        if (sortBy === "value") {
+          const aAmount = Number((a.amount ?? "").replace(/[^\d.]/g, ""))
+          const bAmount = Number((b.amount ?? "").replace(/[^\d.]/g, ""))
+
+          return (Number.isFinite(bAmount) ? bAmount : 0) - (Number.isFinite(aAmount) ? aAmount : 0)
+        }
+
+        return new Date(b.generated_at ?? 0).getTime() - new Date(a.generated_at ?? 0).getTime()
+      })
+  }, [dateFrom, dateTo, purchaseOrders, sortBy, statusFilter])
 
   return (
     <div>
@@ -124,6 +153,45 @@ export default function PurchaseOrdersPage() {
         </div>
       )}
 
+      {!loading && !errorMessage && purchaseOrders.length > 0 && (
+        <section className="mb-6 rounded-md border border-panel bg-card p-5 shadow-panel">
+          <div className="grid gap-4 md:grid-cols-4">
+            <label>
+              <span className="mb-1.5 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-secondary">
+                Status
+              </span>
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none focus:border-accent">
+                <option value="all">All statuses</option>
+                <option value="issued">Issued</option>
+                <option value="accepted">Confirmed</option>
+                <option value="cancelled">Rejected</option>
+              </select>
+            </label>
+            <label>
+              <span className="mb-1.5 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-secondary">
+                From
+              </span>
+              <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none focus:border-accent" />
+            </label>
+            <label>
+              <span className="mb-1.5 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-secondary">
+                To
+              </span>
+              <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none focus:border-accent" />
+            </label>
+            <label>
+              <span className="mb-1.5 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-secondary">
+                Sort
+              </span>
+              <select value={sortBy} onChange={(event) => setSortBy(event.target.value as "newest" | "value")} className="w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none focus:border-accent">
+                <option value="newest">Issue date newest</option>
+                <option value="value">Value high to low</option>
+              </select>
+            </label>
+          </div>
+        </section>
+      )}
+
       {!loading && !errorMessage && purchaseOrders.length === 0 && (
         <div className="rounded-md border border-panel bg-card p-16 text-center shadow-panel">
           <p className="text-sm font-semibold text-heading">
@@ -162,7 +230,7 @@ export default function PurchaseOrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-panel">
-                {purchaseOrders.map((purchaseOrder) => {
+                {filteredPurchaseOrders.map((purchaseOrder) => {
                   const status = normalizePurchaseOrderStatus(purchaseOrder.status)
 
                   return (
@@ -202,10 +270,10 @@ export default function PurchaseOrdersPage() {
                       </td>
                       <td className="px-4 py-4">
                         <Link
-                          href={`/dashboard/purchase-orders/${purchaseOrder.id}`}
+                          href={`/dashboard/awards/${purchaseOrder.id}`}
                           className="inline-flex rounded-md border border-accent bg-accent px-4 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong"
                         >
-                          View PO
+                          View
                         </Link>
                       </td>
                     </tr>

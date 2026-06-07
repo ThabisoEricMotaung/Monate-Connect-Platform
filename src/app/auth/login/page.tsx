@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type MouseEvent } from "react"
+import { useEffect, useState, type MouseEvent } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
@@ -44,9 +44,24 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [selectedRole, setSelectedRole] = useState<"supplier" | "admin">("supplier")
   const [loading, setLoading] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+
+    if (params.get("role") === "admin") {
+      setSelectedRole("admin")
+    }
+  }, [])
+
+  const heading = selectedRole === "admin" ? "Buyer login" : "Supplier login"
+  const subheading =
+    selectedRole === "admin"
+      ? "Sign in to access the procurement dashboard and manage RFQs."
+      : "Sign in to manage your profile, respond to RFQs, and track quotes."
 
   const handleLogin = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
@@ -200,14 +215,39 @@ export default function LoginPage() {
             Procurement portal
           </p>
           <h1 className="mt-3 text-4xl font-semibold text-primary">
-            Supplier login
+            {heading}
           </h1>
           <p className="mt-3 text-sm leading-6 text-secondary">
-            Sign in to manage your profile, respond to RFQs, and track quotes.
+            {subheading}
           </p>
         </div>
 
         <div className="space-y-5">
+          <div className="grid grid-cols-2 gap-2 rounded-2xl border border-panel bg-surface p-1.5">
+            <button
+              type="button"
+              onClick={() => setSelectedRole("supplier")}
+              className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                selectedRole === "supplier"
+                  ? "bg-accent text-button"
+                  : "text-secondary hover:bg-panel hover:text-primary"
+              }`}
+            >
+              Supplier
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRole("admin")}
+              className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                selectedRole === "admin"
+                  ? "bg-accent text-button"
+                  : "text-secondary hover:bg-panel hover:text-primary"
+              }`}
+            >
+              Buyer / Admin
+            </button>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-secondary">Email address</label>
             <input

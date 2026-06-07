@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import AppearanceCore from "@/components/theme/AppearanceCore"
-import LanguageSwitcher from "@/components/LanguageSwitcher"
 import { useI18n } from "@/lib/i18n"
 import { usePathname } from "next/navigation"
 import { useRouter } from "next/navigation"
@@ -29,7 +28,7 @@ export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname() || ""
 
-  if (publicHeaderRoutes.has(pathname)) {
+  if (publicHeaderRoutes.has(pathname) || pathname.startsWith("/dashboard")) {
     return null
   }
 
@@ -52,24 +51,14 @@ export default function Navbar() {
 
   return (
     <header className="masthead sticky top-0 z-50">
-      <div className="masthead__dateline">
-        <span>Vol. I &middot; No. 1 &middot; Enterprise Edition</span>
-        <span>Procurement &amp; Supplier Intelligence Portal</span>
-        <span suppressHydrationWarning>
-          {typeof window !== "undefined"
-            ? new Date().toLocaleDateString("en-ZA", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })
-            : ""}
-        </span>
-      </div>
-
       <div className="masthead__brand">
-        <Link href="/" className="masthead__wordmark">
-          Monate Vendor Network
+        <Link href="/" className="flex items-center justify-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+          <span className="logo-mark flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-accent text-lg font-extrabold text-button shadow-md">
+            M
+          </span>
+          <span className="text-base font-semibold text-heading">
+            Monate Connect
+          </span>
         </Link>
       </div>
 
@@ -104,18 +93,10 @@ export default function Navbar() {
           </div>
 
           <div className="masthead__nav-actions">
-            <LanguageSwitcher />
-            <Link href="/auth/login" className="masthead__btn-primary">
-              {t("supplierLogin")}
-            </Link>
-            <Link href="/auth/signup" className="masthead__btn-secondary">
-              {t("registerSupplier")}
-            </Link>
+            <AppearanceCore />
           </div>
         </div>
       </nav>
-
-      <AppearanceCore />
     </header>
   )
 }

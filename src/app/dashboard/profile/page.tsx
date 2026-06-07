@@ -1,22 +1,31 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import SmartScoreCircle from "@/components/SmartScoreCircle"
-import { calculateSupplierSmartScore } from "@/lib/smartScore"
+import Link from "next/link"
+import { Suspense, useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { logActivity } from "@/lib/activity"
 import { supabase } from "@/lib/supabase"
 
-type SupplierProfile = {
+// --- Types ---
+
+type Tab = "profile" | "verification" | "documents" | "banking"
+
+type Profile = {
   id: string
   business_name: string | null
   province: string | null
   industry: string | null
   phone: string | null
   email: string | null
+  website: string | null
+  description: string | null
+  company_registration: string | null
+  tax_reference: string | null
+  vat_number: string | null
   verification_status: string | null
   csd_number: string | null
   bbbee_level: string | null
   tax_status: string | null
-  company_registration: string | null
   cidb_grade: string | null
   verification_notes: string | null
   csd_document_url: string | null
@@ -25,288 +34,1340 @@ type SupplierProfile = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
-  updated_at?: string | null
+  tax_expiry_date: string | null
+  bbbee_expiry_date: string | null
+  csd_expiry_date: string | null
+  cidb_expiry_date: string | null
+  updated_at: string | null
 }
 
-function valueOrDash(value: string | null | undefined): string {
-  return value || "-"
+type BankRecord = {
+  id: number | null
+  bank_name: string
+  account_holder: string
+  account_number: string
+  branch_code: string
+  account_type: string
+  verification_status: string | null
+  verification_notes: string | null
 }
 
-export default function ProfilePage() {
-  const [profile, setProfile] = useState<SupplierProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [errorMessage, setErrorMessage] = useState("")
+type DocumentField =
+  | "csd_document_url"
+  | "bbbee_document_url"
+  | "tax_document_url"
+  | "company_registration_url"
+  | "cidb_document_url"
+  | "capability_statement_url"
 
-  useEffect(() => {
-    async function loadProfile() {
-      if (!supabase) {
-        setErrorMessage("Supabase environment variables are not configured.")
-        setLoading(false)
-        return
-      }
+type DocUrls = Record<DocumentField, string>
 
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser()
+// --- Constants ---
 
-      if (userError) {
-        setErrorMessage(userError.message)
-        setLoading(false)
-        return
-      }
+const SA_BANKS = [
+  "ABSA",
+  "First National Bank (FNB)",
+  "Standard Bank",
+  "Nedbank",
+  "Capitec Bank",
+  "African Bank",
+  "Investec",
+  "Discovery Bank",
+  "Bidvest Bank",
+  "TymeBank",
+  "Bank Zero",
+  "Other",
+]
 
-      if (!user) {
-        setErrorMessage("You must be logged in to view your supplier profile.")
-        setLoading(false)
-        return
-      }
+const ACCOUNT_TYPES = [
+  "Current / Cheque Account",
+  "Savings Account",
+  "Transmission Account",
+]
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, business_name, province, industry, phone, email, verification_status, csd_number, bbbee_level, tax_status, company_registration, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url")
-        .eq("id", user.id)
-        .maybeSingle()
+const BBBEE_LEVELS = ["Level 1","Level 2","Level 3","Level 4","Level 5","Level 6","Level 7","Level 8","Non-compliant"]
+const TAX_STATUSES = ["Compliant", "Pending", "Non-compliant"]
 
-      if (error) {
-        setErrorMessage(error.message)
-        setLoading(false)
-        return
-      }
+const PROVINCES = [
+  "Eastern Cape",
+  "Free State",
+  "Gauteng",
+  "KwaZulu-Natal",
+  "Limpopo",
+  "Mpumalanga",
+  "Northern Cape",
+  "North West",
+  "Western Cape",
+]
 
-      setProfile((data ?? null) as SupplierProfile | null)
-      setLoading(false)
-    }
+const TABS: { key: Tab; label: string }[] = [
+  { key: "profile", label: "Profile" },
+  { key: "verification", label: "Verification" },
+  { key: "documents", label: "Documents" },
+  { key: "banking", label: "Banking details" },
+]
 
-    loadProfile()
-  }, [])
+// --- Style helpers ---
+
+const inputCls =
+  "w-full rounded-md border border-panel bg-panel px-4 py-3 text-sm text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30"
+
+const labelCls =
+  "mb-1.5 block text-[0.68rem] font-bold uppercase tracking-[0.22em] text-secondary"
+
+// --- Helpers ---
+
+function initials(name: string | null): string {
+  if (!name) return "?"
+  const words = name.trim().split(/\s+/).filter(Boolean)
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase()
+}
+
+function daysAgo(dateStr: string | null): string {
+  if (!dateStr) return "unknown"
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
+  if (diff === 0) return "today"
+  if (diff === 1) return "1 day ago"
+  return `${diff} days ago`
+}
+
+function isVerified(status: string | null | undefined) {
+  return (status ?? "").toLowerCase().includes("verified")
+}
+
+function docLabel(field: DocumentField): string {
+  const map: Record<DocumentField, string> = {
+    csd_document_url: "CSD Document",
+    bbbee_document_url: "BBBEE Certificate",
+    tax_document_url: "Tax Clearance",
+    company_registration_url: "Company Registration",
+    cidb_document_url: "CIDB Certificate",
+    capability_statement_url: "Company Profile",
+  }
+  return map[field]
+}
+
+function cleanFileName(name: string) {
+  return name.trim().replace(/[^a-zA-Z0-9._-]/g, "-").replace(/-+/g, "-")
+}
+
+// --- SmartScore (simplified 0-100 breakdown) ---
+
+type ScoreItem = {
+  label: string
+  points: number
+  earned: boolean
+  pending: boolean
+  optional: boolean
+}
+
+function computeScoreBreakdown(profile: Profile | null, bank: BankRecord | null): ScoreItem[] {
+  if (!profile) return []
+  const bbbeeLevel = parseInt(profile.bbbee_level?.replace("Level ", "") ?? "0") || 0
+  return [
+    {
+      label: "Business profile",
+      points: 20,
+      earned: Boolean(profile.business_name),
+      pending: false,
+      optional: false,
+    },
+    {
+      label: "CSD verified",
+      points: 20,
+      earned: Boolean(profile.csd_number) && isVerified(profile.verification_status),
+      pending: Boolean(profile.csd_number) && !isVerified(profile.verification_status),
+      optional: false,
+    },
+    {
+      label: `BBBEE Level ${bbbeeLevel > 0 ? bbbeeLevel : String.fromCharCode(8211)}`,
+      points: bbbeeLevel >= 1 && bbbeeLevel <= 4 ? 20 : 10,
+      earned: Boolean(profile.bbbee_level) && profile.bbbee_level !== "Non-compliant" && isVerified(profile.verification_status),
+      pending: Boolean(profile.bbbee_level) && !isVerified(profile.verification_status),
+      optional: false,
+    },
+    {
+      label: "Tax clearance",
+      points: 15,
+      earned: Boolean(profile.tax_document_url) && isVerified(profile.verification_status),
+      pending: Boolean(profile.tax_document_url) && !isVerified(profile.verification_status),
+      optional: false,
+    },
+    {
+      label: "Banking details",
+      points: 10,
+      earned: Boolean(bank?.id) && isVerified(bank?.verification_status ?? null),
+      pending: Boolean(bank?.id) && !isVerified(bank?.verification_status ?? null),
+      optional: false,
+    },
+    {
+      label: "Director ID",
+      points: 10,
+      earned: false,
+      pending: false,
+      optional: true,
+    },
+    {
+      label: "Company profile doc",
+      points: 5,
+      earned: Boolean(profile.capability_statement_url),
+      pending: false,
+      optional: true,
+    },
+  ]
+}
+
+function simpleScore(items: ScoreItem[]) {
+  return items.reduce((sum, item) => sum + (item.earned ? item.points : 0), 0)
+}
+
+// --- Score circle (0-100) ---
+
+function ScoreCircle({ score }: { score: number }) {
+  const r = 42
+  const circ = 2 * Math.PI * r
+  const pct = Math.min(1, score / 100)
+  const color =
+    score >= 90 ? "#16a34a" : score >= 75 ? "#2563eb" : score >= 50 ? "#d97706" : "#dc2626"
+  return (
+    <div className="relative mx-auto grid place-items-center" style={{ width: 104, height: 104 }}>
+      <svg width={104} height={104} viewBox="0 0 104 104" aria-hidden="true">
+        <circle cx={52} cy={52} r={r} fill="none" stroke="var(--border)" strokeWidth={9} />
+        <circle
+          cx={52} cy={52} r={r} fill="none"
+          stroke={color} strokeWidth={9} strokeLinecap="round"
+          strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)}
+          transform="rotate(-90 52 52)"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-semibold tabular-nums leading-none" style={{ color }}>
+          {score}
+        </span>
+        <span className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-muted">/ 100</span>
+      </div>
+    </div>
+  )
+}
+
+// --- Status badges ---
+
+function Badge({ children, color }: { children: React.ReactNode; color: "green" | "amber" | "red" | "sky" | "gray" }) {
+  const cls = {
+    green: "border-success/40 bg-success/10 text-success",
+    amber: "border-warning/40 bg-warning/10 text-warning",
+    red: "border-rose-500/35 bg-rose-500/10 text-rose-700",
+    sky: "border-sky-500/35 bg-sky-500/10 text-sky-700",
+    gray: "border-panel bg-panel text-muted",
+  }[color]
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.14em] ${cls}`}>
+      {children}
+    </span>
+  )
+}
+
+// --- Upload zone ---
+
+function UploadZone({
+  id,
+  uploading,
+  onChange,
+}: {
+  id: string
+  uploading: boolean
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className="mt-3 flex cursor-pointer flex-col items-center gap-2 rounded-md border-2 border-dashed border-panel px-4 py-6 text-center transition hover:border-accent"
+    >
+      <svg className="h-6 w-6 text-muted" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+      </svg>
+      <p className="text-xs font-semibold text-secondary">
+        {uploading ? "Uploading..." : "Drag and drop or click to browse"}
+      </p>
+      <p className="text-[0.65rem] text-muted">PDF - max 10 MB</p>
+      <input id={id} type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" onChange={onChange} disabled={uploading} />
+    </label>
+  )
+}
+
+// --- Uploaded file row ---
+
+function FileRow({ label, url, status }: { label: string; url: string; status: "Verified" | "Under review" }) {
+  return (
+    <div className="flex items-center gap-3 rounded-md border border-panel bg-panel px-4 py-3">
+      <svg className="h-4 w-4 shrink-0 text-muted" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+      </svg>
+      <span className="min-w-0 flex-1 truncate text-xs font-semibold text-heading">{label}</span>
+      <Badge color={status === "Verified" ? "green" : "amber"}>{status}</Badge>
+      <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-accent hover:text-accent-strong">
+        View
+      </a>
+    </div>
+  )
+}
+
+// --- Profile Header Card ---
+
+function ProfileHeaderCard({
+  profile,
+  bank,
+  onTabChange,
+}: {
+  profile: Profile | null
+  bank: BankRecord | null
+  onTabChange: (tab: Tab) => void
+}) {
+  if (!profile) return null
+
+  const csdVerified = Boolean(profile.csd_number) && isVerified(profile.verification_status)
+  const bbbeeVerified = Boolean(profile.bbbee_level) && isVerified(profile.verification_status)
+  const taxPending = Boolean(profile.tax_document_url) && !isVerified(profile.verification_status)
+  const taxVerified = Boolean(profile.tax_document_url) && isVerified(profile.verification_status)
+  const bankingMissing = !bank?.id
 
   return (
-    <div>
-      <div className="mb-8 border-b border-panel pb-6">
-        <p className="text-xs uppercase tracking-[0.28em] text-accent">
-          Supplier profile
-        </p>
-        <h1 className="mt-3 text-2xl font-semibold text-heading">
-          Supplier account management
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-secondary">
-          Manage business details, verification status, category data, and
-          procurement readiness in a trusted supplier workspace.
-        </p>
+    <div className="mt-5 rounded-md border border-panel bg-card p-5 shadow-panel">
+      <div className="flex flex-wrap items-start gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent text-lg font-bold text-button">
+          {initials(profile.business_name)}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[0.95rem] font-bold text-heading">
+            {profile.business_name || "Your business"}
+          </p>
+          <p className="mt-0.5 text-xs text-secondary">
+            {[profile.industry, profile.province].filter(Boolean).join(" · ") || "Industry · Province"}
+          </p>
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            {csdVerified && <Badge color="green">CSD verified</Badge>}
+            {bbbeeVerified && (
+              <Badge color="green">BBBEE Level {profile.bbbee_level?.replace("Level ", "")}</Badge>
+            )}
+            {taxPending && <Badge color="amber">Tax clearance pending</Badge>}
+            {taxVerified && <Badge color="green">Tax clearance verified</Badge>}
+            {bankingMissing && (
+              <button
+                type="button"
+                onClick={() => onTabChange("banking")}
+                className="inline-flex items-center rounded-full border border-rose-500/35 bg-rose-500/10 px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-rose-700 transition hover:border-rose-500/60"
+              >
+                Banking details missing
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+      <p className="mt-3 text-[0.68rem] text-muted">
+        Profile last updated {daysAgo(profile.updated_at)} ·{" "}
+        <Link href="/suppliers" className="text-accent hover:text-accent-strong">
+          Preview public profile →
+        </Link>
+      </p>
+    </div>
+  )
+}
+
+// --- TAB 1: Profile ---
+
+function ProfileTab({
+  profile,
+  onSave,
+  saving,
+}: {
+  profile: Profile
+  onSave: (patch: Partial<Profile>) => Promise<void>
+  saving: boolean
+}) {
+  const [bizEdit, setBizEdit] = useState(false)
+  const [compEdit, setCompEdit] = useState(false)
+  const [bizForm, setBizForm] = useState({
+    business_name: profile.business_name ?? "",
+    industry: profile.industry ?? "",
+    phone: profile.phone ?? "",
+    email: profile.email ?? "",
+    website: profile.website ?? "",
+    province: profile.province ?? "",
+    description: profile.description ?? "",
+    company_registration: profile.company_registration ?? "",
+  })
+  const [compForm, setCompForm] = useState({
+    csd_number: profile.csd_number ?? "",
+    bbbee_level: profile.bbbee_level ?? "",
+    tax_status: profile.tax_status ?? "",
+    tax_reference: profile.tax_reference ?? "",
+    vat_number: profile.vat_number ?? "",
+    cidb_grade: profile.cidb_grade ?? "",
+  })
+
+  function handleBizChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+    setBizForm((p) => ({ ...p, [e.target.name]: e.target.value }))
+  }
+
+  function handleCompChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+    setCompForm((p) => ({ ...p, [e.target.name]: e.target.value }))
+  }
+
+  async function saveBiz() {
+    await onSave(bizForm)
+    setBizEdit(false)
+  }
+
+  async function saveComp() {
+    await onSave(compForm)
+    setCompEdit(false)
+  }
+
+  function cancelBiz() {
+    setBizForm({
+      business_name: profile.business_name ?? "",
+      industry: profile.industry ?? "",
+      phone: profile.phone ?? "",
+      email: profile.email ?? "",
+      website: profile.website ?? "",
+      province: profile.province ?? "",
+      description: profile.description ?? "",
+      company_registration: profile.company_registration ?? "",
+    })
+    setBizEdit(false)
+  }
+
+  function cancelComp() {
+    setCompForm({
+      csd_number: profile.csd_number ?? "",
+      bbbee_level: profile.bbbee_level ?? "",
+      tax_status: profile.tax_status ?? "",
+      tax_reference: profile.tax_reference ?? "",
+      vat_number: profile.vat_number ?? "",
+      cidb_grade: profile.cidb_grade ?? "",
+    })
+    setCompEdit(false)
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-md border border-panel bg-panel p-6">
+        <div className="mb-5 flex items-center justify-between gap-4 border-b border-panel pb-4">
+          <h2 className="text-base font-bold text-heading">Business details</h2>
+          {!bizEdit && (
+            <button type="button" onClick={() => setBizEdit(true)} className="rounded-md border border-panel bg-card px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent">
+              Edit
+            </button>
+          )}
+        </div>
+
+        {bizEdit ? (
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="business_name" className={labelCls}>Registered business name</label>
+                <input id="business_name" name="business_name" type="text" value={bizForm.business_name} onChange={handleBizChange} className={inputCls} />
+              </div>
+              <div>
+                <label htmlFor="company_registration" className={labelCls}>Company registration number</label>
+                <input id="company_registration" name="company_registration" type="text" placeholder="2024/000000/07" value={bizForm.company_registration} onChange={handleBizChange} className={inputCls} />
+              </div>
+              <div>
+                <label htmlFor="industry" className={labelCls}>Industry</label>
+                <input id="industry" name="industry" type="text" value={bizForm.industry} onChange={handleBizChange} className={inputCls} />
+              </div>
+              <div>
+                <label htmlFor="phone" className={labelCls}>Phone number</label>
+                <input id="phone" name="phone" type="tel" value={bizForm.phone} onChange={handleBizChange} className={inputCls} />
+              </div>
+              <div>
+                <label htmlFor="email" className={labelCls}>Work email</label>
+                <input id="email" name="email" type="email" value={bizForm.email} onChange={handleBizChange} className={inputCls} />
+              </div>
+              <div>
+                <label htmlFor="website" className={labelCls}>Website</label>
+                <input id="website" name="website" type="url" placeholder="https://" value={bizForm.website} onChange={handleBizChange} className={inputCls} />
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor="province" className={labelCls}>Province</label>
+                <select id="province" name="province" value={bizForm.province} onChange={handleBizChange} className={inputCls}>
+                  <option value="">Select province</option>
+                  {PROVINCES.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor="description" className={labelCls}>Business description</label>
+                <textarea id="description" name="description" rows={3} value={bizForm.description} onChange={handleBizChange} className={inputCls} />
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button type="button" onClick={saveBiz} disabled={saving} className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50">{saving ? "Saving..." : "Save"}</button>
+              <button type="button" onClick={cancelBiz} className="rounded-md border border-panel bg-card px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-surface">Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              { label: "Registered business name", value: profile.business_name },
+              { label: "Company registration number", value: profile.company_registration },
+              { label: "Industry", value: profile.industry },
+              { label: "Phone number", value: profile.phone },
+              { label: "Work email", value: profile.email },
+              { label: "Website", value: profile.website },
+            ].map(({ label, value }) => (
+              <div key={label} className="rounded-md border border-panel bg-card p-4">
+                <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">{label}</p>
+                <p className={`mt-2 text-sm font-semibold ${value ? "text-heading" : "text-muted"}`}>{value || "Not added"}</p>
+              </div>
+            ))}
+            <div className="rounded-md border border-panel bg-card p-4 sm:col-span-2">
+              <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Province</p>
+              {profile.province ? (
+                <span className="mt-2 inline-flex rounded-full border border-accent/40 bg-accent/10 px-3 py-0.5 text-xs font-semibold text-accent">{profile.province}</span>
+              ) : (
+                <p className="mt-2 text-sm font-semibold text-muted">Not added</p>
+              )}
+            </div>
+            <div className="rounded-md border border-panel bg-card p-4 sm:col-span-2">
+              <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Business description</p>
+              <p className={`mt-2 text-sm leading-relaxed ${profile.description ? "text-secondary" : "text-muted"}`}>{profile.description || "Not added"}</p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {errorMessage && (
-        <div className="mb-6 rounded-md border border-rose-500/25 bg-rose-500/10 px-5 py-4">
-          <p className="text-sm font-semibold text-rose-700">
-            Supplier profile failed to load
+      <div className="rounded-md border border-panel bg-panel p-6">
+        <div className="mb-5 flex items-center justify-between gap-4 border-b border-panel pb-4">
+          <h2 className="text-base font-bold text-heading">Compliance details</h2>
+          {!compEdit && (
+            <button type="button" onClick={() => setCompEdit(true)} className="rounded-md border border-panel bg-card px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent">
+              Edit
+            </button>
+          )}
+        </div>
+
+        {compEdit ? (
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="csd_number" className={labelCls}>CSD supplier number</label>
+                <input id="csd_number" name="csd_number" type="text" placeholder="MAAA0000000" value={compForm.csd_number} onChange={handleCompChange} className={inputCls} />
+              </div>
+              <div>
+                <label htmlFor="bbbee_level" className={labelCls}>BBBEE level</label>
+                <select id="bbbee_level" name="bbbee_level" value={compForm.bbbee_level} onChange={handleCompChange} className={inputCls}>
+                  <option value="">Select level</option>
+                  {BBBEE_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="tax_reference" className={labelCls}>Tax reference number</label>
+                <input id="tax_reference" name="tax_reference" type="text" value={compForm.tax_reference} onChange={handleCompChange} className={inputCls} />
+              </div>
+              <div>
+                <label htmlFor="vat_number" className={labelCls}>VAT registration number</label>
+                <input id="vat_number" name="vat_number" type="text" placeholder="Optional" value={compForm.vat_number} onChange={handleCompChange} className={inputCls} />
+              </div>
+              <div>
+                <label htmlFor="tax_status" className={labelCls}>Tax status</label>
+                <select id="tax_status" name="tax_status" value={compForm.tax_status} onChange={handleCompChange} className={inputCls}>
+                  <option value="">Select status</option>
+                  {TAX_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="cidb_grade" className={labelCls}>CIDB grade</label>
+                <input id="cidb_grade" name="cidb_grade" type="text" placeholder="e.g. 3GB, 5CE" value={compForm.cidb_grade} onChange={handleCompChange} className={inputCls} />
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button type="button" onClick={saveComp} disabled={saving} className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50">{saving ? "Saving..." : "Save"}</button>
+              <button type="button" onClick={cancelComp} className="rounded-md border border-panel bg-card px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-surface">Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              { label: "CSD supplier number", value: profile.csd_number, verified: Boolean(profile.csd_number) && isVerified(profile.verification_status) },
+              { label: "BBBEE level", value: profile.bbbee_level, verified: Boolean(profile.bbbee_level) && isVerified(profile.verification_status) },
+              { label: "Tax reference number", value: profile.tax_reference, verified: false },
+              { label: "VAT registration number", value: profile.vat_number || "Not registered", verified: false },
+            ].map(({ label, value, verified }) => (
+              <div key={label} className="rounded-md border border-panel bg-card p-4">
+                <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">{label}</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <p className={`text-sm font-semibold ${value ? "text-heading" : "text-muted"}`}>{value || "Not added"}</p>
+                  {verified && <Badge color="green">Verified</Badge>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// --- TAB 2: Verification ---
+
+function VerificationRow({
+  icon,
+  title,
+  status,
+  optional,
+  verifiedText,
+  pendingText,
+  missingText,
+  missingAction,
+  uploadSlot,
+}: {
+  icon: React.ReactNode
+  title: string
+  status: "verified" | "pending" | "missing"
+  optional?: boolean
+  verifiedText: string
+  pendingText: string
+  missingText: string
+  missingAction?: React.ReactNode
+  uploadSlot?: React.ReactNode
+}) {
+  const iconBg = status === "verified" ? "bg-success/10" : status === "pending" ? "bg-warning/10" : "bg-panel"
+  return (
+    <div className="rounded-md border border-panel bg-card p-4">
+      <div className="flex gap-4">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${iconBg}`}>{icon}</div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-bold text-heading">{title}</p>
+            {optional && <Badge color="gray">Optional</Badge>}
+            {status === "verified" && <Badge color="green">Verified</Badge>}
+            {status === "pending" && <Badge color="amber">Under review</Badge>}
+          </div>
+          <p className="mt-1 text-xs leading-relaxed text-secondary">
+            {status === "verified" ? verifiedText : status === "pending" ? pendingText : missingText}
           </p>
-          <p className="mt-1 text-xs text-rose-700">{errorMessage}</p>
+          {status === "missing" && missingAction && <div className="mt-2">{missingAction}</div>}
+          {uploadSlot}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function VerificationTab({
+  profile,
+  docUrls,
+  userId,
+  onDocUploaded,
+  onTabChange,
+}: {
+  profile: Profile
+  docUrls: DocUrls
+  userId: string
+  onDocUploaded: (field: DocumentField, url: string) => void
+  onTabChange: (tab: Tab) => void
+}) {
+  const [uploadingField, setUploadingField] = useState<DocumentField | null>(null)
+  const [uploadError, setUploadError] = useState("")
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>, field: DocumentField, type: string) {
+    const file = e.target.files?.[0]
+    if (!file || !supabase || !userId) return
+    setUploadError("")
+    setUploadingField(field)
+    const path = `${userId}/${type}/${cleanFileName(file.name)}`
+    const { error: upErr } = await supabase.storage.from("supplier-documents").upload(path, file, { upsert: true })
+    if (upErr) { setUploadError(upErr.message); setUploadingField(null); return }
+    const { data } = supabase.storage.from("supplier-documents").getPublicUrl(path)
+    await supabase.from("profiles").update({ [field]: data.publicUrl }).eq("id", userId)
+    onDocUploaded(field, data.publicUrl)
+    setUploadingField(null)
+    e.target.value = ""
+  }
+
+  function statusOf(doc: DocumentField): "verified" | "pending" | "missing" {
+    if (!docUrls[doc]) return "missing"
+    return isVerified(profile.verification_status) ? "verified" : "pending"
+  }
+
+  return (
+    <div className="rounded-md border border-panel bg-panel p-6">
+      <div className="mb-5 border-b border-panel pb-4">
+        <h2 className="text-base font-bold text-heading">Verification status</h2>
+      </div>
+
+      {uploadError && (
+        <div className="mb-4 rounded-md border border-rose-500/25 bg-rose-500/10 px-4 py-3">
+          <p className="text-xs font-semibold text-rose-700">{uploadError}</p>
         </div>
       )}
 
-      {loading && (
-        <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-          {[0, 1].map((item) => (
-            <div
-              key={item}
-              className="rounded-md border border-panel bg-panel p-6"
-            >
-              <div className="h-5 w-56 animate-pulse rounded bg-card" />
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                {[0, 1, 2, 3].map((field) => (
-                  <div
-                    key={field}
-                    className="h-20 animate-pulse rounded-md bg-card"
-                  />
-                ))}
-              </div>
+      <div className="space-y-4">
+        <VerificationRow
+          icon={<svg className={`h-4 w-4 ${profile.csd_number ? "text-success" : "text-muted"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>}
+          title="CSD registration"
+          status={profile.csd_number ? (isVerified(profile.verification_status) ? "verified" : "pending") : "missing"}
+          verifiedText={`Your CSD number ${profile.csd_number} has been confirmed as active.`}
+          pendingText="CSD number submitted — under review."
+          missingText="Enter your CSD number to begin verification."
+          missingAction={<span className="text-xs text-secondary">Edit in the <button type="button" className="font-semibold text-accent hover:text-accent-strong" onClick={() => onTabChange("profile")}>Profile tab</button></span>}
+        />
+
+        <VerificationRow
+          icon={<svg className={`h-4 w-4 ${statusOf("bbbee_document_url") === "verified" ? "text-success" : statusOf("bbbee_document_url") === "pending" ? "text-warning" : "text-muted"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
+          title="BBBEE certificate"
+          status={statusOf("bbbee_document_url")}
+          verifiedText={`Level ${profile.bbbee_level?.replace("Level ", "")} certificate verified${profile.bbbee_expiry_date ? `. Expires ${profile.bbbee_expiry_date}` : ""}.`}
+          pendingText="Under review — typically 1-2 business days."
+          missingText="Upload your BBBEE certificate to verify."
+          uploadSlot={
+            <div className="mt-2">
+              {docUrls.bbbee_document_url
+                ? <FileRow label="BBBEE Certificate" url={docUrls.bbbee_document_url} status={statusOf("bbbee_document_url") === "verified" ? "Verified" : "Under review"} />
+                : <UploadZone id="bbbee-upload" uploading={uploadingField === "bbbee_document_url"} onChange={(e) => handleUpload(e, "bbbee_document_url", "bbbee-certificate")} />
+              }
+            </div>
+          }
+        />
+
+        <VerificationRow
+          icon={<svg className={`h-4 w-4 ${statusOf("tax_document_url") === "verified" ? "text-success" : statusOf("tax_document_url") === "pending" ? "text-warning" : "text-muted"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
+          title="Tax clearance certificate"
+          status={statusOf("tax_document_url")}
+          verifiedText="Tax clearance certificate verified."
+          pendingText="Under review — typically 1-2 business days."
+          missingText="Upload your tax clearance certificate to verify."
+          uploadSlot={
+            <div className="mt-2">
+              {docUrls.tax_document_url
+                ? <FileRow label="Tax Clearance" url={docUrls.tax_document_url} status={statusOf("tax_document_url") === "verified" ? "Verified" : "Under review"} />
+                : <UploadZone id="tax-upload" uploading={uploadingField === "tax_document_url"} onChange={(e) => handleUpload(e, "tax_document_url", "tax-clearance-document")} />
+              }
+            </div>
+          }
+        />
+
+        <VerificationRow
+          icon={<svg className="h-4 w-4 text-muted" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75" /></svg>}
+          title="Banking details"
+          status="missing"
+          verifiedText="Banking details confirmed."
+          pendingText="Banking details under review."
+          missingText="Required before any PO can be processed."
+          missingAction={<button type="button" onClick={() => onTabChange("banking")} className="text-xs font-semibold text-accent hover:text-accent-strong">Add banking details →</button>}
+        />
+
+        <VerificationRow
+          icon={<svg className="h-4 w-4 text-muted" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>}
+          title="Director ID verification"
+          status="missing"
+          optional
+          verifiedText="Identity verified."
+          pendingText="Identity verification in progress."
+          missingText="Verify a director or authorised representative to add a trust badge to your public profile."
+          missingAction={<button type="button" className="text-xs font-semibold text-accent hover:text-accent-strong">Start verification →</button>}
+        />
+      </div>
+    </div>
+  )
+}
+
+// --- TAB 3: Documents ---
+
+const ALL_DOC_FIELDS: DocumentField[] = [
+  "csd_document_url",
+  "bbbee_document_url",
+  "tax_document_url",
+  "company_registration_url",
+  "cidb_document_url",
+  "capability_statement_url",
+]
+
+function DocumentsTab({
+  profile,
+  docUrls,
+  userId,
+  onDocUploaded,
+}: {
+  profile: Profile
+  docUrls: DocUrls
+  userId: string
+  onDocUploaded: (field: DocumentField, url: string) => void
+}) {
+  const [uploading, setUploading] = useState(false)
+  const [uploadCategory, setUploadCategory] = useState<DocumentField>("bbbee_document_url")
+  const [uploadError, setUploadError] = useState("")
+  const [uploadSuccess, setUploadSuccess] = useState("")
+
+  const existing = ALL_DOC_FIELDS.filter((f) => docUrls[f])
+
+  async function handleNewUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !supabase || !userId) return
+    setUploadError("")
+    setUploadSuccess("")
+    setUploading(true)
+    const type = uploadCategory.replace("_document_url", "").replace("_url", "").replace(/_/g, "-")
+    const path = `${userId}/${type}/${cleanFileName(file.name)}`
+    const { error: upErr } = await supabase.storage.from("supplier-documents").upload(path, file, { upsert: true })
+    if (upErr) { setUploadError(upErr.message); setUploading(false); return }
+    const { data } = supabase.storage.from("supplier-documents").getPublicUrl(path)
+    await supabase.from("profiles").update({ [uploadCategory]: data.publicUrl }).eq("id", userId)
+    onDocUploaded(uploadCategory, data.publicUrl)
+    setUploading(false)
+    setUploadSuccess(`${docLabel(uploadCategory)} uploaded.`)
+    e.target.value = ""
+  }
+
+  const statusOfDoc = (): "Verified" | "Under review" =>
+    isVerified(profile.verification_status) ? "Verified" : "Under review"
+
+  return (
+    <div className="rounded-md border border-panel bg-panel p-6">
+      <div className="mb-5 border-b border-panel pb-4">
+        <h2 className="text-base font-bold text-heading">Documents</h2>
+        <p className="mt-1 text-xs text-secondary">All compliance documents uploaded to your profile.</p>
+      </div>
+
+      {existing.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted">No documents uploaded yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {existing.map((field) => (
+            <div key={field} className="flex flex-wrap items-center gap-3 rounded-md border border-panel bg-card px-4 py-3">
+              <svg className="h-5 w-5 shrink-0 text-muted" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              <span className="min-w-0 flex-1 text-sm font-semibold text-heading">{docLabel(field)}</span>
+              <Badge color={statusOfDoc() === "Verified" ? "green" : "amber"}>{statusOfDoc()}</Badge>
+              <a href={docUrls[field]} target="_blank" rel="noopener noreferrer" className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent">
+                Download
+              </a>
             </div>
           ))}
         </div>
       )}
 
-      {!loading && !errorMessage && !profile && (
-        <div className="rounded-md border border-panel bg-card p-16 text-center shadow-panel">
-          <p className="text-sm font-semibold text-heading">
-            No supplier profile found.
-          </p>
-          <p className="mt-2 text-xs text-muted">
-            Your profile will appear here after account setup is completed.
-          </p>
+      <div className="mt-6 border-t border-panel pt-5">
+        <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-secondary">Upload a new compliance document</p>
+        {uploadError && (
+          <div className="mb-3 rounded-md border border-rose-500/25 bg-rose-500/10 px-4 py-2">
+            <p className="text-xs text-rose-700">{uploadError}</p>
+          </div>
+        )}
+        {uploadSuccess && (
+          <div className="mb-3 rounded-md border border-success/30 bg-success-soft px-4 py-2">
+            <p className="text-xs text-success">{uploadSuccess}</p>
+          </div>
+        )}
+        <div className="mb-3">
+          <label htmlFor="doc-category" className={labelCls}>Document type</label>
+          <select id="doc-category" value={uploadCategory} onChange={(e) => setUploadCategory(e.target.value as DocumentField)} className={inputCls}>
+            {ALL_DOC_FIELDS.map((f) => <option key={f} value={f}>{docLabel(f)}</option>)}
+          </select>
+        </div>
+        <UploadZone id="new-doc-upload" uploading={uploading} onChange={handleNewUpload} />
+      </div>
+    </div>
+  )
+}
+
+// --- TAB 4: Banking details ---
+
+function BankingTab({
+  userId,
+  bank,
+  businessName,
+  onBankSaved,
+}: {
+  userId: string
+  bank: BankRecord | null
+  businessName: string | null
+  onBankSaved: (record: BankRecord) => void
+}) {
+  const hasExisting = Boolean(bank?.id)
+  const [editMode, setEditMode] = useState(!hasExisting)
+  const [form, setForm] = useState({
+    bank_name: bank?.bank_name ?? "",
+    account_holder: bank?.account_holder ?? (businessName ?? ""),
+    account_number: bank?.account_number ?? "",
+    branch_code: bank?.branch_code ?? "",
+    account_type: bank?.account_type ?? "",
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+    setForm((p) => ({ ...p, [e.target.name]: e.target.value }))
+    setError("")
+    setSuccess("")
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!form.bank_name || !form.account_holder || !form.account_number) {
+      setError("Bank name, account holder, and account number are required.")
+      return
+    }
+    if (!supabase || !userId) { setError("Not authenticated."); return }
+    setSaving(true)
+    const payload = {
+      supplier_id: userId,
+      bank_name: form.bank_name.trim(),
+      account_holder: form.account_holder.trim(),
+      account_number: form.account_number.trim(),
+      branch_code: form.branch_code.trim(),
+      account_type: form.account_type,
+      verification_status: "Unverified",
+    }
+    if (bank?.id) {
+      const { error: err } = await supabase.from("supplier_bank_details").update(payload).eq("id", bank.id)
+      if (err) { setSaving(false); setError(err.message); return }
+      onBankSaved({ ...bank, ...payload })
+    } else {
+      const { data, error: err } = await supabase
+        .from("supplier_bank_details")
+        .insert([payload])
+        .select("id")
+        .single()
+      if (err) { setSaving(false); setError(err.message); return }
+      onBankSaved({ ...(data as { id: number }), ...payload, verification_notes: null })
+    }
+    setSaving(false)
+    setEditMode(false)
+    setSuccess("Banking details saved. A finance administrator will verify your details before payment can be processed.")
+    try {
+      await logActivity({ action: "supplier.banking_details_submitted", entity_type: "supplier_profile", entity_id: userId, metadata: { bank_name: form.bank_name } })
+    } catch { /* swallow */ }
+  }
+
+  function verificationBadgeColor(status: string | null): "green" | "sky" | "red" | "amber" {
+    if (status === "Verified") return "green"
+    if (status === "Under Review") return "sky"
+    if (status === "Rejected") return "red"
+    return "amber"
+  }
+
+  return (
+    <div className="rounded-md border border-panel bg-panel p-6">
+      <div className="mb-5 flex items-center justify-between gap-4 border-b border-panel pb-4">
+        <h2 className="text-base font-bold text-heading">Banking details</h2>
+        {hasExisting && !editMode && (
+          <button type="button" onClick={() => { setEditMode(true); setSuccess("") }} className="rounded-md border border-panel bg-card px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent">
+            Edit
+          </button>
+        )}
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-md border border-rose-500/25 bg-rose-500/10 px-4 py-3">
+          <p className="text-xs font-semibold text-rose-700">{error}</p>
+        </div>
+      )}
+      {success && (
+        <div className="mb-4 rounded-md border border-success/30 bg-success-soft px-4 py-3">
+          <p className="text-xs font-semibold text-success">{success}</p>
         </div>
       )}
 
-      {!loading && profile && (
-        <>
-          <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-            <section className="rounded-md border border-panel bg-panel p-6">
-              <div className="flex flex-col gap-3 border-b border-panel pb-5">
-                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">
-                  Business information
-                </p>
-                <h2 className="text-xl font-semibold text-heading">
-                  {profile.business_name || "Supplier Profile"}
-                </h2>
-                <p className="text-sm leading-7 text-secondary">
-                  Supplier details used for procurement matching, contact
-                  workflows, and readiness scoring.
-                </p>
-              </div>
-
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-md border border-panel bg-card p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                    Business name
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-heading">
-                    {valueOrDash(profile.business_name)}
-                  </p>
-                </div>
-                <div className="rounded-md border border-panel bg-card p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                    Province
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-heading">
-                    {valueOrDash(profile.province)}
-                  </p>
-                </div>
-                <div className="rounded-md border border-panel bg-card p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                    Industry
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-heading">
-                    {valueOrDash(profile.industry)}
-                  </p>
-                </div>
-                <div className="rounded-md border border-panel bg-card p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                    Phone
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-heading">
-                    {valueOrDash(profile.phone)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <SmartScoreCircle
-                  score={calculateSupplierSmartScore(profile)}
-                  label="Supplier SmartScore"
-                  className="max-w-none"
-                />
-              </div>
-            </section>
-
-            <section className="rounded-md border border-panel bg-panel p-6">
-              <div className="flex flex-col gap-3 border-b border-panel pb-5">
-                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">
-                  Verification status
-                </p>
-                <h2 className="text-xl font-semibold text-heading">
-                  {profile.verification_status || "Pending Review"}
-                </h2>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                <div className="rounded-md border border-panel bg-card p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                    CSD Number
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-heading">
-                    {valueOrDash(profile.csd_number)}
-                  </p>
-                </div>
-                <div className="rounded-md border border-panel bg-card p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                    Tax Status
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-heading">
-                    {valueOrDash(profile.tax_status)}
-                  </p>
-                </div>
-                <div className="rounded-md border border-panel bg-card p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                    Action required
-                  </p>
-                  <p className="mt-2 text-sm text-secondary">
-                    Upload missing compliance documents and keep credentials
-                    current to improve procurement readiness.
-                  </p>
-                </div>
-              </div>
-            </section>
+      {hasExisting && !editMode && bank && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-panel bg-card p-4">
+            <div>
+              <p className={labelCls}>Verification status</p>
+              <p className="mt-1 text-sm font-bold text-heading">{bank.verification_status ?? "Unverified"}</p>
+            </div>
+            <Badge color={verificationBadgeColor(bank.verification_status)}>{bank.verification_status ?? "Unverified"}</Badge>
           </div>
-
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <section className="rounded-md border border-panel bg-panel p-6">
-              <div className="border-b border-panel pb-5">
-                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">
-                  Contact information
-                </p>
-                <h2 className="mt-2 text-lg font-semibold text-heading">
-                  Primary contact
-                </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              { label: "Bank name", value: bank.bank_name },
+              { label: "Account holder", value: bank.account_holder },
+              { label: "Account number", value: bank.account_number },
+              { label: "Branch code", value: bank.branch_code || "—" },
+              { label: "Account type", value: bank.account_type || "—" },
+            ].map(({ label, value }) => (
+              <div key={label} className="rounded-md border border-panel bg-card p-4">
+                <p className={labelCls}>{label}</p>
+                <p className="mt-1 text-sm font-semibold text-heading">{value}</p>
               </div>
-              <div className="mt-6 space-y-4 text-sm text-secondary">
-                <div className="rounded-md border border-panel bg-card p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                    Email
-                  </p>
-                  <p className="mt-2 font-semibold text-heading">
-                    {valueOrDash(profile.email)}
-                  </p>
-                </div>
-                <div className="rounded-md border border-panel bg-card p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                    Phone
-                  </p>
-                  <p className="mt-2 font-semibold text-heading">
-                    {valueOrDash(profile.phone)}
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-md border border-panel bg-panel p-6">
-              <div className="border-b border-panel pb-5">
-                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">
-                  Supplier category
-                </p>
-                <h2 className="mt-2 text-lg font-semibold text-heading">
-                  Vendor classification
-                </h2>
-              </div>
-              <div className="mt-6 space-y-4 text-sm text-secondary">
-                <div className="rounded-md border border-panel bg-card p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                    Sector
-                  </p>
-                  <p className="mt-2 font-semibold text-heading">
-                    {valueOrDash(profile.industry)}
-                  </p>
-                </div>
-                <div className="rounded-md border border-panel bg-card p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                    B-BBEE Level
-                  </p>
-                  <p className="mt-2 font-semibold text-heading">
-                    {valueOrDash(profile.bbbee_level)}
-                  </p>
-                </div>
-                <div className="rounded-md border border-panel bg-card p-4">
-                  <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
-                    Company Registration
-                  </p>
-                  <p className="mt-2 font-semibold text-heading">
-                    {valueOrDash(profile.company_registration)}
-                  </p>
-                </div>
-              </div>
-            </section>
+            ))}
           </div>
-        </>
+          {bank.verification_notes && (
+            <div className="rounded-md border border-panel bg-panel px-4 py-3">
+              <p className={labelCls}>Verification notes</p>
+              <p className="mt-1 text-sm text-secondary">{bank.verification_notes}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {(!hasExisting || editMode) && (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="bank_name" className={labelCls}>Bank name <span className="text-rose-500">*</span></label>
+            <select id="bank_name" name="bank_name" value={form.bank_name} onChange={handleChange} className={inputCls} required>
+              <option value="">Select bank</option>
+              {SA_BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="account_holder" className={labelCls}>Account holder name <span className="text-rose-500">*</span></label>
+            <input id="account_holder" name="account_holder" type="text" value={form.account_holder} onChange={handleChange} className={inputCls} required placeholder="Must match CIPC registration" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="account_number" className={labelCls}>Account number <span className="text-rose-500">*</span></label>
+              <input id="account_number" name="account_number" type="text" value={form.account_number} onChange={handleChange} className={inputCls} required placeholder="e.g. 62123456789" />
+            </div>
+            <div>
+              <label htmlFor="branch_code" className={labelCls}>Branch code</label>
+              <input id="branch_code" name="branch_code" type="text" value={form.branch_code} onChange={handleChange} className={inputCls} placeholder="e.g. 632005" />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="account_type" className={labelCls}>Account type</label>
+            <select id="account_type" name="account_type" value={form.account_type} onChange={handleChange} className={inputCls}>
+              <option value="">Select account type</option>
+              {ACCOUNT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <p className="text-[0.65rem] text-muted">Universal branch codes: ABSA 632005 · FNB 250655 · Standard Bank 051001 · Nedbank 198765 · Capitec 470010</p>
+          <div className="flex items-start gap-3 rounded-md border border-warning/25 bg-warning/8 px-4 py-3">
+            <svg className="mt-0.5 h-4 w-4 shrink-0 text-warning" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            <p className="text-xs text-warning">
+              <strong>Important:</strong> Submitting incorrect banking details may delay payment. Ensure details exactly match your bank-stamped confirmation letter.{hasExisting && " Editing and resubmitting will reset your verification status."}
+            </p>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="submit" disabled={saving} className="rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50">
+              {saving ? "Saving..." : "Save banking details"}
+            </button>
+            {hasExisting && editMode && (
+              <button type="button" onClick={() => { setEditMode(false); setError("") }} className="rounded-md border border-panel bg-card px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-surface">Cancel</button>
+            )}
+          </div>
+        </form>
       )}
     </div>
+  )
+}
+
+// --- Sidebar: SmartScore card ---
+
+function SmartScoreCard({ profile, bank }: { profile: Profile | null; bank: BankRecord | null }) {
+  const items = computeScoreBreakdown(profile, bank)
+  const score = simpleScore(items)
+
+  const levelLabel =
+    score >= 90
+      ? "Excellent — priority visibility"
+      : score >= 75
+      ? "Good standing"
+      : score >= 50
+      ? "Building trust"
+      : "Incomplete profile"
+
+  const nextThreshold = score >= 90 ? null : score >= 75 ? 90 : score >= 50 ? 75 : 50
+  const pointsToNext = nextThreshold ? nextThreshold - score : 0
+
+  return (
+    <div className="rounded-md border border-panel bg-card p-5 shadow-panel">
+      <p className="text-[0.67rem] font-bold uppercase tracking-[0.24em] text-accent">SmartScore</p>
+      <div className="mt-4">
+        <ScoreCircle score={score} />
+      </div>
+      <p className="mt-3 text-center text-xs font-semibold text-heading">{levelLabel}</p>
+
+      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-panel">
+        <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${score}%` }} />
+      </div>
+
+      {nextThreshold && (
+        <p className="mt-2 text-center text-[0.65rem] text-secondary">
+          Complete {pointsToNext} more point{pointsToNext !== 1 ? "s" : ""} to reach {nextThreshold}+{nextThreshold >= 90 ? " and unlock priority visibility" : ""}
+        </p>
+      )}
+
+      <div className="mt-4 space-y-2 border-t border-panel pt-4">
+        {items.map((item) => {
+          const textCls = item.earned ? "text-success" : item.pending ? "text-warning" : "text-muted"
+          const label = item.earned
+            ? `+${item.points}`
+            : item.pending
+            ? `Pending (+${item.points})`
+            : item.optional
+            ? `Optional (+${item.points})`
+            : `Missing (+${item.points})`
+          return (
+            <div key={item.label} className="flex items-center justify-between gap-2">
+              <span className="text-xs text-secondary">{item.label}</span>
+              <span className={`text-[0.65rem] font-bold ${textCls}`}>{label}</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// --- Sidebar: RFQ visibility card ---
+
+function RFQVisibilityCard({ profile }: { profile: Profile | null }) {
+  return (
+    <div className="rounded-md border border-panel bg-card p-5 shadow-panel">
+      <p className="text-[0.67rem] font-bold uppercase tracking-[0.24em] text-accent">RFQ visibility</p>
+      <p className="mt-2 text-xs leading-relaxed text-secondary">
+        Your profile appears in searches for{" "}
+        {profile?.industry ? <strong className="text-heading">{profile.industry}</strong> : "your industry"} RFQs in{" "}
+        {profile?.province ? <strong className="text-heading">{profile.province}</strong> : "your province"}.
+      </p>
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        {[
+          { label: "Profile views", value: "—" },
+          { label: "RFQs matched", value: "—" },
+          { label: "Shortlisted", value: "—" },
+        ].map(({ label, value }) => (
+          <div key={label} className="rounded-md border border-panel bg-panel p-3 text-center">
+            <p className="text-base font-bold text-heading">{value}</p>
+            <p className="mt-0.5 text-[0.6rem] text-muted">{label}</p>
+          </div>
+        ))}
+      </div>
+      <Link
+        href="/suppliers"
+        className="mt-4 flex w-full items-center justify-center rounded-md border border-panel bg-panel px-4 py-2.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent"
+      >
+        Preview public profile
+      </Link>
+    </div>
+  )
+}
+
+// --- Unsaved changes banner ---
+
+function UnsavedBanner({ onStay, onLeave }: { onStay: () => void; onLeave: () => void }) {
+  return (
+    <div className="mb-4 rounded-md border border-warning/40 bg-warning/8 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs font-semibold text-warning">You have unsaved changes</p>
+        <div className="flex gap-2">
+          <button type="button" onClick={onStay} className="rounded-md border border-warning/40 bg-warning/10 px-3 py-1.5 text-xs font-semibold text-warning transition hover:bg-warning/20">Stay</button>
+          <button type="button" onClick={onLeave} className="rounded-md border border-panel bg-card px-3 py-1.5 text-xs font-semibold text-secondary transition hover:bg-surface">Leave anyway</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// --- Main page inner ---
+
+function ProfilePageInner() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  function resolveTab(param: string | null): Tab {
+    const valid: Tab[] = ["profile", "verification", "documents", "banking"]
+    return valid.includes(param as Tab) ? (param as Tab) : "profile"
+  }
+
+  const [activeTab, setActiveTab] = useState<Tab>(resolveTab(searchParams.get("tab")))
+  const [pendingTab, setPendingTab] = useState<Tab | null>(null)
+  const [hasUnsaved, setHasUnsaved] = useState(false)
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [docUrls, setDocUrls] = useState<DocUrls>({
+    csd_document_url: "",
+    bbbee_document_url: "",
+    tax_document_url: "",
+    company_registration_url: "",
+    cidb_document_url: "",
+    capability_statement_url: "",
+  })
+  const [bank, setBank] = useState<BankRecord | null>(null)
+  const [userId, setUserId] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setActiveTab(resolveTab(searchParams.get("tab")))
+  }, [searchParams])
+
+  useEffect(() => {
+    async function load() {
+      if (!supabase) { setError("Supabase is not configured."); setLoading(false); return }
+      const { data: { user }, error: userErr } = await supabase.auth.getUser()
+      if (userErr || !user) { setError("You must be signed in."); setLoading(false); return }
+      setUserId(user.id)
+
+      const [profileRes, bankRes] = await Promise.all([
+        supabase.from("profiles").select(
+          "id, business_name, province, industry, phone, email, website, description, company_registration, tax_reference, vat_number, verification_status, csd_number, bbbee_level, tax_status, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date, updated_at"
+        ).eq("id", user.id).maybeSingle(),
+        supabase.from("supplier_bank_details").select(
+          "id, bank_name, account_holder, account_number, branch_code, account_type, verification_status, verification_notes"
+        ).eq("supplier_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      ])
+
+      if (profileRes.error) { setError(profileRes.error.message); setLoading(false); return }
+
+      const p = profileRes.data as Profile | null
+      if (p) {
+        setProfile(p)
+        setDocUrls({
+          csd_document_url: p.csd_document_url ?? "",
+          bbbee_document_url: p.bbbee_document_url ?? "",
+          tax_document_url: p.tax_document_url ?? "",
+          company_registration_url: p.company_registration_url ?? "",
+          cidb_document_url: p.cidb_document_url ?? "",
+          capability_statement_url: p.capability_statement_url ?? "",
+        })
+      }
+
+      if (bankRes.data && !bankRes.error) {
+        setBank(bankRes.data as BankRecord)
+      }
+
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  async function handleSave(patch: Partial<Profile>) {
+    if (!supabase || !userId) return
+    setSaving(true)
+    const { error: err } = await supabase.from("profiles").update(patch).eq("id", userId)
+    setSaving(false)
+    if (err) { setError(err.message); return }
+    setProfile((p) => p ? { ...p, ...patch } : p)
+    setHasUnsaved(false)
+  }
+
+  function handleDocUploaded(field: DocumentField, url: string) {
+    setDocUrls((p) => ({ ...p, [field]: url }))
+    setProfile((p) => p ? { ...p, [field]: url } : p)
+  }
+
+  function handleBankSaved(record: BankRecord) {
+    setBank(record)
+  }
+
+  function requestTabChange(tab: Tab) {
+    if (hasUnsaved) {
+      setPendingTab(tab)
+    } else {
+      navigateToTab(tab)
+    }
+  }
+
+  function navigateToTab(tab: Tab) {
+    setActiveTab(tab)
+    setPendingTab(null)
+    setHasUnsaved(false)
+    const params = new URLSearchParams()
+    if (tab !== "profile") params.set("tab", tab)
+    const qs = params.toString()
+    router.push(`/dashboard/profile${qs ? `?${qs}` : ""}`, { scroll: false } as Parameters<typeof router.push>[1])
+  }
+
+  if (loading) {
+    return (
+      <div>
+        <div className="mb-6 h-7 w-48 animate-pulse rounded bg-panel" />
+        <div className="h-10 animate-pulse rounded-md bg-panel" />
+        <div className="mt-4 h-32 animate-pulse rounded-md bg-panel" />
+        <div className="mt-4 h-64 animate-pulse rounded-md bg-panel" />
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-heading">Business profile</h1>
+        <p className="mt-1 text-sm text-secondary">Manage your supplier profile and compliance documents.</p>
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-md border border-rose-500/25 bg-rose-500/10 px-5 py-4">
+          <p className="text-sm font-semibold text-rose-700">{error}</p>
+        </div>
+      )}
+
+      <div className="flex overflow-x-auto border-b border-panel">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => requestTabChange(tab.key)}
+            className={`shrink-0 border-b-2 px-5 py-3 text-sm font-semibold transition ${
+              activeTab === tab.key
+                ? "border-accent text-accent"
+                : "border-transparent text-secondary hover:text-primary"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {profile && <ProfileHeaderCard profile={profile} bank={bank} onTabChange={requestTabChange} />}
+
+      {pendingTab && (
+        <div className="mt-4">
+          <UnsavedBanner onStay={() => setPendingTab(null)} onLeave={() => navigateToTab(pendingTab)} />
+        </div>
+      )}
+
+      <div className="mt-4 flex flex-col gap-4 xl:flex-row xl:items-start">
+        <div className="min-w-0 flex-1">
+          {!profile && (
+            <div className="rounded-md border border-panel bg-card p-16 text-center shadow-panel">
+              <p className="text-sm font-semibold text-heading">No supplier profile found.</p>
+              <p className="mt-2 text-xs text-muted">Complete registration to set up your profile.</p>
+            </div>
+          )}
+          {profile && activeTab === "profile" && (
+            <ProfileTab profile={profile} onSave={handleSave} saving={saving} />
+          )}
+          {profile && activeTab === "verification" && (
+            <VerificationTab profile={profile} docUrls={docUrls} userId={userId} onDocUploaded={handleDocUploaded} onTabChange={requestTabChange} />
+          )}
+          {profile && activeTab === "documents" && (
+            <DocumentsTab profile={profile} docUrls={docUrls} userId={userId} onDocUploaded={handleDocUploaded} />
+          )}
+          {activeTab === "banking" && (
+            <BankingTab userId={userId} bank={bank} businessName={profile?.business_name ?? null} onBankSaved={handleBankSaved} />
+          )}
+        </div>
+
+        <aside className="w-full space-y-4 xl:w-72 xl:shrink-0">
+          <SmartScoreCard profile={profile} bank={bank} />
+          <RFQVisibilityCard profile={profile} />
+        </aside>
+      </div>
+    </div>
+  )
+}
+
+// --- Export ---
+
+export default function ProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-4">
+          <div className="h-7 w-48 animate-pulse rounded bg-panel" />
+          <div className="h-10 animate-pulse rounded-md bg-panel" />
+          <div className="h-40 animate-pulse rounded-md bg-panel" />
+        </div>
+      }
+    >
+      <ProfilePageInner />
+    </Suspense>
   )
 }

@@ -56,6 +56,10 @@ function MetricCard({ label, value }: { label: string; value: number }) {
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<Contract[]>([])
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
+  const [sortBy, setSortBy] = useState<"newest" | "endDate">("newest")
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
 
@@ -88,6 +92,32 @@ export default function ContractsPage() {
       completed: statuses.filter((status) => status === "Completed").length,
     }
   }, [contracts])
+
+  const filteredContracts = useMemo(() => {
+    return contracts
+      .filter((contract) => {
+        const status = normalizeContractStatus(contract.status, contract.end_date)
+        const normalizedStatus =
+          status === "Draft" ? "pending" :
+          status === "Expiring Soon" ? "expired" :
+          status.toLowerCase()
+        const statusMatch = statusFilter === "all" || normalizedStatus === statusFilter
+        const issuedAt = contract.created_at
+          ? new Date(contract.created_at).getTime()
+          : 0
+        const fromMatch = !dateFrom || issuedAt >= new Date(`${dateFrom}T00:00:00`).getTime()
+        const toMatch = !dateTo || issuedAt <= new Date(`${dateTo}T23:59:59`).getTime()
+
+        return statusMatch && fromMatch && toMatch
+      })
+      .sort((a, b) => {
+        if (sortBy === "endDate") {
+          return new Date(a.end_date ?? 0).getTime() - new Date(b.end_date ?? 0).getTime()
+        }
+
+        return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
+      })
+  }, [contracts, dateFrom, dateTo, sortBy, statusFilter])
 
   return (
     <div>
@@ -126,6 +156,46 @@ export default function ContractsPage() {
             <div key={index} className="h-14 animate-pulse rounded-md bg-panel" />
           ))}
         </div>
+      )}
+
+      {!loading && !errorMessage && contracts.length > 0 && (
+        <section className="mb-6 rounded-md border border-panel bg-card p-5 shadow-panel">
+          <div className="grid gap-4 md:grid-cols-4">
+            <label>
+              <span className="mb-1.5 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-secondary">
+                Status
+              </span>
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none focus:border-accent">
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="active">Signed</option>
+                <option value="expired">Expired</option>
+                <option value="terminated">Expired / terminated</option>
+              </select>
+            </label>
+            <label>
+              <span className="mb-1.5 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-secondary">
+                From
+              </span>
+              <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none focus:border-accent" />
+            </label>
+            <label>
+              <span className="mb-1.5 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-secondary">
+                To
+              </span>
+              <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none focus:border-accent" />
+            </label>
+            <label>
+              <span className="mb-1.5 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-secondary">
+                Sort
+              </span>
+              <select value={sortBy} onChange={(event) => setSortBy(event.target.value as "newest" | "endDate")} className="w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none focus:border-accent">
+                <option value="newest">Issue date newest</option>
+                <option value="endDate">End date soonest</option>
+              </select>
+            </label>
+          </div>
+        </section>
       )}
 
       {!loading && !errorMessage && contracts.length === 0 && (
@@ -167,7 +237,7 @@ export default function ContractsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-panel">
-                {contracts.map((contract) => {
+                {filteredContracts.map((contract) => {
                   const status = normalizeContractStatus(contract.status)
                   const renewalStatus = getContractRenewalStatus(
                     contract.end_date,
@@ -210,10 +280,10 @@ export default function ContractsPage() {
                       </td>
                       <td className="px-4 py-4">
                         <Link
-                          href={`/dashboard/contracts/${contract.id}`}
+                          href={contract.purchase_order_id ? `/dashboard/awards/${contract.purchase_order_id}` : `/dashboard/contracts/${contract.id}`}
                           className="inline-flex rounded-md border border-accent bg-accent px-4 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong"
                         >
-                          View Contract
+                          View
                         </Link>
                       </td>
                     </tr>

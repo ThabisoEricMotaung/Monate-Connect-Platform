@@ -1,10 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
-import NotificationBell from "@/components/NotificationBell"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
 
@@ -67,7 +66,7 @@ const navigation: {
   },
   {
     name: "Banking Details",
-    href: "/dashboard/banking",
+    href: "/dashboard/profile?tab=banking",
   },
   {
     name: "Onboarding",
@@ -75,7 +74,7 @@ const navigation: {
   },
   {
     name: "verification",
-    href: "/dashboard/verification",
+    href: "/dashboard/profile?tab=verification",
   },
   {
     name: "savedRFQs",
@@ -233,8 +232,10 @@ export default function DashboardLayout({
   children: ReactNode
 }) {
   const { t } = useI18n()
+  const router = useRouter()
   const pathname = usePathname() || ""
   const [role, setRole] = useState<string | null>(null)
+  const [roleChecked, setRoleChecked] = useState(false)
   const canViewAdminNavigation = hasAdminOrBuyerAccess(
     role ? { id: "", role } : null
   )
@@ -244,10 +245,31 @@ export default function DashboardLayout({
       const profile = await getCurrentProfile()
 
       setRole(profile?.role ?? "supplier")
+      setRoleChecked(true)
     }
 
     loadRole()
   }, [])
+
+  useEffect(() => {
+    if (!roleChecked) return
+
+    const isAdminRoute = pathname.startsWith("/dashboard/admin")
+    const canAccessAdmin = hasAdminOrBuyerAccess(role ? { id: "", role } : null)
+
+    if (pathname === "/dashboard" && canAccessAdmin) {
+      router.replace("/dashboard/admin")
+      return
+    }
+
+    if (isAdminRoute && !canAccessAdmin) {
+      router.replace("/dashboard")
+    }
+  }, [pathname, role, roleChecked, router])
+
+  if (pathname.startsWith("/dashboard/admin")) {
+    return <>{children}</>
+  }
 
   return (
     <main className="flex min-h-screen bg-page text-primary">
@@ -282,9 +304,10 @@ export default function DashboardLayout({
 
         <nav className="space-y-2">
           {navigation.map((item) => {
+            const itemPath = item.href.split("?")[0]
             const active =
-              pathname === item.href ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href))
+              pathname === itemPath ||
+              (itemPath !== "/dashboard" && pathname.startsWith(itemPath))
 
             return (
               <Link
@@ -369,17 +392,6 @@ export default function DashboardLayout({
       </aside>
 
       <section className="flex-1 min-w-0 overflow-x-hidden p-6 md:p-8">
-        <div className="dashboard-chrome print:hidden mb-6 flex items-center justify-between gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-secondary">
-              Live Procurement
-            </p>
-            <p className="mt-1 text-sm font-semibold text-heading">
-              Notification Center
-            </p>
-          </div>
-          <NotificationBell />
-        </div>
         <div className="print:hidden"><Breadcrumbs /></div>
         {children}
       </section>
@@ -387,3 +399,4 @@ export default function DashboardLayout({
     </main>
   )
 }
+

@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { getInvoices, type Invoice } from "@/lib/invoices"
+import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
 
 const statusStyles: Record<string, string> = {
   Draft: "border-sky-500/30 bg-sky-500/10 text-sky-700",
@@ -30,6 +31,19 @@ function displayValue(value: string | number | null): string {
   return value == null ? "-" : String(value)
 }
 
+function dueUrgency(invoice: Invoice): number {
+  if (!invoice.due_date) return 3
+
+  const due = new Date(invoice.due_date)
+  if (Number.isNaN(due.getTime())) return 3
+
+  const days = Math.ceil((due.getTime() - Date.now()) / 86_400_000)
+  if (days < 0) return 0
+  if (days <= 7) return 1
+
+  return 2
+}
+
 function MetricCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-md border border-panel bg-card p-5 shadow-panel">
@@ -43,13 +57,24 @@ function MetricCard({ label, value }: { label: string; value: number }) {
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [canManage, setCanManage] = useState(false)
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [supplierFilter, setSupplierFilter] = useState("all")
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
     async function loadInvoices() {
       try {
-        setInvoices(await getInvoices())
+        const [profile, loadedInvoices] = await Promise.all([
+          getCurrentProfile(),
+          getInvoices(),
+        ])
+
+        setCanManage(hasAdminOrBuyerAccess(profile))
+        setInvoices(loadedInvoices)
       } catch (error) {
         setErrorMessage(
           error instanceof Error ? error.message : "Invoices failed to load."
@@ -74,6 +99,33 @@ export default function InvoicesPage() {
       paid: statuses.filter((status) => status === "Paid").length,
     }
   }, [invoices])
+
+  const supplierOptions = useMemo(
+    () => Array.from(new Set(invoices.map((invoice) => invoice.supplier_name).filter(Boolean))).sort(),
+    [invoices]
+  )
+
+  const filteredInvoices = useMemo(() => {
+    return invoices
+      .filter((invoice) => {
+        const status = normalizeInvoiceStatus(invoice.status).toLowerCase().replace(/\s+/g, "-")
+        const statusMatch = statusFilter === "all" || status === statusFilter
+        const supplierMatch = supplierFilter === "all" || invoice.supplier_name === supplierFilter
+        const submittedAt = invoice.created_at ? new Date(invoice.created_at).getTime() : 0
+        const fromMatch = !dateFrom || submittedAt >= new Date(`${dateFrom}T00:00:00`).getTime()
+        const toMatch = !dateTo || submittedAt <= new Date(`${dateTo}T23:59:59`).getTime()
+
+        return statusMatch && supplierMatch && fromMatch && toMatch
+      })
+      .sort((a, b) => {
+        if (canManage) {
+          const urgency = dueUrgency(a) - dueUrgency(b)
+          if (urgency !== 0) return urgency
+        }
+
+        return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
+      })
+  }, [canManage, dateFrom, dateTo, invoices, statusFilter, supplierFilter])
 
   return (
     <div>
@@ -110,6 +162,59 @@ export default function InvoicesPage() {
             <div key={index} className="h-14 animate-pulse rounded-md bg-panel" />
           ))}
         </div>
+      )}
+
+      {!loading && !errorMessage && invoices.length > 0 && (
+        <section className="mb-6 rounded-md border border-panel bg-card p-5 shadow-panel">
+          <div className="grid gap-4 md:grid-cols-5">
+            <label>
+              <span className="mb-1.5 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-secondary">
+                Status
+              </span>
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none focus:border-accent">
+                <option value="all">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="submitted">Submitted</option>
+                <option value="under-review">Under review</option>
+                <option value="approved">Approved</option>
+                <option value="paid">Paid</option>
+              </select>
+            </label>
+            {canManage && (
+              <label>
+                <span className="mb-1.5 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-secondary">
+                  Supplier
+                </span>
+                <select value={supplierFilter} onChange={(event) => setSupplierFilter(event.target.value)} className="w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none focus:border-accent">
+                  <option value="all">All suppliers</option>
+                  {supplierOptions.map((supplierName) => (
+                    <option key={supplierName} value={supplierName ?? ""}>{supplierName}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label>
+              <span className="mb-1.5 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-secondary">
+                From
+              </span>
+              <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none focus:border-accent" />
+            </label>
+            <label>
+              <span className="mb-1.5 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-secondary">
+                To
+              </span>
+              <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none focus:border-accent" />
+            </label>
+            <div className="rounded-md border border-panel bg-panel px-4 py-3">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-secondary">
+                Sort
+              </p>
+              <p className="mt-2 text-sm font-semibold text-heading">
+                {canManage ? "Urgent first" : "Submitted newest"}
+              </p>
+            </div>
+          </div>
+        </section>
       )}
 
       {!loading && !errorMessage && invoices.length === 0 && (
@@ -149,11 +254,12 @@ export default function InvoicesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-panel">
-                {invoices.map((invoice) => {
+                {filteredInvoices.map((invoice) => {
                   const status = normalizeInvoiceStatus(invoice.status)
+                  const urgent = canManage && dueUrgency(invoice) <= 1
 
                   return (
-                    <tr key={invoice.id} className="transition-colors hover:bg-surface">
+                    <tr key={invoice.id} className={`transition-colors hover:bg-surface ${urgent ? "bg-warning-soft/60" : ""}`}>
                       <td className="px-4 py-4 font-mono text-xs font-semibold text-accent">
                         {invoice.invoice_number || `INV-${invoice.id}`}
                       </td>
@@ -178,10 +284,10 @@ export default function InvoicesPage() {
                       </td>
                       <td className="px-4 py-4">
                         <Link
-                          href={`/dashboard/invoices/${invoice.id}`}
+                          href={invoice.purchase_order_id ? `/dashboard/awards/${invoice.purchase_order_id}` : `/dashboard/invoices/${invoice.id}`}
                           className="inline-flex rounded-md border border-accent bg-accent px-4 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong"
                         >
-                          View Invoice
+                          View
                         </Link>
                       </td>
                     </tr>

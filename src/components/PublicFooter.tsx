@@ -15,10 +15,6 @@ const footerSections = [
     links: [
       { label: "Help Centre", href: "/help" },
       { label: "Contact", href: "/contact" },
-      { label: "Pilot Launch", href: "/pilot-launch" },
-      { label: "Feedback", href: "/feedback" },
-      { label: "Demo Pack", href: "/demo-pack" },
-      { label: "Demo Walkthrough", href: "/demo-walkthrough" },
     ],
   },
   {
@@ -70,6 +66,11 @@ export default function PublicFooter() {
             </div>
           ))}
         </nav>
+      </div>
+      <div className="mx-auto max-w-7xl border-t border-panel px-6 py-5">
+        <p className="text-xs font-semibold text-muted">
+          © 2026 Monate Connect · Procurement Edition
+        </p>
       </div>
     </footer>
   )

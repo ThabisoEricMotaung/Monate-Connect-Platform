@@ -8,8 +8,6 @@ const links = [
   { label: "Suppliers", href: "/suppliers" },
   { label: "Trust Centre", href: "/trust" },
   { label: "Pricing", href: "/pricing" },
-  { label: "Help", href: "/help" },
-  { label: "Contact", href: "/contact" },
 ]
 
 function isActiveLink(pathname: string, href: string) {
@@ -50,7 +48,7 @@ export default function PublicHeader() {
 
           <div className="flex flex-wrap gap-2">
             <Link href="/auth/login" className="masthead__btn-secondary">
-              Login
+              Log in
             </Link>
             <Link href="/auth/signup" className="masthead__btn-primary">
               Register

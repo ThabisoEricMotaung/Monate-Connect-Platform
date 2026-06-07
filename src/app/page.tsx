@@ -1,43 +1,91 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
+import HomepageNewspaper from "@/components/HomepageNewspaper"
 
-const primaryActions = [
-  { label: "Supplier Login", href: "/auth/login", tone: "light" },
-  { label: "Register Supplier", href: "/auth/signup", tone: "paper" },
-  { label: "Admin / Buyer Login", href: "/auth/login?role=admin", tone: "paper" },
-  { label: "Explore Demo Tour", href: "/demo-walkthrough", tone: "outline" },
+const audienceCards = [
+  {
+    icon: "shop",
+    title: "Suppliers",
+    description: "List your business, respond to RFQs, and get verified to increase visibility.",
+    cta: "Register free →",
+    href: "/auth/signup",
+  },
+  {
+    icon: "briefcase",
+    title: "Procurement teams",
+    description: "Source verified suppliers, post RFQs, and manage quotes in one place.",
+    cta: "Request a pilot →",
+    href: "/contact",
+  },
+  {
+    icon: "shield",
+    title: "Verified buyers",
+    description: "Access BBBEE intelligence and CSD-compliant supplier records.",
+    cta: "Learn more →",
+    href: "/trust",
+  },
 ]
 
-const quickLinks = [
-  { label: "View Opportunities", href: "/opportunities" },
-  { label: "Browse Verified Suppliers", href: "/suppliers" },
-  { label: "Trust Centre", href: "/trust" },
-  { label: "Request Pilot Demo", href: "/contact" },
-  { label: "Pilot Launch", href: "/pilot-launch" },
-  { label: "Feedback", href: "/feedback" },
+const platformTiles = [
+  {
+    icon: "briefcase",
+    title: "Opportunities",
+    description: "Live RFQs and tenders",
+    href: "/opportunities",
+  },
+  {
+    icon: "shop",
+    title: "Supplier directory",
+    description: "Verified SA businesses",
+    href: "/suppliers",
+  },
+  {
+    icon: "shield",
+    title: "Trust centre",
+    description: "How verification works",
+    href: "/trust",
+  },
+  {
+    icon: "pricing",
+    title: "Pricing",
+    description: "Plans and pilot options",
+    href: "/pricing",
+  },
 ]
 
-function EntryButton({
-  href,
-  label,
-  tone,
-}: {
-  href: string
-  label: string
-  tone: string
-}) {
-  const className =
-    tone === "light"
-      ? "entry-button entry-button--light"
-      : tone === "outline"
-        ? "entry-button entry-button--outline"
-        : "entry-button entry-button--paper"
+function EntryIcon({ icon }: { icon: string }) {
+  if (icon === "shop") {
+    return (
+      <svg aria-hidden="true" className="h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path d="M4 10h16l-1.5-5h-13L4 10Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+        <path d="M5 10v9h14v-9M9 19v-5h6v5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+      </svg>
+    )
+  }
+
+  if (icon === "briefcase") {
+    return (
+      <svg aria-hidden="true" className="h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path d="M9 7V5h6v2M4 8h16v11H4V8Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+        <path d="M4 13h16M10 13v1h4v-1" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+      </svg>
+    )
+  }
+
+  if (icon === "shield") {
+    return (
+      <svg aria-hidden="true" className="h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path d="M12 3 5.5 5.5v5.8c0 4 2.6 7.6 6.5 9.1 3.9-1.5 6.5-5.1 6.5-9.1V5.5L12 3Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+        <path d="m9 12 2 2 4-4" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+      </svg>
+    )
+  }
 
   return (
-    <Link href={href} className={className}>
-      {label}
-    </Link>
+    <svg aria-hidden="true" className="h-6 w-6" fill="none" viewBox="0 0 24 24">
+      <path d="M5 8h14M7 8V5h10v3M7 8v11M17 8v11M9 12h6M9 16h6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+    </svg>
   )
 }
 
@@ -46,66 +94,60 @@ export default function Home() {
     <>
       <PublicHeader />
       <main className="min-h-screen bg-page text-primary">
-        <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-10 sm:px-6 lg:min-h-[calc(100vh-220px)] lg:justify-center lg:py-14">
-          <div className="entry-editorial-card">
-            <div className="entry-editorial-card__inner">
-              <div className="max-w-4xl">
-                <p className="entry-kicker">Monate Vendor Network</p>
-                <h1 className="entry-title">Welcome to Monate Connect.</h1>
-                <p className="entry-subtitle">
-                  Procurement and supplier intelligence for South African businesses.
-                </p>
-                <p className="mt-6 max-w-2xl text-base leading-8 text-[#d8d2c7] sm:text-lg">
-                  Sign in, register, or take a guided look around. The platform is here to
-                  help suppliers and procurement teams meet with more clarity, trust, and
-                  less administrative noise.
-                </p>
-              </div>
+        <HomepageNewspaper />
+        <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-10 sm:px-6 lg:py-14">
 
-              <div className="mt-9 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {primaryActions.map((action) => (
-                  <EntryButton
-                    key={action.label}
-                    href={action.href}
-                    label={action.label}
-                    tone={action.tone}
-                  />
-                ))}
-              </div>
+          <section>
+            <div className="flex flex-col gap-3 border-t border-strong pt-8">
+              <p className="newspaper-kicker">Who is this for?</p>
+              <h2 className="text-3xl font-semibold text-heading">Built for procurement networks</h2>
             </div>
-          </div>
+            <div className="mt-6 grid gap-4 lg:grid-cols-3">
+              {audienceCards.map((card) => (
+                <article
+                  key={card.title}
+                  className="rounded-md border border-panel bg-card p-6 shadow-panel transition hover:border-accent"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-md border border-panel bg-panel text-accent">
+                    <EntryIcon icon={card.icon} />
+                  </div>
+                  <h3 className="mt-5 text-2xl font-semibold text-heading">{card.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-secondary">{card.description}</p>
+                  <Link
+                    href={card.href}
+                    className="mt-5 inline-flex text-sm font-bold text-accent transition hover:text-accent-strong"
+                  >
+                    {card.cta}
+                  </Link>
+                </article>
+              ))}
+            </div>
+          </section>
 
-          <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
-            <article className="entry-paper-panel">
-              <p className="newspaper-kicker">New here?</p>
-              <h2 className="mt-3 text-2xl font-semibold text-heading">
-                Choose a simple starting point.
-              </h2>
-              <p className="mt-4 text-sm leading-7 text-secondary">
-                Start with public opportunities, browse verified suppliers, review the
-                trust model, or ask for a pilot walkthrough.
-              </p>
-            </article>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              {quickLinks.map((link) => (
-                <Link key={link.href} href={link.href} className="entry-quick-link">
-                  <span>{link.label}</span>
-                  <span aria-hidden="true">-&gt;</span>
+          <section>
+            <div className="flex flex-col gap-3 border-t border-strong pt-8">
+              <p className="newspaper-kicker">Explore the platform</p>
+              <h2 className="text-3xl font-semibold text-heading">Start with the public pages</h2>
+            </div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {platformTiles.map((tile) => (
+                <Link
+                  key={tile.href}
+                  href={tile.href}
+                  className="rounded-md bg-panel p-5 text-primary transition hover:bg-muted"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-md bg-surface text-accent">
+                      <EntryIcon icon={tile.icon} />
+                    </span>
+                    <span className="text-base font-bold text-heading">{tile.title}</span>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-secondary">{tile.description}</p>
                 </Link>
               ))}
             </div>
           </section>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-y border-strong py-4 text-sm text-secondary">
-            <p>
-              Looking for the full product walkthrough? Visit the demo experience when
-              you are ready.
-            </p>
-            <Link href="/demo-pack" className="font-bold text-accent hover:text-accent-strong">
-              View Demo Pack
-            </Link>
-          </div>
         </section>
       </main>
       <PublicFooter />
