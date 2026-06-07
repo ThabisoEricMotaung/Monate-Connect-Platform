@@ -18,13 +18,19 @@ export type SmartScoreResult = {
 export type SupplierSmartScoreProfile = {
   business_name?: string | null
   province?: string | null
+  provinces?: string[] | null
   industry?: string | null
   phone?: string | null
   email?: string | null
+  description?: string | null
   verification_status?: string | null
   csd_number?: string | null
+  csd_verified?: boolean | null
   bbbee_level?: string | null
+  bbbee_verified?: boolean | null
   tax_status?: string | null
+  tax_verified?: boolean | null
+  tax_clearance_url?: string | null
   company_registration?: string | null
   cidb_grade?: string | null
   csd_document_url?: string | null
@@ -36,8 +42,41 @@ export type SupplierSmartScoreProfile = {
   banking_verification_status?: string | null
   bank_verification_status?: string | null
   bank_verified?: boolean | null
+  banking_verified?: boolean | null
+  bank_name?: string | null
+  bank_account_number?: string | null
+  account_number?: string | null
+  director_verified?: boolean | null
   updated_at?: string | null
   created_at?: string | null
+}
+
+export type SmartScoreColour = "success" | "warning" | "danger"
+
+export type SmartScoreBreakdownItem = {
+  key: string
+  label: string
+  points: number
+  earnedPoints: number
+  status: "earned" | "pending" | "missing" | "optional"
+}
+
+export type RFQMatchProfile = {
+  industry?: string | null
+  province?: string | null
+  provinces?: string[] | null
+  bbbee_level?: string | null
+}
+
+export type RFQMatchRecord = {
+  industry?: string | null
+  category?: string | null
+  province?: string | null
+  region?: string | null
+  provinces?: string[] | null
+  bbbee_requirement?: string | null
+  bbee_requirement?: string | null
+  bbbee_level?: string | null
 }
 
 export type SupplierSmartScoreActivity = {
@@ -78,6 +117,51 @@ export type BuyerSmartScoreActivity = {
 
 function hasValue(value: string | null | undefined): boolean {
   return Boolean(value?.trim())
+}
+
+function hasAnyValue(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some((item) => hasAnyValue(item))
+  if (typeof value === "string") return hasValue(value)
+  return value !== null && value !== undefined
+}
+
+function profileProvinces(profile: SupplierSmartScoreProfile | RFQMatchProfile): string[] {
+  const provinces = Array.isArray(profile.provinces) ? profile.provinces : []
+  const province = typeof profile.province === "string" ? profile.province.split(/[,;|/]+/) : []
+
+  return [...provinces, ...province].map((item) => item.trim()).filter(Boolean)
+}
+
+function parseLevel(value: string | null | undefined): number {
+  return Number(value?.replace(/[^0-9]/g, "") || "0")
+}
+
+function profileCsdVerified(profile: SupplierSmartScoreProfile): boolean {
+  return Boolean(profile.csd_verified || isVerified(profile.verification_status))
+}
+
+function profileBBBEEVerified(profile: SupplierSmartScoreProfile): boolean {
+  return Boolean(profile.bbbee_verified || isVerified(profile.verification_status))
+}
+
+function profileTaxVerified(profile: SupplierSmartScoreProfile): boolean {
+  return Boolean(
+    profile.tax_verified ||
+      (isVerified(profile.tax_status) && hasAnyValue(profile.tax_document_url ?? profile.tax_clearance_url))
+  )
+}
+
+function profileBankingVerified(profile: SupplierSmartScoreProfile): boolean {
+  return Boolean(
+    profile.banking_verified ||
+      profile.bank_verified ||
+      isVerified(profile.banking_verification_status) ||
+      isVerified(profile.bank_verification_status)
+  )
+}
+
+function profileHasBankingDetails(profile: SupplierSmartScoreProfile): boolean {
+  return hasAnyValue(profile.bank_name) && hasAnyValue(profile.bank_account_number ?? profile.account_number)
 }
 
 function clampScore(score: number): number {
@@ -123,6 +207,178 @@ function bankingVerified(profile: SupplierSmartScoreProfile): boolean {
       isVerified(profile.banking_verification_status) ||
       isVerified(profile.bank_verification_status)
   )
+}
+
+export function calculateSmartScore(profile: SupplierSmartScoreProfile | null | undefined): number {
+  if (!profile) return 0
+
+  let score = 0
+  const provinces = profileProvinces(profile)
+
+  if (
+    hasAnyValue(profile.business_name) &&
+    hasAnyValue(profile.industry) &&
+    provinces.length > 0 &&
+    hasAnyValue(profile.phone) &&
+    hasAnyValue(profile.description)
+  ) {
+    score += 20
+  }
+
+  if (profileCsdVerified(profile)) {
+    score += 20
+  } else if (hasAnyValue(profile.csd_number)) {
+    score += 10
+  }
+
+  if (profileBBBEEVerified(profile)) {
+    const level = parseLevel(profile.bbbee_level)
+    if (level >= 1 && level <= 4) score += 20
+    else if (level >= 5 && level <= 8) score += 10
+  }
+
+  if (profileTaxVerified(profile)) {
+    score += 15
+  } else if (hasAnyValue(profile.tax_clearance_url ?? profile.tax_document_url)) {
+    score += 7
+  }
+
+  if (profileBankingVerified(profile)) {
+    score += 10
+  } else if (profileHasBankingDetails(profile)) {
+    score += 5
+  }
+
+  if (profile.director_verified) {
+    score += 10
+  }
+
+  if (hasAnyValue(profile.capability_statement_url)) {
+    score += 5
+  }
+
+  return Math.min(score, 100)
+}
+
+export function getSmartScoreLabel(score: number): string {
+  if (score >= 90) return "Excellent"
+  if (score >= 75) return "Good standing"
+  if (score >= 50) return "Building trust"
+  return "Incomplete"
+}
+
+export function getSmartScoreColour(score: number): SmartScoreColour {
+  if (score >= 75) return "success"
+  if (score >= 50) return "warning"
+  return "danger"
+}
+
+export function getSmartScoreBreakdown(
+  profile: SupplierSmartScoreProfile | null | undefined
+): SmartScoreBreakdownItem[] {
+  const safeProfile = profile ?? {}
+  const provinces = profileProvinces(safeProfile)
+  const bbbeeLevel = parseLevel(safeProfile.bbbee_level)
+  const businessEarned =
+    hasAnyValue(safeProfile.business_name) &&
+    hasAnyValue(safeProfile.industry) &&
+    provinces.length > 0 &&
+    hasAnyValue(safeProfile.phone) &&
+    hasAnyValue(safeProfile.description)
+  const csdVerified = profileCsdVerified(safeProfile)
+  const csdPending = !csdVerified && hasAnyValue(safeProfile.csd_number)
+  const bbbeeVerified = profileBBBEEVerified(safeProfile)
+  const taxVerified = profileTaxVerified(safeProfile)
+  const taxPending = !taxVerified && hasAnyValue(safeProfile.tax_clearance_url ?? safeProfile.tax_document_url)
+  const bankingVerified = profileBankingVerified(safeProfile)
+  const bankingPending = !bankingVerified && profileHasBankingDetails(safeProfile)
+
+  return [
+    {
+      key: "business",
+      label: "Business profile",
+      points: 20,
+      earnedPoints: businessEarned ? 20 : 0,
+      status: businessEarned ? "earned" : "missing",
+    },
+    {
+      key: "csd",
+      label: "CSD number verified",
+      points: 20,
+      earnedPoints: csdVerified ? 20 : csdPending ? 10 : 0,
+      status: csdVerified ? "earned" : csdPending ? "pending" : "missing",
+    },
+    {
+      key: "bbbee",
+      label: "BBBEE certificate verified",
+      points: 20,
+      earnedPoints: bbbeeVerified && bbbeeLevel >= 1 && bbbeeLevel <= 4 ? 20 : bbbeeVerified && bbbeeLevel >= 5 && bbbeeLevel <= 8 ? 10 : 0,
+      status: bbbeeVerified && bbbeeLevel >= 1 && bbbeeLevel <= 8 ? "earned" : hasAnyValue(safeProfile.bbbee_level) ? "pending" : "missing",
+    },
+    {
+      key: "tax",
+      label: "Tax clearance verified",
+      points: 15,
+      earnedPoints: taxVerified ? 15 : taxPending ? 7 : 0,
+      status: taxVerified ? "earned" : taxPending ? "pending" : "missing",
+    },
+    {
+      key: "banking",
+      label: "Banking details verified",
+      points: 10,
+      earnedPoints: bankingVerified ? 10 : bankingPending ? 5 : 0,
+      status: bankingVerified ? "earned" : bankingPending ? "pending" : "missing",
+    },
+    {
+      key: "director",
+      label: "Director ID verified",
+      points: 10,
+      earnedPoints: safeProfile.director_verified ? 10 : 0,
+      status: safeProfile.director_verified ? "earned" : "optional",
+    },
+    {
+      key: "company_profile",
+      label: "Company profile document",
+      points: 5,
+      earnedPoints: hasAnyValue(safeProfile.capability_statement_url) ? 5 : 0,
+      status: hasAnyValue(safeProfile.capability_statement_url) ? "earned" : "optional",
+    },
+  ]
+}
+
+export function calculateRFQMatch(profile: RFQMatchProfile | null | undefined, rfq: RFQMatchRecord | null | undefined): number {
+  if (!profile || !rfq) return 0
+
+  let score = 0
+  const supplierIndustry = (profile.industry ?? "").trim().toLowerCase()
+  const rfqIndustry = (rfq.industry ?? rfq.category ?? "").trim().toLowerCase()
+
+  if (supplierIndustry && rfqIndustry && supplierIndustry === rfqIndustry) {
+    score += 40
+  }
+
+  const supplierProvinces = profileProvinces(profile).map((province) => province.toLowerCase())
+  const rfqProvinces = [
+    ...(Array.isArray(rfq.provinces) ? rfq.provinces : []),
+    ...(typeof rfq.province === "string" ? rfq.province.split(/[,;|/]+/) : []),
+    ...(typeof rfq.region === "string" ? rfq.region.split(/[,;|/]+/) : []),
+  ].map((province) => province.trim().toLowerCase()).filter(Boolean)
+  const overlap = supplierProvinces.filter((province) => rfqProvinces.includes(province))
+
+  if (overlap.length > 0) {
+    score += 40
+  }
+
+  const requirement = rfq.bbbee_requirement ?? rfq.bbee_requirement ?? rfq.bbbee_level ?? null
+  if (requirement) {
+    const requiredLevel = Number(requirement.replace(/[^0-9]/g, "") || "8")
+    const supplierLevel = Number(profile.bbbee_level?.replace(/[^0-9]/g, "") || "9")
+    if (supplierLevel <= requiredLevel) score += 20
+  } else {
+    score += 20
+  }
+
+  return Math.min(score, 100)
 }
 
 export function getSmartScoreLevel(score: number): SmartScoreResult {

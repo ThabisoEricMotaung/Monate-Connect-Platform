@@ -4,6 +4,11 @@ import Link from "next/link"
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { logActivity } from "@/lib/activity"
+import {
+  calculateSmartScore,
+  getSmartScoreBreakdown,
+  type SupplierSmartScoreProfile,
+} from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 
 // --- Types ---
@@ -14,6 +19,7 @@ type Profile = {
   id: string
   business_name: string | null
   province: string | null
+  provinces?: string[] | null
   industry: string | null
   phone: string | null
   email: string | null
@@ -28,6 +34,14 @@ type Profile = {
   tax_status: string | null
   cidb_grade: string | null
   verification_notes: string | null
+  smart_score?: number | string | null
+  csd_verified?: boolean | null
+  bbbee_verified?: boolean | null
+  tax_verified?: boolean | null
+  banking_verified?: boolean | null
+  bank_verified?: boolean | null
+  director_verified?: boolean | null
+  tax_clearance_url?: string | null
   csd_document_url: string | null
   bbbee_document_url: string | null
   tax_document_url: string | null
@@ -152,74 +166,29 @@ function cleanFileName(name: string) {
   return name.trim().replace(/[^a-zA-Z0-9._-]/g, "-").replace(/-+/g, "-")
 }
 
-// --- SmartScore (simplified 0-100 breakdown) ---
+function scoreProfile(profile: Profile | null, bank: BankRecord | null): SupplierSmartScoreProfile | null {
+  if (!profile) return null
 
-type ScoreItem = {
-  label: string
-  points: number
-  earned: boolean
-  pending: boolean
-  optional: boolean
+  return {
+    ...profile,
+    provinces: profile.provinces?.length ? profile.provinces : profile.province ? [profile.province] : [],
+    bank_name: bank?.bank_name ?? null,
+    bank_account_number: bank?.account_number ?? null,
+    bank_verification_status: bank?.verification_status ?? null,
+  }
 }
 
-function computeScoreBreakdown(profile: Profile | null, bank: BankRecord | null): ScoreItem[] {
-  if (!profile) return []
-  const bbbeeLevel = parseInt(profile.bbbee_level?.replace("Level ", "") ?? "0") || 0
-  return [
-    {
-      label: "Business profile",
-      points: 20,
-      earned: Boolean(profile.business_name),
-      pending: false,
-      optional: false,
-    },
-    {
-      label: "CSD verified",
-      points: 20,
-      earned: Boolean(profile.csd_number) && isVerified(profile.verification_status),
-      pending: Boolean(profile.csd_number) && !isVerified(profile.verification_status),
-      optional: false,
-    },
-    {
-      label: `BBBEE Level ${bbbeeLevel > 0 ? bbbeeLevel : String.fromCharCode(8211)}`,
-      points: bbbeeLevel >= 1 && bbbeeLevel <= 4 ? 20 : 10,
-      earned: Boolean(profile.bbbee_level) && profile.bbbee_level !== "Non-compliant" && isVerified(profile.verification_status),
-      pending: Boolean(profile.bbbee_level) && !isVerified(profile.verification_status),
-      optional: false,
-    },
-    {
-      label: "Tax clearance",
-      points: 15,
-      earned: Boolean(profile.tax_document_url) && isVerified(profile.verification_status),
-      pending: Boolean(profile.tax_document_url) && !isVerified(profile.verification_status),
-      optional: false,
-    },
-    {
-      label: "Banking details",
-      points: 10,
-      earned: Boolean(bank?.id) && isVerified(bank?.verification_status ?? null),
-      pending: Boolean(bank?.id) && !isVerified(bank?.verification_status ?? null),
-      optional: false,
-    },
-    {
-      label: "Director ID",
-      points: 10,
-      earned: false,
-      pending: false,
-      optional: true,
-    },
-    {
-      label: "Company profile doc",
-      points: 5,
-      earned: Boolean(profile.capability_statement_url),
-      pending: false,
-      optional: true,
-    },
-  ]
-}
+function syncSmartScore(userId: string, profile: Profile | null, bank: BankRecord | null) {
+  if (!supabase || !userId || !profile) return
+  const score = calculateSmartScore(scoreProfile(profile, bank))
 
-function simpleScore(items: ScoreItem[]) {
-  return items.reduce((sum, item) => sum + (item.earned ? item.points : 0), 0)
+  void supabase
+    .from("profiles")
+    .update({ smart_score: score, updated_at: new Date().toISOString() })
+    .eq("id", userId)
+    .then(({ error }) => {
+      if (error) console.warn("SmartScore update failed:", error.message)
+    })
 }
 
 // --- Score circle (0-100) ---
@@ -1060,8 +1029,9 @@ function BankingTab({
 // --- Sidebar: SmartScore card ---
 
 function SmartScoreCard({ profile, bank }: { profile: Profile | null; bank: BankRecord | null }) {
-  const items = computeScoreBreakdown(profile, bank)
-  const score = simpleScore(items)
+  const smartProfile = scoreProfile(profile, bank)
+  const items = getSmartScoreBreakdown(smartProfile)
+  const score = calculateSmartScore(smartProfile)
 
   const levelLabel =
     score >= 90
@@ -1095,17 +1065,32 @@ function SmartScoreCard({ profile, bank }: { profile: Profile | null; bank: Bank
 
       <div className="mt-4 space-y-2 border-t border-panel pt-4">
         {items.map((item) => {
-          const textCls = item.earned ? "text-success" : item.pending ? "text-warning" : "text-muted"
-          const label = item.earned
-            ? `+${item.points}`
-            : item.pending
-            ? `Pending (+${item.points})`
-            : item.optional
-            ? `Optional (+${item.points})`
-            : `Missing (+${item.points})`
+          const textCls = item.status === "earned" ? "text-success" : item.status === "pending" ? "text-warning" : "text-muted"
+          const label =
+            item.status === "earned"
+              ? `+${item.earnedPoints}`
+              : item.status === "pending"
+              ? `Pending (${item.earnedPoints}/${item.points} pts)`
+              : item.status === "optional"
+              ? `Optional (${item.points} pts)`
+              : `Missing (${item.points} pts)`
           return (
             <div key={item.label} className="flex items-center justify-between gap-2">
-              <span className="text-xs text-secondary">{item.label}</span>
+              <span className="flex min-w-0 items-center gap-2 text-xs text-secondary">
+                <span
+                  className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[0.55rem] font-bold ${
+                    item.status === "earned"
+                      ? "border-success/40 bg-success-soft text-success"
+                      : item.status === "pending"
+                      ? "border-warning/40 bg-warning-soft text-warning"
+                      : "border-panel bg-panel text-muted"
+                  }`}
+                  aria-hidden="true"
+                >
+                  {item.status === "earned" ? "+" : item.status === "pending" ? "..." : ""}
+                </span>
+                <span>{item.label}</span>
+              </span>
               <span className={`text-[0.65rem] font-bold ${textCls}`}>{label}</span>
             </div>
           )
@@ -1206,7 +1191,7 @@ function ProfilePageInner() {
 
       const [profileRes, bankRes] = await Promise.all([
         supabase.from("profiles").select(
-          "id, business_name, province, industry, phone, email, website, description, company_registration, tax_reference, vat_number, verification_status, csd_number, bbbee_level, tax_status, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date, updated_at"
+          "id, business_name, province, provinces, industry, phone, email, website, description, company_registration, tax_reference, vat_number, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, banking_verified, bank_verified, director_verified, tax_clearance_url, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date, updated_at"
         ).eq("id", user.id).maybeSingle(),
         supabase.from("supplier_bank_details").select(
           "id, bank_name, account_holder, account_number, branch_code, account_type, verification_status, verification_notes"
@@ -1243,17 +1228,26 @@ function ProfilePageInner() {
     const { error: err } = await supabase.from("profiles").update(patch).eq("id", userId)
     setSaving(false)
     if (err) { setError(err.message); return }
-    setProfile((p) => p ? { ...p, ...patch } : p)
+    setProfile((p) => {
+      const updated = p ? { ...p, ...patch } : p
+      syncSmartScore(userId, updated, bank)
+      return updated
+    })
     setHasUnsaved(false)
   }
 
   function handleDocUploaded(field: DocumentField, url: string) {
     setDocUrls((p) => ({ ...p, [field]: url }))
-    setProfile((p) => p ? { ...p, [field]: url } : p)
+    setProfile((p) => {
+      const updated = p ? { ...p, [field]: url } : p
+      syncSmartScore(userId, updated, bank)
+      return updated
+    })
   }
 
   function handleBankSaved(record: BankRecord) {
     setBank(record)
+    syncSmartScore(userId, profile, record)
   }
 
   function requestTabChange(tab: Tab) {

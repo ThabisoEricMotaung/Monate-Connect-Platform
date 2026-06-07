@@ -2,13 +2,17 @@
 
 import { useEffect, useState, type MouseEvent } from "react"
 import { useRouter } from "next/navigation"
+import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 
 type LoginProfile = {
   id: string
+  business_name?: string | null
   province: string | null
   industry: string | null
   phone: string | null
+  description?: string | null
+  smart_score?: number | string | null
   role?: string | null
 }
 
@@ -111,7 +115,7 @@ export default function LoginPage() {
     if (user) {
       const { data: profileWithRole, error: profileSelectError } = await supabase
         .from("profiles")
-        .select("id, province, industry, phone, role")
+        .select("id, business_name, province, industry, phone, description, smart_score, role")
         .eq("id", user.id)
         .maybeSingle()
       let profile = profileWithRole as LoginProfile | null
@@ -131,7 +135,7 @@ export default function LoginPage() {
         const { data: fallbackProfile, error: fallbackProfileError } =
           await supabase
             .from("profiles")
-            .select("id, province, industry, phone")
+            .select("id, business_name, province, industry, phone, description, smart_score")
             .eq("id", user.id)
             .maybeSingle()
 
@@ -159,10 +163,11 @@ export default function LoginPage() {
           verification_status: "Pending Review",
           ...(roleColumnAvailable ? { role: "supplier" } : {}),
         }
+        const profileScore = calculateSmartScore(profilePayload)
 
         const { error: profileInsertError } = await supabase
           .from("profiles")
-          .insert([profilePayload])
+          .insert([{ ...profilePayload, smart_score: profileScore }])
 
         if (profileInsertError) {
           console.error(profileInsertError)
@@ -185,10 +190,11 @@ export default function LoginPage() {
           phone: profile.phone || user.user_metadata?.phone || "",
           ...(roleColumnAvailable ? { role: profile.role || "supplier" } : {}),
         }
+        const profileScore = calculateSmartScore({ ...profile, ...profileUpdatePayload })
 
         const { error: profileUpdateError } = await supabase
           .from("profiles")
-          .update(profileUpdatePayload)
+          .update({ ...profileUpdatePayload, smart_score: profileScore })
           .eq("id", user.id)
 
         if (profileUpdateError) {

@@ -13,13 +13,20 @@ type PublicRFQ = {
   title: string | null
   description: string | null
   province: string | null
+  provinces?: string[] | null
   category: string | null
+  industry?: string | null
   budget: string | number | null
+  estimated_value_min?: number | null
+  estimated_value_max?: number | null
   deadline: string | null
+  closing_date?: string | null
   status: string | null
   created_at: string | null
+  published_date?: string | null
   buyer_name?: string | null
   buyer?: string | null
+  buyer_org?: string | null
   organization_name?: string | null
   bbbee_requirement?: string | null
   bbee_requirement?: string | null
@@ -31,8 +38,6 @@ type DeadlineFilter = "week" | "twoWeeks" | "month"
 type BBBEEFilter = "level1to2" | "level3to4" | "level5to8" | "any"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const PUBLIC_STATUSES = ["Open", "Closing Soon"]
 
 const SA_PROVINCES = [
   "Gauteng",
@@ -65,13 +70,17 @@ function normalize(value: string | null | undefined): string {
   return (value ?? "").trim().toLowerCase()
 }
 
+function normalizeArray(value: string[] | null | undefined): string[] {
+  return Array.isArray(value) ? value.filter(Boolean) : []
+}
+
 function toggleItem<T>(arr: T[], value: T): T[] {
   return arr.includes(value) ? arr.filter((x) => x !== value) : [...arr, value]
 }
 
 function daysUntil(value: string | null | undefined): number | null {
   if (!value) return null
-  const deadline = new Date(`${value}T00:00:00`)
+  const deadline = new Date(value)
   if (Number.isNaN(deadline.getTime())) return null
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -99,21 +108,44 @@ function formatBudget(value: string | number | null): string {
 
 function formatDate(value: string | null): string {
   if (!value) return "Deadline TBC"
-  const d = new Date(`${value}T00:00:00`)
+  const d = new Date(value)
   if (Number.isNaN(d.getTime())) return value
   return d.toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" })
 }
 
+function formatValueRange(rfq: PublicRFQ): string {
+  const min = rfq.estimated_value_min
+  const max = rfq.estimated_value_max
+
+  if (typeof min === "number" && typeof max === "number") {
+    return `${formatBudget(min)} - ${formatBudget(max)}`
+  }
+
+  if (typeof min === "number") return `From ${formatBudget(min)}`
+  if (typeof max === "number") return `Up to ${formatBudget(max)}`
+
+  return formatBudget(rfq.budget)
+}
+
+function getClosingDate(rfq: PublicRFQ): string | null {
+  return rfq.closing_date || rfq.deadline || null
+}
+
+function getPublishedDate(rfq: PublicRFQ): string | null {
+  return rfq.published_date || rfq.created_at || null
+}
+
 function getBuyerName(rfq: PublicRFQ): string {
-  return rfq.buyer_name || rfq.buyer || rfq.organization_name || "Government / Public entity"
+  return rfq.buyer_org || rfq.buyer_name || rfq.buyer || rfq.organization_name || "Government / Public entity"
 }
 
 function getRFQProvince(rfq: PublicRFQ): string {
-  return rfq.province || "South Africa"
+  const provinces = normalizeArray(rfq.provinces)
+  return provinces.length > 0 ? provinces.join(", ") : rfq.province || "South Africa"
 }
 
 function getRFQIndustry(rfq: PublicRFQ): string {
-  return rfq.category || "General procurement"
+  return rfq.industry || rfq.category || "General procurement"
 }
 
 function getBBBEEReq(rfq: PublicRFQ): string | null {
@@ -156,10 +188,12 @@ async function fetchPublicRFQs(): Promise<PublicRFQ[]> {
   const { data, error } = await supabase
     .from("rfqs")
     .select(
-      "id,title,description,province,category,budget,deadline,status,created_at,buyer_name,buyer,organization_name,bbbee_requirement,bbee_requirement,bbbee_level"
+      "id,title,description,buyer_name,buyer_org,industry,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count,category,province,budget,deadline,created_at,buyer,organization_name,bbee_requirement,bbbee_level"
     )
-    .in("status", PUBLIC_STATUSES)
-    .order("deadline", { ascending: true, nullsFirst: false })
+    .eq("status", "open")
+    .eq("is_public", true)
+    .gt("closing_date", new Date().toISOString())
+    .order("closing_date", { ascending: true, nullsFirst: false })
   if (error) {
     console.warn("Public opportunities fetch failed:", error.message)
     return []
@@ -326,7 +360,7 @@ function FilterBody({
     return all.filter((r) => normalize(getRFQIndustry(r)) === normalize(ind)).length
   }
   function countByDeadline(f: DeadlineFilter) {
-    return all.filter((r) => deadlineBucketMatches(daysUntil(r.deadline), f)).length
+    return all.filter((r) => deadlineBucketMatches(daysUntil(getClosingDate(r)), f)).length
   }
   function countByBBBEE(f: BBBEEFilter) {
     return all.filter((r) => getBBBEEBucket(r) === f).length
@@ -446,7 +480,7 @@ function FilterBody({
 
 function PreviewModal({ rfq, onClose }: { rfq: PublicRFQ | null; onClose: () => void }) {
   if (!rfq) return null
-  const daysLeft = daysUntil(rfq.deadline)
+  const daysLeft = daysUntil(getClosingDate(rfq))
 
   return (
     <div
@@ -473,7 +507,7 @@ function PreviewModal({ rfq, onClose }: { rfq: PublicRFQ | null; onClose: () => 
         </p>
         <div className="mb-6 flex flex-wrap gap-2">
           <MetaChip icon={<PinIcon />} label={getRFQProvince(rfq)} />
-          {rfq.budget && <MetaChip icon={<RandIcon />} label={formatBudget(rfq.budget)} />}
+          <MetaChip icon={<RandIcon />} label={formatValueRange(rfq)} />
           {getBBBEEReq(rfq) && (
             <MetaChip icon={<ShieldIcon />} label={"BBBEE: " + getBBBEEReq(rfq)} />
           )}
@@ -545,9 +579,9 @@ function RFQCard({
   isAuth: boolean
   onPreview: (rfq: PublicRFQ) => void
 }) {
-  const daysLeft = daysUntil(rfq.deadline)
+  const daysLeft = daysUntil(getClosingDate(rfq))
   const isClosingSoon = daysLeft !== null && daysLeft >= 0 && daysLeft <= 3
-  const isNew = isPostedWithin48h(rfq.created_at)
+  const isNew = isPostedWithin48h(getPublishedDate(rfq))
   const blurDesc = !isAuth && (idx + 1) % 3 === 0
 
   // left-border accent: blue ≤2 days (≤48h), amber ≤3 days
@@ -588,9 +622,7 @@ function RFQCard({
         </div>
         <div className="shrink-0 text-right">
           <p className="text-sm font-bold text-heading">{formatDaysLeft(daysLeft)}</p>
-          {rfq.budget && (
-            <p className="mt-0.5 text-xs text-muted">{formatBudget(rfq.budget)}</p>
-          )}
+          <p className="mt-0.5 text-xs text-muted">{formatValueRange(rfq)}</p>
         </div>
       </div>
 
@@ -623,12 +655,12 @@ function RFQCard({
         {getBBBEEReq(rfq) && (
           <MetaChip icon={<ShieldIcon />} label={"BBBEE " + getBBBEEReq(rfq)} />
         )}
-        {rfq.budget && <MetaChip icon={<RandIcon />} label={formatBudget(rfq.budget)} />}
+        <MetaChip icon={<RandIcon />} label={formatValueRange(rfq)} />
       </div>
 
       {/* Action row */}
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-panel pt-3">
-        <p className="text-xs text-muted">Closes {formatDate(rfq.deadline)}</p>
+        <p className="text-xs text-muted">Closes {formatDate(getClosingDate(rfq))}</p>
         {isAuth ? (
           <Link
             href={"/dashboard/rfqs?open=" + rfq.id}
@@ -684,10 +716,10 @@ export default function OpportunitiesPage() {
 
   const totalOpen = rfqs.length
   const closingSoonCount = rfqs.filter((r) => {
-    const d = daysUntil(r.deadline)
+    const d = daysUntil(getClosingDate(r))
     return d !== null && d >= 0 && d <= 7
   }).length
-  const newRecentCount = rfqs.filter((r) => isPostedWithin48h(r.created_at)).length
+  const newRecentCount = rfqs.filter((r) => isPostedWithin48h(getPublishedDate(r))).length
 
   const filtered = useMemo(() => {
     let result = rfqs
@@ -718,7 +750,7 @@ export default function OpportunitiesPage() {
 
     if (deadlineFilters.length > 0) {
       result = result.filter((r) =>
-        deadlineFilters.some((f) => deadlineBucketMatches(daysUntil(r.deadline), f))
+        deadlineFilters.some((f) => deadlineBucketMatches(daysUntil(getClosingDate(r)), f))
       )
     }
 
@@ -728,15 +760,15 @@ export default function OpportunitiesPage() {
 
     return [...result].sort((a, b) => {
       if (sort === "deadline") {
-        const da = daysUntil(a.deadline) ?? 99999
-        const db = daysUntil(b.deadline) ?? 99999
+        const da = daysUntil(getClosingDate(a)) ?? 99999
+        const db = daysUntil(getClosingDate(b)) ?? 99999
         return da - db
       }
       if (sort === "newest") {
-        return (b.created_at ?? "").localeCompare(a.created_at ?? "")
+        return (getPublishedDate(b) ?? "").localeCompare(getPublishedDate(a) ?? "")
       }
-      const numA = Number(String(a.budget ?? "0").replace(/[^\d]/g, ""))
-      const numB = Number(String(b.budget ?? "0").replace(/[^\d]/g, ""))
+      const numA = a.estimated_value_max ?? Number(String(a.budget ?? "0").replace(/[^\d]/g, ""))
+      const numB = b.estimated_value_max ?? Number(String(b.budget ?? "0").replace(/[^\d]/g, ""))
       return numB - numA
     })
   }, [rfqs, search, industryFilters, provinceFilters, deadlineFilters, bbeeFilters, sort])

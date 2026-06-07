@@ -10,7 +10,7 @@ export function getRFQDeadlineStatus(
   if (!deadline) return "Open"
 
   const deadlineDate =
-    deadline instanceof Date ? deadline : new Date(`${deadline}T00:00:00`)
+    deadline instanceof Date ? deadline : new Date(deadline)
 
   if (Number.isNaN(deadlineDate.getTime())) return "Open"
 

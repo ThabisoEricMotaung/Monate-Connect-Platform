@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { getSavedRFQs, saveRFQ, unsaveRFQ } from "@/lib/savedRFQs"
+import { calculateRFQMatch } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 
 type TabKey = "matched" | "all" | "saved" | "submitted"
@@ -17,22 +18,31 @@ type RFQ = {
   description: string | null
   region: string | null
   province: string | null
+  provinces?: string[] | null
   category: string | null
+  industry?: string | null
   budget: string | null
+  estimated_value_min?: number | null
+  estimated_value_max?: number | null
   status: string | null
   deadline: string | null
+  closing_date?: string | null
   created_at: string | null
+  published_date?: string | null
   buyer_name?: string | null
   buyer?: string | null
+  buyer_org?: string | null
   organization_name?: string | null
   bbee_requirement?: string | null
   bbbee_requirement?: string | null
   bbbee_level?: string | null
+  quote_count?: number | null
 }
 
 type SupplierProfile = {
   id: string
   province: string | null
+  provinces?: string[] | null
   industry: string | null
   bbbee_level?: string | null
 }
@@ -98,10 +108,14 @@ function parseList(value: string | null | undefined): string[] {
     .filter(Boolean)
 }
 
+function normalizeArray(value: string[] | null | undefined): string[] {
+  return Array.isArray(value) ? value.filter(Boolean) : []
+}
+
 function daysUntil(value: string | null): number | null {
   if (!value) return null
 
-  const deadline = new Date(`${value}T00:00:00`)
+  const deadline = new Date(value)
   if (Number.isNaN(deadline.getTime())) return null
 
   const today = new Date()
@@ -141,8 +155,31 @@ function formatRand(amount: string | null): string {
   })}`
 }
 
+function formatValueRange(rfq: RFQ): string {
+  const min = rfq.estimated_value_min
+  const max = rfq.estimated_value_max
+
+  if (typeof min === "number" && typeof max === "number") {
+    return `${formatRand(String(min))} - ${formatRand(String(max))}`
+  }
+
+  if (typeof min === "number") return `From ${formatRand(String(min))}`
+  if (typeof max === "number") return `Up to ${formatRand(String(max))}`
+
+  return formatRand(rfq.budget)
+}
+
+function getClosingDate(rfq: RFQ): string | null {
+  return rfq.closing_date || rfq.deadline || null
+}
+
+function getPublishedDate(rfq: RFQ): string | null {
+  return rfq.published_date || rfq.created_at || null
+}
+
 function getBuyerName(rfq: RFQ): string {
   return (
+    rfq.buyer_org ||
     rfq.buyer_name ||
     rfq.buyer ||
     rfq.organization_name ||
@@ -151,11 +188,12 @@ function getBuyerName(rfq: RFQ): string {
 }
 
 function getRFQProvince(rfq: RFQ): string {
-  return rfq.province || rfq.region || "South Africa"
+  const provinces = normalizeArray(rfq.provinces)
+  return provinces.length > 0 ? provinces.join(", ") : rfq.province || rfq.region || "South Africa"
 }
 
 function getRFQIndustry(rfq: RFQ): string {
-  return rfq.category || "General procurement"
+  return rfq.industry || rfq.category || "General procurement"
 }
 
 function getRFQBBBEERequirement(rfq: RFQ): string | null {
@@ -203,18 +241,20 @@ function hasIndustryMatch(profile: SupplierProfile | null, rfq: RFQ): boolean {
 }
 
 function hasProvinceMatch(profile: SupplierProfile | null, rfq: RFQ): boolean {
-  const supplierProvinces = parseList(profile?.province).map(normalize)
-  const rfqProvinces = parseList(getRFQProvince(rfq)).map(normalize)
+  const supplierProvinces = [
+    ...normalizeArray(profile?.provinces),
+    ...parseList(profile?.province),
+  ].map(normalize)
+  const rfqProvinces = [
+    ...normalizeArray(rfq.provinces),
+    ...parseList(getRFQProvince(rfq)),
+  ].map(normalize)
 
   return supplierProvinces.some((province) => rfqProvinces.includes(province))
 }
 
 function calculateMatchScore(profile: SupplierProfile | null, rfq: RFQ): number {
-  const industry = hasIndustryMatch(profile, rfq)
-  const province = hasProvinceMatch(profile, rfq)
-  const bbee = supplierQualifiesForBBBEE(profile, rfq)
-
-  return (industry ? 45 : 0) + (province ? 45 : 0) + (bbee ? 10 : 0)
+  return calculateRFQMatch(profile, rfq)
 }
 
 function isMatchedRFQ(profile: SupplierProfile | null, rfq: RFQ): boolean {
@@ -363,7 +403,7 @@ export default function RFQsPage() {
       if (userId) {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, province, industry, bbbee_level")
+          .select("id, province, provinces, industry, bbbee_level")
           .eq("id", userId)
           .maybeSingle()
 
@@ -378,8 +418,12 @@ export default function RFQsPage() {
 
       const { data, error: rfqError } = await supabase
         .from("rfqs")
-        .select("*")
-        .order("id", { ascending: false })
+        .select(
+          "id,title,description,buyer_name,buyer_org,industry,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count,category,province,region,budget,deadline,created_at,bbee_requirement,bbbee_level"
+        )
+        .eq("status", "open")
+        .gt("closing_date", new Date().toISOString())
+        .order("closing_date", { ascending: true, nullsFirst: false })
 
       if (rfqError) {
         setError(rfqError.message)
@@ -429,8 +473,9 @@ export default function RFQsPage() {
   const marketplaceRFQs = useMemo<MarketplaceRFQ[]>(
     () =>
       rfqs.map((rfq) => {
-        const displayStatus = getRFQDisplayStatus(rfq.status, rfq.deadline)
-        const daysLeft = daysUntil(rfq.deadline)
+        const closingDate = getClosingDate(rfq)
+        const displayStatus = getRFQDisplayStatus(rfq.status, closingDate)
+        const daysLeft = daysUntil(closingDate)
         const isClosingSoon = daysLeft !== null && daysLeft >= 0 && daysLeft <= 3
 
         return {
@@ -438,7 +483,7 @@ export default function RFQsPage() {
           displayStatus,
           daysLeft,
           isClosingSoon,
-          isNewToday: isPostedRecently(rfq.created_at),
+          isNewToday: isPostedRecently(getPublishedDate(rfq)),
           isSaved: savedIds.has(rfq.id),
           hasQuote: submittedIds.has(rfq.id),
           matchScore: calculateMatchScore(profile, rfq),
@@ -557,8 +602,8 @@ export default function RFQsPage() {
         if (sort === "match") return b.matchScore - a.matchScore
         if (sort === "newest") {
           return (
-            new Date(b.rfq.created_at ?? 0).getTime() -
-            new Date(a.rfq.created_at ?? 0).getTime()
+            new Date(getPublishedDate(b.rfq) ?? 0).getTime() -
+            new Date(getPublishedDate(a.rfq) ?? 0).getTime()
           )
         }
 
@@ -798,7 +843,7 @@ export default function RFQsPage() {
             { icon: "pin" as const, label: getRFQProvince(rfq) },
             { icon: "industry" as const, label: getRFQIndustry(rfq) },
             { icon: "shield" as const, label: getRFQBBBEERequirement(rfq) || "BBBEE any level" },
-            { icon: "rand" as const, label: formatRand(rfq.budget) },
+            { icon: "rand" as const, label: formatValueRange(rfq) },
           ].map((meta) => (
             <span
               key={`${rfq.id}-${meta.icon}`}
@@ -863,7 +908,7 @@ export default function RFQsPage() {
               href={`/dashboard/rfqs/${rfq.id}/submit`}
               className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong"
             >
-              Submit quote →
+              Submit quote -&gt;
             </Link>
           </div>
         </div>

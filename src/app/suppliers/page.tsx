@@ -124,7 +124,7 @@ function getBBBEEBucket(s: PublicSupplier): BBBEEFilter | null {
 function getScore100(s: PublicSupplier): number | null {
   const score = numberValue(s.smart_score)
   if (score === null) return null
-  return Math.min(100, Math.max(0, Math.round(score / 10)))
+  return Math.min(100, Math.max(0, Math.round(score)))
 }
 
 function getScoreBucket(s: PublicSupplier): ScoreFilter | null {
@@ -140,6 +140,12 @@ function getScoreStroke(score100: number): string {
   if (score100 >= 75) return "#16a34a"
   if (score100 >= 50) return "#d97706"
   return "#dc2626"
+}
+
+function getScoreSurface(score100: number): string {
+  if (score100 >= 75) return "bg-success-soft text-success"
+  if (score100 >= 50) return "bg-warning-soft text-warning"
+  return "bg-rose-500/10 text-rose-700"
 }
 
 function isTaxVerified(s: PublicSupplier): boolean {
@@ -169,7 +175,7 @@ async function fetchVerifiedSuppliers(): Promise<PublicSupplier[]> {
     .from("profiles")
     .select("id,business_name,description,province,industry,verification_status,smart_score,bbbee_level,csd_number,tax_status,banking_verification_status,bank_verified,created_at,updated_at")
     .eq("verification_status", "Verified")
-    .order("business_name")
+    .order("smart_score", { ascending: false, nullsFirst: false })
 
   if (!full.error) return (full.data ?? []) as PublicSupplier[]
 
@@ -177,7 +183,7 @@ async function fetchVerifiedSuppliers(): Promise<PublicSupplier[]> {
     .from("profiles")
     .select("id,business_name,description,province,industry,verification_status,smart_score,bbbee_level,csd_number,tax_status,created_at,updated_at")
     .eq("verification_status", "Verified")
-    .order("business_name")
+    .order("smart_score", { ascending: false, nullsFirst: false })
 
   if (!partial.error) return (partial.data ?? []) as PublicSupplier[]
 
@@ -185,7 +191,7 @@ async function fetchVerifiedSuppliers(): Promise<PublicSupplier[]> {
     .from("profiles")
     .select("id,business_name,province,industry,verification_status,smart_score")
     .eq("verification_status", "Verified")
-    .order("business_name")
+    .order("smart_score", { ascending: false, nullsFirst: false })
 
   return (data ?? []) as PublicSupplier[]
 }
@@ -241,8 +247,9 @@ function MiniScore({ score100 }: { score100: number | null }) {
   const r = 22
   const circ = 2 * Math.PI * r
   const strokeColor = getScoreStroke(score100)
+  const surfaceClass = getScoreSurface(score100)
   return (
-    <div className="relative flex h-14 w-14 shrink-0 items-center justify-center">
+    <div className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${surfaceClass}`}>
       <svg width="56" height="56" viewBox="0 0 56 56" aria-label={"SmartScore " + score100}>
         <circle cx="28" cy="28" r={r} fill="none" stroke="var(--border)" strokeWidth="5" />
         <circle cx="28" cy="28" r={r} fill="none" stroke={strokeColor} strokeWidth="5"
@@ -252,7 +259,7 @@ function MiniScore({ score100 }: { score100: number | null }) {
           transform="rotate(-90 28 28)" />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-[0.72rem] font-bold tabular-nums leading-none text-heading">{score100}</span>
+        <span className="text-[0.72rem] font-bold tabular-nums leading-none">{score100}</span>
       </div>
     </div>
   )

@@ -1,7 +1,9 @@
-"use client"
+﻿"use client"
 
 import { useState, type FormEvent } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 
 const steps = ["Account", "Business details", "Compliance", "Review"]
@@ -91,7 +93,6 @@ function isValidEmail(value: string) {
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null
-
   return <p className="mt-2 text-xs font-semibold text-rose-700">{message}</p>
 }
 
@@ -114,9 +115,7 @@ function Stepper({
             <button
               key={label}
               type="button"
-              onClick={() => {
-                if (isCompleted) onStepClick(stepNumber)
-              }}
+              onClick={() => { if (isCompleted) onStepClick(stepNumber) }}
               disabled={!isCompleted}
               className="group text-left disabled:cursor-default"
             >
@@ -133,11 +132,7 @@ function Stepper({
                   {isCompleted ? "✓" : stepNumber}
                 </span>
                 {index < steps.length - 1 && (
-                  <span
-                    className={`ml-2 h-px flex-1 ${
-                      stepNumber < currentStep ? "bg-accent" : "bg-panel"
-                    }`}
-                  />
+                  <span className={`ml-2 h-px flex-1 ${stepNumber < currentStep ? "bg-accent" : "bg-panel"}`} />
                 )}
               </div>
               <span
@@ -163,7 +158,6 @@ function TrustIcon({ type }: { type: "lock" | "shield" | "clock" }) {
       </svg>
     )
   }
-
   if (type === "clock") {
     return (
       <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -171,20 +165,19 @@ function TrustIcon({ type }: { type: "lock" | "shield" | "clock" }) {
       </svg>
     )
   }
-
   return (
     <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
       <path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6V10Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
     </svg>
   )
 }
-
 export default function SignupPage() {
+  const router = useRouter()
   const [step, setStep] = useState(1)
   const [form, setForm] = useState<SignupForm>(initialForm)
   const [errors, setErrors] = useState<SignupErrors>({})
   const [loading, setLoading] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
 
   const updateField = <K extends keyof SignupForm>(field: K, value: SignupForm[K]) => {
     setForm((current) => ({ ...current, [field]: value }))
@@ -195,7 +188,6 @@ export default function SignupPage() {
     const nextProvinces = form.provinces.includes(province)
       ? form.provinces.filter((item) => item !== province)
       : [...form.provinces, province]
-
     updateField("provinces", nextProvinces)
   }
 
@@ -233,21 +225,14 @@ export default function SignupPage() {
     return Object.keys(nextErrors).length === 0
   }
 
-  const continueToNextStep = () => {
-    if (!validateStep(step)) return
-    setStep((current) => Math.min(current + 1, 4))
-  }
-
   const goBack = () => {
     setErrors({})
     setStep((current) => Math.max(current - 1, 1))
   }
 
-  const handleSignup = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
-    if (!validateStep(4)) return
-
+  // STEP 1: create auth user and advance
+  const handleStep1 = async () => {
+    if (!validateStep(1)) return
     setLoading(true)
     setErrors({})
 
@@ -257,76 +242,147 @@ export default function SignupPage() {
       return
     }
 
-    const normalizedEmail = form.email.trim()
+    const normalizedEmail = form.email.trim().toLowerCase()
 
     const { data, error } = await supabase.auth.signUp({
       email: normalizedEmail,
       password: form.password,
       options: {
         data: {
-          business_name: form.businessName,
-          province: form.provinces.join(", "),
-          industry: form.industry,
-          phone: form.phone,
+          full_name: form.fullName,
           role: "supplier",
         },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
 
     if (error) {
-      setLoading(false)
       setErrors({ submit: error.message })
+      setLoading(false)
       return
     }
 
     if (!data.user) {
+      setErrors({ submit: "Account creation failed — no user record was returned." })
       setLoading(false)
-      setErrors({ submit: "Account authentication was created, but no user record was returned." })
       return
     }
 
+    setUserId(data.user.id)
     setLoading(false)
-    setSubmitted(true)
-    setForm(initialForm)
+    setStep(2)
   }
 
-  if (submitted) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-page px-6 py-10 text-primary">
-        <div className="w-full max-w-2xl rounded-3xl border border-panel bg-panel p-8 text-center shadow-panel">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-success bg-success-soft text-3xl font-bold text-success">
-            ✓
-          </div>
-          <p className="mt-8 text-xs uppercase tracking-[0.24em] text-accent">
-            Supplier onboarding
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold text-primary">
-            Registration submitted
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-secondary">
-            Check your email to verify your account. Once verified, your supplier profile
-            will be reviewed within 1-2 business days.
-          </p>
+  // STEP 2: save business details (non-fatal if RLS blocks before email verify)
+  const handleStep2Save = async () => {
+    if (!validateStep(2)) return
+    setLoading(true)
 
-          <div className="mt-8 rounded-2xl border border-panel bg-surface p-5 text-left">
-            <h2 className="text-sm font-semibold text-heading">While you wait, you can:</h2>
-            <div className="mt-4 grid gap-3">
-              <Link href="/opportunities" className="text-sm font-semibold text-accent transition hover:text-accent-strong">
-                Browse open RFQ opportunities →
-              </Link>
-              <Link href="/suppliers" className="text-sm font-semibold text-accent transition hover:text-accent-strong">
-                Explore the supplier directory →
-              </Link>
-              <Link href="/trust" className="text-sm font-semibold text-accent transition hover:text-accent-strong">
-                Read how verification works →
-              </Link>
-            </div>
-          </div>
-        </div>
-      </main>
-    )
+    if (supabase && userId) {
+      const smartScore = calculateSmartScore({
+        business_name: form.businessName,
+        industry: form.industry,
+        provinces: form.provinces,
+        phone: form.phone,
+      })
+      await supabase.from("profiles").upsert({
+        id: userId,
+        business_name: form.businessName,
+        company_registration: form.registrationNumber,
+        phone: form.phone,
+        industry: form.industry,
+        provinces: form.provinces,
+        province: form.provinces.join(", "),
+        smart_score: smartScore,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "id" })
+    }
+
+    setLoading(false)
+    setStep(3)
   }
 
+  // STEP 3: save compliance info (non-fatal)
+  const handleStep3Save = async () => {
+    if (!validateStep(3)) return
+    setLoading(true)
+
+    if (supabase && userId) {
+      const smartScore = calculateSmartScore({
+        business_name: form.businessName,
+        industry: form.industry,
+        provinces: form.provinces,
+        phone: form.phone,
+        csd_number: form.csdNumber,
+        bbbee_level: form.bbeeLevel,
+      })
+      await supabase.from("profiles").upsert({
+        id: userId,
+        csd_number: form.csdNumber,
+        tax_reference: form.taxReference,
+        bbbee_level: form.bbeeLevel,
+        vat_number: form.vatNumber || null,
+        smart_score: smartScore,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "id" })
+    }
+
+    setLoading(false)
+    setStep(4)
+  }
+
+  // STEP 4: final upsert with all fields + redirect
+  const handleSignup = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!validateStep(4)) return
+    setLoading(true)
+    setErrors({})
+
+    if (!supabase || !userId) {
+      setErrors({ submit: "Session expired — please reload and start over." })
+      setLoading(false)
+      return
+    }
+
+    const normalizedEmail = form.email.trim().toLowerCase()
+
+    const smartScore = calculateSmartScore({
+      business_name: form.businessName,
+      industry: form.industry,
+      provinces: form.provinces,
+      phone: form.phone,
+      csd_number: form.csdNumber,
+      bbbee_level: form.bbeeLevel,
+    })
+
+    const { error: profileError } = await supabase.from("profiles").upsert({
+      id: userId,
+      email: normalizedEmail,
+      full_name: form.fullName,
+      business_name: form.businessName,
+      company_registration: form.registrationNumber,
+      phone: form.phone,
+      industry: form.industry,
+      provinces: form.provinces,
+      province: form.provinces.join(", "),
+      csd_number: form.csdNumber,
+      tax_reference: form.taxReference,
+      bbbee_level: form.bbeeLevel,
+      vat_number: form.vatNumber || null,
+      verification_status: "pending",
+      registration_complete: true,
+      role: "supplier",
+      smart_score: smartScore,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "id" })
+
+    if (profileError) {
+      console.error("Profile save:", profileError.message)
+    }
+
+    setLoading(false)
+    router.push(`/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}`)
+  }
   return (
     <main className="flex min-h-screen items-center justify-center bg-page px-6 py-10 text-primary">
       <div className="w-full max-w-3xl rounded-3xl border border-panel bg-panel p-8 shadow-panel">
@@ -336,60 +392,44 @@ export default function SignupPage() {
           {step === 1 && (
             <section>
               <div className="mb-8 text-center">
-                <p className="text-xs uppercase tracking-[0.24em] text-accent">
-                  Supplier onboarding
-                </p>
-                <h1 className="mt-3 text-4xl font-semibold text-primary">
-                  Create your account
-                </h1>
+                <p className="text-xs uppercase tracking-[0.24em] text-accent">Supplier onboarding</p>
+                <h1 className="mt-3 text-4xl font-semibold text-primary">Create your account</h1>
                 <p className="mt-3 text-sm leading-6 text-secondary">
                   Start with your login details. You&apos;ll add your business information next.
                 </p>
               </div>
 
+              {errors.submit && (
+                <div className="mb-5 rounded-2xl border border-rose-500/25 bg-rose-500/10 px-5 py-4">
+                  <p className="text-sm font-semibold text-rose-700">{errors.submit}</p>
+                </div>
+              )}
+
               <div className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-secondary">Full name</label>
-                  <input
-                    type="text"
-                    value={form.fullName}
-                    onChange={(event) => updateField("fullName", event.target.value)}
-                    className={inputClass}
-                  />
+                  <input type="text" value={form.fullName} onChange={(e) => updateField("fullName", e.target.value)} className={inputClass} />
                   <FieldError message={errors.fullName} />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-secondary">Work email address</label>
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={(event) => updateField("email", event.target.value)}
-                    className={inputClass}
-                  />
-                  <p className="mt-2 text-xs leading-5 text-muted">
-                    Use your business email — it helps with verification.
-                  </p>
+                  <input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} className={inputClass} />
+                  <p className="mt-2 text-xs leading-5 text-muted">Use your business email — it helps with verification.</p>
                   <FieldError message={errors.email} />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-secondary">Password</label>
-                  <input
-                    type="password"
-                    value={form.password}
-                    onChange={(event) => updateField("password", event.target.value)}
-                    className={inputClass}
-                  />
+                  <input type="password" value={form.password} onChange={(e) => updateField("password", e.target.value)} className={inputClass} />
                   <FieldError message={errors.password} />
                 </div>
 
                 <button
                   type="button"
-                  onClick={continueToNextStep}
-                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong"
+                  onClick={handleStep1}
+                  disabled={loading}
+                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50"
                 >
-                  Continue →
+                  {loading ? "Creating account…" : "Continue →"}
                 </button>
 
                 <div className="grid gap-2 text-xs font-semibold text-secondary sm:grid-cols-3">
@@ -407,9 +447,7 @@ export default function SignupPage() {
 
                 <p className="text-center text-sm text-secondary">
                   Already registered?{" "}
-                  <Link href="/auth/login" className="font-semibold text-accent transition hover:text-accent-strong">
-                    Log in
-                  </Link>
+                  <Link href="/auth/login" className="font-semibold text-accent transition hover:text-accent-strong">Log in</Link>
                 </p>
               </div>
             </section>
@@ -418,39 +456,20 @@ export default function SignupPage() {
           {step === 2 && (
             <section>
               <div className="mb-8 text-center">
-                <p className="text-xs uppercase tracking-[0.24em] text-accent">
-                  Supplier onboarding
-                </p>
-                <h1 className="mt-3 text-4xl font-semibold text-primary">
-                  Tell us about your business
-                </h1>
-                <p className="mt-3 text-sm leading-6 text-secondary">
-                  This is what procurement teams will see when they find your profile.
-                </p>
+                <p className="text-xs uppercase tracking-[0.24em] text-accent">Supplier onboarding</p>
+                <h1 className="mt-3 text-4xl font-semibold text-primary">Tell us about your business</h1>
+                <p className="mt-3 text-sm leading-6 text-secondary">This is what procurement teams will see when they find your profile.</p>
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-secondary">Registered business name</label>
-                  <input
-                    type="text"
-                    placeholder="As registered with CIPC"
-                    value={form.businessName}
-                    onChange={(event) => updateField("businessName", event.target.value)}
-                    className={inputClass}
-                  />
+                  <input type="text" placeholder="As registered with CIPC" value={form.businessName} onChange={(e) => updateField("businessName", e.target.value)} className={inputClass} />
                   <FieldError message={errors.businessName} />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-secondary">Company registration number</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 2019/123456/07"
-                    value={form.registrationNumber}
-                    onChange={(event) => updateField("registrationNumber", event.target.value)}
-                    className={inputClass}
-                  />
+                  <input type="text" placeholder="e.g. 2019/123456/07" value={form.registrationNumber} onChange={(e) => updateField("registrationNumber", e.target.value)} className={inputClass} />
                   <FieldError message={errors.registrationNumber} />
                 </div>
               </div>
@@ -458,29 +477,14 @@ export default function SignupPage() {
               <div className="mt-5 grid gap-5 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-secondary">Phone number</label>
-                  <input
-                    type="tel"
-                    placeholder="+27 XX XXX XXXX"
-                    value={form.phone}
-                    onChange={(event) => updateField("phone", event.target.value)}
-                    className={inputClass}
-                  />
+                  <input type="tel" placeholder="+27 XX XXX XXXX" value={form.phone} onChange={(e) => updateField("phone", e.target.value)} className={inputClass} />
                   <FieldError message={errors.phone} />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-secondary">Industry</label>
-                  <select
-                    value={form.industry}
-                    onChange={(event) => updateField("industry", event.target.value)}
-                    className={selectClass}
-                  >
+                  <select value={form.industry} onChange={(e) => updateField("industry", e.target.value)} className={selectClass}>
                     <option value="">Select industry</option>
-                    {industryOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
+                    {industryOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
                   <FieldError message={errors.industry} />
                 </div>
@@ -488,23 +492,13 @@ export default function SignupPage() {
 
               <div className="mt-5">
                 <label className="block text-sm font-medium text-secondary">Province(s) you operate in</label>
-                <p className="mt-2 text-xs leading-5 text-muted">
-                  Select all provinces where you can fulfil contracts.
-                </p>
+                <p className="mt-2 text-xs leading-5 text-muted">Select all provinces where you can fulfil contracts.</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {provinces.map((province) => {
                     const selected = form.provinces.includes(province)
-
                     return (
-                      <button
-                        key={province}
-                        type="button"
-                        onClick={() => toggleProvince(province)}
-                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                          selected
-                            ? "border-accent bg-accent text-button"
-                            : "border-panel bg-surface text-secondary hover:border-accent hover:text-accent"
-                        }`}
+                      <button key={province} type="button" onClick={() => toggleProvince(province)}
+                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${selected ? "border-accent bg-accent text-button" : "border-panel bg-surface text-secondary hover:border-accent hover:text-accent"}`}
                       >
                         {province}
                       </button>
@@ -515,79 +509,45 @@ export default function SignupPage() {
               </div>
 
               <div className="mt-7 space-y-3">
-                <button
-                  type="button"
-                  onClick={continueToNextStep}
-                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong"
-                >
-                  Continue →
+                <button type="button" onClick={handleStep2Save} disabled={loading}
+                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50">
+                  {loading ? "Saving…" : "Continue →"}
                 </button>
-                <button
-                  type="button"
-                  onClick={goBack}
-                  className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition hover:bg-surface"
-                >
+                <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition hover:bg-surface">
                   ← Back
                 </button>
               </div>
             </section>
           )}
-
           {step === 3 && (
             <section>
               <div className="mb-8 text-center">
-                <p className="text-xs uppercase tracking-[0.24em] text-accent">
-                  Supplier onboarding
-                </p>
-                <h1 className="mt-3 text-4xl font-semibold text-primary">
-                  Compliance information
-                </h1>
+                <p className="text-xs uppercase tracking-[0.24em] text-accent">Supplier onboarding</p>
+                <h1 className="mt-3 text-4xl font-semibold text-primary">Compliance information</h1>
                 <p className="mt-3 text-sm leading-6 text-secondary">
-                  Procurement teams need these details to verify and shortlist suppliers.
-                  You can update them later from your profile.
+                  Procurement teams need these details to verify and shortlist suppliers. You can update them later from your profile.
                 </p>
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-secondary">CSD supplier number</label>
-                  <input
-                    type="text"
-                    placeholder="MAAA000000000"
-                    value={form.csdNumber}
-                    onChange={(event) => updateField("csdNumber", event.target.value)}
-                    className={inputClass}
-                  />
+                  <input type="text" placeholder="MAAA000000000" value={form.csdNumber} onChange={(e) => updateField("csdNumber", e.target.value)} className={inputClass} />
                   <p className="mt-2 text-xs leading-5 text-muted">Central Supplier Database</p>
                   <FieldError message={errors.csdNumber} />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-secondary">Tax reference number</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 1234567890"
-                    value={form.taxReference}
-                    onChange={(event) => updateField("taxReference", event.target.value)}
-                    className={inputClass}
-                  />
+                  <input type="text" placeholder="e.g. 1234567890" value={form.taxReference} onChange={(e) => updateField("taxReference", e.target.value)} className={inputClass} />
                   <FieldError message={errors.taxReference} />
                 </div>
               </div>
 
               <div className="mt-5">
                 <label className="block text-sm font-medium text-secondary">BBBEE level</label>
-                <select
-                  value={form.bbeeLevel}
-                  onChange={(event) => updateField("bbeeLevel", event.target.value)}
-                  className={selectClass}
-                >
+                <select value={form.bbeeLevel} onChange={(e) => updateField("bbeeLevel", e.target.value)} className={selectClass}>
                   <option value="">Select BBBEE level</option>
-                  {bbeeLevels.map((level) => (
-                    <option key={level} value={level}>
-                      {level}
-                    </option>
-                  ))}
+                  {bbeeLevels.map((level) => <option key={level} value={level}>{level}</option>)}
                 </select>
                 <FieldError message={errors.bbeeLevel} />
               </div>
@@ -596,40 +556,23 @@ export default function SignupPage() {
                 <label className="block text-sm font-medium text-secondary">
                   VAT registration number <span className="text-muted">(optional)</span>
                 </label>
-                <input
-                  type="text"
-                  value={form.vatNumber}
-                  onChange={(event) => updateField("vatNumber", event.target.value)}
-                  className={inputClass}
-                />
+                <input type="text" value={form.vatNumber} onChange={(e) => updateField("vatNumber", e.target.value)} className={inputClass} />
               </div>
 
               <div className="mt-5 rounded-2xl border border-panel bg-surface px-5 py-4">
                 <label className="flex gap-3 text-sm font-semibold text-secondary">
-                  <input
-                    type="checkbox"
-                    checked={form.csdConfirmed}
-                    onChange={(event) => updateField("csdConfirmed", event.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-panel accent-[var(--accent)]"
-                  />
+                  <input type="checkbox" checked={form.csdConfirmed} onChange={(e) => updateField("csdConfirmed", e.target.checked)} className="mt-1 h-4 w-4 rounded border-panel accent-[var(--accent)]" />
                   <span>I confirm that my CSD profile is active and up to date.</span>
                 </label>
                 <FieldError message={errors.csdConfirmed} />
               </div>
 
               <div className="mt-7 space-y-3">
-                <button
-                  type="button"
-                  onClick={continueToNextStep}
-                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong"
-                >
-                  Continue →
+                <button type="button" onClick={handleStep3Save} disabled={loading}
+                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50">
+                  {loading ? "Saving…" : "Continue →"}
                 </button>
-                <button
-                  type="button"
-                  onClick={goBack}
-                  className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition hover:bg-surface"
-                >
+                <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition hover:bg-surface">
                   ← Back
                 </button>
               </div>
@@ -639,24 +582,14 @@ export default function SignupPage() {
           {step === 4 && (
             <section>
               <div className="mb-8 text-center">
-                <p className="text-xs uppercase tracking-[0.24em] text-accent">
-                  Supplier onboarding
-                </p>
-                <h1 className="mt-3 text-4xl font-semibold text-primary">
-                  You&apos;re almost there
-                </h1>
-                <p className="mt-3 text-sm leading-6 text-secondary">
-                  Review your details before submitting. You can edit any section.
-                </p>
+                <p className="text-xs uppercase tracking-[0.24em] text-accent">Supplier onboarding</p>
+                <h1 className="mt-3 text-4xl font-semibold text-primary">You&apos;re almost there</h1>
+                <p className="mt-3 text-sm leading-6 text-secondary">Review your details before submitting. You can edit any section.</p>
               </div>
 
               <div className="overflow-hidden rounded-2xl border border-panel bg-surface">
                 {[
-                  {
-                    title: "Account",
-                    detail: form.email,
-                    editStep: 1,
-                  },
+                  { title: "Account", detail: form.email, editStep: 1 },
                   {
                     title: "Business details",
                     detail: `${form.businessName} · ${form.industry} · ${form.provinces.join(", ")}`,
@@ -671,14 +604,8 @@ export default function SignupPage() {
                   <details key={row.title} className="border-b border-panel last:border-b-0" open>
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
                       <span className="text-sm font-bold text-heading">{row.title}</span>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault()
-                          setStep(row.editStep)
-                        }}
-                        className="text-xs font-bold text-accent transition hover:text-accent-strong"
-                      >
+                      <button type="button" onClick={(e) => { e.preventDefault(); setStep(row.editStep) }}
+                        className="text-xs font-bold text-accent transition hover:text-accent-strong">
                         Edit
                       </button>
                     </summary>
@@ -689,46 +616,29 @@ export default function SignupPage() {
 
               <div className="mt-5 rounded-2xl border border-panel bg-surface px-5 py-4">
                 <label className="flex gap-3 text-sm font-semibold text-secondary">
-                  <input
-                    type="checkbox"
-                    checked={form.termsAccepted}
-                    onChange={(event) => updateField("termsAccepted", event.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-panel accent-[var(--accent)]"
-                  />
+                  <input type="checkbox" checked={form.termsAccepted} onChange={(e) => updateField("termsAccepted", e.target.checked)} className="mt-1 h-4 w-4 rounded border-panel accent-[var(--accent)]" />
                   <span>
                     I agree to the{" "}
-                    <Link href="/terms" className="text-accent transition hover:text-accent-strong">
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link href="/privacy" className="text-accent transition hover:text-accent-strong">
-                      Privacy Policy
-                    </Link>
-                    .
+                    <Link href="/terms" className="text-accent transition hover:text-accent-strong">Terms of Service</Link>
+                    {" "}and{" "}
+                    <Link href="/privacy" className="text-accent transition hover:text-accent-strong">Privacy Policy</Link>.
                   </span>
                 </label>
                 <FieldError message={errors.termsAccepted} />
               </div>
 
               {errors.submit && (
-                <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-5 py-4">
+                <div className="mt-5 rounded-2xl border border-rose-500/25 bg-rose-500/10 px-5 py-4">
                   <p className="text-sm font-semibold text-rose-700">{errors.submit}</p>
                 </div>
               )}
 
               <div className="mt-7 space-y-3">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50"
-                >
-                  {loading ? "Submitting registration..." : "Submit registration"}
+                <button type="submit" disabled={loading}
+                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50">
+                  {loading ? "Submitting registration…" : "Submit registration"}
                 </button>
-                <button
-                  type="button"
-                  onClick={goBack}
-                  className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition hover:bg-surface"
-                >
+                <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition hover:bg-surface">
                   ← Back
                 </button>
               </div>
