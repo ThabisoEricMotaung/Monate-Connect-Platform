@@ -177,7 +177,7 @@ export function riskLevelFromScore(score: number): RiskLevel {
 
 // ─── Recommended actions ──────────────────────────────────────────────────────
 
-function deriveActions(factorIds: string[], verificationStatus: string | null): string[] {
+function deriveActions(factorIds: string[]): string[] {
   const actions: string[] = []
 
   if (factorIds.includes("not_verified")) {
@@ -403,7 +403,7 @@ export async function getSupplierRiskAssessments(): Promise<SupplierRiskRecord[]
     )
 
     const riskLevel = riskLevelFromScore(riskScore)
-    const recommendedActions = deriveActions(triggeredIds, p.verification_status)
+    const recommendedActions = deriveActions(triggeredIds)
 
     return {
       supplierId: sid,

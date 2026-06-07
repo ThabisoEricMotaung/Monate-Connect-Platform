@@ -210,7 +210,6 @@ export default function AuditPackPage() {
 
       const awardedQuote = loadedQuotes.find((q) => q.status === "Awarded")
       if (awardedQuote?.supplier_id) {
-        const sup = supplierIds.length > 0 ? undefined : null // resolve below after supplier map set
         const supplierId = awardedQuote.supplier_id
         // Will resolve on next render; set placeholder
         findings.push(`Awarded supplier: ${awardedQuote.supplier_name ?? supplierId}`)
@@ -247,7 +246,6 @@ export default function AuditPackPage() {
           (inv) => inv.status !== "Approved" && inv.status !== "Paid"
         )
         if (hasUnapprovedPayments) {
-          const invoicePayments = [] as Payment[] // resolved later
           findings.push("Some invoices are not yet in Approved or Paid status.")
           if (status === "Compliant") status = "Exceptions Noted"
         }

@@ -92,13 +92,11 @@ function ProvinceCard({
   maxRFQ,
   maxSupplier,
   maxContracts,
-  maxValue,
 }: {
   record: RegionalInsightRecord
   maxRFQ: number
   maxSupplier: number
   maxContracts: number
-  maxValue: number
 }) {
   const level = activityLevel(record)
   const abbr = PROVINCE_ABBR[record.province] ?? record.province.slice(0, 2).toUpperCase()
@@ -243,7 +241,6 @@ export default function RegionalInsightsPage() {
   const maxRFQ = useMemo(() => Math.max(1, ...records.map((r) => r.rfqCount)), [records])
   const maxSupplier = useMemo(() => Math.max(1, ...records.map((r) => r.supplierCount)), [records])
   const maxContracts = useMemo(() => Math.max(1, ...records.map((r) => r.activeContracts)), [records])
-  const maxValue = useMemo(() => Math.max(1, ...records.map((r) => r.totalValue)), [records])
 
   const totals = useMemo(() => ({
     rfqs: records.reduce((s, r) => s + r.rfqCount, 0),
@@ -309,7 +306,6 @@ export default function RegionalInsightsPage() {
                 maxRFQ={maxRFQ}
                 maxSupplier={maxSupplier}
                 maxContracts={maxContracts}
-                maxValue={maxValue}
               />
             ))}
           </section>

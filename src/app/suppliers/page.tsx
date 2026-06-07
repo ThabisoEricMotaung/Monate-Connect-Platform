@@ -578,9 +578,8 @@ function AuthPromptModal({ action, onClose }: { action: "shortlist" | "invite"; 
 
 // ─── SupplierListCard ─────────────────────────────────────────────────────────
 
-function SupplierListCard({ supplier, isAuth, savedIds, savingId, onShortlist, onInvite }: {
+function SupplierListCard({ supplier, savedIds, savingId, onShortlist, onInvite }: {
   supplier: PublicSupplier
-  isAuth: boolean
   savedIds: Set<string>
   savingId: string | null
   onShortlist: (s: PublicSupplier) => void
@@ -685,18 +684,12 @@ function SupplierListCard({ supplier, isAuth, savedIds, savingId, onShortlist, o
 
 // ─── SupplierGridCard ─────────────────────────────────────────────────────────
 
-function SupplierGridCard({ supplier, isAuth, savedIds, savingId, onShortlist, onInvite }: {
+function SupplierGridCard({ supplier, onInvite }: {
   supplier: PublicSupplier
-  isAuth: boolean
-  savedIds: Set<string>
-  savingId: string | null
-  onShortlist: (s: PublicSupplier) => void
   onInvite: (s: PublicSupplier) => void
 }) {
   const { bg, text } = getIndustryColors(supplier.industry)
   const score100 = getScore100(supplier)
-  const isSaved = savedIds.has(supplier.id)
-  const isSaving = savingId === supplier.id
 
   return (
     <article className="flex flex-col rounded-md border border-panel bg-card p-5 shadow-panel transition hover:shadow-md">
@@ -911,7 +904,8 @@ export default function SuppliersPage() {
     onReset: resetFilters,
   }
 
-  const cardProps = { isAuth, savedIds, savingId, onShortlist: handleShortlist, onInvite: handleInvite }
+  const listCardProps = { savedIds, savingId, onShortlist: handleShortlist, onInvite: handleInvite }
+  const gridCardProps = { onInvite: handleInvite }
 
   return (
     <>
@@ -1039,11 +1033,11 @@ export default function SuppliersPage() {
                 </div>
               ) : view === "list" ? (
                 <div className="space-y-3">
-                  {filtered.map((s) => <SupplierListCard key={s.id} supplier={s} {...cardProps} />)}
+                  {filtered.map((s) => <SupplierListCard key={s.id} supplier={s} {...listCardProps} />)}
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {filtered.map((s) => <SupplierGridCard key={s.id} supplier={s} {...cardProps} />)}
+                  {filtered.map((s) => <SupplierGridCard key={s.id} supplier={s} {...gridCardProps} />)}
                 </div>
               )}
             </div>

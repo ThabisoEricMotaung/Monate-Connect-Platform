@@ -83,7 +83,7 @@ export default function HomepageNewspaper() {
       <div style={{ background: "#f4efe0", borderBottom: "3px double #1a1208", padding: "16px 24px 10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
           <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#3a2e1a", whiteSpace: "nowrap", fontFamily: "Georgia, serif" }}>
-            Est. 2024 &middot; Sasolburg, Free State
+            Est. 2026 &middot; Pretoria, Gauteng
           </span>
           <div style={{ flex: 1, height: "0.5px", background: "#1a1208" }} aria-hidden="true"></div>
           <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#3a2e1a", whiteSpace: "nowrap", fontFamily: "Georgia, serif" }}>
