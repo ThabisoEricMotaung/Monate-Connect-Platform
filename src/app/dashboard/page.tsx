@@ -165,6 +165,12 @@ export default function DashboardPage() {
           .limit(1)
           .maybeSingle(),
       ])
+      const profileData = profileRes.data
+      const profileError = profileRes.error
+      const bankData = bankRes.data
+      const bankError = bankRes.error
+      console.log("SmartScore profile fetch:", profileData, profileError)
+      console.log("SmartScore bank fetch:", bankData, bankError)
 
       if (!profileRes.data) {
         setSmartScore(calculateSmartScore({
