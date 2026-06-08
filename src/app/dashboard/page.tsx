@@ -125,9 +125,17 @@ export default function DashboardPage() {
   }, [])
   useEffect(() => {
     async function loadSmartScore() {
-      if (!supabase) return
-      const profile = await getCurrentProfile()
-      if (!profile) return
+      if (!supabase) {
+        setSmartScore(0)
+        return
+      }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        setSmartScore(0)
+        return
+      }
 
       const [profileRes, bankRes] = await Promise.all([
         supabase
@@ -135,37 +143,51 @@ export default function DashboardPage() {
           .select(
             "id, business_name, province, provinces, industry, phone, email, description, role, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, tax_clearance_url, tax_document_url, banking_verified, bank_verified, director_verified, capability_statement_url, updated_at"
           )
-          .eq("id", profile.id)
+          .eq("id", user.id)
           .maybeSingle(),
         supabase
           .from("supplier_bank_details")
           .select("bank_name, account_number, verification_status")
-          .eq("supplier_id", profile.id)
+          .eq("supplier_id", user.id)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
       ])
 
-      if (!profileRes.data) return
+      if (!profileRes.data) {
+        setSmartScore(calculateSmartScore({
+          business_name: user.user_metadata.business_name,
+          province: user.user_metadata.province,
+          industry: user.user_metadata.industry,
+          phone: user.user_metadata.phone,
+          email: user.email,
+          verification_status: user.user_metadata.verification_status,
+        }))
+        return
+      }
 
-      const score = calculateSmartScore({
+      const storedScore = Number(profileRes.data.smart_score ?? 0)
+      const calculatedScore = calculateSmartScore({
         ...profileRes.data,
         bank_name: bankRes.data?.bank_name ?? null,
         bank_account_number: bankRes.data?.account_number ?? null,
         bank_verification_status: bankRes.data?.verification_status ?? null,
       })
+      const displayScore = storedScore > 0 ? storedScore : calculatedScore
 
-      setSmartScore(score)
+      setSmartScore(displayScore)
 
-      const storedScore = Number(profileRes.data.smart_score ?? -1)
-      if (score !== storedScore) {
+      if (displayScore !== storedScore) {
         void supabase
           .from("profiles")
-          .update({ smart_score: score, updated_at: new Date().toISOString() })
-          .eq("id", profile.id)
+          .update({ smart_score: displayScore, updated_at: new Date().toISOString() })
+          .eq("id", user.id)
       }
     }
-    loadSmartScore().catch((e) => console.error("SmartScore load failed:", e))
+    loadSmartScore().catch((e) => {
+      console.error("SmartScore load failed:", e)
+      setSmartScore(0)
+    })
   }, [])
 
   useEffect(() => {

@@ -7,84 +7,116 @@ import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
 
+type SupplierNavigationName =
+  | TranslationKey
+  | "Banking details"
+  | "Business profile"
+  | "Contracts"
+  | "Invoices"
+  | "Messages"
+  | "Payments"
+  | "Settings"
+  | "Verification"
+
 const navigation: {
-  name:
-    | TranslationKey
-    | "Assistant"
-    | "Calendar"
-    | "Messages"
-    | "Contracts"
-    | "Invoices"
-    | "Payments"
-    | "Onboarding"
-    | "Banking Details"
+  name: SupplierNavigationName
   href: string
+  section: "Top" | "Work" | "Profile" | "Discover" | "Pinned"
 }[] = [
   {
     name: "dashboard",
     href: "/dashboard",
-  },
-  {
-    name: "Calendar",
-    href: "/dashboard/calendar",
-  },
-  {
-    name: "Messages",
-    href: "/dashboard/messages",
+    section: "Top",
   },
   {
     name: "rfqs",
     href: "/dashboard/rfqs",
+    section: "Work",
   },
   {
     name: "quotes",
     href: "/dashboard/quotes",
+    section: "Work",
   },
   {
     name: "purchaseOrders",
     href: "/dashboard/purchase-orders",
+    section: "Work",
   },
   {
     name: "Contracts",
     href: "/dashboard/contracts",
+    section: "Work",
   },
   {
     name: "Invoices",
     href: "/dashboard/invoices",
+    section: "Work",
   },
   {
     name: "Payments",
     href: "/dashboard/payments",
+    section: "Work",
+  },
+  {
+    name: "Business profile",
+    href: "/dashboard/profile",
+    section: "Profile",
+  },
+  {
+    name: "Verification",
+    href: "/dashboard/profile?tab=verification",
+    section: "Profile",
+  },
+  {
+    name: "Banking details",
+    href: "/dashboard/profile?tab=banking",
+    section: "Profile",
   },
   {
     name: "supplierDirectory",
     href: "/dashboard/suppliers",
-  },
-  {
-    name: "supplierProfile",
-    href: "/dashboard/profile",
-  },
-  {
-    name: "Banking Details",
-    href: "/dashboard/profile?tab=banking",
-  },
-  {
-    name: "Onboarding",
-    href: "/dashboard/onboarding",
-  },
-  {
-    name: "verification",
-    href: "/dashboard/profile?tab=verification",
+    section: "Discover",
   },
   {
     name: "savedRFQs",
     href: "/dashboard/saved-rfqs",
+    section: "Discover",
   },
   {
-    name: "Assistant",
-    href: "/dashboard/assistant",
+    name: "Messages",
+    href: "/dashboard/messages",
+    section: "Pinned",
+  },
+  {
+    name: "Settings",
+    href: "/dashboard/profile",
+    section: "Pinned",
   },
 ]
+
+const supplierNavigationSections: { title: "Top" | "Work" | "Profile" | "Discover" | "Pinned"; label: string | null }[] = [
+  { title: "Top", label: null },
+  { title: "Work", label: "Work" },
+  { title: "Profile", label: "Profile" },
+  { title: "Discover", label: "Discover" },
+  { title: "Pinned", label: null },
+]
+
+function supplierNavigationLabel(name: SupplierNavigationName, t: (key: TranslationKey) => string) {
+  if (
+    name === "dashboard" ||
+    name === "rfqs" ||
+    name === "quotes" ||
+    name === "purchaseOrders" ||
+    name === "supplierDirectory" ||
+    name === "savedRFQs"
+  ) {
+    return t(name)
+  }
+
+  return name
+}
 
 const intelligenceNavigation: { name: string; href: string }[] = [
   { name: "Executive Dashboard", href: "/dashboard/intelligence/executive" },
@@ -296,40 +328,46 @@ export default function DashboardLayout({
                 Supplier Workspace
               </p>
               <h2 className="text-xl font-semibold text-primary">
-                Monate Vendor Network
+                Monate Connect
               </h2>
             </div>
           </Link>
         </div>
 
-        <nav className="space-y-2">
-          {navigation.map((item) => {
-            const itemPath = item.href.split("?")[0]
-            const active =
-              pathname === itemPath ||
-              (itemPath !== "/dashboard" && pathname.startsWith(itemPath))
+        <nav className="space-y-6">
+          {supplierNavigationSections.map((section) => {
+            const items = navigation.filter((item) => item.section === section.title)
 
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`block rounded-md border px-4 py-3 text-sm font-semibold transition-colors ${
-                  active
-                    ? "border-accent bg-surface text-primary shadow-sm"
-                    : "border-transparent text-secondary hover:bg-surface hover:text-primary"
-                }`}
-              >
-                {item.name === "Assistant" ||
-                item.name === "Calendar" ||
-                item.name === "Messages" ||
-                item.name === "Contracts" ||
-                item.name === "Invoices" ||
-                item.name === "Payments" ||
-                item.name === "Onboarding" ||
-                item.name === "Banking Details"
-                  ? item.name
-                  : t(item.name)}
-              </Link>
+              <div key={section.title}>
+                {section.label && (
+                  <p className="mb-3 text-xs uppercase tracking-[0.24em] text-secondary">
+                    {section.label}
+                  </p>
+                )}
+                <div className="space-y-2">
+                  {items.map((item) => {
+                    const itemPath = item.href.split("?")[0]
+                    const active =
+                      pathname === itemPath ||
+                      (itemPath !== "/dashboard" && pathname.startsWith(itemPath))
+
+                    return (
+                      <Link
+                        key={`${section.title}-${item.href}-${item.name}`}
+                        href={item.href}
+                        className={`block rounded-md border px-4 py-3 text-sm font-semibold transition-colors ${
+                          active
+                            ? "border-accent bg-surface text-primary shadow-sm"
+                            : "border-transparent text-secondary hover:bg-surface hover:text-primary"
+                        }`}
+                      >
+                        {supplierNavigationLabel(item.name, t)}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
             )
           })}
         </nav>

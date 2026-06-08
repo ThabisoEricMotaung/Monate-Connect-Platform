@@ -198,7 +198,7 @@ function doExport(params: {
 
   const content = [
     "══════════════════════════════════════════════════════",
-    "  MONATE VENDOR NETWORK — PROCUREMENT ANALYTICS",
+    "  MONATE CONNECT — PROCUREMENT ANALYTICS",
     "══════════════════════════════════════════════════════",
     `  Generated:  ${new Date().toLocaleString("en-ZA")}`,
     `  Range:      ${params.rangeLabel}`,
@@ -232,7 +232,7 @@ function doExport(params: {
     `  ${p("Not configured")}${params.compliance.unknown}`,
     "",
     "──────────────────────────────────────────────────────",
-    "  Monate Vendor Network  |  Enterprise Procurement Platform",
+    "  Monate Connect  |  Enterprise Procurement Platform",
     "══════════════════════════════════════════════════════",
   ].join("\n")
 
