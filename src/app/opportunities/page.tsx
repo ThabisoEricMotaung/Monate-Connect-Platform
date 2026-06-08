@@ -12,17 +12,17 @@ type PublicRFQ = {
   id: number
   title: string | null
   description: string | null
-  province: string | null
+  province?: string | null
   provinces?: string[] | null
-  category: string | null
+  category?: string | null
   industry?: string | null
-  budget: string | number | null
+  budget?: string | number | null
   estimated_value_min?: number | null
   estimated_value_max?: number | null
-  deadline: string | null
+  deadline?: string | null
   closing_date?: string | null
   status: string | null
-  created_at: string | null
+  created_at?: string | null
   published_date?: string | null
   buyer_name?: string | null
   buyer?: string | null
@@ -96,7 +96,7 @@ function formatDaysLeft(daysLeft: number | null): string {
   return `${daysLeft} days left`
 }
 
-function formatBudget(value: string | number | null): string {
+function formatBudget(value: string | number | null | undefined): string {
   if (value === null || value === undefined || value === "") return "Value TBC"
   if (typeof value === "number") {
     return `R${value.toLocaleString("en-ZA", { maximumFractionDigits: 0 })}`
@@ -106,7 +106,7 @@ function formatBudget(value: string | number | null): string {
   return `R${num.toLocaleString("en-ZA", { maximumFractionDigits: 0 })}`
 }
 
-function formatDate(value: string | null): string {
+function formatDate(value: string | null | undefined): string {
   if (!value) return "Deadline TBC"
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return value
@@ -188,11 +188,11 @@ async function fetchPublicRFQs(): Promise<PublicRFQ[]> {
   const { data, error } = await supabase
     .from("rfqs")
     .select(
-      "id,title,description,buyer_name,buyer_org,industry,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count,category,province,budget,deadline,created_at,buyer,organization_name,bbee_requirement,bbbee_level"
+      "id,title,description,buyer_name,buyer_org,industry,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count"
     )
     .eq("status", "open")
-    .eq("is_public", true)
     .gt("closing_date", new Date().toISOString())
+    .eq("is_public", true)
     .order("closing_date", { ascending: true, nullsFirst: false })
   if (error) {
     console.warn("Public opportunities fetch failed:", error.message)

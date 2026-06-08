@@ -16,18 +16,18 @@ type RFQ = {
   id: number
   title: string | null
   description: string | null
-  region: string | null
-  province: string | null
+  region?: string | null
+  province?: string | null
   provinces?: string[] | null
-  category: string | null
+  category?: string | null
   industry?: string | null
-  budget: string | null
+  budget?: string | null
   estimated_value_min?: number | null
   estimated_value_max?: number | null
   status: string | null
-  deadline: string | null
+  deadline?: string | null
   closing_date?: string | null
-  created_at: string | null
+  created_at?: string | null
   published_date?: string | null
   buyer_name?: string | null
   buyer?: string | null
@@ -112,7 +112,7 @@ function normalizeArray(value: string[] | null | undefined): string[] {
   return Array.isArray(value) ? value.filter(Boolean) : []
 }
 
-function daysUntil(value: string | null): number | null {
+function daysUntil(value: string | null | undefined): number | null {
   if (!value) return null
 
   const deadline = new Date(value)
@@ -125,7 +125,7 @@ function daysUntil(value: string | null): number | null {
   return Math.ceil((deadline.getTime() - today.getTime()) / 86_400_000)
 }
 
-function isPostedRecently(value: string | null): boolean {
+function isPostedRecently(value: string | null | undefined): boolean {
   if (!value) return false
 
   const posted = new Date(value)
@@ -142,7 +142,7 @@ function formatDaysLeft(daysLeft: number | null): string {
   return `${daysLeft} days left`
 }
 
-function formatRand(amount: string | null): string {
+function formatRand(amount: string | null | undefined): string {
   if (!amount) return "Value TBC"
 
   const cleanAmount = amount.replace(/[^\d]/g, "")
@@ -419,9 +419,10 @@ export default function RFQsPage() {
       const { data, error: rfqError } = await supabase
         .from("rfqs")
         .select(
-          "id,title,description,buyer_name,buyer_org,industry,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count,category,province,region,budget,deadline,created_at,bbee_requirement,bbbee_level"
+          "id,title,description,buyer_name,buyer_org,industry,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count"
         )
         .eq("status", "open")
+        .eq("is_public", true)
         .gt("closing_date", new Date().toISOString())
         .order("closing_date", { ascending: true, nullsFirst: false })
 
