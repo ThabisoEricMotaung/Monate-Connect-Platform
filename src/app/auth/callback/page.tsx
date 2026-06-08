@@ -4,6 +4,8 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
+export const dynamic = "force-dynamic"
+
 export default function AuthCallbackPage() {
   const router = useRouter()
 
@@ -29,10 +31,20 @@ export default function AuthCallbackPage() {
         }
       }
 
-      router.replace("/dashboard/onboarding")
+      router.replace("/dashboard")
     }
 
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        router.replace("/dashboard")
+      }
+    })
+
     exchange()
+
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
   }, [router])
 
   return (

@@ -1,12 +1,11 @@
 ﻿"use client"
 
 import { useState, type FormEvent } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 
-const steps = ["Account", "Business details", "Compliance", "Review"]
+const steps = ["Account", "Business details", "Compliance", "Review", "Submitted"]
 
 const provinces = [
   "Gauteng",
@@ -105,7 +104,7 @@ function Stepper({
 }) {
   return (
     <div className="mb-8">
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-5 gap-2">
         {steps.map((label, index) => {
           const stepNumber = index + 1
           const isCompleted = stepNumber < currentStep
@@ -172,11 +171,12 @@ function TrustIcon({ type }: { type: "lock" | "shield" | "clock" }) {
   )
 }
 export default function SignupPage() {
-  const router = useRouter()
   const [step, setStep] = useState(1)
   const [form, setForm] = useState<SignupForm>(initialForm)
   const [errors, setErrors] = useState<SignupErrors>({})
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [resendMessage, setResendMessage] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
 
   const updateField = <K extends keyof SignupForm>(field: K, value: SignupForm[K]) => {
@@ -331,7 +331,26 @@ export default function SignupPage() {
     setStep(4)
   }
 
-  // STEP 4: final upsert with all fields + redirect
+  const handleResendVerification = async () => {
+    setResending(true)
+    setResendMessage(null)
+
+    if (!supabase) {
+      setResendMessage("Supabase environment variables are not configured.")
+      setResending(false)
+      return
+    }
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: form.email.trim().toLowerCase(),
+    })
+
+    setResendMessage(error ? error.message : "Verification email sent. Please check your inbox.")
+    setResending(false)
+  }
+
+  // STEP 4: final upsert with all fields + confirmation
   const handleSignup = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!validateStep(4)) return
@@ -381,7 +400,7 @@ export default function SignupPage() {
     }
 
     setLoading(false)
-    router.push(`/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}`)
+    setStep(5)
   }
   return (
     <main className="flex min-h-screen items-center justify-center bg-page px-6 py-10 text-primary">
@@ -619,9 +638,9 @@ export default function SignupPage() {
                   <input type="checkbox" checked={form.termsAccepted} onChange={(e) => updateField("termsAccepted", e.target.checked)} className="mt-1 h-4 w-4 rounded border-panel accent-[var(--accent)]" />
                   <span>
                     I agree to the{" "}
-                    <Link href="/terms" className="text-accent transition hover:text-accent-strong">Terms of Service</Link>
+                    <Link href="/terms" target="_blank" rel="noopener noreferrer" className="text-accent transition hover:text-accent-strong">Terms of Service</Link>
                     {" "}and{" "}
-                    <Link href="/privacy" className="text-accent transition hover:text-accent-strong">Privacy Policy</Link>.
+                    <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="text-accent transition hover:text-accent-strong">Privacy Policy</Link>.
                   </span>
                 </label>
                 <FieldError message={errors.termsAccepted} />
@@ -641,6 +660,46 @@ export default function SignupPage() {
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition hover:bg-surface">
                   ← Back
                 </button>
+              </div>
+            </section>
+          )}
+
+          {step === 5 && (
+            <section>
+              <div className="text-center">
+                <p className="text-xs uppercase tracking-[0.24em] text-accent">Supplier onboarding</p>
+                <h1 className="mt-3 text-4xl font-semibold text-primary">Registration submitted!</h1>
+                <p className="mt-4 text-sm leading-6 text-secondary">
+                  We&apos;ve sent a verification email to{" "}
+                  <span className="font-semibold text-heading">{form.email.trim().toLowerCase()}</span>.
+                  {" "}Please check your inbox and click the link to activate your account.
+                </p>
+                <p className="mt-3 text-sm leading-6 text-muted">
+                  Once verified, you&apos;ll be able to log in and access your supplier dashboard.
+                </p>
+              </div>
+
+              {resendMessage && (
+                <div className="mt-6 rounded-2xl border border-panel bg-surface px-5 py-4">
+                  <p className="text-sm font-semibold text-secondary">{resendMessage}</p>
+                </div>
+              )}
+
+              <div className="mt-7 space-y-3">
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={resending}
+                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50"
+                >
+                  {resending ? "Resending…" : "Resend verification email"}
+                </button>
+                <Link
+                  href="/auth/login"
+                  className="block w-full rounded-2xl border border-panel bg-panel py-4 text-center font-semibold text-secondary transition hover:bg-surface"
+                >
+                  Already verified? Log in →
+                </Link>
               </div>
             </section>
           )}
