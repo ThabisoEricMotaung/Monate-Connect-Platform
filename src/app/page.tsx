@@ -1,7 +1,11 @@
 ﻿import Link from "next/link"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
-import HomepageNewspaper from "@/components/HomepageNewspaper"
+import GazetteHeader from "@/components/home/GazetteHeader"
+import HeroSection from "@/components/home/HeroSection"
+import InfoCards from "@/components/home/InfoCards"
+import CTASection from "@/components/home/CTASection"
+import TrustStrip from "@/components/home/TrustStrip"
 
 const audienceCards = [
   {
@@ -92,9 +96,13 @@ function EntryIcon({ icon }: { icon: string }) {
 export default function Home() {
   return (
     <>
+      <GazetteHeader />
       <PublicHeader />
       <main className="min-h-screen bg-page text-primary">
-        <HomepageNewspaper />
+        <HeroSection />
+        <InfoCards />
+        <CTASection />
+        <TrustStrip />
         <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-10 sm:px-6 lg:py-14">
 
           <section>

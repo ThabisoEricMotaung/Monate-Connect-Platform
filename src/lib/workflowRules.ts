@@ -83,7 +83,7 @@ export const CONDITION_KEYS_BY_ENTITY: Record<
     { value: "amount",                label: "Quote Amount (ZAR)",        hint: "Numeric value" },
     { value: "supplier_risk_level",   label: "Supplier Risk Level",       hint: "Low / Medium / High / Critical" },
     { value: "supplier_verification", label: "Supplier Verification",     hint: "Verified / Pending Review" },
-    { value: "supplier_smart_score",  label: "Supplier SmartScore",       hint: "Numeric 0–1000" },
+    { value: "supplier_smart_score",  label: "Supplier SmartScore",       hint: "Numeric 0-100" },
   ],
   rfq: [
     { value: "budget",    label: "RFQ Budget (ZAR)", hint: "Numeric value" },
@@ -92,7 +92,7 @@ export const CONDITION_KEYS_BY_ENTITY: Record<
     { value: "status",    label: "RFQ Status",       hint: "Open / Closed / Awarded" },
   ],
   supplier: [
-    { value: "smart_score",          label: "SmartScore (0–1000)",    hint: "Numeric value" },
+    { value: "smart_score",          label: "SmartScore (0-100)",    hint: "Numeric value" },
     { value: "risk_level",           label: "Risk Level",             hint: "Low / Medium / High / Critical" },
     { value: "verification_status",  label: "Verification Status",    hint: "Verified / Pending Review" },
     { value: "banking_status",       label: "Banking Verification",   hint: "Verified / Unverified" },
@@ -172,9 +172,9 @@ export const SEED_RULES: Omit<WorkflowRule, "id" | "created_at">[] = [
     entity_type: "quote",
     condition_key: "supplier_smart_score",
     condition_operator: "<",
-    condition_value: "500",
+    condition_value: "50",
     action_type: "flag_risk",
-    action_value: "Supplier SmartScore below 500. Review supplier capability and compliance before awarding.",
+    action_value: "Supplier SmartScore below 50. Review supplier capability and compliance before awarding.",
     is_active: true,
   },
   {

@@ -70,6 +70,8 @@ type SupplierProfile = {
 type BuyerProfile = {
   id: string
   business_name: string | null
+  full_name: string | null
+  preferred_name: string | null
   email: string | null
 }
 
@@ -165,13 +167,16 @@ function daysUntil(value: string | null): number | null {
 function greeting(): string {
   const hour = new Date().getHours()
   if (hour < 12) return "Good morning"
-  if (hour < 18) return "Good afternoon"
+  if (hour < 17) return "Good afternoon"
 
   return "Good evening"
 }
 
 function firstName(profile: BuyerProfile | null): string {
-  const source = profile?.business_name || profile?.email || "Procurement team"
+  const preferredName = profile?.preferred_name?.trim()
+  if (preferredName) return preferredName
+
+  const source = profile?.full_name || profile?.business_name || profile?.email || "Procurement team"
   return source.split(/\s|@/).filter(Boolean)[0] ?? "Procurement team"
 }
 
@@ -259,7 +264,7 @@ export default function AdminOverviewPage() {
       const [buyer, rfqs, quotes, contracts, purchaseOrders, invoices] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, business_name, email")
+          .select("id, business_name, full_name, preferred_name, email")
           .eq("id", profile.id)
           .maybeSingle()
           .then((result) => (result.error ? null : (result.data as BuyerProfile | null))),

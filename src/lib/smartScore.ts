@@ -165,23 +165,23 @@ function profileHasBankingDetails(profile: SupplierSmartScoreProfile): boolean {
 }
 
 function clampScore(score: number): number {
-  return Math.max(0, Math.min(1000, Math.round(score)))
+  return Math.max(0, Math.min(100, Math.round(score)))
 }
 
 function getLevel(score: number): Pick<SmartScoreResult, "label" | "tone"> {
-  if (score <= 399) {
+  if (score <= 39) {
     return { label: "Emerging Supplier / High Risk", tone: "red" }
   }
 
-  if (score <= 599) {
+  if (score <= 59) {
     return { label: "Developing Supplier", tone: "orange" }
   }
 
-  if (score <= 749) {
+  if (score <= 74) {
     return { label: "Reliable Supplier", tone: "blue" }
   }
 
-  if (score <= 849) {
+  if (score <= 84) {
     return { label: "Trusted Supplier", tone: "green" }
   }
 
@@ -434,7 +434,7 @@ export function calculateSupplierSmartScore(
       ? Math.min(activity.reviewCount ?? 0, 5) * 10
       : Math.min(120, Math.round((averageRating / 5) * 120))
 
-  const score = clampScore(
+  const rawScore =
     80 +
       (isVerified(profile?.verification_status) ? 120 : 30) +
       uploadedDocuments * 30 +
@@ -451,7 +451,7 @@ export function calculateSupplierSmartScore(
       reviewContribution +
       Math.min(activity.recentActivityCount ?? 0, 5) * 18 +
       (hasRecentDate(profile?.updated_at) ? 30 : 0)
-  )
+  const score = clampScore(rawScore / 10)
 
   const level = getLevel(score)
   const tips: string[] = []
@@ -508,7 +508,7 @@ export function calculateBuyerSmartScore(
       ? Math.round(((activity.paidInvoices ?? 0) / approvedInvoices) * 160)
       : 0
 
-  const score = clampScore(
+  const rawScore =
     160 +
       completedProfileFields * 45 +
       (isVerified(profile?.organisation_verification_status) ||
@@ -521,7 +521,7 @@ export function calculateBuyerSmartScore(
       Math.min(activity.supplierMessages ?? 0, 12) * 12 +
       Math.min(activity.recentActivityCount ?? 0, 5) * 20 +
       (hasRecentDate(profile?.updated_at) ? 30 : 0)
-  )
+  const score = clampScore(rawScore / 10)
 
   const level = getLevel(score)
   const tips: string[] = []

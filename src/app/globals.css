@@ -1097,92 +1097,64 @@ a.bg-accent:hover,
 
 .accessibility-panel {
   position: fixed;
-  right: 18px;
-  bottom: calc(var(--news-ticker-height) + 84px);
-  z-index: 80;
-  pointer-events: none;
-}
-
-.accessibility-panel__trigger,
-.accessibility-panel__surface {
+  inset: 0;
+  z-index: 90;
   pointer-events: auto;
 }
 
-.accessibility-panel__trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 34px !important;
-  border: 1px solid rgba(var(--accent-rgb), 0.48);
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 84%, var(--surface-sheen)), var(--bg-panel));
-  color: var(--text-heading);
+.accessibility-panel__backdrop {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  background: rgba(15, 23, 42, 0.46);
   cursor: pointer;
-  font-size: 0.78rem !important;
-  font-weight: 850;
-  padding: 0.38rem 0.6rem !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.36),
-    0 8px 18px rgba(var(--accent-rgb), 0.14);
-}
-
-.accessibility-panel__trigger:hover,
-.accessibility-panel__trigger:focus-visible {
-  border-color: var(--accent);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--hover-surface) 84%, var(--surface-sheen)), var(--hover-surface));
-  outline: none;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.42),
-    0 0 0 4px rgba(var(--accent-rgb), 0.14),
-    0 14px 32px rgba(var(--accent-rgb), 0.18);
-}
-
-.accessibility-panel__trigger-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px !important;
-  height: 22px !important;
-  border: 1px solid rgba(var(--accent-rgb), 0.42);
-  border-radius: 5px;
-  background:
-    linear-gradient(180deg, rgba(var(--accent-rgb), 0.18), rgba(var(--accent-rgb), 0.10));
-  color: var(--text-heading);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 0.76rem !important;
-  font-weight: 900;
-}
-
-.accessibility-panel__trigger-text {
-  letter-spacing: 0.02em;
 }
 
 .accessibility-panel__surface {
-  position: absolute;
+  position: fixed;
+  top: 0;
   right: 0;
-  bottom: calc(100% + 0.85rem);
-  width: min(420px, calc(100vw - 2rem));
-  max-height: min(74vh, 760px);
+  bottom: 0;
+  width: min(420px, 100vw);
   overflow-y: auto;
-  border: 1px solid rgba(var(--accent-rgb), 0.42);
-  border-radius: 16px;
+  border-left: 1px solid rgba(var(--accent-rgb), 0.42);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 88%, var(--surface-sheen)), var(--bg-panel));
   color: var(--text-primary);
-  padding: 1rem;
+  padding: 1.25rem;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.42),
-    0 22px 52px rgba(24, 31, 39, 0.20),
-    0 8px 22px rgba(var(--accent-rgb), 0.12);
+    inset 1px 0 0 rgba(255, 255, 255, 0.32),
+    -22px 0 52px rgba(24, 31, 39, 0.22);
   animation: appearance-panel-in 160ms ease both;
 }
 
 .accessibility-panel__header {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
   border-bottom: 1px solid var(--border);
   margin-bottom: 1rem;
   padding-bottom: 1rem;
+}
+
+.accessibility-panel__close {
+  border: 1px solid rgba(var(--accent-rgb), 0.34);
+  border-radius: 8px;
+  background: var(--bg-surface);
+  color: var(--text-heading);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 0.55rem 0.75rem;
+}
+
+.accessibility-panel__close:hover,
+.accessibility-panel__close:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
 }
 
 .accessibility-panel__eyebrow,
@@ -1339,14 +1311,18 @@ a.bg-accent:hover,
   transform: translateX(20px);
 }
 
+html.font-size-large,
 html[data-font-size="large"] {
   font-size: 112.5%;
 }
 
+html.font-size-xlarge,
+html[data-font-size="xlarge"],
 html[data-font-size="extra-large"] {
   font-size: 125%;
 }
 
+html.high-contrast-mode,
 html[data-contrast="high"] {
   --bg-page: #FFFFFF;
   --bg-surface: #FFFFFF;
@@ -1369,6 +1345,7 @@ html[data-contrast="high"] {
   --hover-surface: #E7EEF7;
 }
 
+html.theme-dark.high-contrast-mode,
 html.theme-dark[data-contrast="high"] {
   --bg-page: #000000;
   --bg-surface: #080808;
@@ -1391,6 +1368,11 @@ html.theme-dark[data-contrast="high"] {
   --hover-surface: #1C1C1C;
 }
 
+html.high-contrast-mode a,
+html.high-contrast-mode button,
+html.high-contrast-mode input,
+html.high-contrast-mode textarea,
+html.high-contrast-mode select,
 html[data-contrast="high"] a,
 html[data-contrast="high"] button,
 html[data-contrast="high"] input,
@@ -1399,6 +1381,9 @@ html[data-contrast="high"] select {
   outline-offset: 3px;
 }
 
+html.prefers-reduced-motion *,
+html.prefers-reduced-motion *::before,
+html.prefers-reduced-motion *::after,
 html[data-motion="reduced"] *,
 html[data-motion="reduced"] *::before,
 html[data-motion="reduced"] *::after {
@@ -1408,6 +1393,7 @@ html[data-motion="reduced"] *::after {
   transition-duration: 0.01ms !important;
 }
 
+html.prefers-reduced-motion .news-ticker__track,
 html[data-motion="reduced"] .news-ticker__track {
   animation: none !important;
   transform: none !important;
@@ -1584,48 +1570,20 @@ html[data-low-data="on"] .news-ticker__track {
     height: 16px !important;
   }
 
-  .accessibility-panel {
-    right: 12px !important;
-    bottom: calc(var(--news-ticker-height) + 70px) !important;
-  }
-
-  .accessibility-panel__trigger {
-    min-height: 30px !important;
-    font-size: 0.72rem !important;
-    padding: 0.32rem 0.5rem !important;
-    gap: 0.38rem !important;
-  }
-
-  .accessibility-panel__trigger-mark {
-    width: 20px !important;
-    height: 20px !important;
-    font-size: 0.7rem !important;
+  .accessibility-panel__surface {
+    width: 100vw;
   }
 }
 
 @media (min-width: 640px) {
   .accessibility-panel {
-    right: 18px;
-    bottom: calc(var(--news-ticker-height) + 84px);
+    inset: 0;
   }
 }
 
 @media (min-width: 1024px) {
   .accessibility-panel {
-    right: 18px;
-    bottom: calc(var(--news-ticker-height) + 84px);
-  }
-
-  .accessibility-panel__trigger {
-    min-height: 34px;
-    padding: 0.38rem 0.6rem;
-    font-size: 0.78rem;
-  }
-
-  .accessibility-panel__trigger-mark {
-    width: 22px;
-    height: 22px;
-    font-size: 0.76rem;
+    inset: 0;
   }
 }
 

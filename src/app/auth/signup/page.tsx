@@ -90,6 +90,10 @@ function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
 }
 
+function preferredFirstName(value: string) {
+  return value.trim().split(/\s+/)[0] || "there"
+}
+
 function FieldError({ message }: { message?: string }) {
   if (!message) return null
   return <p className="mt-2 text-xs font-semibold text-rose-700">{message}</p>
@@ -668,7 +672,9 @@ export default function SignupPage() {
             <section>
               <div className="text-center">
                 <p className="text-xs uppercase tracking-[0.24em] text-accent">Supplier onboarding</p>
-                <h1 className="mt-3 text-4xl font-semibold text-primary">Registration submitted!</h1>
+                <h1 className="mt-3 text-4xl font-semibold text-primary">
+                  Welcome to Monate Connect, {preferredFirstName(form.fullName)}!
+                </h1>
                 <p className="mt-4 text-sm leading-6 text-secondary">
                   We&apos;ve sent a verification email to{" "}
                   <span className="font-semibold text-heading">{form.email.trim().toLowerCase()}</span>.

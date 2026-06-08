@@ -17,6 +17,8 @@ type Tab = "profile" | "verification" | "documents" | "banking"
 
 type Profile = {
   id: string
+  full_name: string | null
+  preferred_name: string | null
   business_name: string | null
   province: string | null
   provinces?: string[] | null
@@ -75,6 +77,7 @@ type DocumentField =
   | "capability_statement_url"
 
 type DocUrls = Record<DocumentField, string>
+type SaveResult = { ok: boolean; error?: string }
 
 // --- Constants ---
 
@@ -136,6 +139,16 @@ function initials(name: string | null): string {
   const words = name.trim().split(/\s+/).filter(Boolean)
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
   return (words[0][0] + words[words.length - 1][0]).toUpperCase()
+}
+
+function profileDisplayName(profile: Profile | null): string {
+  const preferredName = profile?.preferred_name?.trim()
+  if (preferredName) return preferredName
+
+  const fullName = profile?.full_name?.trim()
+  if (fullName) return fullName.split(/\s+/)[0] || "Your"
+
+  return "Your"
 }
 
 function daysAgo(dateStr: string | null): string {
@@ -351,12 +364,16 @@ function ProfileTab({
   saving,
 }: {
   profile: Profile
-  onSave: (patch: Partial<Profile>) => Promise<void>
+  onSave: (patch: Partial<Profile>) => Promise<SaveResult>
   saving: boolean
 }) {
   const [bizEdit, setBizEdit] = useState(false)
   const [compEdit, setCompEdit] = useState(false)
+  const [saveError, setSaveError] = useState("")
+  const [saveSuccess, setSaveSuccess] = useState("")
+  const [lastSavedSection, setLastSavedSection] = useState<"business" | "compliance" | null>(null)
   const [bizForm, setBizForm] = useState({
+    preferred_name: profile.preferred_name ?? "",
     business_name: profile.business_name ?? "",
     industry: profile.industry ?? "",
     phone: profile.phone ?? "",
@@ -366,6 +383,12 @@ function ProfileTab({
     description: profile.description ?? "",
     company_registration: profile.company_registration ?? "",
   })
+
+  useEffect(() => {
+    if (!saveError) return
+    const timeout = window.setTimeout(() => setSaveError(""), 5000)
+    return () => window.clearTimeout(timeout)
+  }, [saveError])
   const [compForm, setCompForm] = useState({
     csd_number: profile.csd_number ?? "",
     bbbee_level: profile.bbbee_level ?? "",
@@ -384,17 +407,36 @@ function ProfileTab({
   }
 
   async function saveBiz() {
-    await onSave(bizForm)
+    setSaveError("")
+    setSaveSuccess("")
+    setLastSavedSection(null)
+    const result = await onSave(bizForm)
+    if (!result.ok) {
+      setSaveError(result.error ?? "We could not save your profile changes.")
+      return
+    }
     setBizEdit(false)
+    setLastSavedSection("business")
+    setSaveSuccess("Saved successfully.")
   }
 
   async function saveComp() {
-    await onSave(compForm)
+    setSaveError("")
+    setSaveSuccess("")
+    setLastSavedSection(null)
+    const result = await onSave(compForm)
+    if (!result.ok) {
+      setSaveError(result.error ?? "We could not save your profile changes.")
+      return
+    }
     setCompEdit(false)
+    setLastSavedSection("compliance")
+    setSaveSuccess("Saved successfully.")
   }
 
   function cancelBiz() {
     setBizForm({
+      preferred_name: profile.preferred_name ?? "",
       business_name: profile.business_name ?? "",
       industry: profile.industry ?? "",
       phone: profile.phone ?? "",
@@ -404,6 +446,9 @@ function ProfileTab({
       description: profile.description ?? "",
       company_registration: profile.company_registration ?? "",
     })
+    setSaveError("")
+    setSaveSuccess("")
+    setLastSavedSection(null)
     setBizEdit(false)
   }
 
@@ -416,6 +461,9 @@ function ProfileTab({
       vat_number: profile.vat_number ?? "",
       cidb_grade: profile.cidb_grade ?? "",
     })
+    setSaveError("")
+    setSaveSuccess("")
+    setLastSavedSection(null)
     setCompEdit(false)
   }
 
@@ -430,10 +478,26 @@ function ProfileTab({
             </button>
           )}
         </div>
+        {!bizEdit && saveSuccess && lastSavedSection === "business" && (
+          <p className="mb-4 text-sm font-semibold text-success">{saveSuccess}</p>
+        )}
 
         {bizEdit ? (
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label htmlFor="preferred_name" className={labelCls}>Preferred display name</label>
+                <input
+                  id="preferred_name"
+                  name="preferred_name"
+                  type="text"
+                  placeholder="e.g. Thabo, TK, or leave blank to use your full name"
+                  value={bizForm.preferred_name}
+                  onChange={handleBizChange}
+                  className={inputCls}
+                />
+                <p className="mt-2 text-xs text-muted">This is how we&apos;ll greet you across the platform.</p>
+              </div>
               <div>
                 <label htmlFor="business_name" className={labelCls}>Registered business name</label>
                 <input id="business_name" name="business_name" type="text" value={bizForm.business_name} onChange={handleBizChange} className={inputCls} />
@@ -474,10 +538,13 @@ function ProfileTab({
               <button type="button" onClick={saveBiz} disabled={saving} className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50">{saving ? "Saving..." : "Save"}</button>
               <button type="button" onClick={cancelBiz} className="rounded-md border border-panel bg-card px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-surface">Cancel</button>
             </div>
+            {saveError && <p className="text-sm font-semibold text-rose-700">{saveError}</p>}
+            {saveSuccess && <p className="text-sm font-semibold text-success">{saveSuccess}</p>}
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {[
+              { label: "Preferred display name", value: profile.preferred_name },
               { label: "Registered business name", value: profile.business_name },
               { label: "Company registration number", value: profile.company_registration },
               { label: "Industry", value: profile.industry },
@@ -515,6 +582,9 @@ function ProfileTab({
             </button>
           )}
         </div>
+        {!compEdit && saveSuccess && lastSavedSection === "compliance" && (
+          <p className="mb-4 text-sm font-semibold text-success">{saveSuccess}</p>
+        )}
 
         {compEdit ? (
           <div className="space-y-4">
@@ -554,6 +624,8 @@ function ProfileTab({
               <button type="button" onClick={saveComp} disabled={saving} className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50">{saving ? "Saving..." : "Save"}</button>
               <button type="button" onClick={cancelComp} className="rounded-md border border-panel bg-card px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-surface">Cancel</button>
             </div>
+            {saveError && <p className="text-sm font-semibold text-rose-700">{saveError}</p>}
+            {saveSuccess && <p className="text-sm font-semibold text-success">{saveSuccess}</p>}
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
@@ -1191,7 +1263,7 @@ function ProfilePageInner() {
 
       const [profileRes, bankRes] = await Promise.all([
         supabase.from("profiles").select(
-          "id, business_name, province, provinces, industry, phone, email, website, description, company_registration, tax_reference, vat_number, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, banking_verified, bank_verified, director_verified, tax_clearance_url, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date, updated_at"
+          "id, full_name, preferred_name, business_name, province, provinces, industry, phone, email, website, description, company_registration, tax_reference, vat_number, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, banking_verified, bank_verified, director_verified, tax_clearance_url, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date, updated_at"
         ).eq("id", user.id).maybeSingle(),
         supabase.from("supplier_bank_details").select(
           "id, bank_name, account_holder, account_number, branch_code, account_type, verification_status, verification_notes"
@@ -1223,17 +1295,24 @@ function ProfilePageInner() {
   }, [])
 
   async function handleSave(patch: Partial<Profile>) {
-    if (!supabase || !userId) return
+    if (!supabase || !userId) {
+      return { ok: false, error: "Supabase is not configured or your session has expired." }
+    }
     setSaving(true)
     const { error: err } = await supabase.from("profiles").update(patch).eq("id", userId)
     setSaving(false)
-    if (err) { setError(err.message); return }
+    if (err) {
+      setError(err.message)
+      return { ok: false, error: err.message }
+    }
     setProfile((p) => {
       const updated = p ? { ...p, ...patch } : p
       syncSmartScore(userId, updated, bank)
       return updated
     })
     setHasUnsaved(false)
+    setError("")
+    return { ok: true }
   }
 
   function handleDocUploaded(field: DocumentField, url: string) {
@@ -1282,7 +1361,9 @@ function ProfilePageInner() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-heading">Business profile</h1>
+        <h1 className="text-2xl font-semibold text-heading">
+          {profile ? `${profileDisplayName(profile)}'s business profile` : "Your business profile"}
+        </h1>
         <p className="mt-1 text-sm text-secondary">Manage your supplier profile and compliance documents.</p>
       </div>
 

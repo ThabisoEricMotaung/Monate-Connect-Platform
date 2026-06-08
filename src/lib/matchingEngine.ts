@@ -238,7 +238,7 @@ export function calculateSupplierMatch(
   const industry_score = calculateIndustryScore(safeSupplier, safeRfq)
   const province_score = calculateProvinceScore(safeSupplier, safeRfq)
   const compliance_score = calculateComplianceScore(safeSupplier, activity)
-  const smartscore_score = Math.round((smartScoreResult.score / 1000) * 15)
+  const smartscore_score = Math.round((smartScoreResult.score / 100) * 15)
   const activity_score = Math.round(calculateActivityScore(safeSupplier, activity))
   const match_score = clampPercent(
     industry_score + province_score + compliance_score + smartscore_score + activity_score

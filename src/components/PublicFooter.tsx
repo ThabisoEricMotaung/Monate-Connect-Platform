@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 
 const footerSections = [
@@ -29,6 +31,10 @@ const footerSections = [
 ]
 
 export default function PublicFooter() {
+  function openAccessibility() {
+    window.dispatchEvent(new Event("monate:open-accessibility"))
+  }
+
   return (
     <footer className="border-t border-panel bg-card text-primary">
       <div className="mx-auto grid max-w-7xl gap-8 px-6 py-10 lg:grid-cols-[1.1fr_1.4fr]">
@@ -67,10 +73,17 @@ export default function PublicFooter() {
           ))}
         </nav>
       </div>
-      <div className="mx-auto max-w-7xl border-t border-panel px-6 py-5">
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 border-t border-panel px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs font-semibold text-muted">
-          © 2026 Monate Connect · Procurement Edition
+          &copy; 2026 Monate Connect &middot; Procurement Edition
         </p>
+        <button
+          type="button"
+          onClick={openAccessibility}
+          className="w-fit text-xs font-semibold text-muted underline-offset-4 transition hover:text-accent hover:underline"
+        >
+          Accessibility
+        </button>
       </div>
     </footer>
   )

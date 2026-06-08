@@ -272,6 +272,10 @@ export default function DashboardLayout({
     role ? { id: "", role } : null
   )
 
+  function openAccessibility() {
+    window.dispatchEvent(new Event("monate:open-accessibility"))
+  }
+
   useEffect(() => {
     async function loadRole() {
       const profile = await getCurrentProfile()
@@ -432,6 +436,16 @@ export default function DashboardLayout({
       <section className="flex-1 min-w-0 overflow-x-hidden p-6 md:p-8">
         <div className="print:hidden"><Breadcrumbs /></div>
         {children}
+        <footer className="mt-10 flex flex-col gap-3 border-t border-panel pt-5 text-xs font-semibold text-muted sm:flex-row sm:items-center sm:justify-between">
+          <p>&copy; 2026 Monate Connect &middot; Procurement Edition</p>
+          <button
+            type="button"
+            onClick={openAccessibility}
+            className="w-fit underline-offset-4 transition hover:text-accent hover:underline"
+          >
+            Accessibility
+          </button>
+        </footer>
       </section>
 
     </main>

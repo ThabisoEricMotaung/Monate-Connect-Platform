@@ -106,9 +106,9 @@ export default function SupplierPerformancePage() {
   const summary = useMemo(
     () => ({
       suppliers: records.length,
-      elite: records.filter((record) => record.smartScore.score >= 850).length,
+      elite: records.filter((record) => record.smartScore.score >= 85).length,
       trusted: records.filter(
-        (record) => record.smartScore.score >= 750 && record.smartScore.score < 850
+        (record) => record.smartScore.score >= 75 && record.smartScore.score < 85
       ).length,
       highRisk: records.filter(
         (record) => record.riskRating === "High" || record.riskRating === "Critical"

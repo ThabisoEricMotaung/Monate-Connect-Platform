@@ -47,15 +47,15 @@ const sizeMap = {
 function normalizeScore(score: SmartScoreResult | number): SmartScoreResult {
   if (typeof score !== "number") return score
 
-  const clamped = Math.max(0, Math.min(1000, Math.round(score)))
+  const clamped = Math.max(0, Math.min(100, Math.round(score)))
   const level =
-    clamped <= 399
+    clamped <= 39
       ? { label: "Emerging Supplier / High Risk" as const, tone: "red" as const }
-      : clamped <= 599
+      : clamped <= 59
         ? { label: "Developing Supplier" as const, tone: "orange" as const }
-        : clamped <= 749
+        : clamped <= 74
           ? { label: "Reliable Supplier" as const, tone: "blue" as const }
-          : clamped <= 849
+          : clamped <= 84
             ? { label: "Trusted Supplier" as const, tone: "green" as const }
             : { label: "Elite Supplier" as const, tone: "gold" as const }
 
@@ -81,7 +81,7 @@ export default function SmartScoreCircle({
   const tone = toneStyles[result.tone]
   const dimensions = sizeMap[size]
   const circumference = 2 * Math.PI * dimensions.radius
-  const progress = result.score / 1000
+  const progress = result.score / 100
   const trend = monthlyTrend ?? result.monthlyTrend
   const visibleTips = tips ?? result.tips
 
@@ -97,7 +97,7 @@ export default function SmartScoreCircle({
         <div
           className="relative grid place-items-center"
           style={{ width: dimensions.svg, height: dimensions.svg }}
-          aria-label={`SmartScore ${result.score} out of 1000`}
+          aria-label={`SmartScore ${result.score} out of 100`}
         >
           <svg
             width={dimensions.svg}
@@ -131,7 +131,7 @@ export default function SmartScoreCircle({
               {result.score}
             </span>
             <span className="mt-1 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-muted">
-              / 1000
+              / 100
             </span>
           </div>
         </div>

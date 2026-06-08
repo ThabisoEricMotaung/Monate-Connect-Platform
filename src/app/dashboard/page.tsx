@@ -37,6 +37,17 @@ function greeting(): string {
   return "Good evening"
 }
 
+function displayNameFromProfile(
+  profile: { preferred_name?: string | null; full_name?: string | null } | null | undefined,
+  fallbackFullName?: string | null
+): string {
+  const preferredName = profile?.preferred_name?.trim()
+  if (preferredName) return preferredName
+
+  const fullName = profile?.full_name?.trim() || fallbackFullName?.trim() || ""
+  return fullName.split(/\s+/)[0] || "there"
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [smartScore, setSmartScore] = useState<number | null>(null)
@@ -50,6 +61,7 @@ export default function DashboardPage() {
   const [openRFQsClosingThisWeek, setOpenRFQsClosingThisWeek] = useState<number | null>(null)
   const [quoteCount, setQuoteCount] = useState<number | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(false)
 
   useEffect(() => {
     async function ensureSupplierProfile() {
@@ -86,14 +98,14 @@ export default function DashboardPage() {
 
       const meta = user.user_metadata
       const name: string = meta?.full_name ?? ""
-      setFirstName(name.split(" ")[0] || "")
+      setFirstName(displayNameFromProfile(null, name))
 
       const now = new Date()
       const nextWeek = new Date(now)
       nextWeek.setDate(nextWeek.getDate() + 7)
 
       const [profileRes, rfqRes, closingWeekRes, quoteRes] = await Promise.all([
-        supabase.from("profiles").select("verification_status, full_name").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("verification_status, full_name, preferred_name, dashboard_welcome_seen").eq("id", user.id).maybeSingle(),
         supabase
           .from("rfqs")
           .select("id", { count: "exact", head: true })
@@ -112,8 +124,8 @@ export default function DashboardPage() {
 
       if (profileRes.data) {
         setVerificationStatus(profileRes.data.verification_status ?? null)
-        const profileName: string = profileRes.data.full_name ?? ""
-      if (profileName) setFirstName(profileName.split(" ")[0])
+        setFirstName(displayNameFromProfile(profileRes.data, name))
+        setShowWelcomeBanner(profileRes.data.dashboard_welcome_seen === false)
       }
 
       setOpenRFQCount(rfqRes.count ?? 0)
@@ -141,7 +153,7 @@ export default function DashboardPage() {
         supabase
           .from("profiles")
           .select(
-            "id, business_name, province, provinces, industry, phone, email, description, role, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, tax_clearance_url, tax_document_url, banking_verified, bank_verified, director_verified, capability_statement_url, updated_at"
+            "id, preferred_name, business_name, province, provinces, industry, phone, email, description, role, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, tax_clearance_url, tax_document_url, banking_verified, bank_verified, director_verified, capability_statement_url, updated_at"
           )
           .eq("id", user.id)
           .maybeSingle(),
@@ -166,7 +178,8 @@ export default function DashboardPage() {
         return
       }
 
-      const storedScore = Number(profileRes.data.smart_score ?? 0)
+      const storedScoreRaw = Number(profileRes.data.smart_score ?? 0)
+      const storedScore = storedScoreRaw > 100 ? Math.round(storedScoreRaw / 10) : storedScoreRaw
       const calculatedScore = calculateSmartScore({
         ...profileRes.data,
         bank_name: bankRes.data?.bank_name ?? null,
@@ -177,7 +190,7 @@ export default function DashboardPage() {
 
       setSmartScore(displayScore)
 
-      if (displayScore !== storedScore) {
+      if (displayScore !== storedScoreRaw) {
         void supabase
           .from("profiles")
           .update({ smart_score: displayScore, updated_at: new Date().toISOString() })
@@ -243,17 +256,42 @@ export default function DashboardPage() {
       ? "border-warning/40 bg-warning-soft"
       : "border-rose-500/30 bg-rose-500/10"
 
+  async function dismissWelcomeBanner() {
+    setShowWelcomeBanner(false)
+    if (!supabase) return
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+    void supabase
+      .from("profiles")
+      .update({ dashboard_welcome_seen: true })
+      .eq("id", user.id)
+  }
+
   return (
     <div>
+      {showWelcomeBanner && firstName && (
+        <div className="mb-6 flex flex-col gap-4 rounded-md border border-accent/25 bg-accent/10 p-4 text-sm text-secondary sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            <span className="font-semibold text-heading">
+              Welcome to Monate Connect, {firstName}.
+            </span>{" "}
+            Your supplier profile is ready to complete.
+          </p>
+          <button
+            type="button"
+            onClick={dismissWelcomeBanner}
+            className="w-fit rounded-md border border-accent/30 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent transition hover:bg-accent hover:text-button"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className="mb-10">
-        {firstName && (
-          <p className="mb-1 text-lg font-medium text-secondary">
-            {greeting()}, {firstName}.
-          </p>
-        )}
-        <p className="mb-3 text-sm uppercase tracking-[0.3em] text-accent">Procurement Operations</p>
-        <h1 className="text-5xl font-bold text-primary">Supplier Dashboard</h1>
+        <p className="mb-3 text-sm uppercase tracking-[0.3em] text-accent">PROCUREMENT OPERATIONS</p>
+        <h1 className="text-5xl font-bold text-primary">{greeting()}, {firstName || "there"}</h1>
         <p className="mt-4 max-w-3xl text-lg text-secondary">
           Manage procurement opportunities, supplier verification, RFQ participation, and quote submissions from your workspace.
         </p>

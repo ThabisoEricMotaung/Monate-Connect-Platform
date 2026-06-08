@@ -353,9 +353,9 @@ function buildRiskSummary(suppliers: SupplierProfile[]): RiskSummary {
     (summary, supplier) => {
       const smartScore = calculateSupplierSmartScore(supplier)
 
-      if (smartScore.score < 300) summary.critical += 1
-      else if (smartScore.score <= 399) summary.high += 1
-      else if (smartScore.score <= 599) summary.medium += 1
+      if (smartScore.score < 30) summary.critical += 1
+      else if (smartScore.score <= 39) summary.high += 1
+      else if (smartScore.score <= 59) summary.medium += 1
       else summary.low += 1
 
       return summary

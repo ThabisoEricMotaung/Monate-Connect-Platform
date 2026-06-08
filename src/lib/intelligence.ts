@@ -303,11 +303,11 @@ export async function getSupplierScores(): Promise<SupplierIntelligenceRecord[]>
     const riskLevel: "Low" | "Medium" | "High" =
       score >= 70 ? "Low" : score >= 40 ? "Medium" : "High"
     const riskRating: "Low" | "Medium" | "High" | "Critical" =
-      smartScore.score < 300
+      smartScore.score < 30
         ? "Critical"
-        : smartScore.score <= 399
+        : smartScore.score <= 39
           ? "High"
-          : smartScore.score <= 599
+          : smartScore.score <= 59
             ? "Medium"
             : "Low"
 

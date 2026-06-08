@@ -25,7 +25,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Monate Vendor Network",
+  title: "Monate Connect",
   description:
     "Enterprise procurement portal for suppliers, RFQs, quotes, and verification.",
 };
@@ -49,12 +49,17 @@ const accessibilityScript = `(function() {
     var raw = window.localStorage.getItem('monate-accessibility');
     var prefs = raw ? JSON.parse(raw) : {};
     var root = document.documentElement;
-    var fontSize = prefs.fontSize === 'large' || prefs.fontSize === 'extra-large'
+    var fontSize = prefs.fontSize === 'large' || prefs.fontSize === 'xlarge' || prefs.fontSize === 'extra-large'
       ? prefs.fontSize
       : 'normal';
+    if (fontSize === 'extra-large') fontSize = 'xlarge';
+    root.classList.remove('font-size-normal', 'font-size-large', 'font-size-xlarge', 'prefers-reduced-motion', 'high-contrast-mode');
+    root.classList.add('font-size-' + fontSize);
     root.dataset.fontSize = fontSize;
     root.dataset.contrast = prefs.highContrast ? 'high' : 'standard';
     root.dataset.motion = prefs.reducedMotion ? 'reduced' : 'standard';
+    if (prefs.highContrast) root.classList.add('high-contrast-mode');
+    if (prefs.reducedMotion) root.classList.add('prefers-reduced-motion');
     root.dataset.readingMode = prefs.readingMode ? 'on' : 'off';
     root.dataset.lowData = prefs.lowData ? 'on' : 'off';
   } catch (e) {}

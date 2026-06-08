@@ -1,15 +1,14 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useTheme } from "@/components/theme/ThemeProvider"
 
-type FontSize = "normal" | "large" | "extra-large"
+type FontSize = "normal" | "large" | "xlarge"
 
 type AccessibilityPreferences = {
   fontSize: FontSize
   highContrast: boolean
   reducedMotion: boolean
-  readingMode: boolean
-  lowData: boolean
 }
 
 const STORAGE_KEY = "monate-accessibility"
@@ -18,40 +17,42 @@ const defaultPreferences: AccessibilityPreferences = {
   fontSize: "normal",
   highContrast: false,
   reducedMotion: false,
-  readingMode: false,
-  lowData: false,
 }
 
-const fontSizeOptions: Array<{ value: FontSize; label: string; detail: string }> = [
-  { value: "normal", label: "Normal", detail: "Standard interface scale" },
-  { value: "large", label: "Large", detail: "Larger text for daily work" },
-  { value: "extra-large", label: "Extra Large", detail: "Maximum readable text" },
+const fontSizeOptions: Array<{ value: FontSize; label: string }> = [
+  { value: "normal", label: "Normal" },
+  { value: "large", label: "Large" },
+  { value: "xlarge", label: "Extra Large" },
 ]
 
+const displayModeOptions = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "auto", label: "Auto" },
+] as const
+
 function isFontSize(value: unknown): value is FontSize {
-  return value === "normal" || value === "large" || value === "extra-large"
+  return value === "normal" || value === "large" || value === "xlarge"
+}
+
+function normalizeFontSize(value: unknown): FontSize {
+  if (value === "extra-large") return "xlarge"
+  return isFontSize(value) ? value : "normal"
 }
 
 function readStoredPreferences(): AccessibilityPreferences {
-  if (typeof window === "undefined") {
-    return defaultPreferences
-  }
+  if (typeof window === "undefined") return defaultPreferences
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-
     if (!raw) return defaultPreferences
 
     const parsed = JSON.parse(raw) as Partial<AccessibilityPreferences>
 
     return {
-      fontSize: isFontSize(parsed.fontSize)
-        ? parsed.fontSize
-        : defaultPreferences.fontSize,
+      fontSize: normalizeFontSize(parsed.fontSize),
       highContrast: Boolean(parsed.highContrast),
       reducedMotion: Boolean(parsed.reducedMotion),
-      readingMode: Boolean(parsed.readingMode),
-      lowData: Boolean(parsed.lowData),
     }
   } catch {
     return defaultPreferences
@@ -61,21 +62,22 @@ function readStoredPreferences(): AccessibilityPreferences {
 function applyPreferences(preferences: AccessibilityPreferences) {
   const root = document.documentElement
 
+  root.classList.remove("font-size-normal", "font-size-large", "font-size-xlarge", "prefers-reduced-motion", "high-contrast-mode")
+  root.classList.add(`font-size-${preferences.fontSize}`)
   root.dataset.fontSize = preferences.fontSize
   root.dataset.contrast = preferences.highContrast ? "high" : "standard"
   root.dataset.motion = preferences.reducedMotion ? "reduced" : "standard"
-  root.dataset.readingMode = preferences.readingMode ? "on" : "off"
-  root.dataset.lowData = preferences.lowData ? "on" : "off"
+
+  if (preferences.reducedMotion) root.classList.add("prefers-reduced-motion")
+  if (preferences.highContrast) root.classList.add("high-contrast-mode")
 }
 
 function ToggleRow({
   label,
-  description,
   checked,
   onChange,
 }: {
   label: string
-  description: string
   checked: boolean
   onChange: (checked: boolean) => void
 }) {
@@ -89,10 +91,7 @@ function ToggleRow({
         checked ? "accessibility-panel__row--active" : ""
       }`}
     >
-      <span>
-        <span className="accessibility-panel__row-title">{label}</span>
-        <span className="accessibility-panel__row-detail">{description}</span>
-      </span>
+      <span className="accessibility-panel__row-title">{label}</span>
       <span className="accessibility-panel__switch" aria-hidden="true">
         <span className="accessibility-panel__switch-thumb" />
       </span>
@@ -101,11 +100,13 @@ function ToggleRow({
 }
 
 export default function AccessibilityPanel() {
+  const { theme, setThemeMode } = useTheme()
   const [open, setOpen] = useState(false)
   const [preferences, setPreferences] = useState<AccessibilityPreferences>(
     () => readStoredPreferences()
   )
-  const panelRef = useRef<HTMLDivElement | null>(null)
+  const drawerRef = useRef<HTMLDivElement | null>(null)
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     applyPreferences(preferences)
@@ -113,156 +114,159 @@ export default function AccessibilityPanel() {
   }, [preferences])
 
   useEffect(() => {
-    function handleDocumentClick(event: MouseEvent) {
-      if (
-        open &&
-        panelRef.current &&
-        !panelRef.current.contains(event.target as Node)
-      ) {
-        setOpen(false)
-      }
+    function openDrawer() {
+      setOpen(true)
     }
 
-    document.addEventListener("mousedown", handleDocumentClick)
-
-    return () => document.removeEventListener("mousedown", handleDocumentClick)
-  }, [open])
+    window.addEventListener("monate:open-accessibility", openDrawer)
+    return () => window.removeEventListener("monate:open-accessibility", openDrawer)
+  }, [])
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      if (event.altKey && event.key.toLowerCase() === "a") {
+        event.preventDefault()
+        setOpen(true)
+        return
+      }
+
+      if (!open) return
+
       if (event.key === "Escape") {
         setOpen(false)
+        return
+      }
+
+      if (event.key !== "Tab" || !drawerRef.current) return
+
+      const focusable = Array.from(
+        drawerRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => !element.hasAttribute("disabled"))
+
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
       }
     }
 
     document.addEventListener("keydown", handleKeyDown)
-
     return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [])
+  }, [open])
 
-  const activeFontSize = fontSizeOptions.find(
-    (option) => option.value === preferences.fontSize
-  )
+  useEffect(() => {
+    if (!open) return
+    closeButtonRef.current?.focus()
+  }, [open])
+
+  if (!open) return null
 
   return (
-    <div
-      ref={panelRef}
-      className="accessibility-panel"
-      style={{ position: "fixed", right: 18, bottom: "calc(var(--news-ticker-height) + 84px)", zIndex: 80, pointerEvents: "none" }}
-    >
+    <div className="accessibility-panel" role="presentation">
       <button
         type="button"
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        aria-label="Open accessibility controls"
-        onClick={() => setOpen((current) => !current)}
-        className="accessibility-panel__trigger"
-        style={{ minHeight: 34, fontSize: "0.78rem", padding: "0.38rem 0.6rem", gap: "0.45rem" }}
+        className="accessibility-panel__backdrop"
+        aria-label="Close accessibility centre"
+        onClick={() => setOpen(false)}
+      />
+      <aside
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="accessibility-centre-title"
+        className="accessibility-panel__surface"
       >
-        <span
-          className="accessibility-panel__trigger-mark"
-          aria-hidden="true"
-          style={{ width: 22, height: 22, fontSize: "0.76rem" }}
-        >
-          Aa
-        </span>
-        <span className="accessibility-panel__trigger-text">Access</span>
-      </button>
-
-      {open ? (
-        <section
-          className="accessibility-panel__surface"
-          aria-label="Accessibility controls"
-        >
-          <div className="accessibility-panel__header">
-            <p className="accessibility-panel__eyebrow">Access Console</p>
-            <h2 className="accessibility-panel__title">Comfort Controls</h2>
-            <p className="accessibility-panel__summary">
-              Adjust the platform for clearer reading, quieter motion, and
-              lighter mobile use.
-            </p>
+        <div className="accessibility-panel__header">
+          <div>
+            <p className="accessibility-panel__eyebrow">Accessibility Centre</p>
+            <h2 id="accessibility-centre-title" className="accessibility-panel__title">
+              Display preferences
+            </h2>
           </div>
+          <button
+            ref={closeButtonRef}
+            type="button"
+            onClick={() => setOpen(false)}
+            className="accessibility-panel__close"
+          >
+            Close
+          </button>
+        </div>
 
-          <div className="accessibility-panel__section">
-            <p className="accessibility-panel__section-label">Font Size</p>
-            <div className="accessibility-panel__font-grid">
-              {fontSizeOptions.map((option) => {
-                const selected = option.value === preferences.fontSize
+        <div className="accessibility-panel__section">
+          <p className="accessibility-panel__section-label">Text size</p>
+          <div className="accessibility-panel__font-grid">
+            {fontSizeOptions.map((option) => {
+              const selected = option.value === preferences.fontSize
 
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() =>
-                      setPreferences((current) => ({
-                        ...current,
-                        fontSize: option.value,
-                      }))
-                    }
-                    className={`accessibility-panel__font-option ${
-                      selected ? "accessibility-panel__font-option--active" : ""
-                    }`}
-                  >
-                    <span>{option.label}</span>
-                    <small>{option.detail}</small>
-                  </button>
-                )
-              })}
-            </div>
-            <p className="accessibility-panel__hint">
-              Current scale: {activeFontSize?.label ?? "Normal"}
-            </p>
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() =>
+                    setPreferences((current) => ({ ...current, fontSize: option.value }))
+                  }
+                  className={`accessibility-panel__font-option ${
+                    selected ? "accessibility-panel__font-option--active" : ""
+                  }`}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
           </div>
+        </div>
 
-          <div className="accessibility-panel__section accessibility-panel__toggles">
-            <ToggleRow
-              label="High Contrast Mode"
-              description="Sharper text, borders, and controls"
-              checked={preferences.highContrast}
-              onChange={(checked) =>
-                setPreferences((current) => ({
-                  ...current,
-                  highContrast: checked,
-                }))
-              }
-            />
-            <ToggleRow
-              label="Reduced Motion"
-              description="Minimise animations and moving ticker effects"
-              checked={preferences.reducedMotion}
-              onChange={(checked) =>
-                setPreferences((current) => ({
-                  ...current,
-                  reducedMotion: checked,
-                }))
-              }
-            />
-            <ToggleRow
-              label="Reading Mode / Focus Mode"
-              description="Adds breathing room around text and forms"
-              checked={preferences.readingMode}
-              onChange={(checked) =>
-                setPreferences((current) => ({
-                  ...current,
-                  readingMode: checked,
-                }))
-              }
-            />
-            <ToggleRow
-              label="Low Data Mode"
-              description="Simplifies visual effects for slower connections"
-              checked={preferences.lowData}
-              onChange={(checked) =>
-                setPreferences((current) => ({
-                  ...current,
-                  lowData: checked,
-                }))
-              }
-            />
+        <div className="accessibility-panel__section">
+          <p className="accessibility-panel__section-label">Display mode</p>
+          <div className="accessibility-panel__font-grid">
+            {displayModeOptions.map((option) => {
+              const selected = option.value === theme
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setThemeMode(option.value)}
+                  className={`accessibility-panel__font-option ${
+                    selected ? "accessibility-panel__font-option--active" : ""
+                  }`}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
           </div>
-        </section>
-      ) : null}
+        </div>
+
+        <div className="accessibility-panel__section accessibility-panel__toggles">
+          <ToggleRow
+            label="Reduce motion"
+            checked={preferences.reducedMotion}
+            onChange={(checked) =>
+              setPreferences((current) => ({ ...current, reducedMotion: checked }))
+            }
+          />
+          <ToggleRow
+            label="High contrast mode"
+            checked={preferences.highContrast}
+            onChange={(checked) =>
+              setPreferences((current) => ({ ...current, highContrast: checked }))
+            }
+          />
+        </div>
+      </aside>
     </div>
   )
 }

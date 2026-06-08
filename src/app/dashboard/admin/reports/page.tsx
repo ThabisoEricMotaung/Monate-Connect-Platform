@@ -253,9 +253,9 @@ function addComputedFields(type: ReportType, row: ReportRow): ReportRow {
       smart_score: score.score,
       smart_score_level: score.label,
       risk_level:
-        score.score <= 399
+        score.score <= 39
           ? "High"
-          : score.score <= 599
+          : score.score <= 59
             ? "Medium"
             : "Low",
     }

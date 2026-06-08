@@ -211,7 +211,8 @@ function latestScoreForSupplier(
     })
 
   const score = parseMoney(rows[0]?.score ?? rows[0]?.smart_score)
-  return score > 0 ? score : null
+  if (score <= 0) return null
+  return score > 100 ? Math.round(score / 10) : score
 }
 
 function supplierRiskLevel(
@@ -222,9 +223,9 @@ function supplierRiskLevel(
   const verification = text(supplier.verification_status).toLowerCase()
 
   if (score !== null) {
-    if (score < 400) return "Critical"
-    if (score < 600) return "High"
-    if (score < 750) return "Medium"
+    if (score < 40) return "Critical"
+    if (score < 60) return "High"
+    if (score < 75) return "Medium"
     return "Low"
   }
 
