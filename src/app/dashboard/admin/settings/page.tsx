@@ -346,8 +346,10 @@ export default function AdminSettingsPage() {
   const [savedRows, setSavedRows] = useState<Record<string, PlatformSettingRow>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [seedingDemo, setSeedingDemo] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
+  const [seedMessage, setSeedMessage] = useState("")
   const [tableMissing, setTableMissing] = useState(false)
 
   useEffect(() => {
@@ -474,6 +476,30 @@ export default function AdminSettingsPage() {
     setSuccessMessage("Platform settings saved successfully.")
   }
 
+  async function seedDemoData() {
+    setSeedingDemo(true)
+    setSeedMessage("")
+    setErrorMessage("")
+    setSuccessMessage("")
+
+    try {
+      const response = await fetch("/api/admin/seed-demo", {
+        method: "POST",
+      })
+      const payload = await response.json()
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.error ?? "Demo data seeding failed.")
+      }
+
+      setSeedMessage(payload.message ?? "Demo data seeded successfully.")
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error))
+    } finally {
+      setSeedingDemo(false)
+    }
+  }
+
   return (
     <div>
       <div className="mb-8 border-b border-panel pb-6">
@@ -597,6 +623,31 @@ using (true);`}
           className="rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? "Saving..." : "Save Settings"}
+        </button>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
+        <div>
+          <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">
+            Demo Environment
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            Seed sample suppliers, RFQs, quotes, awards, contracts, invoices,
+            and workflow records.
+          </p>
+          {seedMessage && (
+            <p className="mt-2 text-xs font-semibold text-success">
+              {seedMessage}
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={seedDemoData}
+          disabled={seedingDemo}
+          className="rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {seedingDemo ? "Seeding demo data..." : "Seed demo data"}
         </button>
       </div>
 
