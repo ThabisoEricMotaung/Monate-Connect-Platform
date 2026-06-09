@@ -145,9 +145,12 @@ function profileBBBEEVerified(profile: SupplierSmartScoreProfile): boolean {
 }
 
 function profileTaxVerified(profile: SupplierSmartScoreProfile): boolean {
+  if (profile.tax_verified) {
+    return true
+  }
+
   return Boolean(
-    profile.tax_verified ||
-      (isVerified(profile.tax_status) && hasAnyValue(profile.tax_document_url ?? profile.tax_clearance_url))
+    isVerified(profile.tax_status) && hasAnyValue(profile.tax_document_url ?? profile.tax_clearance_url)
   )
 }
 
