@@ -1,49 +1,41 @@
 "use client"
 
 import Link from "next/link"
-import { useRef, useState } from "react"
-import PublicFooter from "@/components/PublicFooter"
-import PublicHeader from "@/components/PublicHeader"
+import { useState } from "react"
 
-type Plan = {
-  name: string
-  description: string
-  price: string
-  note: string
-  cta: string
-  href: string
-  featured?: string
-  success?: boolean
-  features: string[]
-  exclusions?: string[]
-}
-
-const supplierPlans: Plan[] = [
+const supplierPlans = [
   {
     name: "Basic",
-    description: "Get listed and start browsing RFQs. No payment required.",
     price: "Free",
-    note: "Always free - No credit card",
-    cta: "Register free ->",
-    href: "/auth/signup",
-    features: [
+    period: "Always free",
+    sub: "No credit card required",
+    badge: null,
+    cta: "Register free",
+    ctaHref: "/auth/signup",
+    ctaStyle: "outline",
+    included: [
       "Supplier profile listing",
       "CSD & BBBEE verification",
       "Browse all open RFQs",
       "Submit up to 3 quotes/month",
       "SmartScore profile",
     ],
-    exclusions: ["RFQ match notifications", "Quote analytics", "Priority placement"],
+    excluded: [
+      "RFQ match notifications",
+      "Quote analytics",
+      "Priority placement",
+    ],
   },
   {
     name: "Growth",
-    description: "Unlimited quotes, match alerts, and analytics to grow your win rate.",
-    price: "R299/month",
-    note: "Billed monthly - Cancel anytime",
-    cta: "Start free during pilot ->",
-    href: "/auth/signup",
-    featured: "Most popular",
-    features: [
+    price: "R299",
+    period: "/month",
+    sub: "Billed monthly · Cancel anytime",
+    badge: "Most popular",
+    cta: "Start free during pilot",
+    ctaHref: "/auth/signup",
+    ctaStyle: "gold",
+    included: [
       "Everything in Basic",
       "Unlimited quote submissions",
       "RFQ match email alerts",
@@ -52,16 +44,18 @@ const supplierPlans: Plan[] = [
       "Buyer shortlist notifications",
       "Document storage (500MB)",
     ],
-    exclusions: ["Dedicated account manager"],
+    excluded: ["Dedicated account manager"],
   },
   {
     name: "Enterprise",
-    description: "For large suppliers managing multiple divisions or subsidiaries.",
-    price: "Custom pricing",
-    note: "Annual contract - Volume discounts",
-    cta: "Contact sales ->",
-    href: "/contact",
-    features: [
+    price: "Custom",
+    period: "pricing",
+    sub: "Annual contract · Volume discounts",
+    badge: null,
+    cta: "Contact sales",
+    ctaHref: "/contact",
+    ctaStyle: "outline",
+    included: [
       "Everything in Growth",
       "Multiple entity profiles",
       "Team member access (5 seats)",
@@ -71,35 +65,43 @@ const supplierPlans: Plan[] = [
       "Custom reporting",
       "SLA & compliance support",
     ],
+    excluded: [],
   },
 ]
 
-const buyerPlans: Plan[] = [
+const buyerPlans = [
   {
     name: "Starter",
-    description: "For small teams running occasional procurement.",
-    price: "R990/month",
-    note: "Up to 3 users - Billed monthly",
-    cta: "Start free during pilot ->",
-    href: "/auth/signup?role=buyer",
-    features: [
+    price: "R990",
+    period: "/month",
+    sub: "Up to 3 users · Billed monthly",
+    badge: null,
+    cta: "Start free during pilot",
+    ctaHref: "/auth/signup?role=buyer",
+    ctaStyle: "outline",
+    included: [
       "Up to 5 active RFQs",
       "Access to supplier directory",
       "Quote comparison tools",
       "Basic spend reporting",
       "CSD-verified supplier filter",
     ],
-    exclusions: ["BBBEE scorecard reporting", "Contract management", "Audit trail export"],
+    excluded: [
+      "BBBEE scorecard reporting",
+      "Contract management",
+      "Audit trail export",
+    ],
   },
   {
     name: "Professional",
-    description: "Full procurement workflow with compliance reporting and audit trails.",
-    price: "R2,490/month",
-    note: "Up to 10 users - Billed monthly",
-    cta: "Start free during pilot ->",
-    href: "/auth/signup?role=buyer",
-    featured: "Recommended",
-    features: [
+    price: "R2,490",
+    period: "/month",
+    sub: "Up to 10 users · Billed monthly",
+    badge: "Recommended",
+    cta: "Start free during pilot",
+    ctaHref: "/auth/signup?role=buyer",
+    ctaStyle: "gold",
+    included: [
       "Everything in Starter",
       "Unlimited active RFQs",
       "BBBEE scorecard & reporting",
@@ -109,16 +111,18 @@ const buyerPlans: Plan[] = [
       "PO & invoice management",
       "Spend analytics dashboard",
     ],
+    excluded: [],
   },
   {
     name: "Government & SOE",
-    description: "For municipalities, parastatals, and government departments.",
-    price: "Custom pricing",
-    note: "Annual - Quotation on request",
-    cta: "Request a quote ->",
-    href: "/contact",
-    success: true,
-    features: [
+    price: "Custom",
+    period: "pricing",
+    sub: "Annual · Quotation on request",
+    badge: null,
+    cta: "Request a quote",
+    ctaHref: "/contact",
+    ctaStyle: "outline",
+    included: [
       "Everything in Professional",
       "Unlimited users",
       "SCM policy configuration",
@@ -128,315 +132,292 @@ const buyerPlans: Plan[] = [
       "Data residency options",
       "SLA with uptime guarantee",
     ],
+    excluded: [],
   },
 ]
 
-const pricingQuestions = [
+const faqs = [
   {
-    question: "When does pilot pricing end?",
-    answer:
-      "The pilot phase runs until 31 August 2026. All features across all plans are free during this period. Paid plans will activate automatically from 1 September 2026. You will receive 30 days' notice before billing begins, and you can cancel or downgrade at any time before that date.",
+    q: "When does pilot pricing end?",
+    a: "The pilot phase runs until 31 August 2026. All features across all plans are free during this period. Paid plans will activate automatically from 1 September 2026. You will receive 30 days' notice before billing begins, and you can cancel or downgrade at any time before that date.",
   },
   {
-    question: "Can I stay on the free Basic plan as a supplier?",
-    answer:
-      "Yes. The Basic supplier plan is permanently free. You can list your business, get verified, and submit up to 3 quotes per month at no cost. If you want unlimited quotes and match notifications, you will need the Growth plan at R299/month after the pilot period ends.",
+    q: "Can I stay on the free Basic plan as a supplier?",
+    a: "Yes. The Basic supplier plan is permanently free. You can list your business, get verified, and submit up to 3 quotes per month at no cost. If you want unlimited quotes and match notifications, you will need the Growth plan at R299/month after the pilot period ends.",
   },
   {
-    question: "Do you offer annual billing discounts?",
-    answer:
-      "Yes. Annual billing saves approximately 20% compared to monthly billing. Annual pricing will be confirmed when paid plans launch after the pilot period. Contact us if you want to discuss annual pricing ahead of time.",
+    q: "Do you offer annual billing discounts?",
+    a: "Yes. Annual billing saves approximately 20% compared to monthly billing. Annual pricing will be confirmed when paid plans launch after the pilot period. Contact us if you want to discuss annual pricing ahead of time.",
   },
   {
-    question: "Is there a setup fee or onboarding cost?",
-    answer:
-      "No setup fees for Supplier Basic, Growth, Buyer Starter, or Professional plans. Government & SOE and Enterprise plans include dedicated onboarding which may be quoted separately depending on implementation complexity.",
+    q: "Is there a setup fee or onboarding cost?",
+    a: "No setup fees for Supplier Basic, Growth, Buyer Starter, or Professional plans. Government & SOE and Enterprise plans include dedicated onboarding which may be quoted separately depending on implementation complexity.",
   },
   {
-    question: "What payment methods do you accept?",
-    answer:
-      "We accept EFT, debit order, and major credit cards. Government and SOE customers can pay via purchase order. All pricing is in South African Rand (ZAR) and invoices are VAT-inclusive where applicable.",
+    q: "What payment methods do you accept?",
+    a: "We accept EFT, debit order, and major credit cards. Government and SOE customers can pay via purchase order. All pricing is in South African Rand (ZAR) and invoices are VAT-inclusive where applicable.",
   },
 ]
-
-function RocketIcon({ className = "h-4 w-4" }: { className?: string }) {
-  return (
-    <svg aria-hidden="true" className={className} fill="none" viewBox="0 0 24 24">
-      <path
-        d="M14 4.5c2.2-.9 4.1-.9 5.5-.3.6 1.4.6 3.3-.3 5.5-.9 2.3-2.8 4.8-5.5 7.1l-4.8-4.8c2.3-2.7 4.8-4.6 7.1-5.5Z"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.7"
-      />
-      <path d="M8.8 12.2 5 12l3-3.2M11.8 15.2 12 19l3.2-3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
-      <path d="M6.5 17.5 4 20" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
-      <path d="M16.5 7.5h.01" stroke="currentColor" strokeLinecap="round" strokeWidth="2.4" />
-    </svg>
-  )
-}
 
 function CheckIcon() {
   return (
-    <svg aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-success" fill="none" viewBox="0 0 24 24">
-      <path d="m5 12 4 4L19 6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
+      <circle cx="8" cy="8" r="8" fill="#C9A84C" fillOpacity="0.15" />
+      <path d="M4.5 8l2.5 2.5 4.5-5" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
 
-function MinusIcon() {
+function CrossIcon() {
   return (
-    <svg aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted" fill="none" viewBox="0 0 24 24">
-      <path d="M6 12h12" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
+      <circle cx="8" cy="8" r="8" fill="#ffffff" fillOpacity="0.05" />
+      <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#ffffff" strokeOpacity="0.25" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
 }
 
-function ChevronIcon({ open }: { open: boolean }) {
+function PlanCard({ plan, featured }: { plan: typeof supplierPlans[0]; featured?: boolean }) {
   return (
-    <svg
-      aria-hidden="true"
-      className={`h-5 w-5 shrink-0 transition ${open ? "rotate-180" : ""}`}
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <path d="m6 9 6 6 6-6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
-    </svg>
-  )
-}
-
-function PlanCard({ plan }: { plan: Plan }) {
-  const featured = Boolean(plan.featured)
-  const ctaClass = plan.success
-    ? "border-success bg-success text-button hover:bg-success/90"
-    : featured
-      ? "border-accent bg-accent text-button hover:bg-accent-strong"
-      : "border-panel bg-panel text-heading hover:border-accent hover:text-accent"
-
-  return (
-    <article
-      className={`relative flex h-full flex-col rounded-md border bg-card p-6 shadow-panel ${
-        featured ? "border-accent ring-2 ring-accent/15" : "border-panel"
+    <div
+      className={`plan-card relative flex flex-col rounded-2xl border p-8 transition-all duration-300 ${
+        featured
+          ? "border-gold bg-teal-deep shadow-gold"
+          : "border-white/10 bg-white/5 hover:border-gold/40"
       }`}
+      style={{
+        background: featured
+          ? "linear-gradient(145deg, rgba(15,43,43,0.95) 0%, rgba(10,30,30,0.98) 100%)"
+          : "rgba(255,255,255,0.04)",
+      }}
     >
-      {plan.featured && (
-        <div className="absolute -top-4 left-6 rounded-full border border-accent bg-accent px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-button">
-          {plan.featured}
+      {plan.badge && (
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+          <span className="inline-block rounded-full bg-gold px-4 py-1 text-xs font-bold uppercase tracking-widest text-teal-deep">
+            {plan.badge}
+          </span>
         </div>
       )}
 
-      <div className="flex-1">
-        <h3 className="text-2xl font-semibold text-heading">{plan.name}</h3>
-        <p className="mt-3 min-h-[3.5rem] text-sm leading-7 text-secondary">{plan.description}</p>
-
-        <div className="mt-6 border-y border-panel py-5">
-          <p className="text-3xl font-bold text-heading">{plan.price}</p>
-          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">{plan.note}</p>
+      <div className="mb-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold/70">{plan.name}</p>
+        <div className="mt-3 flex items-end gap-1">
+          <span className="font-playfair text-5xl font-bold text-white">{plan.price}</span>
+          <span className="mb-1.5 text-sm text-white/50">{plan.period}</span>
         </div>
+        <p className="mt-1.5 text-xs text-white/40">{plan.sub}</p>
+      </div>
 
-        <ul className="mt-6 space-y-3">
-          {plan.features.map((feature) => (
-            <li key={feature} className="flex gap-3 text-sm leading-6 text-secondary">
-              <CheckIcon />
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
-
-        {plan.exclusions && (
-          <ul className="mt-5 space-y-3 border-t border-panel pt-5">
-            {plan.exclusions.map((feature) => (
-              <li key={feature} className="flex gap-3 text-sm leading-6 text-muted">
-                <MinusIcon />
-                <span>{feature}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+      <div className="mb-8 flex-1 space-y-3">
+        {plan.included.map((item) => (
+          <div key={item} className="flex items-start gap-3">
+            <CheckIcon />
+            <span className="text-sm text-white/80">{item}</span>
+          </div>
+        ))}
+        {plan.excluded.map((item) => (
+          <div key={item} className="flex items-start gap-3">
+            <CrossIcon />
+            <span className="text-sm text-white/30 line-through">{item}</span>
+          </div>
+        ))}
       </div>
 
       <Link
-        href={plan.href}
-        className={`mt-7 inline-flex min-h-12 items-center justify-center rounded-md border px-5 py-3 text-center text-sm font-bold transition ${ctaClass}`}
+        href={plan.ctaHref}
+        className={`block rounded-lg px-6 py-3 text-center text-sm font-bold uppercase tracking-widest transition-all duration-200 ${
+          plan.ctaStyle === "gold"
+            ? "bg-gold text-teal-deep hover:bg-gold-light shadow-sm hover:shadow-gold-sm"
+            : "border border-white/20 text-white/80 hover:border-gold/60 hover:text-gold"
+        }`}
       >
-        {plan.cta}
+        {plan.cta} →
       </Link>
-    </article>
+    </div>
   )
 }
 
-function PlanSection({
-  id,
-  label,
-  plans,
-}: {
-  id: string
-  label: string
-  plans: Plan[]
-}) {
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
   return (
-    <section id={id} className="scroll-mt-24">
-      <div className="flex flex-col gap-3 border-t border-strong pt-10">
-        <p className="newspaper-kicker">{label}</p>
-        <h2 className="text-3xl font-semibold text-heading">Choose the right launch plan</h2>
-      </div>
-      <div className="mt-7 grid gap-5 lg:grid-cols-3">
-        {plans.map((plan) => (
-          <PlanCard key={plan.name} plan={plan} />
-        ))}
-      </div>
-    </section>
+    <div className="border-b border-white/10 py-5">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-start justify-between gap-4 text-left"
+      >
+        <span className="font-playfair text-lg text-white/90">{q}</span>
+        <span className="mt-0.5 shrink-0 text-gold text-xl leading-none transition-transform duration-200" style={{ transform: open ? "rotate(45deg)" : "rotate(0deg)" }}>
+          +
+        </span>
+      </button>
+      {open && (
+        <p className="mt-4 text-sm leading-7 text-white/55">{a}</p>
+      )}
+    </div>
   )
 }
 
 export default function PricingPage() {
-  const supplierRef = useRef<HTMLDivElement | null>(null)
-  const buyerRef = useRef<HTMLDivElement | null>(null)
-  const [audience, setAudience] = useState<"suppliers" | "buyers">("suppliers")
-  const [openQuestion, setOpenQuestion] = useState(0)
-
-  function selectAudience(nextAudience: "suppliers" | "buyers") {
-    setAudience(nextAudience)
-    const target = nextAudience === "suppliers" ? supplierRef.current : buyerRef.current
-    target?.scrollIntoView({ behavior: "smooth", block: "start" })
-  }
+  const [tab, setTab] = useState<"suppliers" | "buyers">("suppliers")
+  const plans = tab === "suppliers" ? supplierPlans : buyerPlans
 
   return (
     <>
-      <PublicHeader />
-      <main className="min-h-screen bg-page text-primary">
-        <section className="mx-auto flex max-w-7xl flex-col items-center px-6 py-16 text-center lg:py-20">
-          <div className="inline-flex items-center gap-2 rounded-full border border-warning bg-warning-soft px-4 py-2 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-warning">
-            <RocketIcon />
-            Pilot launch pricing
+      <style>{`
+        :root {
+          --gold: #C9A84C;
+          --gold-light: #DFC06E;
+          --teal-deep: #0A2020;
+        }
+        .font-playfair { font-family: 'Playfair Display', Georgia, serif; }
+        .bg-gold { background-color: var(--gold); }
+        .bg-gold-light { background-color: var(--gold-light); }
+        .text-gold { color: var(--gold); }
+        .text-teal-deep { color: var(--teal-deep); }
+        .bg-teal-deep { background-color: var(--teal-deep); }
+        .border-gold { border-color: var(--gold); }
+        .shadow-gold { box-shadow: 0 0 40px rgba(201,168,76,0.12), 0 0 0 1px rgba(201,168,76,0.3); }
+        .shadow-gold-sm { box-shadow: 0 4px 20px rgba(201,168,76,0.25); }
+        .plan-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 30px rgba(201,168,76,0.08);
+        }
+        .plan-card { cursor: default; }
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
+      `}</style>
+
+      {/* Hero */}
+      <section
+        style={{
+          background: "linear-gradient(160deg, #0D3030 0%, #071818 60%, #050F0F 100%)",
+          borderBottom: "1px solid rgba(201,168,76,0.15)",
+        }}
+        className="px-6 py-24 text-center"
+      >
+        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-gold/70">
+          Pilot launch pricing
+        </p>
+        <h1 className="font-playfair mx-auto max-w-3xl text-5xl font-bold leading-tight text-white md:text-6xl">
+          Simple pricing for{" "}
+          <span style={{ color: "var(--gold)" }}>SA procurement</span>
+        </h1>
+        <p className="mx-auto mt-6 max-w-xl text-lg text-white/55">
+          Suppliers list for free. Buyers pay for what they need. No hidden fees, no lock-in.
+        </p>
+
+        {/* Tab toggle */}
+        <div className="mt-10 inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+          {(["suppliers", "buyers"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`rounded-lg px-8 py-2.5 text-sm font-semibold uppercase tracking-widest transition-all duration-200 ${
+                tab === t
+                  ? "bg-gold text-teal-deep shadow-sm"
+                  : "text-white/50 hover:text-white/80"
+              }`}
+            >
+              {t === "suppliers" ? "Suppliers" : "Buyers & teams"}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Pilot banner */}
+      <section
+        style={{
+          background: "linear-gradient(90deg, #071818 0%, #0D3030 50%, #071818 100%)",
+          borderBottom: "1px solid rgba(201,168,76,0.1)",
+        }}
+        className="px-6 py-8"
+      >
+        <div className="mx-auto max-w-4xl text-center">
+          <div className="inline-flex items-center gap-3 rounded-full border border-gold/30 bg-gold/10 px-5 py-2 text-sm text-gold">
+            <span className="h-2 w-2 rounded-full bg-gold animate-pulse" />
+            Pilot phase active — all plans free until 31 August 2026
           </div>
-          <h1 className="newspaper-headline mt-6 max-w-5xl">Simple pricing for SA procurement</h1>
-          <p className="newspaper-body mt-6 max-w-3xl">
-            Suppliers list for free. Buyers pay for what they need. No hidden fees, no lock-in.
+          <p className="mt-4 text-sm text-white/45 max-w-2xl mx-auto">
+            Monate Connect is in its pilot phase. All features across all plans are available at no charge until 31 August 2026. After that, paid plans activate at the prices shown below.{" "}
+            <Link href="/contact" className="text-gold/80 underline underline-offset-2 hover:text-gold">
+              Contact us
+            </Link>{" "}
+            to lock in pilot pricing beyond this date.
           </p>
-          <div
-            className="mt-8 inline-flex rounded-full border border-panel bg-card p-1 shadow-panel"
-            aria-label="Choose pricing audience"
+        </div>
+      </section>
+
+      {/* Plans */}
+      <section
+        style={{ background: "linear-gradient(180deg, #071818 0%, #050F0F 100%)" }}
+        className="px-6 py-20"
+      >
+        <div className="mx-auto max-w-6xl">
+          <p className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.25em] text-gold/60">
+            {tab === "suppliers" ? "For suppliers" : "For buyers & procurement teams"}
+          </p>
+          <h2 className="font-playfair mb-12 text-center text-3xl font-bold text-white">
+            {tab === "suppliers" ? "Choose the right launch plan" : "Choose the right launch plan"}
+          </h2>
+          <div className="grid gap-6 md:grid-cols-3">
+            {plans.map((plan) => (
+              <PlanCard key={plan.name} plan={plan} featured={!!plan.badge} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section
+        style={{
+          background: "#050F0F",
+          borderTop: "1px solid rgba(201,168,76,0.1)",
+        }}
+        className="px-6 py-20"
+      >
+        <div className="mx-auto max-w-3xl">
+          <p className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.25em] text-gold/60">FAQ</p>
+          <h2 className="font-playfair mb-12 text-center text-3xl font-bold text-white">
+            Pricing questions
+          </h2>
+          <div>
+            {faqs.map((faq) => (
+              <FaqItem key={faq.q} q={faq.q} a={faq.a} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA strip */}
+      <section
+        style={{
+          background: "linear-gradient(135deg, #0D3030 0%, #071818 100%)",
+          borderTop: "1px solid rgba(201,168,76,0.15)",
+        }}
+        className="px-6 py-20 text-center"
+      >
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-gold/60">Pilot access</p>
+        <h2 className="font-playfair mb-4 text-3xl font-bold text-white">
+          Start during the pilot — everything is free
+        </h2>
+        <p className="mx-auto mb-10 max-w-md text-white/50">
+          Get verified, browse RFQs, and submit quotes with no commitment until September 2026.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <Link
+            href="/contact"
+            className="rounded-lg border border-gold/40 px-8 py-3 text-sm font-bold uppercase tracking-widest text-gold transition hover:border-gold hover:bg-gold/10"
           >
-            <button
-              type="button"
-              onClick={() => selectAudience("suppliers")}
-              className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${
-                audience === "suppliers"
-                  ? "bg-accent text-button"
-                  : "text-secondary hover:bg-panel hover:text-accent"
-              }`}
-            >
-              Suppliers
-            </button>
-            <button
-              type="button"
-              onClick={() => selectAudience("buyers")}
-              className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${
-                audience === "buyers"
-                  ? "bg-accent text-button"
-                  : "text-secondary hover:bg-panel hover:text-accent"
-              }`}
-            >
-              Buyers & teams
-            </button>
-          </div>
-        </section>
-
-        <div className="mx-auto max-w-7xl px-6">
-          <section className="rounded-md border border-warning bg-warning-soft p-6 shadow-panel">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-warning bg-card text-warning">
-                <RocketIcon className="h-6 w-6" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-semibold text-heading">
-                  Pilot launch - all plans at no cost until 31 August 2026
-                </h2>
-                <p className="mt-3 max-w-5xl text-sm leading-7 text-secondary">
-                  Monate Connect is in its pilot phase. All features across all plans are
-                  available at no charge until 31 August 2026. After that, paid plans will
-                  activate at the prices shown below.{" "}
-                  <Link href="/contact" className="font-bold text-accent hover:text-accent-strong">
-                    Contact us
-                  </Link>{" "}
-                  if you want to lock in pilot pricing beyond this date or discuss an
-                  enterprise arrangement.
-                </p>
-              </div>
-            </div>
-          </section>
+            Contact sales
+          </Link>
+          <Link
+            href="/auth/signup"
+            className="rounded-lg bg-gold px-8 py-3 text-sm font-bold uppercase tracking-widest text-teal-deep transition hover:bg-gold-light"
+            style={{ color: "var(--teal-deep)" }}
+          >
+            Register free →
+          </Link>
         </div>
-
-        <div className="mx-auto grid max-w-7xl gap-14 px-6 py-14 lg:py-16">
-          <div ref={supplierRef}>
-            <PlanSection id="suppliers" label="For suppliers" plans={supplierPlans} />
-          </div>
-
-          <div ref={buyerRef}>
-            <PlanSection id="buyers" label="For buyers & procurement teams" plans={buyerPlans} />
-          </div>
-        </div>
-
-        <section className="mx-auto max-w-4xl px-6 pb-16">
-          <div className="text-center">
-            <p className="newspaper-kicker justify-center">FAQ</p>
-            <h2 className="mt-4 text-3xl font-semibold text-heading">Pricing questions</h2>
-            <p className="mt-3 text-sm leading-7 text-secondary">
-              Everything you need to know before committing.
-            </p>
-          </div>
-
-          <div className="mt-8 overflow-hidden rounded-md border border-panel bg-card shadow-panel">
-            {pricingQuestions.map((item, index) => {
-              const isOpen = openQuestion === index
-
-              return (
-                <div key={item.question} className="border-b border-panel last:border-b-0">
-                  <button
-                    type="button"
-                    onClick={() => setOpenQuestion(isOpen ? -1 : index)}
-                    className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left text-base font-bold text-heading hover:bg-panel"
-                    aria-expanded={isOpen}
-                  >
-                    <span>{item.question}</span>
-                    <ChevronIcon open={isOpen} />
-                  </button>
-                  <div className={`grid transition-all duration-200 ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-                    <div className="overflow-hidden">
-                      <p className="px-5 pb-5 text-sm leading-7 text-secondary">{item.answer}</p>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className="bg-panel">
-          <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-12 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="newspaper-kicker">Pilot access</p>
-              <h2 className="mt-4 text-3xl font-semibold text-heading">
-                Start during the pilot - everything is free
-              </h2>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-secondary">
-                Get verified, browse RFQs, and submit quotes with no commitment until
-                September 2026.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/contact" className="masthead__btn-secondary">
-                Contact sales
-              </Link>
-              <Link href="/auth/signup" className="masthead__btn-primary">
-                {"Register free ->"}
-              </Link>
-            </div>
-          </div>
-        </section>
-      </main>
-      <PublicFooter />
+      </section>
     </>
   )
 }
