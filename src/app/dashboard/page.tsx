@@ -296,15 +296,15 @@ export default function DashboardPage() {
       )}
 
       <div className="mb-10">
-        <p className="mb-3 text-sm uppercase tracking-[0.3em] text-accent">PROCUREMENT OPERATIONS</p>
-        <h1 className="text-5xl font-bold text-primary">{greeting()}, {firstName || "there"}</h1>
-        <p className="mt-4 max-w-3xl text-lg text-secondary">
+        <p className="mb-3 text-xs md:text-sm uppercase tracking-[0.3em] text-accent">PROCUREMENT OPERATIONS</p>
+        <h1 className="text-3xl md:text-5xl font-bold text-primary">{greeting()}, {firstName || "there"}</h1>
+        <p className="mt-4 max-w-3xl text-base md:text-lg text-secondary">
           Manage procurement opportunities, supplier verification, RFQ participation, and quote submissions from your workspace.
         </p>
       </div>
 
       <div className="mb-8">
-        <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
+        <div className="grid gap-6 grid-cols-1 xl:grid-cols-[320px_1fr]">
           <div className="rounded-xl border border-panel bg-surface p-6 shadow-panel">
             <p className="text-sm uppercase tracking-widest text-secondary">SmartScore</p>
             <div className="mt-5 flex items-center gap-4">
@@ -341,17 +341,17 @@ export default function DashboardPage() {
       </div>
 
       <section className="mb-8 rounded-xl border border-panel bg-card p-6 shadow-panel">
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-panel pb-4">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 border-b border-panel pb-4">
           <div>
             <p className="text-xs uppercase tracking-[0.24em] text-secondary">Supplier Intelligence</p>
-            <h2 className="mt-2 text-2xl font-semibold text-heading">Recommended Opportunities</h2>
+            <h2 className="mt-2 text-lg md:text-2xl font-semibold text-heading">Recommended Opportunities</h2>
           </div>
-          <Link href="/dashboard/rfqs" className="rounded-md border border-panel bg-surface px-4 py-2 text-sm font-semibold text-secondary transition hover:border-accent hover:text-accent">
+          <Link href="/dashboard/rfqs" className="rounded-md border border-panel bg-surface px-4 py-2 text-sm font-semibold text-secondary transition hover:border-accent hover:text-accent w-fit">
             View All RFQs
           </Link>
         </div>
         {opportunitiesLoading ? (
-          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <div className="mt-5 grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-28 animate-pulse rounded-md bg-panel" />)}
           </div>
         ) : recommendedOpportunities.length === 0 ? (
@@ -359,7 +359,7 @@ export default function DashboardPage() {
             No recommended opportunities are available yet. Complete your supplier profile, province, industry, and compliance details to improve matching.
           </p>
         ) : (
-          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <div className="mt-5 grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
             {recommendedOpportunities.map((match) => (
               <article key={match.rfq.id} className="rounded-md border border-panel bg-panel p-4">
                 <div className="flex items-start justify-between gap-3">

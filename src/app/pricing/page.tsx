@@ -395,7 +395,7 @@ export default function PricingPage() {
         aria-label="Toggle theme"
         onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
         className="pricing-toggle fixed z-50 flex h-12 w-12 items-center justify-center rounded-full border"
-        style={{ bottom: 'calc(56px + 16px)', right: '24px', transition: 'background 0.3s, transform 0.2s' }}
+        style={{ bottom: 'calc(var(--news-ticker-height) + 16px)', right: '24px', transition: 'background 0.3s, transform 0.2s' }}
       >
         {theme === "dark" ? (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
