@@ -8,6 +8,9 @@ import { supabase } from "@/lib/supabase"
 
 type FilterMode = "all" | "pending" | "verified"
 type VerificationStep = "csd" | "bbbee" | "tax" | "banking" | "director"
+type BulkAction = "verify" | "reject" | "pending"
+type PendingAction = { supplierId: string; key: string }
+type InlineFeedback = { message: string; type: "success" | "error" }
 
 type SupplierProfile = {
   id: string
@@ -15,6 +18,7 @@ type SupplierProfile = {
   full_name: string | null
   email: string | null
   phone: string | null
+  description: string | null
   industry: string | null
   province: string | null
   provinces: string[] | string | null
@@ -54,6 +58,7 @@ const profileSelect = [
   "full_name",
   "email",
   "phone",
+  "description",
   "industry",
   "province",
   "provinces",
@@ -79,6 +84,14 @@ const profileSelect = [
   "created_at",
   "verification_notes",
 ].join(", ")
+
+const STEP_LABELS: Record<VerificationStep, string> = {
+  csd: "CSD",
+  bbbee: "BBBEE",
+  tax: "Tax",
+  banking: "Banking",
+  director: "Director",
+}
 
 function normalizeBool(value: boolean | null | undefined): boolean {
   return value === true
@@ -170,6 +183,10 @@ function stepVerified(step: VerificationStep, profile: SupplierProfile): boolean
   return normalizeBool(profile.director_verified)
 }
 
+function bankStatusForVerified(verified: boolean): string {
+  return verified ? "verified" : "pending"
+}
+
 function StatusChip({
   label,
   verified,
@@ -194,18 +211,20 @@ function StatusChip({
 function ActionButton({
   children,
   disabled,
+  loading,
   onClick,
   tone = "default",
 }: {
-  children: string
+  children: ReactNode
   disabled?: boolean
+  loading?: boolean
   onClick: () => void
   tone?: "default" | "danger"
 }) {
   return (
     <button
       type="button"
-      disabled={disabled}
+      disabled={disabled || loading}
       onClick={onClick}
       className={
         tone === "danger"
@@ -213,8 +232,47 @@ function ActionButton({
           : "rounded-md border border-accent bg-accent px-3 py-1.5 text-xs font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
       }
     >
-      {children}
+      {loading ? (
+        <span className="inline-flex items-center gap-1.5">
+          <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 22 6.477 22 12h-4z" />
+          </svg>
+          Saving…
+        </span>
+      ) : children}
     </button>
+  )
+}
+
+function InlineFeedbackBadge({ feedback }: { feedback: InlineFeedback | undefined }) {
+  if (!feedback) return null
+  const isSuccess = feedback.type === "success"
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-xs font-semibold ${
+        isSuccess ? "text-success" : "text-rose-600"
+      }`}
+    >
+      {isSuccess ? (
+        <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+          <path
+            fillRule="evenodd"
+            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+            clipRule="evenodd"
+          />
+        </svg>
+      ) : (
+        <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+          <path
+            fillRule="evenodd"
+            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+            clipRule="evenodd"
+          />
+        </svg>
+      )}
+      {feedback.message}
+    </span>
   )
 }
 
@@ -259,8 +317,9 @@ export default function AdminVerificationQueuePage() {
   const [filter, setFilter] = useState<FilterMode>("all")
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
-  const [feedback, setFeedback] = useState<Record<string, string>>({})
-  const [savingKey, setSavingKey] = useState("")
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+  const [inlineFeedback, setInlineFeedback] = useState<Record<string, InlineFeedback>>({})
+  const [scoreHighlight, setScoreHighlight] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     let cancelled = false
@@ -369,8 +428,25 @@ export default function AdminVerificationQueuePage() {
     return profiles
   }, [filter, profiles])
 
-  function setSupplierFeedback(supplierId: string, message: string) {
-    setFeedback((current) => ({ ...current, [supplierId]: message }))
+  function setActionFeedback(supplierId: string, key: string, fb: InlineFeedback) {
+    const fbKey = `${supplierId}:${key}`
+    setInlineFeedback((current) => ({ ...current, [fbKey]: fb }))
+    if (fb.type === "success") {
+      setTimeout(() => {
+        setInlineFeedback((current) => {
+          const next = { ...current }
+          delete next[fbKey]
+          return next
+        })
+      }, 3000)
+    }
+  }
+
+  function setScoreFlash(supplierId: string) {
+    setScoreHighlight((current) => ({ ...current, [supplierId]: true }))
+    setTimeout(() => {
+      setScoreHighlight((current) => ({ ...current, [supplierId]: false }))
+    }, 1500)
   }
 
   function mergeBankFields(profile: SupplierProfile, bank?: BankDetails) {
@@ -387,9 +463,10 @@ export default function AdminVerificationQueuePage() {
   async function updateStep(profile: SupplierProfile, step: VerificationStep, verified: boolean) {
     if (!supabase) return
 
-    const bank = banksBySupplier[profile.id]
+    const currentProfile = profiles.find((item) => item.id === profile.id) ?? profile
+    const bank = banksBySupplier[currentProfile.id]
     const nextProfile: SupplierProfile = {
-      ...profile,
+      ...currentProfile,
       ...(step === "csd" ? { csd_verified: verified } : {}),
       ...(step === "bbbee" ? { bbbee_verified: verified } : {}),
       ...(step === "tax" ? { tax_verified: verified } : {}),
@@ -397,30 +474,32 @@ export default function AdminVerificationQueuePage() {
       ...(step === "director" ? { director_verified: verified } : {}),
     }
     const nextVerificationStatus = isFullyVerified(nextProfile) ? "Verified" : "Pending Review"
+    const scoreProfile = {
+      ...nextProfile,
+      verification_status: nextVerificationStatus,
+    }
     const nextBank =
       step === "banking" && bank
-        ? { ...bank, verification_status: verified ? "verified" : "unverified" }
+        ? { ...bank, verification_status: bankStatusForVerified(verified) }
         : bank
-    const nextSmartScore = calculateSmartScore(mergeBankFields(nextProfile, nextBank))
-    const savingId = `${profile.id}-${step}`
+    const nextSmartScore = calculateSmartScore(mergeBankFields(scoreProfile, nextBank))
+    const pendingKey = `${step}-${verified ? "approve" : "revoke"}`
 
-    setSavingKey(savingId)
+    setPendingAction({ supplierId: currentProfile.id, key: pendingKey })
     setErrorMessage("")
-    setSupplierFeedback(profile.id, `${verified ? "Approving" : "Revoking"} ${step}...`)
 
     setProfiles((current) =>
       current.map((item) =>
-        item.id === profile.id
+        item.id === currentProfile.id
           ? {
-              ...nextProfile,
-              verification_status: nextVerificationStatus,
+              ...scoreProfile,
               smart_score: nextSmartScore,
             }
           : item,
       ),
     )
     if (step === "banking" && nextBank) {
-      setBanksBySupplier((current) => ({ ...current, [profile.id]: nextBank }))
+      setBanksBySupplier((current) => ({ ...current, [currentProfile.id]: nextBank }))
     }
 
     const profileUpdate = {
@@ -436,38 +515,144 @@ export default function AdminVerificationQueuePage() {
     const { error: profileError } = await supabase
       .from("profiles")
       .update(profileUpdate)
-      .eq("id", profile.id)
+      .eq("id", currentProfile.id)
 
     if (profileError) {
       setErrorMessage(profileError.message)
-      setProfiles((current) => current.map((item) => (item.id === profile.id ? profile : item)))
+      setProfiles((current) => current.map((item) => (item.id === currentProfile.id ? currentProfile : item)))
       if (step === "banking" && bank) {
-        setBanksBySupplier((current) => ({ ...current, [profile.id]: bank }))
+        setBanksBySupplier((current) => ({ ...current, [currentProfile.id]: bank }))
       }
-      setSavingKey("")
-      setSupplierFeedback(profile.id, "Update failed.")
+      setPendingAction(null)
+      setActionFeedback(currentProfile.id, pendingKey, { message: "Couldn't save — try again", type: "error" })
       return
     }
 
     if (step === "banking") {
       const { error: bankError } = await supabase
         .from("supplier_bank_details")
-        .update({ verification_status: verified ? "verified" : "unverified" })
-        .eq("supplier_id", profile.id)
+        .update({ verification_status: bankStatusForVerified(verified) })
+        .eq("supplier_id", currentProfile.id)
 
       if (bankError) {
         setErrorMessage(bankError.message)
-        setSupplierFeedback(profile.id, "Profile updated, but banking status update failed.")
-        setSavingKey("")
+        setPendingAction(null)
+        setActionFeedback(currentProfile.id, pendingKey, {
+          message: "Profile updated, but banking status update failed.",
+          type: "error",
+        })
         return
       }
     }
 
-    setSavingKey("")
-    setSupplierFeedback(
-      profile.id,
-      `${step.toUpperCase()} ${verified ? "approved" : "revoked"}. SmartScore updated to ${nextSmartScore}.`,
+    setPendingAction(null)
+    setScoreFlash(currentProfile.id)
+    setActionFeedback(currentProfile.id, pendingKey, {
+      message: `${STEP_LABELS[step]} ${verified ? "approved" : "revoked"}`,
+      type: "success",
+    })
+  }
+
+  async function updateSupplierStatus(profile: SupplierProfile, action: BulkAction) {
+    if (!supabase) return
+
+    const currentProfile = profiles.find((item) => item.id === profile.id) ?? profile
+    const bank = banksBySupplier[currentProfile.id]
+    const flagUpdates =
+      action === "verify"
+        ? {
+            csd_verified: true,
+            bbbee_verified: true,
+            tax_verified: true,
+            bank_verified: true,
+            director_verified: true,
+          }
+        : {}
+    const nextProfile: SupplierProfile = {
+      ...currentProfile,
+      ...flagUpdates,
+    }
+    const nextVerificationStatus =
+      action === "reject"
+        ? "Rejected"
+        : action === "pending"
+          ? "Pending Review"
+          : isFullyVerified(nextProfile)
+            ? "Verified"
+            : "Pending Review"
+    const scoreProfile = {
+      ...nextProfile,
+      verification_status: nextVerificationStatus,
+    }
+    const nextBank =
+      action === "verify" && bank
+        ? { ...bank, verification_status: bankStatusForVerified(true) }
+        : bank
+    const nextSmartScore = calculateSmartScore(mergeBankFields(scoreProfile, nextBank))
+    const pendingKey = `bulk-${action}`
+
+    setPendingAction({ supplierId: currentProfile.id, key: pendingKey })
+    setErrorMessage("")
+
+    setProfiles((current) =>
+      current.map((item) =>
+        item.id === currentProfile.id
+          ? {
+              ...scoreProfile,
+              smart_score: nextSmartScore,
+            }
+          : item,
+      ),
     )
+    if (action === "verify" && nextBank) {
+      setBanksBySupplier((current) => ({ ...current, [currentProfile.id]: nextBank }))
+    }
+
+    const profileUpdate = {
+      ...flagUpdates,
+      verification_status: nextVerificationStatus,
+      smart_score: nextSmartScore,
+    }
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update(profileUpdate)
+      .eq("id", currentProfile.id)
+
+    if (profileError) {
+      setErrorMessage(profileError.message)
+      setProfiles((current) => current.map((item) => (item.id === currentProfile.id ? currentProfile : item)))
+      if (action === "verify" && bank) {
+        setBanksBySupplier((current) => ({ ...current, [currentProfile.id]: bank }))
+      }
+      setPendingAction(null)
+      setActionFeedback(currentProfile.id, pendingKey, { message: "Couldn't save — try again", type: "error" })
+      return
+    }
+
+    if (action === "verify") {
+      const { error: bankError } = await supabase
+        .from("supplier_bank_details")
+        .update({ verification_status: bankStatusForVerified(true) })
+        .eq("supplier_id", currentProfile.id)
+
+      if (bankError) {
+        setErrorMessage(bankError.message)
+        setPendingAction(null)
+        setActionFeedback(currentProfile.id, pendingKey, {
+          message: "Profile updated, but banking status update failed.",
+          type: "error",
+        })
+        return
+      }
+    }
+
+    setPendingAction(null)
+    setScoreFlash(currentProfile.id)
+    setActionFeedback(currentProfile.id, pendingKey, {
+      message: `Supplier marked ${nextVerificationStatus}. SmartScore updated to ${nextSmartScore}.`,
+      type: "success",
+    })
   }
 
   async function saveNote(profile: SupplierProfile) {
@@ -475,11 +660,10 @@ export default function AdminVerificationQueuePage() {
 
     const nextNote = notesBySupplier[profile.id] ?? ""
     const nextSmartScore = calculateSmartScore(mergeBankFields(profile, banksBySupplier[profile.id]))
-    const savingId = `${profile.id}-notes`
+    const pendingKey = "notes"
 
-    setSavingKey(savingId)
+    setPendingAction({ supplierId: profile.id, key: pendingKey })
     setErrorMessage("")
-    setSupplierFeedback(profile.id, "Saving note...")
 
     const { error } = await supabase
       .from("profiles")
@@ -489,11 +673,11 @@ export default function AdminVerificationQueuePage() {
       })
       .eq("id", profile.id)
 
-    setSavingKey("")
+    setPendingAction(null)
 
     if (error) {
       setErrorMessage(error.message)
-      setSupplierFeedback(profile.id, "Note save failed.")
+      setActionFeedback(profile.id, pendingKey, { message: "Note save failed — try again", type: "error" })
       return
     }
 
@@ -504,7 +688,7 @@ export default function AdminVerificationQueuePage() {
           : item,
       ),
     )
-    setSupplierFeedback(profile.id, "Verification note saved.")
+    setActionFeedback(profile.id, pendingKey, { message: "Note saved", type: "success" })
   }
 
   function renderStepRow(
@@ -515,7 +699,15 @@ export default function AdminVerificationQueuePage() {
     options?: { expired?: boolean },
   ) {
     const verified = stepVerified(step, profile)
-    const approveDisabled = Boolean(options?.expired) || savingKey === `${profile.id}-${step}`
+    const approveKey = `${step}-approve`
+    const revokeKey = `${step}-revoke`
+    const stepPending =
+      pendingAction?.supplierId === profile.id &&
+      (pendingAction.key === approveKey || pendingAction.key === revokeKey)
+    const approvePending = pendingAction?.supplierId === profile.id && pendingAction.key === approveKey
+    const revokePending = pendingAction?.supplierId === profile.id && pendingAction.key === revokeKey
+    const stepFeedback =
+      inlineFeedback[`${profile.id}:${approveKey}`] ?? inlineFeedback[`${profile.id}:${revokeKey}`]
 
     return (
       <div className="grid gap-4 rounded-xl border border-panel bg-surface p-4 md:grid-cols-[1fr_auto] md:items-center">
@@ -535,20 +727,23 @@ export default function AdminVerificationQueuePage() {
           </div>
           <div className="mt-3 grid gap-3 text-sm text-secondary sm:grid-cols-2">{children}</div>
         </div>
-        <div className="flex flex-wrap gap-2 md:justify-end">
+        <div className="flex flex-wrap items-center gap-2 md:justify-end">
           <ActionButton
-            disabled={approveDisabled || verified}
+            loading={approvePending}
+            disabled={Boolean(options?.expired) || stepPending || verified}
             onClick={() => updateStep(profile, step, true)}
           >
             Approve
           </ActionButton>
           <ActionButton
             tone="danger"
-            disabled={savingKey === `${profile.id}-${step}` || !verified}
+            loading={revokePending}
+            disabled={stepPending || !verified}
             onClick={() => updateStep(profile, step, false)}
           >
             Revoke
           </ActionButton>
+          <InlineFeedbackBadge feedback={stepFeedback} />
         </div>
       </div>
     )
@@ -626,6 +821,14 @@ export default function AdminVerificationQueuePage() {
             const expanded = expandedId === profile.id
             const bbbeeExpired = isExpired(profile.bbbee_expiry_date)
             const taxLink = profile.tax_clearance_url ?? profile.tax_document_url
+            const bulkPending =
+              pendingAction?.supplierId === profile.id &&
+              (pendingAction.key === "bulk-verify" ||
+                pendingAction.key === "bulk-reject" ||
+                pendingAction.key === "bulk-pending")
+            const notesPending =
+              pendingAction?.supplierId === profile.id && pendingAction.key === "notes"
+            const scoreFlashing = Boolean(scoreHighlight[profile.id])
 
             return (
               <article key={profile.id} className="rounded-xl border border-panel bg-card p-5 shadow-panel">
@@ -648,11 +851,23 @@ export default function AdminVerificationQueuePage() {
                     </p>
                   </div>
                   <div className="flex flex-col gap-3 lg:items-end">
-                    <div className="rounded-xl border border-panel bg-surface px-4 py-3">
+                    <div
+                      className={`rounded-xl border px-4 py-3 transition-colors duration-500 ${
+                        scoreFlashing
+                          ? "border-accent/40 bg-accent/10"
+                          : "border-panel bg-surface"
+                      }`}
+                    >
                       <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted">
                         SmartScore
                       </p>
-                      <p className="mt-1 text-xl font-bold text-heading">{profile.smart_score ?? 0}</p>
+                      <p
+                        className={`mt-1 text-xl font-bold tabular-nums transition-colors duration-500 ${
+                          scoreFlashing ? "text-accent" : "text-heading"
+                        }`}
+                      >
+                        {profile.smart_score ?? 0}
+                      </p>
                     </div>
                     <span className="text-xs font-semibold text-accent">
                       {expanded ? "Collapse" : "Review supplier"}
@@ -671,14 +886,72 @@ export default function AdminVerificationQueuePage() {
                   ))}
                 </div>
 
-                {feedback[profile.id] && (
-                  <div className="mt-4 rounded-xl border border-panel bg-surface px-4 py-3">
-                    <p className="text-xs font-semibold text-secondary">{feedback[profile.id]}</p>
-                  </div>
-                )}
-
                 {expanded && (
                   <div className="mt-5 space-y-3 border-t border-panel pt-5">
+                    <div className="rounded-xl border border-panel bg-surface p-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                          <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted">
+                            Supplier action
+                          </p>
+                          <p className="mt-1 text-sm text-secondary">
+                            Bulk actions update supplier status; verification keeps all step flags aligned.
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <ActionButton
+                            loading={pendingAction?.supplierId === profile.id && pendingAction.key === "bulk-verify"}
+                            disabled={bulkPending}
+                            onClick={() => updateSupplierStatus(profile, "verify")}
+                          >
+                            Verify Supplier
+                          </ActionButton>
+                          <ActionButton
+                            tone="danger"
+                            loading={pendingAction?.supplierId === profile.id && pendingAction.key === "bulk-reject"}
+                            disabled={bulkPending}
+                            onClick={() => updateSupplierStatus(profile, "reject")}
+                          >
+                            Reject Supplier
+                          </ActionButton>
+                          <button
+                            type="button"
+                            disabled={
+                              bulkPending ||
+                              (pendingAction?.supplierId === profile.id && pendingAction.key === "bulk-pending")
+                            }
+                            onClick={() => updateSupplierStatus(profile, "pending")}
+                            className="rounded-md border border-panel bg-panel px-3 py-1.5 text-xs font-semibold text-secondary transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {pendingAction?.supplierId === profile.id && pendingAction.key === "bulk-pending" ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 22 6.477 22 12h-4z" />
+                                </svg>
+                                Saving…
+                              </span>
+                            ) : (
+                              "Mark Pending"
+                            )}
+                          </button>
+                          <InlineFeedbackBadge
+                            feedback={
+                              inlineFeedback[`${profile.id}:bulk-verify`] ??
+                              inlineFeedback[`${profile.id}:bulk-reject`] ??
+                              inlineFeedback[`${profile.id}:bulk-pending`]
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="mb-3 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted">
+                        Verification steps
+                      </p>
+                    </div>
+
                     {renderStepRow(profile, "csd", "CSD", (
                       <>
                         <DetailLine label="CSD number" value={profile.csd_number} />
@@ -726,8 +999,9 @@ export default function AdminVerificationQueuePage() {
 
                     {renderStepRow(profile, "director", "Director", (
                       <>
+                        <DetailLine label="Status" value={profile.director_verified ? "Verified" : "Pending"} />
                         <DetailLine label="Company registration" value={profile.company_registration} />
-                        <div>
+                        <div className="sm:col-span-2">
                           <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted">
                             Registration document
                           </p>
@@ -756,14 +1030,27 @@ export default function AdminVerificationQueuePage() {
                         className="mt-2 w-full resize-none rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30"
                         placeholder="Add internal verification notes..."
                       />
-                      <button
-                        type="button"
-                        disabled={savingKey === `${profile.id}-notes`}
-                        onClick={() => saveNote(profile)}
-                        className="mt-3 rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Save note
-                      </button>
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          disabled={notesPending}
+                          onClick={() => saveNote(profile)}
+                          className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {notesPending ? (
+                            <span className="inline-flex items-center gap-1.5">
+                              <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 22 6.477 22 12h-4z" />
+                              </svg>
+                              Saving…
+                            </span>
+                          ) : (
+                            "Save note"
+                          )}
+                        </button>
+                        <InlineFeedbackBadge feedback={inlineFeedback[`${profile.id}:notes`]} />
+                      </div>
                     </div>
                   </div>
                 )}

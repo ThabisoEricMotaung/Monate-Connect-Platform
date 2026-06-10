@@ -194,7 +194,7 @@ const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Bo
   },
   {
     name: "verificationReview",
-    href: "/dashboard/admin/verification",
+    href: "/dashboard/admin/verifications",
   },
   {
     name: "analytics",
