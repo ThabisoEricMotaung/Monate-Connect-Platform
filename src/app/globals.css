@@ -689,19 +689,27 @@ a.bg-accent:hover,
   grid-template-columns: auto minmax(0, 1fr);
   height: var(--news-ticker-height);
   overflow: hidden;
-  background: #1a1a1a;
-  color: #f5f0e8;
-  border-top: 0;
-  box-shadow: 0 -1px 0 rgba(245, 240, 232, 0.1);
+  background: #050F0F;
+  color: rgba(255,255,255,0.75);
+  border-top: 1px solid rgba(201,168,76,0.15);
+  box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Light theme ticker */
+html[data-theme="light"] .news-ticker {
+  background: #EFE9DC;
+  color: rgba(10,32,32,0.75);
+  border-top-color: rgba(10,32,32,0.12);
+  box-shadow: 0 -1px 0 rgba(10, 32, 32, 0.08);
 }
 
 .news-ticker__label {
   display: inline-flex;
   align-items: center;
   height: 100%;
-  border-right: 1px solid rgba(245, 240, 232, 0.28);
-  background: #1a1a1a;
-  color: #f5f0e8;
+  border-right: 1px solid rgba(255,255,255,0.12);
+  background: #050F0F;
+  color: rgba(255,255,255,0.75);
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -709,6 +717,13 @@ a.bg-accent:hover,
   text-transform: uppercase;
   white-space: nowrap;
   box-shadow: none;
+}
+
+/* Light theme label */
+html[data-theme="light"] .news-ticker__label {
+  background: #EFE9DC;
+  border-right-color: rgba(10,32,32,0.12);
+  color: rgba(10,32,32,0.75);
 }
 
 .news-ticker__viewport {
@@ -736,7 +751,7 @@ a.bg-accent:hover,
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  color: #f5f0e8;
+  color: rgba(255,255,255,0.75);
   font-size: 0.88rem;
   font-weight: 600;
   line-height: 1;
@@ -745,12 +760,22 @@ a.bg-accent:hover,
   text-decoration: none;
 }
 
+/* Light theme item */
+html[data-theme="light"] .news-ticker__item {
+  color: rgba(10,32,32,0.75);
+}
+
 .news-ticker__item + .news-ticker__item::before {
   content: "";
   width: 1px;
   height: 1.05rem;
   margin-right: 0.2rem;
-  background: rgba(245, 240, 232, 0.28);
+  background: rgba(255,255,255,0.12);
+}
+
+/* Light theme divider */
+html[data-theme="light"] .news-ticker__item + .news-ticker__item::before {
+  background: rgba(10,32,32,0.12);
 }
 
 .news-ticker__tag {
@@ -758,10 +783,10 @@ a.bg-accent:hover,
   align-items: center;
   gap: 0.38rem;
   min-height: 1.55rem;
-  border: 1px solid rgba(245, 240, 232, 0.28);
+  border: 1px solid rgba(201,168,76,0.3);
   border-radius: 0;
-  background: rgba(245, 240, 232, 0.1);
-  color: #f5f0e8;
+  background: rgba(201,168,76,0.1);
+  color: #C9A84C;
   font-size: 0.64rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -770,15 +795,34 @@ a.bg-accent:hover,
   box-shadow: none;
 }
 
+/* Light theme tags */
+html[data-theme="light"] .news-ticker__tag {
+  border-color: rgba(168,137,59,0.3);
+  background: rgba(168,137,59,0.12);
+  color: #A8893B;
+}
+
 .news-ticker__tag--mining,
 .news-ticker__tag--eskom,
 .news-ticker__tag--infrastructure,
 .news-ticker__tag--compliance,
 .news-ticker__tag--deadline,
 .news-ticker__tag--advert {
-  border-color: rgba(245, 240, 232, 0.28);
-  background: rgba(245, 240, 232, 0.1);
-  color: #f5f0e8;
+  border-color: rgba(201,168,76,0.3);
+  background: rgba(201,168,76,0.1);
+  color: #C9A84C;
+}
+
+/* Light theme tag variants */
+html[data-theme="light"] .news-ticker__tag--mining,
+html[data-theme="light"] .news-ticker__tag--eskom,
+html[data-theme="light"] .news-ticker__tag--infrastructure,
+html[data-theme="light"] .news-ticker__tag--compliance,
+html[data-theme="light"] .news-ticker__tag--deadline,
+html[data-theme="light"] .news-ticker__tag--advert {
+  border-color: rgba(168,137,59,0.3);
+  background: rgba(168,137,59,0.12);
+  color: #A8893B;
 }
 
 .theme-dark .news-ticker {
@@ -786,6 +830,8 @@ a.bg-accent:hover,
   border-top: 1px solid var(--border);
   box-shadow: none;
 }
+
+/* Legacy theme-dark selectors (kept for backward compatibility on other pages) */
 
 .theme-dark .news-ticker__label {
   background: var(--bg-muted);

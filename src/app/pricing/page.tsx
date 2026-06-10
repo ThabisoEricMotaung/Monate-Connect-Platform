@@ -171,8 +171,8 @@ function CheckIcon() {
 function CrossIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5" aria-hidden>
-      <circle cx="8" cy="8" r="8" fill="var(--text-primary)" fillOpacity="0.05" />
-      <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="var(--text-primary)" strokeOpacity="0.25" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="8" cy="8" r="8" fill="var(--text-muted)" fillOpacity="0.05" />
+      <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="var(--text-muted)" strokeOpacity="0.25" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
 }
@@ -182,7 +182,7 @@ function PlanCard({ plan, featured }: { plan: typeof supplierPlans[0]; featured?
     <div className={`plan-card ${featured ? "featured" : "not-featured"} relative flex flex-col rounded-2xl border p-8`}>
       {plan.badge && (
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-          <span className="inline-block rounded-full bg-gold px-4 py-1 text-xs font-bold uppercase tracking-widest text-teal-deep">
+          <span className="inline-block rounded-full bg-gold px-4 py-1 text-xs font-bold uppercase tracking-widest text-on-gold">
             {plan.badge}
           </span>
         </div>
@@ -191,23 +191,23 @@ function PlanCard({ plan, featured }: { plan: typeof supplierPlans[0]; featured?
       <div className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold/70">{plan.name}</p>
         <div className="mt-3 flex items-end gap-1">
-          <span className="font-playfair text-5xl font-bold text-white">{plan.price}</span>
-          <span className="mb-1.5 text-sm text-white/50">{plan.period}</span>
+          <span className="font-playfair text-5xl font-bold text-primary">{plan.price}</span>
+          <span className="mb-1.5 text-sm use-text-secondary">{plan.period}</span>
         </div>
-        <p className="mt-1.5 text-xs text-white/40">{plan.sub}</p>
+        <p className="mt-1.5 text-xs use-text-muted">{plan.sub}</p>
       </div>
 
       <div className="mb-8 flex-1 space-y-3">
         {plan.included.map((item) => (
           <div key={item} className="flex items-start gap-3">
             <CheckIcon />
-            <span className="text-sm text-white/80">{item}</span>
+            <span className="text-sm text-primary">{item}</span>
           </div>
         ))}
         {plan.excluded.map((item) => (
           <div key={item} className="flex items-start gap-3">
             <CrossIcon />
-            <span className="text-sm text-white/30 line-through">{item}</span>
+            <span className="text-sm use-text-muted line-through">{item}</span>
           </div>
         ))}
       </div>
@@ -216,7 +216,7 @@ function PlanCard({ plan, featured }: { plan: typeof supplierPlans[0]; featured?
         href={plan.ctaHref}
         className={`block rounded-lg px-6 py-3 text-center text-sm font-bold uppercase tracking-widest transition-all duration-200 ${
           plan.ctaStyle === "gold"
-            ? "bg-gold text-teal-deep hover:bg-gold-light shadow-sm hover:shadow-gold-sm"
+            ? "bg-gold text-on-gold hover:bg-gold-light shadow-sm hover:shadow-gold-sm"
             : "cta-outline"
         }`}
       >
@@ -234,13 +234,13 @@ function FaqItem({ q, a }: { q: string; a: string }) {
         onClick={() => setOpen(!open)}
         className="flex w-full items-start justify-between gap-4 text-left"
       >
-        <span className="font-playfair text-lg text-white/90">{q}</span>
+        <span className="font-playfair text-lg text-primary">{q}</span>
         <span className="mt-0.5 shrink-0 text-gold text-xl leading-none transition-transform duration-200" style={{ transform: open ? "rotate(45deg)" : "rotate(0deg)" }}>
           +
         </span>
       </button>
       {open && (
-        <p className="mt-4 text-sm leading-7 text-white/55">{a}</p>
+        <p className="mt-4 text-sm leading-7 use-text-secondary">{a}</p>
       )}
     </div>
   )
@@ -271,6 +271,12 @@ export default function PricingPage() {
     } catch (e) {}
   }, [theme])
 
+  useEffect(() => {
+    try {
+      document.documentElement.setAttribute("data-theme", theme)
+    } catch (e) {}
+  }, [theme])
+
   return (
     <div className="pricing-root" data-theme={theme}>
       <style>{`
@@ -283,15 +289,18 @@ export default function PricingPage() {
           --bg-section: linear-gradient(180deg, #071818 0%, #050F0F 100%);
           --bg-card: rgba(255,255,255,0.04);
           --bg-card-featured: linear-gradient(145deg, rgba(15,43,43,0.95) 0%, rgba(10,30,30,0.98) 100%);
-          --text-primary: #ffffff;
+          --text-primary: #FFFFFF;
           --text-primary-rgb: 255,255,255;
-          --text-secondary: rgba(255,255,255,0.55);
+          --text-secondary: rgba(255,255,255,0.60);
+          --text-muted: rgba(255,255,255,0.35);
+          --bg-chip: rgba(255,255,255,0.06);
           --gold: #C9A84C;
           --gold-rgb: 201,168,76;
           --gold-light: #DFC06E;
-          --border-subtle: rgba(255,255,255,0.10);
+          --border-subtle: rgba(255,255,255,0.12);
           --muted-overlay: rgba(255,255,255,0.05);
           --cta-outline-border: rgba(255,255,255,0.20);
+          --on-gold: #0A2020;
         }
 
         /* Light theme */
@@ -302,13 +311,16 @@ export default function PricingPage() {
           --bg-card-featured: #FFFFFF;
           --text-primary: #0A2020;
           --text-primary-rgb: 10,32,32;
-          --text-secondary: rgba(10,32,32,0.65);
+          --text-secondary: rgba(10,32,32,0.70);
+          --text-muted: rgba(10,32,32,0.40);
+          --bg-chip: rgba(10,32,32,0.06);
           --gold: #A8893B;
           --gold-rgb: 168,137,59;
           --gold-light: #C9A84C;
-          --border-subtle: rgba(10,32,32,0.12);
+          --border-subtle: rgba(10,32,32,0.14);
           --muted-overlay: rgba(10,32,32,0.04);
           --cta-outline-border: rgba(10,32,32,0.12);
+          --on-gold: #0A2020;
         }
 
         /* Utility mappings used by this file */
@@ -317,11 +329,21 @@ export default function PricingPage() {
         .text-gold { color: var(--gold) !important; }
         .text-gold\/70 { color: rgba(var(--gold-rgb),0.7) !important; }
         .text-gold\/80 { color: rgba(var(--gold-rgb),0.8) !important; }
-        .text-teal-deep { color: var(--text-primary) !important; }
-        .bg-teal-deep { background-color: var(--text-primary) !important; }
         .border-gold { border-color: var(--gold) !important; }
         .shadow-gold { box-shadow: 0 0 40px rgba(var(--gold-rgb),0.12), 0 0 0 1px rgba(var(--gold-rgb),0.3); }
         .shadow-gold-sm { box-shadow: 0 4px 20px rgba(var(--gold-rgb),0.25); }
+
+        /* Semantic helpers mapped to theme variables */
+        .text-primary { color: var(--text-primary) !important; }
+        .text-secondary { color: var(--text-secondary) !important; }
+        .text-muted { color: var(--text-muted) !important; }
+        .text-on-gold { color: var(--on-gold) !important; }
+
+        .bg-card { background: var(--bg-card) !important; }
+        .bg-card-featured { background: var(--bg-card-featured) !important; }
+        .bg-chip { background: var(--bg-chip) !important; }
+        .border-subtle { border-color: var(--border-subtle) !important; }
+        .cta-outline { border: 1px solid var(--cta-outline-border); color: var(--text-secondary); }
 
         .plan-card { cursor: default; background: var(--bg-card); border-color: var(--border-subtle); transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease; }
         .plan-card.featured { background: var(--bg-card-featured); border-color: var(--gold); }
@@ -333,16 +355,32 @@ export default function PricingPage() {
         .pricing-root[data-theme="light"] .plan-card.featured { box-shadow: 0 8px 30px rgba(var(--gold-rgb),0.08); }
         .pricing-root[data-theme="light"] .plan-card.featured:hover { box-shadow: 0 12px 40px rgba(var(--gold-rgb),0.12); }
 
-        .text-white { color: var(--text-primary) !important; }
-        .text-white\/50 { color: var(--text-secondary) !important; }
-        .text-white\/55 { color: var(--text-secondary) !important; }
-        .text-white\/40 { color: rgba(var(--text-primary-rgb),0.4) !important; }
-        .text-white\/30 { color: rgba(var(--text-primary-rgb),0.3) !important; }
-        .text-white\/80 { color: rgba(var(--text-primary-rgb),0.8) !important; }
-        .border-white\/10 { border-color: var(--border-subtle) !important; }
-        .bg-white\/5 { background-color: var(--muted-overlay) !important; }
-        .border-subtle { border-color: var(--border-subtle) !important; }
-        .cta-outline { border: 1px solid var(--cta-outline-border); color: var(--text-secondary); }
+        /* Mappings for legacy tailwind-like utility classes used in JSX */
+        .text-white { display: none; }
+        .text-white\/50 { display: none; }
+        .text-white\/55 { display: none; }
+        .text-white\/40 { display: none; }
+        .text-white\/30 { display: none; }
+        .text-white\/80 { display: none; }
+        .border-white\/10 { display: none; }
+        .bg-white\/5 { display: none; }
+
+        /* New utility classes to use in JSX */
+        .use-text-primary { color: var(--text-primary) !important; }
+        .use-text-secondary { color: var(--text-secondary) !important; }
+        .use-text-muted { color: var(--text-muted) !important; }
+        .use-bg-chip { background: var(--bg-chip) !important; }
+        .use-border-subtle { border-color: var(--border-subtle) !important; }
+
+        /* Toggle button theme styling */
+        .pricing-toggle {
+          background: var(--bg-chip);
+          border-color: var(--border-subtle);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .pricing-root[data-theme="light"] .pricing-toggle {
+          box-shadow: 0 2px 8px rgba(10, 32, 32, 0.12);
+        }
 
         .text-gold\/60 { color: rgba(var(--gold-rgb),0.6) !important; }
         .border-gold\/30 { border-color: rgba(var(--gold-rgb),0.3) !important; }
@@ -356,8 +394,8 @@ export default function PricingPage() {
       <button
         aria-label="Toggle theme"
         onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-        className="fixed z-50 bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full border bg-white/6"
-        style={{ borderColor: 'var(--border-subtle)', transition: 'background 0.3s, transform 0.2s' }}
+        className="pricing-toggle fixed z-50 flex h-12 w-12 items-center justify-center rounded-full border"
+        style={{ bottom: 'calc(56px + 16px)', right: '24px', transition: 'background 0.3s, transform 0.2s' }}
       >
         {theme === "dark" ? (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -379,27 +417,27 @@ export default function PricingPage() {
         }}
         className="px-6 py-24 text-center"
       >
-        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-gold/70">
+        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-gold">
           Pilot launch pricing
         </p>
-        <h1 className="font-playfair mx-auto max-w-3xl text-5xl font-bold leading-tight text-white md:text-6xl">
+        <h1 className="font-playfair mx-auto max-w-3xl text-5xl font-bold leading-tight text-primary md:text-6xl">
           Simple pricing for{" "}
           <span style={{ color: "var(--gold)" }}>SA procurement</span>
         </h1>
-        <p className="mx-auto mt-6 max-w-xl text-lg text-white/55">
+        <p className="mx-auto mt-6 max-w-xl text-lg use-text-secondary">
           Suppliers list for free. Buyers pay for what they need. No hidden fees, no lock-in.
         </p>
 
         {/* Tab toggle */}
-        <div className="mt-10 inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+        <div className="mt-10 inline-flex rounded-xl border use-border-subtle use-bg-chip p-1">
           {(["suppliers", "buyers"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`rounded-lg px-8 py-2.5 text-sm font-semibold uppercase tracking-widest transition-all duration-200 ${
                 tab === t
-                  ? "bg-gold text-teal-deep shadow-sm"
-                  : "text-white/50 hover:text-white/80"
+                  ? "bg-gold text-on-gold shadow-sm"
+                  : "use-text-secondary"
               }`}
             >
               {t === "suppliers" ? "Suppliers" : "Buyers & teams"}
@@ -421,7 +459,7 @@ export default function PricingPage() {
             <span className="h-2 w-2 rounded-full bg-gold animate-pulse" />
             Pilot phase active — all plans free until 31 August 2026
           </div>
-          <p className="mt-4 text-sm text-white/45 max-w-2xl mx-auto">
+          <p className="mt-4 text-sm use-text-secondary max-w-2xl mx-auto">
             Monate Connect is in its pilot phase. All features across all plans are available at no charge until 31 August 2026. After that, paid plans activate at the prices shown below.{" "}
             <Link href="/contact" className="text-gold/80 underline underline-offset-2 hover:text-gold">
               Contact us
@@ -440,7 +478,7 @@ export default function PricingPage() {
           <p className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.25em] text-gold/60">
             {tab === "suppliers" ? "For suppliers" : "For buyers & procurement teams"}
           </p>
-          <h2 className="font-playfair mb-12 text-center text-3xl font-bold text-white">
+          <h2 className="font-playfair mb-12 text-center text-3xl font-bold text-primary">
             {tab === "suppliers" ? "Choose the right launch plan" : "Choose the right launch plan"}
           </h2>
           <div className="grid gap-6 md:grid-cols-3">
@@ -461,7 +499,7 @@ export default function PricingPage() {
       >
         <div className="mx-auto max-w-3xl">
           <p className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.25em] text-gold/60">FAQ</p>
-          <h2 className="font-playfair mb-12 text-center text-3xl font-bold text-white">
+          <h2 className="font-playfair mb-12 text-center text-3xl font-bold text-primary">
             Pricing questions
           </h2>
           <div>
@@ -481,10 +519,10 @@ export default function PricingPage() {
         className="px-6 py-20 text-center"
       >
         <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-gold/60">Pilot access</p>
-        <h2 className="font-playfair mb-4 text-3xl font-bold text-white">
+        <h2 className="font-playfair mb-4 text-3xl font-bold text-primary">
           Start during the pilot — everything is free
         </h2>
-        <p className="mx-auto mb-10 max-w-md text-white/50">
+        <p className="mx-auto mb-10 max-w-md use-text-secondary">
           Get verified, browse RFQs, and submit quotes with no commitment until September 2026.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4">
@@ -496,8 +534,7 @@ export default function PricingPage() {
           </Link>
           <Link
             href="/auth/signup"
-            className="rounded-lg bg-gold px-8 py-3 text-sm font-bold uppercase tracking-widest text-teal-deep transition hover:bg-gold-light"
-            style={{ color: "var(--text-primary)" }}
+            className="rounded-lg bg-gold px-8 py-3 text-sm font-bold uppercase tracking-widest text-on-gold transition hover:bg-gold-light"
           >
             Register free →
           </Link>
