@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, type MouseEvent } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
@@ -214,7 +215,8 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-page px-6 text-primary">
 
-      <div className="w-full max-w-md rounded-3xl border border-panel bg-panel p-8 shadow-panel">
+      <div className="w-full max-w-md">
+        <div className="rounded-3xl border border-panel bg-panel p-8 shadow-panel">
 
         <div className="mb-8 text-center">
           <p className="text-xs uppercase tracking-[0.24em] text-accent">
@@ -311,6 +313,19 @@ export default function LoginPage() {
             </p>
           )}
 
+        </div>
+
+        </div>
+
+        <div className="mt-5 flex items-center justify-center gap-2 text-xs font-semibold text-muted">
+          <Image
+            src="/aiform-mark.png"
+            alt=""
+            width={14}
+            height={18}
+            className="h-[18px] w-auto"
+          />
+          <span>Powered by AiForm Studio</span>
         </div>
 
       </div>

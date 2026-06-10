@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 
 const footerSections = [
   {
@@ -74,9 +75,21 @@ export default function PublicFooter() {
         </nav>
       </div>
       <div className="mx-auto flex max-w-7xl flex-col gap-3 border-t border-panel px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-semibold text-muted">
-          &copy; 2026 Monate Connect &middot; Procurement Edition
-        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <p className="text-xs font-semibold text-muted">
+            &copy; 2026 Monate Connect &middot; Procurement Edition
+          </p>
+          <div className="flex items-center gap-2 text-xs font-semibold text-muted">
+            <Image
+              src="/aiform-mark.png"
+              alt=""
+              width={19}
+              height={24}
+              className="h-6 w-auto"
+            />
+            <span>A product of AiForm Studio</span>
+          </div>
+        </div>
         <button
           type="button"
           onClick={openAccessibility}

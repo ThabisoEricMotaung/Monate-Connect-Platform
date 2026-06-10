@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useState } from "react"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
@@ -411,6 +412,55 @@ export default function TrustCentrePage() {
                 Register as supplier
               </Link>
             </div>
+          </div>
+        </section>
+
+        <section className="border-t border-panel bg-card">
+          <div className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[1fr_0.9fr] lg:items-center">
+            <div>
+              <Image
+                src="/aiform-mark.png"
+                alt=""
+                width={26}
+                height={32}
+                className="h-8 w-auto"
+              />
+              <p className="newspaper-kicker mt-5">THE STUDIO BEHIND THE PLATFORM</p>
+              <h2 id="who-builds-monate-connect" className="mt-3 text-3xl font-semibold text-heading">
+                Who builds Monate Connect
+              </h2>
+              <div className="mt-5 space-y-5 text-sm leading-7 text-secondary">
+                <p>
+                  Monate Connect is designed and built by AiForm Studio, a South African product
+                  studio based in Pretoria.
+                </p>
+                <p>
+                  The AiForm mark has an unusual origin. While working at the University of
+                  Pretoria, our founder noticed a small tan moth resting on a wall — Hypena
+                  proboscidalis, commonly called the A-Moth, named for the distinctive &apos;A&apos;
+                  shape its wings form at rest. In that moment the studio&apos;s identity was
+                  already there: the A of AiForm, the natural geometry of the moth, and the faceted
+                  form of something engineered. Noticed, not invented.
+                </p>
+                <p>
+                  That philosophy carries into everything we build. Monate Connect wasn&apos;t invented
+                  from nothing either — it was noticed: thousands of capable South African suppliers
+                  and serious buyers, separated by paperwork, spreadsheets, and missed connections.
+                  We build the structure that lets them find each other.
+                </p>
+              </div>
+              <p className="mt-6 text-sm italic leading-7 text-muted">
+                Shaping intelligence. Designing impact.
+              </p>
+            </div>
+
+            <Image
+              src="/aiform-story.png"
+              alt="AiForm Studio story mark"
+              width={720}
+              height={540}
+              className="w-full rounded-md border border-panel object-cover shadow-panel"
+            />
           </div>
         </section>
       </main>

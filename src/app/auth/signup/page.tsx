@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import { useState, type FormEvent } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
@@ -408,7 +409,8 @@ export default function SignupPage() {
   }
   return (
     <main className="flex min-h-screen items-center justify-center bg-page px-6 py-10 text-primary">
-      <div className="w-full max-w-3xl rounded-3xl border border-panel bg-panel p-8 shadow-panel">
+      <div className="w-full max-w-3xl">
+        <div className="rounded-3xl border border-panel bg-panel p-8 shadow-panel">
         <Stepper currentStep={step} onStepClick={setStep} />
 
         <form onSubmit={handleSignup} className="space-y-6">
@@ -710,6 +712,19 @@ export default function SignupPage() {
             </section>
           )}
         </form>
+        </div>
+
+        <div className="mt-5 flex items-center justify-center gap-2 text-xs font-semibold text-muted">
+          <Image
+            src="/aiform-mark.png"
+            alt=""
+            width={14}
+            height={18}
+            className="h-[18px] w-auto"
+          />
+          <span>Powered by AiForm Studio</span>
+        </div>
+
       </div>
     </main>
   )

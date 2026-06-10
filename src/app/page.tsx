@@ -1,4 +1,5 @@
 ﻿import Link from "next/link"
+import Image from "next/image"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import GazetteHeader from "@/components/home/GazetteHeader"
@@ -93,6 +94,37 @@ function EntryIcon({ icon }: { icon: string }) {
   )
 }
 
+function MakersMark() {
+  return (
+    <section className="bg-page px-6 py-12 text-center">
+      <div className="mx-auto flex max-w-3xl flex-col items-center">
+        <Image
+          src="/aiform-mark.png"
+          alt=""
+          width={29}
+          height={36}
+          className="h-9 w-auto"
+        />
+        <p
+          className="mt-4 text-xl italic leading-7 text-heading sm:text-2xl"
+          style={{
+            fontFamily:
+              "var(--font-playfair-display), 'Cormorant Garamond', 'Playfair Display', Georgia, serif",
+          }}
+        >
+          Designed and built in Pretoria by AiForm Studio
+        </p>
+        <Link
+          href="/trust#who-builds-monate-connect"
+          className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-accent transition hover:text-accent-strong"
+        >
+          Read the story &rarr;
+        </Link>
+      </div>
+    </section>
+  )
+}
+
 export default function Home() {
   return (
     <>
@@ -101,6 +133,7 @@ export default function Home() {
       <main className="min-h-screen bg-page text-primary">
         <HeroSection />
         <InfoCards />
+        <MakersMark />
         <CTASection />
         <TrustStrip />
         <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-10 sm:px-6 lg:py-14">
