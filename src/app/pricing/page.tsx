@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 const supplierPlans = [
   {
@@ -161,36 +161,25 @@ const faqs = [
 
 function CheckIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
-      <circle cx="8" cy="8" r="8" fill="#C9A84C" fillOpacity="0.15" />
-      <path d="M4.5 8l2.5 2.5 4.5-5" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5" aria-hidden>
+      <circle cx="8" cy="8" r="8" fill="var(--gold)" fillOpacity="0.15" />
+      <path d="M4.5 8l2.5 2.5 4.5-5" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
 
 function CrossIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
-      <circle cx="8" cy="8" r="8" fill="#ffffff" fillOpacity="0.05" />
-      <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#ffffff" strokeOpacity="0.25" strokeWidth="1.5" strokeLinecap="round" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5" aria-hidden>
+      <circle cx="8" cy="8" r="8" fill="var(--text-primary)" fillOpacity="0.05" />
+      <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="var(--text-primary)" strokeOpacity="0.25" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
 }
 
 function PlanCard({ plan, featured }: { plan: typeof supplierPlans[0]; featured?: boolean }) {
   return (
-    <div
-      className={`plan-card relative flex flex-col rounded-2xl border p-8 transition-all duration-300 ${
-        featured
-          ? "border-gold bg-teal-deep shadow-gold"
-          : "border-white/10 bg-white/5 hover:border-gold/40"
-      }`}
-      style={{
-        background: featured
-          ? "linear-gradient(145deg, rgba(15,43,43,0.95) 0%, rgba(10,30,30,0.98) 100%)"
-          : "rgba(255,255,255,0.04)",
-      }}
-    >
+    <div className={`plan-card ${featured ? "featured" : "not-featured"} relative flex flex-col rounded-2xl border p-8`}>
       {plan.badge && (
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
           <span className="inline-block rounded-full bg-gold px-4 py-1 text-xs font-bold uppercase tracking-widest text-teal-deep">
@@ -228,7 +217,7 @@ function PlanCard({ plan, featured }: { plan: typeof supplierPlans[0]; featured?
         className={`block rounded-lg px-6 py-3 text-center text-sm font-bold uppercase tracking-widest transition-all duration-200 ${
           plan.ctaStyle === "gold"
             ? "bg-gold text-teal-deep hover:bg-gold-light shadow-sm hover:shadow-gold-sm"
-            : "border border-white/20 text-white/80 hover:border-gold/60 hover:text-gold"
+            : "cta-outline"
         }`}
       >
         {plan.cta} →
@@ -240,7 +229,7 @@ function PlanCard({ plan, featured }: { plan: typeof supplierPlans[0]; featured?
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="border-b border-white/10 py-5">
+    <div className="border-b border-subtle py-5">
       <button
         onClick={() => setOpen(!open)}
         className="flex w-full items-start justify-between gap-4 text-left"
@@ -260,37 +249,133 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 export default function PricingPage() {
   const [tab, setTab] = useState<"suppliers" | "buyers">("suppliers")
   const plans = tab === "suppliers" ? supplierPlans : buyerPlans
+  const [theme, setTheme] = useState<"light" | "dark">("dark")
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("mc-pricing-theme") as "light" | "dark" | null
+      if (stored === "light" || stored === "dark") {
+        setTheme(stored)
+        return
+      }
+      const h = new Date().getHours()
+      setTheme(h >= 6 && h <= 17 ? "light" : "dark")
+    } catch (e) {
+      setTheme("dark")
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("mc-pricing-theme", theme)
+    } catch (e) {}
+  }, [theme])
 
   return (
-    <>
+    <div className="pricing-root" data-theme={theme}>
       <style>{`
-        :root {
-          --gold: #C9A84C;
-          --gold-light: #DFC06E;
-          --teal-deep: #0A2020;
-        }
         .font-playfair { font-family: 'Playfair Display', Georgia, serif; }
-        .bg-gold { background-color: var(--gold); }
-        .bg-gold-light { background-color: var(--gold-light); }
-        .text-gold { color: var(--gold); }
-        .text-teal-deep { color: var(--teal-deep); }
-        .bg-teal-deep { background-color: var(--teal-deep); }
-        .border-gold { border-color: var(--gold); }
-        .shadow-gold { box-shadow: 0 0 40px rgba(201,168,76,0.12), 0 0 0 1px rgba(201,168,76,0.3); }
-        .shadow-gold-sm { box-shadow: 0 4px 20px rgba(201,168,76,0.25); }
-        .plan-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 30px rgba(201,168,76,0.08);
+        .pricing-root { transition: background-color 0.3s ease, color 0.3s ease; }
+
+        /* Dark theme */
+        .pricing-root[data-theme="dark"] {
+          --bg-hero: linear-gradient(160deg, #0D3030 0%, #071818 60%, #050F0F 100%);
+          --bg-section: linear-gradient(180deg, #071818 0%, #050F0F 100%);
+          --bg-card: rgba(255,255,255,0.04);
+          --bg-card-featured: linear-gradient(145deg, rgba(15,43,43,0.95) 0%, rgba(10,30,30,0.98) 100%);
+          --text-primary: #ffffff;
+          --text-primary-rgb: 255,255,255;
+          --text-secondary: rgba(255,255,255,0.55);
+          --gold: #C9A84C;
+          --gold-rgb: 201,168,76;
+          --gold-light: #DFC06E;
+          --border-subtle: rgba(255,255,255,0.10);
+          --muted-overlay: rgba(255,255,255,0.05);
+          --cta-outline-border: rgba(255,255,255,0.20);
         }
-        .plan-card { cursor: default; }
+
+        /* Light theme */
+        .pricing-root[data-theme="light"] {
+          --bg-hero: linear-gradient(160deg, #F5F1E8 0%, #EFE9DC 100%);
+          --bg-section: #F5F1E8;
+          --bg-card: #FFFFFF;
+          --bg-card-featured: #FFFFFF;
+          --text-primary: #0A2020;
+          --text-primary-rgb: 10,32,32;
+          --text-secondary: rgba(10,32,32,0.65);
+          --gold: #A8893B;
+          --gold-rgb: 168,137,59;
+          --gold-light: #C9A84C;
+          --border-subtle: rgba(10,32,32,0.12);
+          --muted-overlay: rgba(10,32,32,0.04);
+          --cta-outline-border: rgba(10,32,32,0.12);
+        }
+
+        /* Utility mappings used by this file */
+        .bg-gold { background-color: var(--gold) !important; }
+        .bg-gold-light { background-color: var(--gold-light) !important; }
+        .text-gold { color: var(--gold) !important; }
+        .text-gold\/70 { color: rgba(var(--gold-rgb),0.7) !important; }
+        .text-gold\/80 { color: rgba(var(--gold-rgb),0.8) !important; }
+        .text-teal-deep { color: var(--text-primary) !important; }
+        .bg-teal-deep { background-color: var(--text-primary) !important; }
+        .border-gold { border-color: var(--gold) !important; }
+        .shadow-gold { box-shadow: 0 0 40px rgba(var(--gold-rgb),0.12), 0 0 0 1px rgba(var(--gold-rgb),0.3); }
+        .shadow-gold-sm { box-shadow: 0 4px 20px rgba(var(--gold-rgb),0.25); }
+
+        .plan-card { cursor: default; background: var(--bg-card); border-color: var(--border-subtle); transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease; }
+        .plan-card.featured { background: var(--bg-card-featured); border-color: var(--gold); }
+        .plan-card.not-featured:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+        .plan-card.featured:hover { transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 0 30px rgba(var(--gold-rgb),0.08); }
+
+        /* Light theme: soft warm shadows on hover and featured card */
+        .pricing-root[data-theme="light"] .plan-card.not-featured:hover { box-shadow: 0 12px 30px rgba(var(--gold-rgb),0.06); }
+        .pricing-root[data-theme="light"] .plan-card.featured { box-shadow: 0 8px 30px rgba(var(--gold-rgb),0.08); }
+        .pricing-root[data-theme="light"] .plan-card.featured:hover { box-shadow: 0 12px 40px rgba(var(--gold-rgb),0.12); }
+
+        .text-white { color: var(--text-primary) !important; }
+        .text-white\/50 { color: var(--text-secondary) !important; }
+        .text-white\/55 { color: var(--text-secondary) !important; }
+        .text-white\/40 { color: rgba(var(--text-primary-rgb),0.4) !important; }
+        .text-white\/30 { color: rgba(var(--text-primary-rgb),0.3) !important; }
+        .text-white\/80 { color: rgba(var(--text-primary-rgb),0.8) !important; }
+        .border-white\/10 { border-color: var(--border-subtle) !important; }
+        .bg-white\/5 { background-color: var(--muted-overlay) !important; }
+        .border-subtle { border-color: var(--border-subtle) !important; }
+        .cta-outline { border: 1px solid var(--cta-outline-border); color: var(--text-secondary); }
+
+        .text-gold\/60 { color: rgba(var(--gold-rgb),0.6) !important; }
+        .border-gold\/30 { border-color: rgba(var(--gold-rgb),0.3) !important; }
+        .bg-gold\/10 { background-color: rgba(var(--gold-rgb),0.1) !important; }
+        .border-gold\/40 { border-color: rgba(var(--gold-rgb),0.4) !important; }
+
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
       `}</style>
+
+      {/* Theme toggle button */}
+      <button
+        aria-label="Toggle theme"
+        onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+        className="fixed z-50 bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full border bg-white/6"
+        style={{ borderColor: 'var(--border-subtle)', transition: 'background 0.3s, transform 0.2s' }}
+      >
+        {theme === "dark" ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="var(--gold)" />
+          </svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M12 4v2M12 18v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="12" cy="12" r="3" stroke="var(--gold)" strokeWidth="1.5" />
+          </svg>
+        )}
+      </button>
 
       {/* Hero */}
       <section
         style={{
-          background: "linear-gradient(160deg, #0D3030 0%, #071818 60%, #050F0F 100%)",
-          borderBottom: "1px solid rgba(201,168,76,0.15)",
+          background: 'var(--bg-hero)',
+          borderBottom: '1px solid var(--border-subtle)'
         }}
         className="px-6 py-24 text-center"
       >
@@ -326,8 +411,8 @@ export default function PricingPage() {
       {/* Pilot banner */}
       <section
         style={{
-          background: "linear-gradient(90deg, #071818 0%, #0D3030 50%, #071818 100%)",
-          borderBottom: "1px solid rgba(201,168,76,0.1)",
+          background: 'var(--bg-section)',
+          borderBottom: '1px solid var(--border-subtle)'
         }}
         className="px-6 py-8"
       >
@@ -348,7 +433,7 @@ export default function PricingPage() {
 
       {/* Plans */}
       <section
-        style={{ background: "linear-gradient(180deg, #071818 0%, #050F0F 100%)" }}
+        style={{ background: 'var(--bg-section)' }}
         className="px-6 py-20"
       >
         <div className="mx-auto max-w-6xl">
@@ -369,8 +454,8 @@ export default function PricingPage() {
       {/* FAQ */}
       <section
         style={{
-          background: "#050F0F",
-          borderTop: "1px solid rgba(201,168,76,0.1)",
+          background: 'var(--bg-section)',
+          borderTop: '1px solid var(--border-subtle)'
         }}
         className="px-6 py-20"
       >
@@ -390,8 +475,8 @@ export default function PricingPage() {
       {/* CTA strip */}
       <section
         style={{
-          background: "linear-gradient(135deg, #0D3030 0%, #071818 100%)",
-          borderTop: "1px solid rgba(201,168,76,0.15)",
+          background: 'var(--bg-section)',
+          borderTop: '1px solid var(--border-subtle)'
         }}
         className="px-6 py-20 text-center"
       >
@@ -412,12 +497,12 @@ export default function PricingPage() {
           <Link
             href="/auth/signup"
             className="rounded-lg bg-gold px-8 py-3 text-sm font-bold uppercase tracking-widest text-teal-deep transition hover:bg-gold-light"
-            style={{ color: "var(--teal-deep)" }}
+            style={{ color: "var(--text-primary)" }}
           >
             Register free →
           </Link>
         </div>
       </section>
-    </>
+    </div>
   )
 }
