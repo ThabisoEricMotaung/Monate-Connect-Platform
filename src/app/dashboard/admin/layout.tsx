@@ -200,6 +200,21 @@ export default function AdminDashboardLayout({
           },
         ],
       },
+      ...(profile?.role === "admin"
+        ? [
+            {
+              label: "ADMIN",
+              divider: true,
+              items: [
+                {
+                  name: "Verifications",
+                  href: "/dashboard/admin/verifications",
+                  icon: "V",
+                },
+              ],
+            },
+          ]
+        : []),
       {
         label: "Procurement",
         items: [
@@ -279,7 +294,7 @@ export default function AdminDashboardLayout({
         ],
       },
     ],
-    [metrics],
+    [metrics, profile?.role],
   )
 
   if (checkingAccess) {
