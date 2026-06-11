@@ -48,6 +48,16 @@ function displayNameFromProfile(
   return fullName.split(/\s+/)[0] || "there"
 }
 
+function isMissingGreetingProfileColumnError(error: { message?: string } | null): boolean {
+  const message = error?.message ?? ""
+
+  return (
+    message.includes("dashboard_welcome_seen") ||
+    message.includes("schema cache") ||
+    message.includes("Could not find")
+  )
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [smartScore, setSmartScore] = useState<number | null>(null)
@@ -104,7 +114,7 @@ export default function DashboardPage() {
       const nextWeek = new Date(now)
       nextWeek.setDate(nextWeek.getDate() + 7)
 
-      const [profileRes, rfqRes, closingWeekRes, quoteRes] = await Promise.all([
+      const [initialProfileRes, rfqRes, closingWeekRes, quoteRes] = await Promise.all([
         supabase.from("profiles").select("verification_status, full_name, preferred_name, dashboard_welcome_seen").eq("id", user.id).maybeSingle(),
         supabase
           .from("rfqs")
@@ -121,11 +131,22 @@ export default function DashboardPage() {
           .lte("closing_date", nextWeek.toISOString()),
         supabase.from("quotes").select("id", { count: "exact", head: true }).eq("supplier_id", user.id),
       ])
+      let profileRes = initialProfileRes
+
+      if (profileRes.error && isMissingGreetingProfileColumnError(profileRes.error)) {
+        profileRes = await supabase
+          .from("profiles")
+          .select("verification_status, full_name, preferred_name")
+          .eq("id", user.id)
+          .maybeSingle()
+      }
 
       if (profileRes.data) {
         setVerificationStatus(profileRes.data.verification_status ?? null)
         setFirstName(displayNameFromProfile(profileRes.data, name))
-        setShowWelcomeBanner(profileRes.data.dashboard_welcome_seen === false)
+        setShowWelcomeBanner("dashboard_welcome_seen" in profileRes.data && profileRes.data.dashboard_welcome_seen === false)
+      } else if (profileRes.error) {
+        console.error("Dashboard profile fetch failed:", profileRes.error)
       }
 
       setOpenRFQCount(rfqRes.count ?? 0)

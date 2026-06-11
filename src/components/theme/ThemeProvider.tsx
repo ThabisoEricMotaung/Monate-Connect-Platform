@@ -19,22 +19,33 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
-const STORAGE_KEY = "monate-theme"
+const STORAGE_KEY = "mc-theme"
 
 const getSystemTheme = (): "dark" | "light" =>
   window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
 
+const getTimeOfDayDefault = (): "light" | "dark" => {
+  const h = new Date().getHours()
+  return h >= 6 && h <= 17 ? "light" : "dark"
+}
+
 const getPreferredTheme = (): ThemeMode => {
-  if (typeof window === "undefined") {
-    return "auto"
-  }
+  if (typeof window === "undefined") return "dark"
 
   const stored = window.localStorage.getItem(STORAGE_KEY)
-  if (stored === "dark" || stored === "light" || stored === "auto") {
-    return stored
+  if (stored === "dark" || stored === "light" || stored === "auto") return stored
+
+  // Migrate old keys
+  for (const oldKey of ["monate-theme", "mc-pricing-theme"]) {
+    const old = window.localStorage.getItem(oldKey)
+    if (old === "dark" || old === "light") {
+      window.localStorage.setItem(STORAGE_KEY, old)
+      window.localStorage.removeItem(oldKey)
+      return old as ThemeMode
+    }
   }
 
-  return "auto"
+  return getTimeOfDayDefault()
 }
 
 const applyTheme = (mode: ThemeMode) => {
@@ -42,6 +53,7 @@ const applyTheme = (mode: ThemeMode) => {
   const effectiveTheme = mode === "auto" ? getSystemTheme() : mode
   root.classList.remove("theme-light", "theme-dark")
   root.classList.add(`theme-${effectiveTheme}`)
+  root.setAttribute("data-theme", effectiveTheme)
 }
 
 const setStoredTheme = (mode: ThemeMode) => {
@@ -49,7 +61,7 @@ const setStoredTheme = (mode: ThemeMode) => {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<ThemeMode>("auto")
+  const [theme, setTheme] = useState<ThemeMode>("dark")
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {

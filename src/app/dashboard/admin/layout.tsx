@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { ReactNode, useEffect, useMemo, useState } from "react"
 import NotificationBell from "@/components/NotificationBell"
-import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
+import { getCurrentProfile } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 
 type BuyerProfile = {
@@ -113,8 +113,9 @@ export default function AdminDashboardLayout({
     async function checkAccess() {
       const currentProfile = await getCurrentProfile()
 
-      if (!hasAdminOrBuyerAccess(currentProfile)) {
-        router.replace("/dashboard")
+      const normalizedRole = currentProfile?.role?.trim().toLowerCase()
+      if (normalizedRole !== "admin") {
+        router.replace(normalizedRole === "buyer" ? "/dashboard/buyer" : "/dashboard")
         return
       }
 

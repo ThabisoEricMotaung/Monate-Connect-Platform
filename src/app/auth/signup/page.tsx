@@ -1,7 +1,6 @@
 ﻿"use client"
 
-import { useState, type FormEvent } from "react"
-import Image from "next/image"
+import { useEffect, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
@@ -46,6 +45,7 @@ const bbeeLevels = [
 ]
 
 type SignupForm = {
+  role: "supplier" | "buyer"
   fullName: string
   email: string
   password: string
@@ -71,6 +71,7 @@ const selectClass =
   "mt-2 w-full rounded-2xl border border-panel bg-surface px-5 py-4 text-primary outline-none transition focus:border-accent"
 
 const initialForm: SignupForm = {
+  role: "supplier",
   fullName: "",
   email: "",
   password: "",
@@ -184,6 +185,14 @@ export default function SignupPage() {
   const [resendMessage, setResendMessage] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("role") === "buyer") {
+      setForm((current) => ({ ...current, role: "buyer" }))
+    }
+  }, [])
+
+
   const updateField = <K extends keyof SignupForm>(field: K, value: SignupForm[K]) => {
     setForm((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: undefined, submit: undefined }))
@@ -255,7 +264,7 @@ export default function SignupPage() {
       options: {
         data: {
           full_name: form.fullName,
-          role: "supplier",
+          role: form.role,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -395,7 +404,7 @@ export default function SignupPage() {
       vat_number: form.vatNumber || null,
       verification_status: "pending",
       registration_complete: true,
-      role: "supplier",
+      role: form.role,
       smart_score: smartScore,
       updated_at: new Date().toISOString(),
     }, { onConflict: "id" })
@@ -408,7 +417,7 @@ export default function SignupPage() {
     setStep(5)
   }
   return (
-    <main className="flex min-h-screen items-center justify-center bg-page px-6 py-10 text-primary">
+    <main className="flex flex-1 items-center justify-center px-6 py-10">
       <div className="w-full max-w-3xl">
         <div className="rounded-3xl border border-panel bg-panel p-8 shadow-panel">
         <Stepper currentStep={step} onStepClick={setStep} />
@@ -417,7 +426,7 @@ export default function SignupPage() {
           {step === 1 && (
             <section>
               <div className="mb-8 text-center">
-                <p className="text-xs uppercase tracking-[0.24em] text-accent">Supplier onboarding</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-accent">{form.role === "buyer" ? "Buyer registration" : "Supplier onboarding"}</p>
                 <h1 className="mt-3 text-4xl font-semibold text-primary">Create your account</h1>
                 <p className="mt-3 text-sm leading-6 text-secondary">
                   Start with your login details. You&apos;ll add your business information next.
@@ -430,20 +439,48 @@ export default function SignupPage() {
                 </div>
               )}
 
+              <p className="mb-1 text-xs text-secondary">
+                <span className="font-semibold text-accent">*</span> Required fields
+              </p>
+
               <div className="space-y-5">
+                <div className="grid grid-cols-2 gap-3">
+                  {(["supplier", "buyer"] as const).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => updateField("role", r)}
+                      className={`flex flex-col items-start rounded-2xl border p-4 text-left transition ${
+                        form.role === r
+                          ? "border-accent bg-accent/5 ring-2 ring-accent/20"
+                          : "border-panel bg-surface hover:border-accent/50"
+                      }`}
+                    >
+                      <span className={`text-sm font-bold ${form.role === r ? "text-accent" : "text-primary"}`}>
+                        {r === "supplier" ? "I’m a Supplier" : "I’m a Buyer"}
+                      </span>
+                      <span className="mt-1 text-xs text-secondary">
+                        {r === "supplier" ? "Sell to government & corporates" : "Post RFQs & procure"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-secondary">Full name</label>
+                  <label className="block text-sm font-medium text-secondary">
+                    Full name <span className="font-semibold text-accent">*</span>
+                  </label>
                   <input type="text" value={form.fullName} onChange={(e) => updateField("fullName", e.target.value)} className={inputClass} />
                   <FieldError message={errors.fullName} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary">Work email address</label>
+                  <label className="block text-sm font-medium text-secondary">Work email address <span className="font-semibold text-accent">*</span></label>
                   <input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} className={inputClass} />
                   <p className="mt-2 text-xs leading-5 text-muted">Use your business email — it helps with verification.</p>
                   <FieldError message={errors.email} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary">Password</label>
+                  <label className="block text-sm font-medium text-secondary">Password <span className="font-semibold text-accent">*</span></label>
                   <input type="password" value={form.password} onChange={(e) => updateField("password", e.target.value)} className={inputClass} />
                   <FieldError message={errors.password} />
                 </div>
@@ -673,7 +710,7 @@ export default function SignupPage() {
           {step === 5 && (
             <section>
               <div className="text-center">
-                <p className="text-xs uppercase tracking-[0.24em] text-accent">Supplier onboarding</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-accent">{form.role === "buyer" ? "Buyer registration" : "Supplier onboarding"}</p>
                 <h1 className="mt-3 text-4xl font-semibold text-primary">
                   Welcome to Monate Connect, {preferredFirstName(form.fullName)}!
                 </h1>
@@ -702,9 +739,25 @@ export default function SignupPage() {
                 >
                   {resending ? "Resending…" : "Resend verification email"}
                 </button>
+                <p className="pt-1 text-center text-xs text-muted">
+                  Confirmed your email in another tab?
+                </p>
                 <Link
                   href="/auth/login"
-                  className="block w-full rounded-2xl border border-panel bg-panel py-4 text-center font-semibold text-secondary transition hover:bg-surface"
+                  className="block w-full rounded-2xl border py-4 text-center font-semibold transition"
+                  style={{
+                    borderColor: "rgba(201,168,76,0.5)",
+                    color: "#A8893B",
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(201,168,76,0.08)"
+                    e.currentTarget.style.borderColor = "rgba(201,168,76,0.75)"
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent"
+                    e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)"
+                  }}
                 >
                   Already verified? Log in →
                 </Link>
@@ -715,14 +768,11 @@ export default function SignupPage() {
         </div>
 
         <div className="mt-5 flex items-center justify-center gap-2 text-xs font-semibold text-muted">
-          <Image
-            src="/aiform-mark.png"
-            alt=""
-            width={14}
-            height={18}
-            className="h-[18px] w-auto"
-          />
-          <span>Powered by AiForm Studio</span>
+          <svg width="12" height="16" viewBox="0 0 12 16" fill="none" aria-hidden>
+            <path d="M6 1L1 4v4c0 3.3 2.1 6.4 5 7.4 2.9-1 5-4.1 5-7.4V4L6 1z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+            <path d="M4 8l1.5 1.5L8 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span>Secured by Monate Connect</span>
         </div>
 
       </div>

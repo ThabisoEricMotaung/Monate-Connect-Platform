@@ -269,9 +269,7 @@ export default function DashboardLayout({
   const [role, setRole] = useState<string | null>(null)
   const [roleChecked, setRoleChecked] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const canViewAdminNavigation = hasAdminOrBuyerAccess(
-    role ? { id: "", role } : null
-  )
+  const canViewAdminNavigation = role?.trim().toLowerCase() === "admin"
   
   function closeSidebar() {
     setSidebarOpen(false)
@@ -298,8 +296,14 @@ export default function DashboardLayout({
     const isAdminRoute = pathname.startsWith("/dashboard/admin")
     const canAccessAdmin = hasAdminOrBuyerAccess(role ? { id: "", role } : null)
 
-    if (pathname === "/dashboard" && canAccessAdmin) {
+    const normalizedRole = role?.trim().toLowerCase()
+    if (pathname === "/dashboard" && normalizedRole === "admin") {
       router.replace("/dashboard/admin")
+      return
+    }
+
+    if (pathname === "/dashboard" && normalizedRole === "buyer") {
+      router.replace("/dashboard/buyer")
       return
     }
 
@@ -309,6 +313,10 @@ export default function DashboardLayout({
   }, [pathname, role, roleChecked, router])
 
   if (pathname.startsWith("/dashboard/admin")) {
+    return <>{children}</>
+  }
+
+  if (pathname.startsWith("/dashboard/buyer")) {
     return <>{children}</>
   }
 

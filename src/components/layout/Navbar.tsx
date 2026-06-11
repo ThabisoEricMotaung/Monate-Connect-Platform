@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import AppearanceCore from "@/components/theme/AppearanceCore"
 import { useI18n } from "@/lib/i18n"
 import { usePathname } from "next/navigation"
 import { useRouter } from "next/navigation"
@@ -9,6 +8,10 @@ import { supabase } from "@/lib/supabase"
 
 const publicHeaderRoutes = new Set([
   "/",
+  "/auth/login",
+  "/auth/signup",
+  "/auth/verify-email",
+  "/auth/callback",
   "/opportunities",
   "/suppliers",
   "/trust",
@@ -90,10 +93,6 @@ export default function Navbar() {
             >
               {t("logout")}
             </button>
-          </div>
-
-          <div className="masthead__nav-actions">
-            <AppearanceCore />
           </div>
         </div>
       </nav>

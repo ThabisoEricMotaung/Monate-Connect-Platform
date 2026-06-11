@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 const supplierPlans = [
   {
@@ -249,42 +249,16 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 export default function PricingPage() {
   const [tab, setTab] = useState<"suppliers" | "buyers">("suppliers")
   const plans = tab === "suppliers" ? supplierPlans : buyerPlans
-  const [theme, setTheme] = useState<"light" | "dark">("dark")
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("mc-pricing-theme") as "light" | "dark" | null
-      if (stored === "light" || stored === "dark") {
-        setTheme(stored)
-        return
-      }
-      const h = new Date().getHours()
-      setTheme(h >= 6 && h <= 17 ? "light" : "dark")
-    } catch (e) {
-      setTheme("dark")
-    }
-  }, [])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("mc-pricing-theme", theme)
-    } catch (e) {}
-  }, [theme])
-
-  useEffect(() => {
-    try {
-      document.documentElement.setAttribute("data-theme", theme)
-    } catch (e) {}
-  }, [theme])
 
   return (
-    <div className="pricing-root" data-theme={theme}>
+    <div className="pricing-root">
       <style>{`
         .font-playfair { font-family: 'Playfair Display', Georgia, serif; }
         .pricing-root { transition: background-color 0.3s ease, color 0.3s ease; }
 
         /* Dark theme */
-        .pricing-root[data-theme="dark"] {
+        :root[data-theme="dark"] .pricing-root {
           --bg-hero: linear-gradient(160deg, #0D3030 0%, #071818 60%, #050F0F 100%);
           --bg-section: linear-gradient(180deg, #071818 0%, #050F0F 100%);
           --bg-card: rgba(255,255,255,0.04);
@@ -304,7 +278,7 @@ export default function PricingPage() {
         }
 
         /* Light theme */
-        .pricing-root[data-theme="light"] {
+        :root[data-theme="light"] .pricing-root {
           --bg-hero: linear-gradient(160deg, #F5F1E8 0%, #EFE9DC 100%);
           --bg-section: #F5F1E8;
           --bg-card: #FFFFFF;
@@ -351,9 +325,9 @@ export default function PricingPage() {
         .plan-card.featured:hover { transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 0 30px rgba(var(--gold-rgb),0.08); }
 
         /* Light theme: soft warm shadows on hover and featured card */
-        .pricing-root[data-theme="light"] .plan-card.not-featured:hover { box-shadow: 0 12px 30px rgba(var(--gold-rgb),0.06); }
-        .pricing-root[data-theme="light"] .plan-card.featured { box-shadow: 0 8px 30px rgba(var(--gold-rgb),0.08); }
-        .pricing-root[data-theme="light"] .plan-card.featured:hover { box-shadow: 0 12px 40px rgba(var(--gold-rgb),0.12); }
+        :root[data-theme="light"] .pricing-root .plan-card.not-featured:hover { box-shadow: 0 12px 30px rgba(var(--gold-rgb),0.06); }
+        :root[data-theme="light"] .pricing-root .plan-card.featured { box-shadow: 0 8px 30px rgba(var(--gold-rgb),0.08); }
+        :root[data-theme="light"] .pricing-root .plan-card.featured:hover { box-shadow: 0 12px 40px rgba(var(--gold-rgb),0.12); }
 
         /* Mappings for legacy tailwind-like utility classes used in JSX */
         .text-white { display: none; }
@@ -372,25 +346,6 @@ export default function PricingPage() {
         .use-bg-chip { background: var(--bg-chip) !important; }
         .use-border-subtle { border-color: var(--border-subtle) !important; }
 
-        /* Toggle button theme styling */
-        .pricing-toggle {
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(201,168,76,0.35);
-          box-shadow: 0 4px 20px rgba(0,0,0,0.45);
-          transition: all 0.3s ease, transform 0.2s ease;
-        }
-        .pricing-toggle:hover {
-          transform: scale(1.05);
-          border-color: #C9A84C;
-        }
-        .pricing-root[data-theme="light"] .pricing-toggle {
-          background: #FFFFFF;
-          border: 1px solid rgba(10,32,32,0.14);
-          box-shadow: 0 4px 16px rgba(10,32,32,0.12);
-        }
-        .pricing-root[data-theme="light"] .pricing-toggle:hover {
-          border-color: #A8893B;
-        }
 
         .text-gold\/60 { color: rgba(var(--gold-rgb),0.6) !important; }
         .border-gold\/30 { border-color: rgba(var(--gold-rgb),0.3) !important; }
@@ -400,24 +355,6 @@ export default function PricingPage() {
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
       `}</style>
 
-      {/* Theme toggle button */}
-      <button
-        aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
-        onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-        className="pricing-toggle fixed z-50 flex items-center justify-center rounded-full"
-        style={{ bottom: 'calc(var(--news-ticker-height) + 16px)', right: '24px', width: 44, height: 44 }}
-      >
-        {theme === "light" ? (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="#A8893B" />
-          </svg>
-        ) : (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <circle cx="12" cy="12" r="4" stroke="#C9A84C" strokeWidth="1.5" />
-            <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        )}
-      </button>
 
       {/* Hero */}
       <section

@@ -813,7 +813,8 @@ export default function NewRFQPage() {
       setSuccessMessage(
         status === "Open" ? "RFQ published successfully." : "RFQ draft saved successfully.",
       )
-      router.push(`/dashboard/admin/rfqs/${rfqData?.id}`)
+      const isBuyer = buyerProfile?.role?.trim().toLowerCase() === "buyer"
+      router.push(isBuyer ? "/dashboard/buyer/rfqs" : `/dashboard/admin/rfqs/${rfqData?.id}`)
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "RFQ creation failed.")
     } finally {

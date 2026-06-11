@@ -32,15 +32,20 @@ export const metadata: Metadata = {
 
 const themeScript = `(function() {
   try {
-    var stored = window.localStorage.getItem('monate-theme');
+    var h = new Date().getHours();
+    var todDefault = h >= 6 && h <= 17 ? 'light' : 'dark';
+    var stored = window.localStorage.getItem('mc-theme');
+    if (!stored) {
+      var old = window.localStorage.getItem('monate-theme') || window.localStorage.getItem('mc-pricing-theme');
+      if (old === 'dark' || old === 'light') { stored = old; window.localStorage.setItem('mc-theme', stored); }
+    }
     var theme = stored === 'dark' || stored === 'light'
       ? stored
       : stored === 'auto'
         ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-        : window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? 'dark'
-          : 'light';
+        : todDefault;
     document.documentElement.classList.add('theme-' + theme);
+    document.documentElement.setAttribute('data-theme', theme);
   } catch (e) {}
 })();`;
 
