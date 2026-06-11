@@ -44,11 +44,13 @@ export default function LoginPage() {
   const [loadingMessage, setLoadingMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
   const [verifiedNotice, setVerifiedNotice] = useState(false)
+  const [signedOutNotice, setSignedOutNotice] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get("role") === "buyer") setSelectedRole("buyer")
     if (params.get("verified") === "1") setVerifiedNotice(true)
+    if (params.get("signedout") === "1") setSignedOutNotice(true)
   }, [])
 
   const heading = selectedRole === "buyer" ? "Buyer login" : "Supplier login"
@@ -204,6 +206,14 @@ export default function LoginPage() {
             <div className="mb-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4">
               <p className="text-sm font-semibold text-emerald-700">
                 ✓ Email verified — please log in to continue.
+              </p>
+            </div>
+          )}
+
+          {signedOutNotice && (
+            <div className="mb-5 rounded-2xl border border-panel bg-surface px-5 py-4">
+              <p className="text-sm font-semibold text-secondary">
+                You&apos;ve been signed out
               </p>
             </div>
           )}

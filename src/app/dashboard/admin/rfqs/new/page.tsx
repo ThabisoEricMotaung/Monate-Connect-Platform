@@ -12,6 +12,7 @@ import {
 import { logActivity } from "@/lib/activity"
 import { logAuditAction } from "@/lib/audit"
 import { notifyNewRFQ, notifyRecommendedSuppliers } from "@/lib/automationRules"
+import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning"
 import { getCurrentProfile, getCurrentUser, hasAdminOrBuyerAccess } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 
@@ -410,6 +411,8 @@ export default function NewRFQPage() {
   const [draftId, setDraftId] = useState(() => crypto.randomUUID())
   const [pendingDraft, setPendingDraft] = useState<StoredDraft | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  useUnsavedChangesWarning(hasUnsavedChanges)
 
   useEffect(() => {
     let cancelled = false
@@ -544,6 +547,7 @@ export default function NewRFQPage() {
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: undefined }))
+    setHasUnsavedChanges(true)
   }
 
   function toggleProvince(province: string) {
@@ -568,6 +572,7 @@ export default function NewRFQPage() {
       ),
     }))
     setErrors((current) => ({ ...current, lineItems: undefined }))
+    setHasUnsavedChanges(true)
   }
 
   function addLineItem() {
@@ -575,6 +580,7 @@ export default function NewRFQPage() {
       ...current,
       lineItems: [...current.lineItems, createLineItem()],
     }))
+    setHasUnsavedChanges(true)
   }
 
   function removeLineItem(id: string) {
@@ -585,6 +591,7 @@ export default function NewRFQPage() {
           ? current.lineItems
           : current.lineItems.filter((item) => item.id !== id),
     }))
+    setHasUnsavedChanges(true)
   }
 
   function handleFiles(files: FileList | null) {
@@ -594,10 +601,12 @@ export default function NewRFQPage() {
       ...current,
       ...acceptedFiles.map((file) => ({ id: crypto.randomUUID(), file })),
     ])
+    if (acceptedFiles.length > 0) setHasUnsavedChanges(true)
   }
 
   function removeDocument(id: string) {
     setDocuments((current) => current.filter((document) => document.id !== id))
+    setHasUnsavedChanges(true)
   }
 
   function validateStep(targetStep: Step): boolean {
@@ -651,6 +660,7 @@ export default function NewRFQPage() {
     setForm(pendingDraft.form)
     setDraftId(pendingDraft.draftId)
     setPendingDraft(null)
+    setHasUnsavedChanges(true)
   }
 
   function discardDraft() {
@@ -814,6 +824,7 @@ export default function NewRFQPage() {
         status === "Open" ? "RFQ published successfully." : "RFQ draft saved successfully.",
       )
       const isBuyer = buyerProfile?.role?.trim().toLowerCase() === "buyer"
+      setHasUnsavedChanges(false)
       router.push(isBuyer ? "/dashboard/buyer/rfqs" : `/dashboard/admin/rfqs/${rfqData?.id}`)
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "RFQ creation failed.")
@@ -829,6 +840,7 @@ export default function NewRFQPage() {
       form,
     }
     writeStoredDraft(draft)
+    setHasUnsavedChanges(false)
     setSuccessMessage("Draft saved locally. You can continue editing from this browser.")
   }
 

@@ -9,6 +9,7 @@ import {
   getSmartScoreBreakdown,
   type SupplierSmartScoreProfile,
 } from "@/lib/smartScore"
+import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning"
 import { supabase } from "@/lib/supabase"
 
 // --- Types ---
@@ -361,10 +362,12 @@ function ProfileHeaderCard({
 function ProfileTab({
   profile,
   onSave,
+  onDirtyChange,
   saving,
 }: {
   profile: Profile
   onSave: (patch: Partial<Profile>) => Promise<SaveResult>
+  onDirtyChange: (dirty: boolean) => void
   saving: boolean
 }) {
   const [bizEdit, setBizEdit] = useState(false)
@@ -400,10 +403,12 @@ function ProfileTab({
 
   function handleBizChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setBizForm((p) => ({ ...p, [e.target.name]: e.target.value }))
+    onDirtyChange(true)
   }
 
   function handleCompChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setCompForm((p) => ({ ...p, [e.target.name]: e.target.value }))
+    onDirtyChange(true)
   }
 
   async function saveBiz() {
@@ -416,6 +421,7 @@ function ProfileTab({
       return
     }
     setBizEdit(false)
+    onDirtyChange(false)
     setLastSavedSection("business")
     setSaveSuccess("Saved successfully.")
   }
@@ -430,6 +436,7 @@ function ProfileTab({
       return
     }
     setCompEdit(false)
+    onDirtyChange(false)
     setLastSavedSection("compliance")
     setSaveSuccess("Saved successfully.")
   }
@@ -450,6 +457,7 @@ function ProfileTab({
     setSaveSuccess("")
     setLastSavedSection(null)
     setBizEdit(false)
+    onDirtyChange(false)
   }
 
   function cancelComp() {
@@ -465,6 +473,7 @@ function ProfileTab({
     setSaveSuccess("")
     setLastSavedSection(null)
     setCompEdit(false)
+    onDirtyChange(false)
   }
 
   return (
@@ -921,11 +930,13 @@ function BankingTab({
   bank,
   businessName,
   onBankSaved,
+  onDirtyChange,
 }: {
   userId: string
   bank: BankRecord | null
   businessName: string | null
   onBankSaved: (record: BankRecord) => void
+  onDirtyChange: (dirty: boolean) => void
 }) {
   const hasExisting = Boolean(bank?.id)
   const [editMode, setEditMode] = useState(!hasExisting)
@@ -944,6 +955,7 @@ function BankingTab({
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }))
     setError("")
     setSuccess("")
+    onDirtyChange(true)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -978,6 +990,7 @@ function BankingTab({
     }
     setSaving(false)
     setEditMode(false)
+    onDirtyChange(false)
     setSuccess("Banking details saved. A finance administrator will verify your details before payment can be processed.")
     try {
       await logActivity({ action: "supplier.banking_details_submitted", entity_type: "supplier_profile", entity_id: userId, metadata: { bank_name: form.bank_name } })
@@ -1089,7 +1102,7 @@ function BankingTab({
               {saving ? "Saving..." : "Save banking details"}
             </button>
             {hasExisting && editMode && (
-              <button type="button" onClick={() => { setEditMode(false); setError("") }} className="rounded-md border border-panel bg-card px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-surface">Cancel</button>
+              <button type="button" onClick={() => { setEditMode(false); setError(""); onDirtyChange(false) }} className="rounded-md border border-panel bg-card px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-surface">Cancel</button>
             )}
           </div>
         </form>
@@ -1205,22 +1218,6 @@ function RFQVisibilityCard({ profile }: { profile: Profile | null }) {
   )
 }
 
-// --- Unsaved changes banner ---
-
-function UnsavedBanner({ onStay, onLeave }: { onStay: () => void; onLeave: () => void }) {
-  return (
-    <div className="mb-4 rounded-md border border-warning/40 bg-warning/8 px-4 py-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs font-semibold text-warning">You have unsaved changes</p>
-        <div className="flex gap-2">
-          <button type="button" onClick={onStay} className="rounded-md border border-warning/40 bg-warning/10 px-3 py-1.5 text-xs font-semibold text-warning transition hover:bg-warning/20">Stay</button>
-          <button type="button" onClick={onLeave} className="rounded-md border border-panel bg-card px-3 py-1.5 text-xs font-semibold text-secondary transition hover:bg-surface">Leave anyway</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // --- Main page inner ---
 
 function ProfilePageInner() {
@@ -1233,7 +1230,6 @@ function ProfilePageInner() {
   }
 
   const [activeTab, setActiveTab] = useState<Tab>(resolveTab(searchParams.get("tab")))
-  const [pendingTab, setPendingTab] = useState<Tab | null>(null)
   const [hasUnsaved, setHasUnsaved] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [docUrls, setDocUrls] = useState<DocUrls>({
@@ -1249,6 +1245,7 @@ function ProfilePageInner() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [saving, setSaving] = useState(false)
+  const { confirmNavigation } = useUnsavedChangesWarning(hasUnsaved)
 
   useEffect(() => {
     setActiveTab(resolveTab(searchParams.get("tab")))
@@ -1330,16 +1327,12 @@ function ProfilePageInner() {
   }
 
   function requestTabChange(tab: Tab) {
-    if (hasUnsaved) {
-      setPendingTab(tab)
-    } else {
-      navigateToTab(tab)
-    }
+    if (hasUnsaved && !confirmNavigation()) return
+    navigateToTab(tab)
   }
 
   function navigateToTab(tab: Tab) {
     setActiveTab(tab)
-    setPendingTab(null)
     setHasUnsaved(false)
     const params = new URLSearchParams()
     if (tab !== "profile") params.set("tab", tab)
@@ -1392,12 +1385,6 @@ function ProfilePageInner() {
 
       {profile && <ProfileHeaderCard profile={profile} bank={bank} onTabChange={requestTabChange} />}
 
-      {pendingTab && (
-        <div className="mt-4">
-          <UnsavedBanner onStay={() => setPendingTab(null)} onLeave={() => navigateToTab(pendingTab)} />
-        </div>
-      )}
-
       <div className="mt-4 flex flex-col gap-4 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1">
           {!profile && (
@@ -1407,7 +1394,7 @@ function ProfilePageInner() {
             </div>
           )}
           {profile && activeTab === "profile" && (
-            <ProfileTab profile={profile} onSave={handleSave} saving={saving} />
+            <ProfileTab profile={profile} onSave={handleSave} onDirtyChange={setHasUnsaved} saving={saving} />
           )}
           {profile && activeTab === "verification" && (
             <VerificationTab profile={profile} docUrls={docUrls} userId={userId} onDocUploaded={handleDocUploaded} onTabChange={requestTabChange} />
@@ -1416,7 +1403,7 @@ function ProfilePageInner() {
             <DocumentsTab profile={profile} docUrls={docUrls} userId={userId} onDocUploaded={handleDocUploaded} />
           )}
           {activeTab === "banking" && (
-            <BankingTab userId={userId} bank={bank} businessName={profile?.business_name ?? null} onBankSaved={handleBankSaved} />
+            <BankingTab userId={userId} bank={bank} businessName={profile?.business_name ?? null} onBankSaved={handleBankSaved} onDirtyChange={setHasUnsaved} />
           )}
         </div>
 

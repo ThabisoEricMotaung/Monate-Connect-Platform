@@ -2,6 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
 
 const links = [
   { label: "Opportunities", href: "/opportunities" },
@@ -14,8 +16,51 @@ function isActiveLink(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
+function roleHome(role?: string | null): string {
+  const normalizedRole = role?.trim().toLowerCase()
+  if (normalizedRole === "admin") return "/dashboard/admin"
+  if (normalizedRole === "buyer") return "/dashboard/buyer"
+  return "/dashboard"
+}
+
 export default function PublicHeader() {
   const pathname = usePathname() || "/"
+  const [dashboardHref, setDashboardHref] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadSession() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.user) {
+        if (!cancelled) setDashboardHref(null)
+        return
+      }
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .maybeSingle()
+
+      if (!cancelled) setDashboardHref(roleHome((data as { role?: string | null } | null)?.role))
+    }
+
+    loadSession()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    setDashboardHref(null)
+    window.location.assign("/auth/login?signedout=1")
+  }
 
   return (
     <header className="border-b border-panel bg-card text-primary shadow-panel">
@@ -47,12 +92,25 @@ export default function PublicHeader() {
           </nav>
 
           <div className="flex flex-wrap gap-2">
-            <Link href="/auth/login" className="masthead__btn-secondary">
-              Log in
-            </Link>
-            <Link href="/auth/signup" className="masthead__btn-primary">
-              Register
-            </Link>
+            {dashboardHref ? (
+              <>
+                <Link href={dashboardHref} className="masthead__btn-primary">
+                  Go to dashboard
+                </Link>
+                <button type="button" onClick={handleLogout} className="masthead__btn-secondary">
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/login" className="masthead__btn-secondary">
+                  Log in
+                </Link>
+                <Link href="/auth/signup" className="masthead__btn-primary">
+                  Register
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

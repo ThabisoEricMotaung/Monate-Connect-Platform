@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { ReactNode, useEffect, useMemo, useState } from "react"
+import AccountMenu from "@/components/AccountMenu"
 import NotificationBell from "@/components/NotificationBell"
 import { getCurrentProfile } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
@@ -11,6 +12,8 @@ type BuyerProfile = {
   id: string
   business_name: string | null
   email: string | null
+  full_name?: string | null
+  preferred_name?: string | null
   role: string | null
 }
 
@@ -42,16 +45,6 @@ const emptyMetrics: ShellMetrics = {
   unreviewedQuotes: 0,
   shortlistedSuppliers: 0,
   unreadMessages: 0,
-}
-
-function initialsFromProfile(profile: BuyerProfile | null): string {
-  const source = profile?.business_name || profile?.email || "Buyer"
-  const parts = source.split(/\s|@/).filter(Boolean)
-
-  return parts
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "B"
 }
 
 function isActivePath(pathname: string, href: string): boolean {
@@ -129,7 +122,7 @@ export default function AdminDashboardLayout({
 
       const { data } = await supabase
         .from("profiles")
-        .select("id, business_name, email, role")
+        .select("id, business_name, email, full_name, preferred_name, role")
         .eq("id", currentProfile?.id)
         .maybeSingle()
 
@@ -367,7 +360,7 @@ export default function AdminDashboardLayout({
       <section className="flex-1 min-w-0 overflow-x-hidden p-6 md:p-8">
         <div className="dashboard-chrome print:hidden mb-6 flex items-center justify-between gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
           <Link
-            href="/"
+            href="/dashboard/admin"
             className="flex min-w-0 items-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
           >
             <div className="logo-mark flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-accent text-button text-lg font-extrabold shadow-md">
@@ -385,9 +378,7 @@ export default function AdminDashboardLayout({
 
           <div className="flex items-center gap-3">
             <NotificationBell />
-            <div className="flex h-11 w-11 items-center justify-center rounded-full border border-panel bg-panel text-sm font-bold text-heading shadow-sm">
-              {initialsFromProfile(profile)}
-            </div>
+            <AccountMenu profile={profile} />
           </div>
         </div>
 

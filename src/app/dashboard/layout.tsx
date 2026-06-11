@@ -3,9 +3,11 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
+import AccountMenu, { type AccountMenuProfile } from "@/components/AccountMenu"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
+import { supabase } from "@/lib/supabase"
 
 type SupplierNavigationName =
   | TranslationKey
@@ -267,6 +269,7 @@ export default function DashboardLayout({
   const router = useRouter()
   const pathname = usePathname() || ""
   const [role, setRole] = useState<string | null>(null)
+  const [profile, setProfile] = useState<AccountMenuProfile | null>(null)
   const [roleChecked, setRoleChecked] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const canViewAdminNavigation = role?.trim().toLowerCase() === "admin"
@@ -281,9 +284,21 @@ export default function DashboardLayout({
 
   useEffect(() => {
     async function loadRole() {
-      const profile = await getCurrentProfile()
+      const currentProfile = await getCurrentProfile()
 
-      setRole(profile?.role ?? "supplier")
+      if (supabase && currentProfile?.id) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("business_name, email, full_name, preferred_name, role")
+          .eq("id", currentProfile.id)
+          .maybeSingle()
+
+        setProfile((data as AccountMenuProfile | null) ?? null)
+        setRole((data as { role?: string | null } | null)?.role ?? currentProfile.role ?? "supplier")
+      } else {
+        setRole(currentProfile?.role ?? "supplier")
+      }
+
       setRoleChecked(true)
     }
 
@@ -337,7 +352,7 @@ export default function DashboardLayout({
             <line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2">
           <div className="logo-mark flex h-10 w-10 items-center justify-center rounded-md bg-accent text-button font-extrabold text-lg shadow-md">
             <span className="sr-only">Monate</span>
             M
@@ -347,7 +362,7 @@ export default function DashboardLayout({
             <h2 className="text-sm font-semibold text-primary leading-none">Monate</h2>
           </div>
         </Link>
-        <div className="w-10" />
+        <AccountMenu profile={profile} />
       </header>
 
       {/* Mobile backdrop */}
@@ -387,7 +402,7 @@ export default function DashboardLayout({
         </div>
 
         <div className="mb-6 flex items-center gap-3 border-b border-panel pb-5">
-          <Link href="/" onClick={closeSidebar} className="flex items-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+          <Link href="/dashboard" onClick={closeSidebar} className="flex items-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
             <div className="logo-mark flex h-14 w-14 items-center justify-center rounded-md bg-accent text-button font-extrabold text-xl shadow-md">
               <span className="sr-only">Monate</span>
               M
@@ -503,7 +518,12 @@ export default function DashboardLayout({
 
       {/* Main content area - padding-bottom accounts for fixed news ticker */}
       <section className="flex-1 min-w-0 overflow-x-hidden mt-16 md:mt-0 p-4 md:p-6 lg:p-8" style={{ paddingBottom: 'var(--news-ticker-height)' }}>
-        <div className="print:hidden"><Breadcrumbs /></div>
+        <div className="print:hidden mb-4 flex items-center justify-between gap-4">
+          <Breadcrumbs />
+          <div className="hidden md:block">
+            <AccountMenu profile={profile} />
+          </div>
+        </div>
         {children}
         <footer className="mt-10 flex flex-col gap-3 border-t border-panel pt-5 text-xs font-semibold text-muted sm:flex-row sm:items-center sm:justify-between">
           <p>&copy; 2026 Monate Connect &middot; Procurement Edition</p>
