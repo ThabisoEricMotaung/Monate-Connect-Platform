@@ -232,7 +232,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
     <div className="border-b border-subtle py-5">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-start justify-between gap-4 text-left"
+        className="pricing-hover-tint flex w-full items-start justify-between gap-4 rounded-md px-2 py-1 text-left"
       >
         <span className="font-playfair text-lg text-primary">{q}</span>
         <span className="mt-0.5 shrink-0 text-gold text-xl leading-none transition-transform duration-200" style={{ transform: open ? "rotate(45deg)" : "rotate(0deg)" }}>
@@ -317,7 +317,10 @@ export default function PricingPage() {
         .bg-card-featured { background: var(--bg-card-featured) !important; }
         .bg-chip { background: var(--bg-chip) !important; }
         .border-subtle { border-color: var(--border-subtle) !important; }
-        .cta-outline { border: 1px solid var(--cta-outline-border); color: var(--text-secondary); }
+        .cta-outline { border: 1px solid var(--cta-outline-border); color: var(--text-secondary); transition: background 200ms ease, border-color 200ms ease, color 200ms ease; }
+        .cta-outline:hover, .cta-outline:focus-visible { background: rgba(var(--gold-rgb),0.10); border-color: rgba(var(--gold-rgb),0.45); color: var(--gold); outline: none; }
+        .pricing-hover-tint { transition: background 200ms ease, color 200ms ease; }
+        .pricing-hover-tint:hover, .pricing-hover-tint:focus-visible { background: rgba(var(--gold-rgb),0.10); color: var(--gold) !important; outline: none; }
 
         .plan-card { cursor: default; background: var(--bg-card); border-color: var(--border-subtle); transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease; }
         .plan-card.featured { background: var(--bg-card-featured); border-color: var(--gold); }
@@ -384,7 +387,7 @@ export default function PricingPage() {
               className={`rounded-lg px-8 py-2.5 text-sm font-semibold uppercase tracking-widest transition-all duration-200 ${
                 tab === t
                   ? "bg-gold text-on-gold shadow-sm"
-                  : "use-text-secondary"
+                  : "pricing-hover-tint use-text-secondary"
               }`}
             >
               {t === "suppliers" ? "Suppliers" : "Buyers & teams"}

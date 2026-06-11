@@ -25,8 +25,9 @@ const CTA_STYLES = `
     display: inline-block;
   }
   .cta-btn-gold:hover {
-    background: transparent;
-    color: #c8a060;
+    background: #DFC06E;
+    border-color: #DFC06E;
+    color: #1a3a2a;
   }
   .cta-btn-outline {
     background: transparent;
@@ -46,8 +47,8 @@ const CTA_STYLES = `
     display: inline-block;
   }
   .cta-btn-outline:hover {
-    background: #c8a060;
-    color: #1a3a2a;
+    background: rgba(200, 160, 96, 0.10);
+    color: #DFC06E;
   }
   @media (max-width: 767px) {
     .cta-wrap {

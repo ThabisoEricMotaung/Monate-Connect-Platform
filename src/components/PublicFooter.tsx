@@ -46,7 +46,7 @@ export default function PublicFooter() {
           <h2 className="mt-3 font-serif text-3xl font-bold text-heading">
             Public procurement intelligence, clearly signposted
           </h2>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-secondary">
+          <p className="mt-4 max-w-2xl text-base leading-7 text-secondary">
             Public information for suppliers, buyers, pilot partners and procurement stakeholders.
             Legal and policy pages contain professional placeholder language and are not final legal
             advice.
@@ -56,7 +56,7 @@ export default function PublicFooter() {
         <nav className="grid gap-5 sm:grid-cols-3" aria-label="Public footer navigation">
           {footerSections.map((section) => (
             <div key={section.title} className="rounded-md border border-panel bg-panel p-4">
-              <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-muted">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">
                 {section.title}
               </p>
               <div className="mt-4 grid gap-2">
@@ -64,7 +64,7 @@ export default function PublicFooter() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="text-sm font-semibold text-secondary transition hover:text-accent"
+                    className="text-base font-semibold text-secondary transition hover:text-accent"
                   >
                     {link.label}
                   </Link>
@@ -76,10 +76,10 @@ export default function PublicFooter() {
       </div>
       <div className="mx-auto flex max-w-7xl flex-col gap-3 border-t border-panel px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-          <p className="text-xs font-semibold text-muted">
+          <p className="text-sm font-semibold text-muted">
             &copy; 2026 Monate Connect &middot; Procurement Edition
           </p>
-          <div className="flex items-center gap-2 text-xs font-semibold text-muted">
+          <div className="flex items-center gap-2 text-sm font-semibold text-muted">
             <Image
               src="/aiform-mark.png"
               alt=""
@@ -93,7 +93,7 @@ export default function PublicFooter() {
         <button
           type="button"
           onClick={openAccessibility}
-          className="w-fit text-xs font-semibold text-muted underline-offset-4 transition hover:text-accent hover:underline"
+          className="w-fit text-sm font-semibold text-muted underline-offset-4 transition hover:text-accent hover:underline"
         >
           Accessibility
         </button>

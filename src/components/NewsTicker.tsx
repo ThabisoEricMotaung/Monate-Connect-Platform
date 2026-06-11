@@ -152,9 +152,18 @@ function TickerItem({ update, index }: { update: TickerUpdate; index: number }) 
 
 export default function NewsTicker() {
   const [liveUpdates, setLiveUpdates] = useState<TickerUpdate[] | null>(null);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+
+    if (window.sessionStorage.getItem("monate-news-ticker-dismissed") === "1") {
+      document.documentElement.style.setProperty("--news-ticker-height", "0px");
+      setDismissed(true);
+      return;
+    }
+
+    document.documentElement.style.removeProperty("--news-ticker-height");
 
     async function loadLatestRFQs() {
       if (!supabase) return;
@@ -178,6 +187,14 @@ export default function NewsTicker() {
     };
   }, []);
 
+  function dismissTicker() {
+    window.sessionStorage.setItem("monate-news-ticker-dismissed", "1");
+    document.documentElement.style.setProperty("--news-ticker-height", "0px");
+    setDismissed(true);
+  }
+
+  if (dismissed) return null;
+
   const sourceItems = liveUpdates?.length ? liveUpdates : updates;
   const tickerItems = [...sourceItems, ...sourceItems];
 
@@ -195,6 +212,14 @@ export default function NewsTicker() {
           ))}
         </div>
       </div>
+      <button
+        type="button"
+        className="news-ticker__dismiss"
+        onClick={dismissTicker}
+        aria-label="Dismiss procurement wire"
+      >
+        ×
+      </button>
     </aside>
   );
 }

@@ -228,7 +228,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setSelectedRole("supplier")}
-                className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                className={`rounded-xl px-4 py-3 text-sm font-semibold transition duration-200 ${
                   selectedRole === "supplier"
                     ? "bg-accent text-button shadow-sm"
                     : "text-secondary hover:bg-panel hover:text-primary"
@@ -239,7 +239,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setSelectedRole("buyer")}
-                className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                className={`rounded-xl px-4 py-3 text-sm font-semibold transition duration-200 ${
                   selectedRole === "buyer"
                     ? "bg-accent text-button shadow-sm"
                     : "text-secondary hover:bg-panel hover:text-primary"
@@ -293,7 +293,7 @@ export default function LoginPage() {
               type="button"
               onClick={handleLogin}
               disabled={loading}
-              className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50"
+              className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50"
             >
               {loading ? loadingMessage : "Log in"}
             </button>

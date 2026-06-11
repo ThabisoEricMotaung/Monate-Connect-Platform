@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { requireAdminOrBuyer } from "@/lib/auth"
+import { formatRand, parseMoney } from "@/lib/format"
 import { supabase } from "@/lib/supabase"
 
 type RfqRow = {
@@ -119,29 +120,8 @@ function normalizeStatus(status: string | null): string {
   return String(status ?? "").trim().toLowerCase()
 }
 
-function parseMoney(value: string | number | null | undefined): number {
-  if (typeof value === "number") return Number.isFinite(value) ? value : 0
-  if (!value) return 0
-
-  const normalized = String(value)
-    .replace(/[Rr]/g, "")
-    .replace(/\s/g, "")
-    .replace(/,/g, "")
-    .replace(/[^\d.]/g, "")
-  const parsed = Number(normalized)
-
-  return Number.isFinite(parsed) ? parsed : 0
-}
-
-function formatSpend(value: number): string {
-  if (value >= 1_000_000) return `R ${(value / 1_000_000).toFixed(1)}m`
-  if (value >= 1_000) return `R ${Math.round(value / 1_000).toLocaleString("en-ZA")}k`
-
-  return `R ${Math.round(value).toLocaleString("en-ZA")}`
-}
-
 function formatCurrency(value: string | number | null | undefined): string {
-  return `R ${Math.round(parseMoney(value)).toLocaleString("en-ZA")}`
+  return formatRand(value)
 }
 
 function formatDate(value: string | null): string {
@@ -566,7 +546,7 @@ export default function AdminOverviewPage() {
               },
               {
                 label: "YTD spend",
-                value: formatSpend(derived.ytdSpend),
+                value: formatRand(derived.ytdSpend),
                 sub: `${derived.spendChange >= 0 ? "+" : ""}${derived.spendChange}% vs last year`,
                 tone: derived.spendChange >= 0 ? "text-success" : "text-warning",
               },
@@ -747,7 +727,7 @@ export default function AdminOverviewPage() {
                     <div key={row.category}>
                       <div className="mb-1 flex items-center justify-between gap-3">
                         <p className="truncate text-xs font-semibold text-heading">{row.category}</p>
-                        <p className="text-xs font-bold text-heading">{formatSpend(row.value)}</p>
+                        <p className="text-xs font-bold text-heading">{formatRand(row.value)}</p>
                       </div>
                       <div className="h-2 overflow-hidden rounded-full bg-panel">
                         <div
@@ -794,7 +774,7 @@ export default function AdminOverviewPage() {
                             {bucket.label}
                           </p>
                           <p className={`mt-2 text-lg font-bold ${bucket.tone}`}>{bucket.percent}%</p>
-                          <p className="mt-1 text-[0.68rem] text-secondary">{formatSpend(bucket.value)}</p>
+                          <p className="mt-1 text-[0.68rem] text-secondary">{formatRand(bucket.value)}</p>
                         </div>
                       ))}
                     </div>

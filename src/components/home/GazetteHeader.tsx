@@ -15,14 +15,11 @@ export default function GazetteHeader() {
           South Africa&#39;s Verified Procurement Network &middot; Pilot Edition
         </span>
       </div>
-      <div className="gz-secondary" style={{ background: '#f8f4ec', borderBottom: '2px solid #1a3a2a', padding: '4px 24px', gap: 12 }}>
-        <span className="gz-side" style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6a5a3a', fontFamily: 'system-ui, sans-serif', whiteSpace: 'nowrap' }}>
-          Vol. 1 &middot; No. 1
-        </span>
-        <span style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6a5a3a', fontFamily: 'system-ui, sans-serif' }}>
+      <div className="gz-secondary" style={{ background: '#f8f4ec', borderBottom: '2px solid #1a3a2a', padding: '2px 24px', gap: 12 }}>
+        <span style={{ fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6a5a3a', fontFamily: 'system-ui, sans-serif' }}>
           CSD &middot; BBBEE &middot; SARS &middot; CIPC &middot; National Treasury
         </span>
-        <span className="gz-side" style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6a5a3a', fontFamily: 'system-ui, sans-serif', whiteSpace: 'nowrap' }}>
+        <span className="gz-side" style={{ fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6a5a3a', fontFamily: 'system-ui, sans-serif', whiteSpace: 'nowrap' }}>
           Free during pilot &middot; Until Aug 2026
         </span>
       </div>

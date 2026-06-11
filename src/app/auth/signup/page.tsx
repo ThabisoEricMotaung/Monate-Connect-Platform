@@ -489,7 +489,7 @@ export default function SignupPage() {
                   type="button"
                   onClick={handleStep1}
                   disabled={loading}
-                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50"
+                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50"
                 >
                   {loading ? "Creating account…" : "Continue →"}
                 </button>
@@ -560,7 +560,7 @@ export default function SignupPage() {
                     const selected = form.provinces.includes(province)
                     return (
                       <button key={province} type="button" onClick={() => toggleProvince(province)}
-                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${selected ? "border-accent bg-accent text-button" : "border-panel bg-surface text-secondary hover:border-accent hover:text-accent"}`}
+                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition duration-200 ${selected ? "border-accent bg-accent text-button" : "border-panel bg-surface text-secondary hover:border-accent hover:bg-accent/10 hover:text-accent"}`}
                       >
                         {province}
                       </button>
@@ -572,10 +572,10 @@ export default function SignupPage() {
 
               <div className="mt-7 space-y-3">
                 <button type="button" onClick={handleStep2Save} disabled={loading}
-                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50">
+                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
                   {loading ? "Saving…" : "Continue →"}
                 </button>
-                <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition hover:bg-surface">
+                <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
                   ← Back
                 </button>
               </div>
@@ -631,10 +631,10 @@ export default function SignupPage() {
 
               <div className="mt-7 space-y-3">
                 <button type="button" onClick={handleStep3Save} disabled={loading}
-                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50">
+                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
                   {loading ? "Saving…" : "Continue →"}
                 </button>
-                <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition hover:bg-surface">
+                <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
                   ← Back
                 </button>
               </div>
@@ -697,10 +697,10 @@ export default function SignupPage() {
 
               <div className="mt-7 space-y-3">
                 <button type="submit" disabled={loading}
-                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50">
+                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
                   {loading ? "Submitting registration…" : "Submit registration"}
                 </button>
-                <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition hover:bg-surface">
+                <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
                   ← Back
                 </button>
               </div>
@@ -735,7 +735,7 @@ export default function SignupPage() {
                   type="button"
                   onClick={handleResendVerification}
                   disabled={resending}
-                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50"
+                  className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50"
                 >
                   {resending ? "Resending…" : "Resend verification email"}
                 </button>

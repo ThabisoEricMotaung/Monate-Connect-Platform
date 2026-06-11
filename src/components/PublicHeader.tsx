@@ -83,7 +83,7 @@ export default function PublicHeader() {
                 className={`rounded-md border px-3 py-2 text-xs font-semibold transition ${
                   isActiveLink(pathname, link.href)
                     ? "border-accent bg-accent text-button"
-                    : "border-panel bg-panel text-secondary hover:border-accent hover:text-accent"
+                    : "border-panel bg-panel text-secondary hover:border-accent hover:bg-accent/10 hover:text-accent"
                 }`}
               >
                 {link.label}

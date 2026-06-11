@@ -370,7 +370,7 @@ export default function TrustCentrePage() {
                     <button
                       type="button"
                       onClick={() => setOpenFaq(isOpen ? -1 : index)}
-                      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+                      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors duration-200 hover:bg-accent/10"
                       aria-expanded={isOpen}
                     >
                       <span className="text-sm font-bold text-heading">{faq.question}</span>

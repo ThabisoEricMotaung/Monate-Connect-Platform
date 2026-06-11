@@ -103,14 +103,14 @@ function VerifyEmailContent() {
             type="button"
             onClick={handleResend}
             disabled={resending}
-            className="w-full rounded-2xl border border-panel bg-surface py-4 text-sm font-semibold text-secondary transition hover:border-accent hover:text-accent disabled:opacity-50"
+            className="w-full rounded-2xl border border-panel bg-surface py-4 text-sm font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent disabled:opacity-50"
           >
             {resending ? "Sending…" : "Resend verification email"}
           </button>
 
           <Link
             href="/dashboard"
-            className="block w-full rounded-2xl bg-accent py-4 text-sm font-semibold text-button transition hover:bg-accent-strong"
+            className="block w-full rounded-2xl bg-accent py-4 text-sm font-semibold text-button transition duration-200 hover:bg-accent-strong"
           >
             Already verified? Continue to dashboard →
           </Link>
