@@ -374,12 +374,22 @@ export default function PricingPage() {
 
         /* Toggle button theme styling */
         .pricing-toggle {
-          background: var(--bg-chip);
-          border-color: var(--border-subtle);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(201,168,76,0.35);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.45);
+          transition: all 0.3s ease, transform 0.2s ease;
+        }
+        .pricing-toggle:hover {
+          transform: scale(1.05);
+          border-color: #C9A84C;
         }
         .pricing-root[data-theme="light"] .pricing-toggle {
-          box-shadow: 0 2px 8px rgba(10, 32, 32, 0.12);
+          background: #FFFFFF;
+          border: 1px solid rgba(10,32,32,0.14);
+          box-shadow: 0 4px 16px rgba(10,32,32,0.12);
+        }
+        .pricing-root[data-theme="light"] .pricing-toggle:hover {
+          border-color: #A8893B;
         }
 
         .text-gold\/60 { color: rgba(var(--gold-rgb),0.6) !important; }
@@ -392,19 +402,19 @@ export default function PricingPage() {
 
       {/* Theme toggle button */}
       <button
-        aria-label="Toggle theme"
+        aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
         onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-        className="pricing-toggle fixed z-50 flex h-12 w-12 items-center justify-center rounded-full border"
-        style={{ bottom: 'calc(var(--news-ticker-height) + 16px)', right: '24px', transition: 'background 0.3s, transform 0.2s' }}
+        className="pricing-toggle fixed z-50 flex items-center justify-center rounded-full"
+        style={{ bottom: 'calc(var(--news-ticker-height) + 16px)', right: '24px', width: 44, height: 44 }}
       >
-        {theme === "dark" ? (
+        {theme === "light" ? (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="var(--gold)" />
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="#A8893B" />
           </svg>
         ) : (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M12 4v2M12 18v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="12" cy="12" r="3" stroke="var(--gold)" strokeWidth="1.5" />
+            <circle cx="12" cy="12" r="4" stroke="#C9A84C" strokeWidth="1.5" />
+            <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         )}
       </button>
