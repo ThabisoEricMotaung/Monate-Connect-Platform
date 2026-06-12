@@ -43,7 +43,7 @@ export default function PublicFooter() {
           <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-accent">
             Monate Connect
           </p>
-          <h2 className="mt-3 font-serif text-3xl font-bold text-heading">
+          <h2 className="mt-3 font-display text-3xl font-bold text-heading">
             Public procurement intelligence, clearly signposted
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-7 text-secondary">

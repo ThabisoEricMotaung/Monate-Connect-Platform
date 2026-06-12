@@ -38,11 +38,11 @@ export default async function SupplierSpotlight() {
 
       <div className="mb-14 text-center">
 
-        <h2 className="text-4xl font-bold md:text-5xl">
+        <h2 className="font-display text-4xl font-bold md:text-5xl">
           Trusted Supplier Network
         </h2>
 
-        <p className="mx-auto mt-4 max-w-3xl text-lg text-secondary">
+        <p className="mx-auto mt-4 max-w-3xl font-serif text-lg text-secondary">
           Discover emerging African suppliers ready for procurement opportunities.
         </p>
 
@@ -57,7 +57,7 @@ export default async function SupplierSpotlight() {
       {!loadError && suppliers.length === 0 && (
         <div className="rounded-3xl border border-panel bg-card p-10 text-center">
           <p className="text-sm font-semibold text-heading">No verified suppliers available yet.</p>
-          <p className="mt-2 text-sm text-muted">
+          <p className="mt-2 font-serif text-sm text-muted">
             Verified supplier profiles will appear here as the network grows.
           </p>
         </div>
@@ -85,11 +85,11 @@ export default async function SupplierSpotlight() {
 
               </div>
 
-              <h3 className="text-2xl font-semibold text-heading">
+              <h3 className="font-display text-2xl font-semibold text-heading">
                 {supplier.business_name || "Supplier"}
               </h3>
 
-              <p className="mt-3 text-secondary">
+              <p className="mt-3 font-serif text-secondary">
                 {supplier.industry || "Procurement Supplier"}
               </p>
 

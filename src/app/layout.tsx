@@ -1,6 +1,6 @@
 ﻿import type { Metadata } from "next";
 import Script from "next/script";
-import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+import { Libre_Franklin, Playfair_Display, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { I18nProvider } from "@/lib/i18n";
@@ -8,20 +8,26 @@ import AccessibilityPanel from "@/components/AccessibilityPanel";
 import Navbar from "@/components/layout/Navbar";
 import NewsTicker from "@/components/NewsTicker";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
 const playfair = Playfair_Display({
-  variable: "--font-playfair-display",
+  variable: "--font-display",
   subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const sourceSerif = Source_Serif_4({
+  variable: "--font-body",
   subsets: ["latin"],
+  weight: ["400", "600"],
+  display: "swap",
+});
+
+const libreFranklin = Libre_Franklin({
+  variable: "--font-ui",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -84,16 +90,9 @@ export default function RootLayout({
       data-reading-mode="off"
       data-low-data="off"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${playfair.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${playfair.variable} ${sourceSerif.variable} ${libreFranklin.variable} h-full antialiased`}
     >
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=IM+Fell+English:ital@0;1&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+      <head />
       <Script
         id="theme-script"
         strategy="beforeInteractive"

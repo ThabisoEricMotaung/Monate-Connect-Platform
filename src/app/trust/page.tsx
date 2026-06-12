@@ -236,17 +236,17 @@ export default function TrustCentrePage() {
             <span className="inline-flex rounded-full border border-success bg-success-soft px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-success">
               Built for South African procurement
             </span>
-            <h1 className="mt-6 text-4xl font-semibold leading-tight text-heading md:text-5xl">
+            <h1 className="mt-6 font-display text-4xl font-semibold leading-tight text-heading md:text-5xl">
               How trust works on Monate Connect
             </h1>
-            <p className="mx-auto mt-5 max-w-[520px] text-base leading-8 text-secondary">
+            <p className="mx-auto mt-5 max-w-[520px] font-serif text-base leading-8 text-secondary">
               Every supplier on the platform is verified against the Central Supplier Database,
               BBBEE records, and SARS tax status before they can respond to a single RFQ.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               {stats.map((stat) => (
                 <div key={stat.label} className="rounded-md border border-panel bg-panel px-4 py-3 text-left shadow-panel">
-                  <p className="text-xl font-bold text-heading">{stat.value}</p>
+                  <p className="text-xl font-bold tabular-nums text-heading">{stat.value}</p>
                   <p className="mt-1 text-xs text-secondary">{stat.label}</p>
                 </div>
               ))}
@@ -256,8 +256,8 @@ export default function TrustCentrePage() {
 
         <section className="mx-auto max-w-[860px] px-6 py-16">
           <p className="newspaper-kicker">For buyers</p>
-          <h2 className="mt-3 text-3xl font-semibold text-heading">How we verify every supplier</h2>
-          <p className="mt-4 text-sm leading-7 text-secondary">
+          <h2 className="mt-3 font-display text-3xl font-semibold text-heading">How we verify every supplier</h2>
+          <p className="mt-4 font-serif text-sm leading-7 text-secondary">
             Before a supplier can respond to any RFQ on Monate Connect, they go through a mandatory
             3-stage verification process. No shortcuts.
           </p>
@@ -277,15 +277,15 @@ export default function TrustCentrePage() {
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-lg font-semibold text-heading">
+                      <h3 className="font-display text-lg font-semibold text-heading">
                         Step {index + 1} - {step.title}
                       </h3>
                       <span className="rounded-md border border-panel bg-panel px-2 py-1 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-secondary">
                         {step.badge}
                       </span>
                     </div>
-                    <p className="mt-3 text-sm leading-7 text-secondary">{step.description}</p>
-                    <p className="mt-3 text-xs leading-6 text-muted">{step.detail}</p>
+                    <p className="mt-3 font-serif text-sm leading-7 text-secondary">{step.description}</p>
+                    <p className="mt-3 font-serif text-xs leading-6 text-muted">{step.detail}</p>
                   </div>
                 </div>
               </article>
@@ -296,8 +296,8 @@ export default function TrustCentrePage() {
         <section className="border-y border-panel bg-card">
           <div className="mx-auto max-w-[860px] px-6 py-16">
             <p className="newspaper-kicker">Trust scoring</p>
-            <h2 className="mt-3 text-3xl font-semibold text-heading">What is SmartScore?</h2>
-            <p className="mt-4 text-sm leading-7 text-secondary">
+            <h2 className="mt-3 font-display text-3xl font-semibold text-heading">What is SmartScore?</h2>
+            <p className="mt-4 font-serif text-sm leading-7 text-secondary">
               SmartScore is a 0-100 trust rating that tells buyers at a glance how complete,
               verified, and active a supplier is on the platform. It&apos;s calculated from
               objective compliance data - not reviews or self-reported information.
@@ -311,9 +311,9 @@ export default function TrustCentrePage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-heading">{row.name}</h3>
-                    <p className="mt-1 text-sm leading-6 text-secondary">{row.description}</p>
+                    <p className="mt-1 font-serif text-sm leading-6 text-secondary">{row.description}</p>
                   </div>
-                  <p className="text-right text-sm font-bold text-accent">{row.points}</p>
+                  <p className="text-right text-sm font-bold tabular-nums text-accent">{row.points}</p>
                 </div>
               ))}
             </div>
@@ -321,12 +321,12 @@ export default function TrustCentrePage() {
             <div className="mt-6 grid gap-4 md:grid-cols-3">
               {scoreBands.map((band) => (
                 <article key={band.score} className="rounded-md border border-panel bg-page p-5 shadow-panel">
-                  <p className={`text-[0.68rem] font-bold uppercase tracking-[0.2em] ${band.tone}`}>
+                  <p className={`text-[0.68rem] font-bold uppercase tracking-[0.2em] tabular-nums ${band.tone}`}>
                     {band.score} / {band.label}
                   </p>
                   <div className="mt-4 space-y-2">
                     {band.items.map((item, index) => (
-                      <p key={item} className="text-sm leading-6 text-secondary">
+                      <p key={item} className="font-serif text-sm leading-6 text-secondary">
                         <span className={index === 0 ? "text-success" : "text-muted"}>
                           {index === 0 ? "✓" : "-"}
                         </span>{" "}
@@ -342,8 +342,8 @@ export default function TrustCentrePage() {
 
         <section className="mx-auto max-w-[860px] px-6 py-16">
           <p className="newspaper-kicker">For suppliers</p>
-          <h2 className="mt-3 text-3xl font-semibold text-heading">How we protect suppliers</h2>
-          <p className="mt-4 text-sm leading-7 text-secondary">
+          <h2 className="mt-3 font-display text-3xl font-semibold text-heading">How we protect suppliers</h2>
+          <p className="mt-4 font-serif text-sm leading-7 text-secondary">
             Suppliers have the right to know that the buyers posting RFQs on the platform are
             legitimate. Here&apos;s how we verify procurement teams.
           </p>
@@ -351,8 +351,8 @@ export default function TrustCentrePage() {
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             {buyerTrustCards.map((card) => (
               <article key={card.title} className="rounded-md border border-panel bg-card p-6 shadow-panel">
-                <h3 className="text-lg font-semibold text-heading">{card.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-secondary">{card.body}</p>
+                <h3 className="font-display text-lg font-semibold text-heading">{card.title}</h3>
+                <p className="mt-3 font-serif text-sm leading-7 text-secondary">{card.body}</p>
               </article>
             ))}
           </div>
@@ -361,7 +361,7 @@ export default function TrustCentrePage() {
         <section className="border-y border-panel bg-card">
           <div className="mx-auto max-w-[860px] px-6 py-16">
             <p className="newspaper-kicker">Common questions</p>
-            <h2 className="mt-3 text-3xl font-semibold text-heading">Frequently asked</h2>
+            <h2 className="mt-3 font-display text-3xl font-semibold text-heading">Frequently asked</h2>
             <div className="mt-8 overflow-hidden rounded-md border border-panel bg-page shadow-panel">
               {faqs.map((faq, index) => {
                 const isOpen = openFaq === index
@@ -385,7 +385,7 @@ export default function TrustCentrePage() {
                     </button>
                     {isOpen && (
                       <div className="px-5 pb-5">
-                        <p className="text-sm leading-7 text-secondary">{faq.answer}</p>
+                        <p className="font-serif text-sm leading-7 text-secondary">{faq.answer}</p>
                       </div>
                     )}
                   </article>
@@ -397,10 +397,10 @@ export default function TrustCentrePage() {
 
         <section className="mx-auto max-w-[860px] px-6 py-16">
           <div className="rounded-md border border-panel bg-panel p-8 text-center shadow-panel">
-            <h2 className="text-3xl font-semibold text-heading">
+            <h2 className="font-display text-3xl font-semibold text-heading">
               Ready to join South Africa&apos;s verified procurement network?
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-secondary">
+            <p className="mx-auto mt-4 max-w-xl font-serif text-sm leading-7 text-secondary">
               Register as a supplier or request a buyer account. Verification takes less than 48
               hours.
             </p>
@@ -426,10 +426,10 @@ export default function TrustCentrePage() {
                 className="h-8 w-auto"
               />
               <p className="newspaper-kicker mt-5">THE STUDIO BEHIND THE PLATFORM</p>
-              <h2 id="who-builds-monate-connect" className="mt-3 text-3xl font-semibold text-heading">
+              <h2 id="who-builds-monate-connect" className="mt-3 font-display text-3xl font-semibold text-heading">
                 Who builds Monate Connect
               </h2>
-              <div className="mt-5 space-y-5 text-sm leading-7 text-secondary">
+              <div className="mt-5 space-y-5 font-serif text-sm leading-7 text-secondary">
                 <p>
                   Monate Connect is designed and built by AiForm Studio, a South African product
                   studio based in Pretoria.
@@ -449,7 +449,7 @@ export default function TrustCentrePage() {
                   We build the structure that lets them find each other.
                 </p>
               </div>
-              <p className="mt-6 text-sm italic leading-7 text-muted">
+              <p className="mt-6 font-serif text-sm italic leading-7 text-muted">
                 Shaping intelligence. Designing impact.
               </p>
             </div>

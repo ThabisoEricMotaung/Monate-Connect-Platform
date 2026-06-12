@@ -88,7 +88,7 @@ export default function FeedbackPage() {
         <section className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="entry-paper-panel">
             <p className="newspaper-kicker">Pilot Feedback</p>
-            <h1 className="mt-4 font-serif text-4xl font-bold leading-tight text-heading md:text-5xl">
+            <h1 className="mt-4 font-display text-4xl font-bold leading-tight text-heading md:text-5xl">
               Help shape Monate Connect.
             </h1>
             <p className="mt-5 text-sm leading-7 text-secondary">

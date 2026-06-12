@@ -231,16 +231,6 @@ export default function AdminDashboardLayout({
             href: "/dashboard/admin/purchase-orders",
             icon: "P",
           },
-          {
-            name: "Contracts",
-            href: "/dashboard/admin/contracts",
-            icon: "C",
-          },
-          {
-            name: "Invoices",
-            href: "/dashboard/admin/invoices",
-            icon: "I",
-          },
         ],
       },
       {
@@ -251,18 +241,6 @@ export default function AdminDashboardLayout({
             name: "Supplier directory",
             href: "/suppliers",
             icon: "S",
-          },
-          {
-            name: "My shortlist",
-            href: "/dashboard/admin/shortlist",
-            icon: "M",
-            badge: metrics.shortlistedSuppliers,
-            badgeTone: "info",
-          },
-          {
-            name: "Verified suppliers",
-            href: "/dashboard/admin/verified-suppliers",
-            icon: "V",
           },
         ],
       },
@@ -335,16 +313,6 @@ export default function AdminDashboardLayout({
 
         <div className="mt-auto border-t border-panel pt-5">
           <div className="space-y-1.5">
-            <NavLink
-              item={{
-                name: "Messages",
-                href: "/dashboard/admin/messages",
-                icon: "N",
-                badge: metrics.unreadMessages,
-                badgeTone: "danger",
-              }}
-              pathname={pathname}
-            />
             <NavLink
               item={{
                 name: "Settings",

@@ -41,7 +41,7 @@ export default function HomepageNewspaper() {
     <div
       role="region"
       aria-label="Platform introduction"
-      style={{ position: 'relative', overflow: 'hidden', background: '#f4efe0', fontFamily: "'IM Fell English', Georgia, serif", color: '#1a1208' }}
+      style={{ position: 'relative', overflow: 'hidden', background: '#f4efe0', color: '#1a1208' }}
     >
       <style dangerouslySetInnerHTML={{ __html: NP_STYLES }} />
 
@@ -259,7 +259,7 @@ export default function HomepageNewspaper() {
             <div style={{ flex: 1, height: '0.5px', background: '#1a1208', margin: '0 10px' }} aria-hidden="true" />
             <span>{dateStr}</span>
           </div>
-          <div style={{ fontFamily: "'UnifrakturMaguntia', serif", fontSize: 'clamp(32px, 6vw, 48px)', lineHeight: 1, color: '#1a1208', margin: '4px 0 2px' }}>
+          <div className="font-display" style={{ fontSize: 'clamp(32px, 6vw, 48px)', lineHeight: 1, color: '#1a1208', margin: '4px 0 2px' }}>
             Monate Connect
           </div>
           <div style={{ fontSize: 14, color: '#5a4a2a', letterSpacing: '8px', margin: '2px 0' }}>
@@ -280,10 +280,10 @@ export default function HomepageNewspaper() {
         {/* D) MAIN HEADLINE BLOCK */}
         <div style={{ padding: '16px 40px 12px', textAlign: 'center', borderBottom: '2px solid #1a1208', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{ background: 'rgba(26, 58, 42, 0.88)', border: '1px solid #5DCAA5', padding: '14px 28px', maxWidth: 480, textAlign: 'center' }}>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(22px, 4vw, 34px)', fontWeight: 900, lineHeight: 1.1, color: '#E1F5EE', marginBottom: 8 }}>
+            <h2 className="font-display" style={{ fontSize: 'clamp(22px, 4vw, 34px)', fontWeight: 900, lineHeight: 1.1, color: '#E1F5EE', marginBottom: 8 }}>
               Where SA Suppliers<br /><em style={{ color: '#9FE1CB' }}>Meet Real Procurement.</em>
             </h2>
-            <p style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: 13, color: '#9FE1CB', lineHeight: 1.5, margin: 0 }}>
+            <p className="font-display" style={{ fontStyle: 'italic', fontSize: 13, color: '#9FE1CB', lineHeight: 1.5, margin: 0 }}>
               Verified RFQs from Eskom, municipalities &amp; parastatals — matched to your BBBEE level and province.
             </p>
           </div>
@@ -297,21 +297,21 @@ export default function HomepageNewspaper() {
 
           {/* Column 1 */}
           <div style={{ padding: '12px 14px', background: 'rgba(244, 239, 224, 0.88)' }}>
-            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid #1a1208', paddingBottom: 4, marginBottom: 8, color: '#1a1208' }}>
+            <h3 className="font-display" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid #1a1208', paddingBottom: 4, marginBottom: 8, color: '#1a1208' }}>
               For suppliers
             </h3>
-            <p style={{ fontSize: 11, lineHeight: 1.65, color: '#1a1208', textAlign: 'justify', textShadow: '0 0 4px #f4efe0', margin: '0 0 6px' }}>
+            <p className="font-serif" style={{ fontSize: 11, lineHeight: 1.65, color: '#1a1208', textAlign: 'justify', textShadow: '0 0 4px #f4efe0', margin: '0 0 6px' }}>
               List your business. Upload your CSD number and BBBEE certificate. Receive a SmartScore — your trust rating, visible to every buyer.
             </p>
-            <p style={{ fontSize: 11, lineHeight: 1.65, color: '#1a1208', textAlign: 'justify', textShadow: '0 0 4px #f4efe0', margin: 0 }}>
+            <p className="font-serif" style={{ fontSize: 11, lineHeight: 1.65, color: '#1a1208', textAlign: 'justify', textShadow: '0 0 4px #f4efe0', margin: 0 }}>
               Matched RFQs come to you. No more missed closing dates.
             </p>
             <div style={{ background: '#1a3a2a', color: '#9FE1CB', padding: '3px 10px', margin: '8px 0 0', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' }}>
               SmartScore · CSD · BBBEE · SARS
             </div>
             <div style={{ border: '1px solid #1a1208', padding: '7px 8px', textAlign: 'center', marginTop: 10, background: 'rgba(237,232,212,0.88)' }}>
-              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#1a1208', margin: '0 0 3px' }}>Register Free</p>
-              <p style={{ fontSize: 9, color: '#3a2e1a', margin: 0 }}>Verified in 48 hours.<br />No credit card required.</p>
+              <p className="font-display" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#1a1208', margin: '0 0 3px' }}>Register Free</p>
+              <p className="font-serif" style={{ fontSize: 9, color: '#3a2e1a', margin: 0 }}>Verified in 48 hours.<br />No credit card required.</p>
             </div>
           </div>
 
@@ -320,13 +320,13 @@ export default function HomepageNewspaper() {
 
           {/* Column 2 */}
           <div style={{ padding: '12px 14px', background: 'rgba(244, 239, 224, 0.88)' }}>
-            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid #1a1208', paddingBottom: 4, marginBottom: 8, color: '#1a1208' }}>
+            <h3 className="font-display" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid #1a1208', paddingBottom: 4, marginBottom: 8, color: '#1a1208' }}>
               The SmartScore
             </h3>
-            <p style={{ fontSize: 11, lineHeight: 1.65, color: '#1a1208', textAlign: 'justify', textShadow: '0 0 4px #f4efe0', margin: '0 0 6px' }}>
+            <p className="font-serif" style={{ fontSize: 11, lineHeight: 1.65, color: '#1a1208', textAlign: 'justify', textShadow: '0 0 4px #f4efe0', margin: '0 0 6px' }}>
               Every supplier carries a SmartScore — drawn from four official SA sources: National Treasury CSD, your BBBEE agency, SARS tax records, and CIPC banking confirmation.
             </p>
-            <p style={{ fontSize: 11, lineHeight: 1.65, color: '#1a1208', textAlign: 'justify', textShadow: '0 0 4px #f4efe0', margin: 0 }}>
+            <p className="font-serif" style={{ fontSize: 11, lineHeight: 1.65, color: '#1a1208', textAlign: 'justify', textShadow: '0 0 4px #f4efe0', margin: 0 }}>
               Score 90 or above and your profile sits first in buyer searches. Complete your profile in under ten minutes.
             </p>
             <div style={{ borderTop: '1px solid #c8b89a', margin: '8px 0 5px', paddingTop: 5, fontSize: 9, color: '#5a4a2a', textAlign: 'center', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
@@ -339,18 +339,18 @@ export default function HomepageNewspaper() {
 
           {/* Column 3 */}
           <div style={{ padding: '12px 14px', background: 'rgba(244, 239, 224, 0.88)' }}>
-            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid #1a1208', paddingBottom: 4, marginBottom: 8, color: '#1a1208' }}>
+            <h3 className="font-display" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid #1a1208', paddingBottom: 4, marginBottom: 8, color: '#1a1208' }}>
               For buyers
             </h3>
-            <p style={{ fontSize: 11, lineHeight: 1.65, color: '#1a1208', textAlign: 'justify', textShadow: '0 0 4px #f4efe0', margin: '0 0 6px' }}>
+            <p className="font-serif" style={{ fontSize: 11, lineHeight: 1.65, color: '#1a1208', textAlign: 'justify', textShadow: '0 0 4px #f4efe0', margin: '0 0 6px' }}>
               Post an RFQ in five minutes. Set your BBBEE requirement, province, and value range. Verified suppliers are notified immediately.
             </p>
-            <p style={{ fontSize: 11, lineHeight: 1.65, color: '#1a1208', textAlign: 'justify', textShadow: '0 0 4px #f4efe0', margin: 0 }}>
+            <p className="font-serif" style={{ fontSize: 11, lineHeight: 1.65, color: '#1a1208', textAlign: 'justify', textShadow: '0 0 4px #f4efe0', margin: 0 }}>
               Compare quotes side by side — each carrying a SmartScore and verification badge.
             </p>
             <div style={{ border: '1px solid #1a1208', padding: '7px 8px', textAlign: 'center', marginTop: 10, background: 'rgba(237,232,212,0.88)' }}>
-              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#1a1208', margin: '0 0 3px' }}>Request Access</p>
-              <p style={{ fontSize: 9, color: '#3a2e1a', margin: 0 }}>For verified organisations.<br />Municipalities welcome.</p>
+              <p className="font-display" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#1a1208', margin: '0 0 3px' }}>Request Access</p>
+              <p className="font-serif" style={{ fontSize: 9, color: '#3a2e1a', margin: 0 }}>For verified organisations.<br />Municipalities welcome.</p>
             </div>
           </div>
 
@@ -358,20 +358,20 @@ export default function HomepageNewspaper() {
 
         {/* F) CTA BAR */}
         <div className="np-cta-bar" style={{ background: '#1a3a2a', padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <p style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: 12, color: '#9FE1CB', flex: 1, textAlign: 'left', margin: 0 }}>
+          <p className="font-display" style={{ fontStyle: 'italic', fontSize: 12, color: '#9FE1CB', flex: 1, textAlign: 'left', margin: 0 }}>
             The procurement network South Africa has been waiting for.
           </p>
           <a
             href="/auth/signup"
             className="np-cta-btn"
-            style={{ border: '1px solid #5DCAA5', color: '#E1F5EE', padding: '5px 14px', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: "'IM Fell English', Georgia, serif", whiteSpace: 'nowrap' }}
+            style={{ border: '1px solid #5DCAA5', color: '#E1F5EE', padding: '5px 14px', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', whiteSpace: 'nowrap' }}
           >
             Register as supplier →
           </a>
           <a
             href="/auth/login?role=admin"
             className="np-cta-btn"
-            style={{ border: '1px solid #5DCAA5', color: '#E1F5EE', padding: '5px 14px', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: "'IM Fell English', Georgia, serif", whiteSpace: 'nowrap' }}
+            style={{ border: '1px solid #5DCAA5', color: '#E1F5EE', padding: '5px 14px', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', whiteSpace: 'nowrap' }}
           >
             Buyer access →
           </a>

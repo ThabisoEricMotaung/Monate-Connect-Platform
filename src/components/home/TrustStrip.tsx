@@ -78,10 +78,10 @@ export default function TrustStrip() {
           <div key={item.title} className="ts-item">
             <div style={{ flexShrink: 0, marginTop: 2 }}>{item.icon}</div>
             <div>
-              <div style={{ fontFamily: "var(--font-playfair-display), 'Playfair Display', Georgia, serif", fontSize: 12, fontWeight: 700, color: '#1a2e1a', marginBottom: 4, lineHeight: 1.3 }}>
+              <div className="font-display" style={{ fontSize: 12, fontWeight: 700, color: '#1a2e1a', marginBottom: 4, lineHeight: 1.3 }}>
                 {item.title}
               </div>
-              <div style={{ fontSize: 11, color: '#5a6a5a', lineHeight: 1.55, fontFamily: 'system-ui, sans-serif' }}>
+              <div className="font-serif" style={{ fontSize: 11, color: '#5a6a5a', lineHeight: 1.55 }}>
                 {item.subtitle}
               </div>
             </div>

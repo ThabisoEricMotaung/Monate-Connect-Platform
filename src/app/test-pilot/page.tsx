@@ -77,7 +77,7 @@ export default function TestPilotPage() {
           <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
             <aside className="entry-paper-panel self-start">
               <p className="newspaper-kicker">Pilot Testing</p>
-              <h1 className="mt-4 font-serif text-4xl font-bold leading-tight text-heading md:text-5xl">
+              <h1 className="mt-4 font-display text-4xl font-bold leading-tight text-heading md:text-5xl">
                 Monate Connect tester checklist.
               </h1>
               <p className="mt-5 text-sm leading-7 text-secondary">

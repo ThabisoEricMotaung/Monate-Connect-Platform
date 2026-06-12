@@ -154,10 +154,7 @@ const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Bo
     name: "Reports",
     href: "/dashboard/admin/reports",
   },
-  {
-    name: "Board Pack",
-    href: "/dashboard/admin/board-pack",
-  },
+  // Governance suite hidden until migrations run.
   {
     name: "System Health",
     href: "/dashboard/admin/system-health",
@@ -237,26 +234,6 @@ const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Bo
   {
     name: "Supplier Risk",
     href: "/dashboard/admin/supplier-risk",
-  },
-  {
-    name: "Decision Board",
-    href: "/dashboard/admin/decision-board",
-  },
-  {
-    name: "Workflow Rules",
-    href: "/dashboard/admin/workflow-rules",
-  },
-  {
-    name: "Overrides",
-    href: "/dashboard/admin/overrides",
-  },
-  {
-    name: "Approval Matrix",
-    href: "/dashboard/admin/approval-matrix",
-  },
-  {
-    name: "Delegation Authority",
-    href: "/dashboard/admin/delegation-authority",
   },
 ]
 

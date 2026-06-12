@@ -191,7 +191,7 @@ function PlanCard({ plan, featured }: { plan: typeof supplierPlans[0]; featured?
       <div className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold/70">{plan.name}</p>
         <div className="mt-3 flex items-end gap-1">
-          <span className="font-playfair text-5xl font-bold text-primary">{plan.price}</span>
+          <span className="font-display text-5xl font-bold tabular-nums text-primary">{plan.price}</span>
           <span className="mb-1.5 text-sm use-text-secondary">{plan.period}</span>
         </div>
         <p className="mt-1.5 text-xs use-text-muted">{plan.sub}</p>
@@ -234,13 +234,13 @@ function FaqItem({ q, a }: { q: string; a: string }) {
         onClick={() => setOpen(!open)}
         className="pricing-hover-tint flex w-full items-start justify-between gap-4 rounded-md px-2 py-1 text-left"
       >
-        <span className="font-playfair text-lg text-primary">{q}</span>
+        <span className="font-display text-lg text-primary">{q}</span>
         <span className="mt-0.5 shrink-0 text-gold text-xl leading-none transition-transform duration-200" style={{ transform: open ? "rotate(45deg)" : "rotate(0deg)" }}>
           +
         </span>
       </button>
       {open && (
-        <p className="mt-4 text-sm leading-7 use-text-secondary">{a}</p>
+        <p className="mt-4 font-serif text-sm leading-7 use-text-secondary">{a}</p>
       )}
     </div>
   )
@@ -254,7 +254,6 @@ export default function PricingPage() {
   return (
     <div className="pricing-root">
       <style>{`
-        .font-playfair { font-family: 'Playfair Display', Georgia, serif; }
         .pricing-root { transition: background-color 0.3s ease, color 0.3s ease; }
 
         /* Dark theme */
@@ -355,7 +354,6 @@ export default function PricingPage() {
         .bg-gold\/10 { background-color: rgba(var(--gold-rgb),0.1) !important; }
         .border-gold\/40 { border-color: rgba(var(--gold-rgb),0.4) !important; }
 
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
       `}</style>
 
 
@@ -370,11 +368,11 @@ export default function PricingPage() {
         <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-gold">
           Pilot launch pricing
         </p>
-        <h1 className="font-playfair mx-auto max-w-3xl text-5xl font-bold leading-tight text-primary md:text-6xl">
+        <h1 className="font-display mx-auto max-w-3xl text-5xl font-bold leading-tight text-primary md:text-6xl">
           Simple pricing for{" "}
           <span style={{ color: "var(--gold)" }}>SA procurement</span>
         </h1>
-        <p className="mx-auto mt-6 max-w-xl text-lg use-text-secondary">
+        <p className="mx-auto mt-6 max-w-xl font-serif text-lg use-text-secondary">
           Suppliers list for free. Buyers pay for what they need. No hidden fees, no lock-in.
         </p>
 
@@ -428,7 +426,7 @@ export default function PricingPage() {
           <p className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.25em] text-gold/60">
             {tab === "suppliers" ? "For suppliers" : "For buyers & procurement teams"}
           </p>
-          <h2 className="font-playfair mb-12 text-center text-3xl font-bold text-primary">
+          <h2 className="font-display mb-12 text-center text-3xl font-bold text-primary">
             {tab === "suppliers" ? "Choose the right launch plan" : "Choose the right launch plan"}
           </h2>
           <div className="grid gap-6 md:grid-cols-3">
@@ -449,7 +447,7 @@ export default function PricingPage() {
       >
         <div className="mx-auto max-w-3xl">
           <p className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.25em] text-gold/60">FAQ</p>
-          <h2 className="font-playfair mb-12 text-center text-3xl font-bold text-primary">
+          <h2 className="font-display mb-12 text-center text-3xl font-bold text-primary">
             Pricing questions
           </h2>
           <div>
@@ -469,10 +467,10 @@ export default function PricingPage() {
         className="px-6 py-20 text-center"
       >
         <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-gold/60">Pilot access</p>
-        <h2 className="font-playfair mb-4 text-3xl font-bold text-primary">
+        <h2 className="font-display mb-4 text-3xl font-bold text-primary">
           Start during the pilot — everything is free
         </h2>
-        <p className="mx-auto mb-10 max-w-md use-text-secondary">
+        <p className="mx-auto mb-10 max-w-md font-serif use-text-secondary">
           Get verified, browse RFQs, and submit quotes with no commitment until September 2026.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4">

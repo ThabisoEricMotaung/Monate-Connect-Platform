@@ -18,7 +18,6 @@ const HERO_STYLES = `
     width: 100%;
   }
   .hero-h1 {
-    font-family: var(--font-playfair-display), 'Playfair Display', Georgia, serif;
     font-size: clamp(28px, 5vw, 52px);
     font-weight: 900;
     line-height: 1.08;
@@ -26,14 +25,12 @@ const HERO_STYLES = `
     margin: 0;
   }
   .hero-h1-italic {
-    font-family: var(--font-playfair-display), 'Playfair Display', Georgia, serif;
     font-size: clamp(28px, 5vw, 52px);
     font-weight: 700;
     font-style: italic;
     color: #1a3a2a;
   }
   .hero-deck {
-    font-family: var(--font-playfair-display), 'Playfair Display', Georgia, serif;
     font-size: 17px;
     line-height: 1.6;
     color: #3a4a3a;
@@ -187,18 +184,18 @@ export default function HeroSection() {
       {/* LAYER 2 — hero text */}
       <div className="hero-content">
         {/* Eyebrow */}
-        <p style={{ display: 'inline-block', fontSize: 12, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#A8893B', margin: '0 0 14px', fontFamily: 'system-ui, sans-serif', fontWeight: 800, opacity: 1, textShadow: '0 1px 2px rgba(248,244,236,0.85)', background: 'rgba(248,244,236,0.58)', padding: '3px 8px' }}>
+        <p style={{ display: 'inline-block', fontSize: 12, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#A8893B', margin: '0 0 14px', fontWeight: 800, opacity: 1, textShadow: '0 1px 2px rgba(248,244,236,0.85)', background: 'rgba(248,244,236,0.58)', padding: '3px 8px' }}>
           South Africa&#39;s Verified Procurement Network
         </p>
 
         {/* Heading line 1 */}
-        <h1 className="hero-h1">
+        <h1 className="hero-h1 font-display">
           Where SA Suppliers
         </h1>
 
         {/* Heading line 2 — italic + gold underline */}
         <div style={{ display: 'inline-block', marginBottom: 20 }}>
-          <span className="hero-h1-italic">
+          <span className="hero-h1-italic font-display">
             Meet Real Procurement.
           </span>
           <div
@@ -212,7 +209,7 @@ export default function HeroSection() {
         </div>
 
         {/* Deck */}
-        <p className="hero-deck">
+        <p className="hero-deck font-serif">
           Verified RFQs from Eskom, municipalities &amp; parastatals — matched to your BBBEE level and province.
         </p>
 
@@ -222,7 +219,7 @@ export default function HeroSection() {
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             <path d="M9 12l2 2 4-4" />
           </svg>
-          <span style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#7a8a7a', fontFamily: 'system-ui, sans-serif' }}>
+          <span style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#7a8a7a' }}>
             — Procurement Correspondent &middot; Monate Connect Gazette
           </span>
         </div>

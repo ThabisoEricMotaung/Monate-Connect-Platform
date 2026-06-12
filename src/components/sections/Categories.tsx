@@ -15,11 +15,11 @@ export default function Categories() {
 
       <div className="mb-14 text-center">
 
-        <h2 className="text-4xl font-bold md:text-5xl">
+        <h2 className="font-display text-4xl font-bold md:text-5xl">
           Explore Supplier Categories
         </h2>
 
-        <p className="mx-auto mt-4 max-w-3xl text-lg text-secondary">
+        <p className="mx-auto mt-4 max-w-3xl font-serif text-lg text-secondary">
           Discover verified suppliers across mining, infrastructure,
           logistics, construction, and township business ecosystems.
         </p>
@@ -36,11 +36,11 @@ export default function Categories() {
 
             <div className="mb-6 h-16 w-16 rounded-2xl bg-accent-soft" />
 
-            <h3 className="text-2xl font-semibold text-heading">
+            <h3 className="font-display text-2xl font-semibold text-heading">
               {category}
             </h3>
 
-            <p className="mt-3 text-secondary">
+            <p className="mt-3 font-serif text-secondary">
               Verified suppliers and procurement opportunities.
             </p>
 

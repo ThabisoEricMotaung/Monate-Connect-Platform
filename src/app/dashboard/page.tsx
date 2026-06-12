@@ -318,7 +318,7 @@ export default function DashboardPage() {
 
       <div className="mb-10">
         <p className="mb-3 text-xs md:text-sm uppercase tracking-[0.3em] text-accent">PROCUREMENT OPERATIONS</p>
-        <h1 className="text-3xl md:text-5xl font-bold text-primary">{greeting()}, {firstName || "there"}</h1>
+        <h1 className="font-display text-3xl md:text-5xl font-bold text-primary">{greeting()}, {firstName || "there"}</h1>
         <p className="mt-4 max-w-3xl text-base md:text-lg text-secondary">
           Manage procurement opportunities, supplier verification, RFQ participation, and quote submissions from your workspace.
         </p>
@@ -353,7 +353,7 @@ export default function DashboardPage() {
               ].map(([label, value]) => (
                 <div key={label} className="rounded-xl border border-panel bg-surface p-5 shadow-panel">
                   <p className="text-sm uppercase tracking-widest text-secondary">{label}</p>
-                  <h2 className="mt-3 text-3xl font-bold text-primary">{value}</h2>
+                  <h2 className="mt-3 text-3xl font-bold tabular-nums text-primary">{value}</h2>
                 </div>
               ))}
             </div>
@@ -391,7 +391,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-bold text-heading">{match.match_score}%</p>
+                    <p className="text-xl font-bold tabular-nums text-heading">{match.match_score}%</p>
                     <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-secondary">Match</p>
                   </div>
                 </div>
@@ -429,7 +429,7 @@ export default function DashboardPage() {
         </div>
         <div className="rounded-xl border border-panel bg-surface p-6 shadow-panel">
           <p className="text-sm uppercase tracking-widest text-secondary">Open RFQs</p>
-          <h2 className="mt-4 text-3xl font-bold text-primary">
+          <h2 className="mt-4 text-3xl font-bold tabular-nums text-primary">
             {statsLoading ? "—" : (openRFQCount ?? 0)}
           </h2>
           <p className="mt-2 text-sm text-secondary">
@@ -438,7 +438,7 @@ export default function DashboardPage() {
         </div>
         <div className="rounded-xl border border-panel bg-surface p-6 shadow-panel">
           <p className="text-sm uppercase tracking-widest text-secondary">Submitted Quotes</p>
-          <h2 className="mt-4 text-3xl font-bold text-primary">
+          <h2 className="mt-4 text-3xl font-bold tabular-nums text-primary">
             {statsLoading ? "—" : (quoteCount ?? 0)}
           </h2>
         </div>

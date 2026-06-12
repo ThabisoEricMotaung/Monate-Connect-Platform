@@ -56,7 +56,7 @@ function CardHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
         <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#1a3a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {icon}
         </div>
-        <h3 style={{ fontFamily: "var(--font-playfair-display), 'Playfair Display', Georgia, serif", fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#1a2e1a', margin: 0 }}>
+        <h3 className="font-display" style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#1a2e1a', margin: 0 }}>
           {title}
         </h3>
       </div>
@@ -74,7 +74,7 @@ function CheckItem({ text }: { text: string }) {
           <path d="M4.5 7.5l2.5 2.5 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
-      <span style={{ fontSize: 12, lineHeight: 1.55, color: '#3a4a3a' }}>{text}</span>
+      <span className="font-serif" style={{ fontSize: 12, lineHeight: 1.55, color: '#3a4a3a' }}>{text}</span>
     </li>
   )
 }
@@ -103,7 +103,7 @@ export default function InfoCards() {
             <CheckItem text="Matched RFQs come to you. No more missed closing dates." />
           </ul>
 
-          <div style={{ background: '#1a3a2a', color: '#9FE1CB', padding: '5px 10px', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 12, fontFamily: 'system-ui, sans-serif' }}>
+          <div style={{ background: '#1a3a2a', color: '#9FE1CB', padding: '5px 10px', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 12 }}>
             SmartScore &middot; CSD &middot; BBBEE &middot; SARS
           </div>
 
@@ -117,7 +117,7 @@ export default function InfoCards() {
               </svg>
             </div>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#1a2e1a', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2, fontFamily: 'system-ui, sans-serif' }}>Register Free</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: '#1a2e1a', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>Register Free</div>
               <div style={{ fontSize: 11, color: '#6a7a6a' }}>Verified in 48 hours. No credit card.</div>
             </div>
           </Link>
@@ -137,7 +137,7 @@ export default function InfoCards() {
             }
           />
 
-          <p style={{ fontSize: 12, color: '#3a4a3a', lineHeight: 1.55, margin: '0 0 14px' }}>
+          <p className="font-serif" style={{ fontSize: 12, color: '#3a4a3a', lineHeight: 1.55, margin: '0 0 14px' }}>
             Every supplier carries a SmartScore — drawn from four official SA sources:
           </p>
 
@@ -185,14 +185,14 @@ export default function InfoCards() {
             ].map(({ label, icon }) => (
               <div key={label} className="ic-source-box">
                 {icon}
-                <span style={{ fontSize: 8, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6a5a3a', fontFamily: 'system-ui, sans-serif', lineHeight: 1.3 }}>
+                <span style={{ fontSize: 8, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6a5a3a', lineHeight: 1.3 }}>
                   {label}
                 </span>
               </div>
             ))}
           </div>
 
-          <p style={{ fontSize: 12, color: '#3a4a3a', lineHeight: 1.55, margin: '0 0 14px' }}>
+          <p className="font-serif" style={{ fontSize: 12, color: '#3a4a3a', lineHeight: 1.55, margin: '0 0 14px' }}>
             Score 90 or above and your profile sits first in buyer searches.
           </p>
 
@@ -201,7 +201,7 @@ export default function InfoCards() {
               <circle cx="12" cy="8" r="6" />
               <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12" />
             </svg>
-            <span style={{ fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6a5a3a', fontFamily: 'system-ui, sans-serif' }}>
+            <span style={{ fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6a5a3a' }}>
               CSD &middot; BBBEE &middot; Tax cleared &middot; Banking confirmed
             </span>
           </div>
@@ -238,7 +238,7 @@ export default function InfoCards() {
               </svg>
             </div>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#1a2e1a', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2, fontFamily: 'system-ui, sans-serif' }}>Request Access</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: '#1a2e1a', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>Request Access</div>
               <div style={{ fontSize: 11, color: '#6a7a6a' }}>For verified organisations. Municipalities welcome.</div>
             </div>
           </Link>

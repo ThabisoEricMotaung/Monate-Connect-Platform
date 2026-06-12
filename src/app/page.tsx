@@ -106,11 +106,7 @@ function MakersMark() {
           className="h-9 w-auto"
         />
         <p
-          className="mt-4 text-xl italic leading-7 text-heading sm:text-2xl"
-          style={{
-            fontFamily:
-              "var(--font-playfair-display), 'Cormorant Garamond', 'Playfair Display', Georgia, serif",
-          }}
+          className="mt-4 font-display text-xl italic leading-7 text-heading sm:text-2xl"
         >
           Designed and built in Pretoria by AiForm Studio
         </p>
@@ -141,7 +137,7 @@ export default function Home() {
           <section>
             <div className="flex flex-col gap-3 border-t border-strong pt-8">
               <p className="newspaper-kicker">Who is this for?</p>
-              <h2 className="text-3xl font-semibold text-heading">Built for procurement networks</h2>
+              <h2 className="font-display text-3xl font-semibold text-heading">Built for procurement networks</h2>
             </div>
             <div className="mt-6 grid gap-4 lg:grid-cols-3">
               {audienceCards.map((card) => (
@@ -152,8 +148,8 @@ export default function Home() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-md border border-panel bg-panel text-accent">
                     <EntryIcon icon={card.icon} />
                   </div>
-                  <h3 className="mt-5 text-2xl font-semibold text-heading">{card.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-secondary">{card.description}</p>
+                  <h3 className="mt-5 font-display text-2xl font-semibold text-heading">{card.title}</h3>
+                  <p className="mt-3 font-serif text-sm leading-7 text-secondary">{card.description}</p>
                   <Link
                     href={card.href}
                     className="mt-5 inline-flex text-sm font-bold text-accent transition hover:text-accent-strong"
@@ -168,7 +164,7 @@ export default function Home() {
           <section>
             <div className="flex flex-col gap-3 border-t border-strong pt-8">
               <p className="newspaper-kicker">Explore the platform</p>
-              <h2 className="text-3xl font-semibold text-heading">Start with the public pages</h2>
+              <h2 className="font-display text-3xl font-semibold text-heading">Start with the public pages</h2>
             </div>
             <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {platformTiles.map((tile) => (
@@ -183,7 +179,7 @@ export default function Home() {
                     </span>
                     <span className="text-base font-bold text-heading">{tile.title}</span>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-secondary">{tile.description}</p>
+                  <p className="mt-3 font-serif text-sm leading-6 text-secondary">{tile.description}</p>
                 </Link>
               ))}
             </div>

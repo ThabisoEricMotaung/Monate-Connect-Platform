@@ -14,7 +14,6 @@ const CTA_STYLES = `
     border-radius: 2px;
     padding: 8px 20px;
     font-size: 11px;
-    font-family: system-ui, sans-serif;
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -36,7 +35,6 @@ const CTA_STYLES = `
     border-radius: 2px;
     padding: 8px 20px;
     font-size: 11px;
-    font-family: system-ui, sans-serif;
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -76,7 +74,7 @@ export default function CTASection() {
             <path d="M9 12l2 2 4-4" />
           </svg>
         </div>
-        <p style={{ fontFamily: "var(--font-playfair-display), 'Playfair Display', Georgia, serif", fontSize: 16, fontStyle: 'italic', color: '#E1F5EE', margin: 0, lineHeight: 1.4 }}>
+        <p className="font-display" style={{ fontSize: 16, fontStyle: 'italic', color: '#E1F5EE', margin: 0, lineHeight: 1.4 }}>
           The procurement network South Africa has been waiting for.
         </p>
       </div>

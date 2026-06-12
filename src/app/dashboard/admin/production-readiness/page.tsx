@@ -372,7 +372,7 @@ function ScoreRing({ score }: { score: number }) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <p className="text-3xl font-bold text-heading">{score}%</p>
+          <p className="text-3xl font-bold tabular-nums text-heading">{score}%</p>
           <p className="mt-1 text-[0.58rem] font-bold uppercase tracking-[0.16em] text-muted">Readiness</p>
         </div>
       </div>

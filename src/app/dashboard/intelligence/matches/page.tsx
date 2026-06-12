@@ -157,7 +157,7 @@ export default function SupplierMatchesPage() {
             <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-secondary">
               {label}
             </p>
-            <p className="mt-3 text-3xl font-bold text-heading">{value}</p>
+            <p className="mt-3 text-3xl font-bold tabular-nums text-heading">{value}</p>
           </div>
         ))}
       </section>
@@ -267,7 +267,7 @@ export default function SupplierMatchesPage() {
                           {match.match_level}
                         </span>
                       </td>
-                      <td className="px-4 py-4 font-semibold text-heading">{match.smartscore}</td>
+                      <td className="px-4 py-4 font-semibold tabular-nums text-heading">{match.smartscore}</td>
                       <td className="px-4 py-4 text-secondary">
                         {match.supplier.province ?? match.rfq.province ?? "-"}
                       </td>

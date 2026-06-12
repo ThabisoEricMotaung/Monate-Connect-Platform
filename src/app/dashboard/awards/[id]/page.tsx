@@ -830,12 +830,12 @@ function LineItemsTable({
                 <span className="font-semibold">{item.description}</span>
                 <span className="ml-2 text-xs text-muted">({item.quantity})</span>
               </td>
-              <td className="px-4 py-4 text-right font-semibold text-heading">{formatCurrency(item.total)}</td>
+              <td className="px-4 py-4 text-right font-semibold tabular-nums text-heading">{formatCurrency(item.total)}</td>
             </tr>
           ))}
-          <tr><td className="px-4 py-3 text-right text-secondary">Subtotal</td><td className="px-4 py-3 text-right font-semibold text-heading">{formatCurrency(subtotal)}</td></tr>
-          {vat > 0 && <tr><td className="px-4 py-3 text-right text-secondary">VAT (15%)</td><td className="px-4 py-3 text-right font-semibold text-heading">{formatCurrency(vat)}</td></tr>}
-          <tr className="bg-panel"><td className="px-4 py-4 text-right text-base font-bold text-heading">Total</td><td className="px-4 py-4 text-right text-base font-bold text-heading">{formatCurrency(total)}</td></tr>
+          <tr><td className="px-4 py-3 text-right text-secondary">Subtotal</td><td className="px-4 py-3 text-right font-semibold tabular-nums text-heading">{formatCurrency(subtotal)}</td></tr>
+          {vat > 0 && <tr><td className="px-4 py-3 text-right text-secondary">VAT (15%)</td><td className="px-4 py-3 text-right font-semibold tabular-nums text-heading">{formatCurrency(vat)}</td></tr>}
+          <tr className="bg-panel"><td className="px-4 py-4 text-right text-base font-bold text-heading">Total</td><td className="px-4 py-4 text-right text-base font-bold tabular-nums text-heading">{formatCurrency(total)}</td></tr>
         </tbody>
       </table>
     </div>

@@ -26,11 +26,11 @@ export default function Features() {
     <section className="mx-auto max-w-7xl px-6 pb-24">
 
       <div className="mb-14 text-center">
-        <h2 className="text-4xl font-bold md:text-5xl">
+        <h2 className="font-display text-4xl font-bold md:text-5xl">
           Built for African Business Growth
         </h2>
 
-        <p className="mx-auto mt-4 max-w-3xl text-lg text-secondary">
+        <p className="mx-auto mt-4 max-w-3xl font-serif text-lg text-secondary">
           Monate Connect helps suppliers become discoverable,
           procurement-ready, and trusted by large buyers.
         </p>
@@ -45,11 +45,11 @@ export default function Features() {
           >
             <div className="mb-6 tactile-icon" />
 
-            <h3 className="text-2xl font-semibold text-heading mt-6">
+            <h3 className="text-2xl font-semibold text-heading mt-6 font-display">
               {feature.title}
             </h3>
 
-            <p className="mt-4 text-secondary">
+            <p className="mt-4 font-serif text-secondary">
               {feature.description}
             </p>
           </div>

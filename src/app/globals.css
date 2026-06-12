@@ -35,7 +35,6 @@
   --newsprint: #f5f0e8;
   --ink: #1a1a1a;
   --ink-muted: #555555;
-  --font-playfair: var(--font-playfair-display);
   --glass-highlight: rgba(255, 255, 255, 0.72);
   --shadow-xs: rgba(31, 39, 46, 0.05);
   --shadow-sm: rgba(31, 39, 46, 0.07);
@@ -1741,7 +1740,7 @@ html[data-low-data="on"] .news-ticker__track {
 }
 
 .masthead__wordmark {
-  font-family: var(--font-playfair), var(--font-playfair-display), Georgia, serif;
+  @apply font-display;
   font-size: clamp(1.2rem, 2.6vw, 2.1rem);
   font-weight: 900;
   letter-spacing: 0.06em;
@@ -1966,7 +1965,7 @@ html[data-low-data="on"] .news-ticker__track {
 }
 
 .newspaper-headline {
-  font-family: var(--font-playfair), var(--font-playfair-display), Georgia, serif;
+  @apply font-display;
   font-size: clamp(1.75rem, 3vw, 2.75rem);
   font-weight: 900;
   line-height: 1.1;
@@ -1984,7 +1983,7 @@ html[data-low-data="on"] .news-ticker__track {
 
 .newspaper-drop-cap::first-letter {
   float: left;
-  font-family: var(--font-playfair), var(--font-playfair-display), Georgia, serif;
+  @apply font-display;
   font-size: 3.1rem;
   font-weight: 900;
   line-height: 0.84;
@@ -2536,7 +2535,7 @@ html[data-low-data="on"] .news-ticker__track {
   max-width: 900px;
   margin-top: 1.15rem;
   color: #FFF9ED;
-  font-family: var(--font-playfair), var(--font-playfair-display), Georgia, serif;
+  @apply font-display;
   font-size: clamp(2.75rem, 8vw, 6.8rem);
   font-weight: 900;
   letter-spacing: 0;

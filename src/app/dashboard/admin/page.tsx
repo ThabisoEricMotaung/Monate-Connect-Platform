@@ -483,7 +483,7 @@ export default function AdminOverviewPage() {
           <p className="text-xs uppercase tracking-[0.28em] text-accent">
             Admin / Procurement Control
           </p>
-          <h1 className="mt-3 text-2xl font-semibold text-heading">
+          <h1 className="mt-3 font-display text-2xl font-semibold text-heading">
             {greeting()}, {firstName(dashboardData.buyer)}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-secondary">
@@ -555,7 +555,7 @@ export default function AdminOverviewPage() {
                 <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-secondary">
                   {card.label}
                 </p>
-                <p className="mt-4 text-3xl font-bold text-heading">{card.value}</p>
+                <p className="mt-4 text-3xl font-bold tabular-nums text-heading">{card.value}</p>
                 <p className={`mt-2 text-xs font-semibold ${card.tone}`}>{card.sub}</p>
               </article>
             ))}

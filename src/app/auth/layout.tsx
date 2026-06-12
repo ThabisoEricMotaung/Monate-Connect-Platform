@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <p className="text-[0.63rem] font-bold uppercase tracking-[0.24em] text-accent">
             Procurement Edition
           </p>
-          <p className="mt-1 font-serif text-3xl font-bold leading-none text-heading">
+          <p className="mt-1 font-display text-3xl font-bold leading-none text-heading">
             Monate Connect
           </p>
         </Link>
