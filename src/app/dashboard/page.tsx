@@ -67,10 +67,13 @@ export default function DashboardPage() {
 
   const [firstName, setFirstName] = useState("")
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null)
+  const [profileLoadError, setProfileLoadError] = useState("")
   const [openRFQCount, setOpenRFQCount] = useState<number | null>(null)
   const [openRFQsClosingThisWeek, setOpenRFQsClosingThisWeek] = useState<number | null>(null)
   const [quoteCount, setQuoteCount] = useState<number | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
+  const [smartScoreLoading, setSmartScoreLoading] = useState(true)
+  const [smartScoreError, setSmartScoreError] = useState("")
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false)
 
   useEffect(() => {
@@ -102,131 +105,164 @@ export default function DashboardPage() {
   // Load greeting + real stat values
   useEffect(() => {
     async function loadStats() {
-      if (!supabase) { setStatsLoading(false); return }
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setStatsLoading(false); return }
+      try {
+        if (!supabase) {
+          setProfileLoadError("Dashboard data is not configured.")
+          return
+        }
 
-      const meta = user.user_metadata
-      const name: string = meta?.full_name ?? ""
-      setFirstName(displayNameFromProfile(null, name))
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+        if (userError) throw userError
+        if (!user) {
+          setProfileLoadError("Sign in to load your dashboard profile.")
+          return
+        }
 
-      const now = new Date()
-      const nextWeek = new Date(now)
-      nextWeek.setDate(nextWeek.getDate() + 7)
+        const meta = user.user_metadata
+        const name: string = meta?.full_name ?? ""
+        setFirstName(displayNameFromProfile(null, name))
 
-      const [initialProfileRes, rfqRes, closingWeekRes, quoteRes] = await Promise.all([
-        supabase.from("profiles").select("verification_status, full_name, preferred_name, dashboard_welcome_seen").eq("id", user.id).maybeSingle(),
-        supabase
-          .from("rfqs")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "open")
-          .eq("is_public", true)
-          .gt("closing_date", now.toISOString()),
-        supabase
-          .from("rfqs")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "open")
-          .eq("is_public", true)
-          .gt("closing_date", now.toISOString())
-          .lte("closing_date", nextWeek.toISOString()),
-        supabase.from("quotes").select("id", { count: "exact", head: true }).eq("supplier_id", user.id),
-      ])
-      let profileRes = initialProfileRes
+        const now = new Date()
+        const nextWeek = new Date(now)
+        nextWeek.setDate(nextWeek.getDate() + 7)
 
-      if (profileRes.error && isMissingGreetingProfileColumnError(profileRes.error)) {
-        profileRes = await supabase
-          .from("profiles")
-          .select("verification_status, full_name, preferred_name")
-          .eq("id", user.id)
-          .maybeSingle()
+        const [initialProfileRes, rfqRes, closingWeekRes, quoteRes] = await Promise.all([
+          supabase.from("profiles").select("verification_status, full_name, preferred_name, dashboard_welcome_seen").eq("id", user.id).maybeSingle(),
+          supabase
+            .from("rfqs")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "open")
+            .eq("is_public", true)
+            .gt("closing_date", now.toISOString()),
+          supabase
+            .from("rfqs")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "open")
+            .eq("is_public", true)
+            .gt("closing_date", now.toISOString())
+            .lte("closing_date", nextWeek.toISOString()),
+          supabase.from("quotes").select("id", { count: "exact", head: true }).eq("supplier_id", user.id),
+        ])
+        let profileRes = initialProfileRes
+
+        if (profileRes.error && isMissingGreetingProfileColumnError(profileRes.error)) {
+          profileRes = await supabase
+            .from("profiles")
+            .select("verification_status, full_name, preferred_name")
+            .eq("id", user.id)
+            .maybeSingle()
+        }
+
+        if (profileRes.error) {
+          console.error("Dashboard profile fetch failed:", profileRes.error)
+          setProfileLoadError("We couldn't load your profile details. Dashboard navigation remains available.")
+        } else if (profileRes.data) {
+          setProfileLoadError("")
+          setVerificationStatus(profileRes.data.verification_status ?? null)
+          setFirstName(displayNameFromProfile(profileRes.data, name))
+          setShowWelcomeBanner("dashboard_welcome_seen" in profileRes.data && profileRes.data.dashboard_welcome_seen === false)
+        } else {
+          setProfileLoadError("We couldn't find a profile for this account yet.")
+        }
+
+        setOpenRFQCount(rfqRes.count ?? 0)
+        setOpenRFQsClosingThisWeek(closingWeekRes.count ?? 0)
+        setQuoteCount(quoteRes.count ?? 0)
+      } catch (error) {
+        console.error("Dashboard stats load failed:", error)
+        setProfileLoadError("We couldn't load your profile details. Dashboard navigation remains available.")
+        setOpenRFQCount(0)
+        setOpenRFQsClosingThisWeek(0)
+        setQuoteCount(0)
+      } finally {
+        setStatsLoading(false)
       }
-
-      if (profileRes.data) {
-        setVerificationStatus(profileRes.data.verification_status ?? null)
-        setFirstName(displayNameFromProfile(profileRes.data, name))
-        setShowWelcomeBanner("dashboard_welcome_seen" in profileRes.data && profileRes.data.dashboard_welcome_seen === false)
-      } else if (profileRes.error) {
-        console.error("Dashboard profile fetch failed:", profileRes.error)
-      }
-
-      setOpenRFQCount(rfqRes.count ?? 0)
-      setOpenRFQsClosingThisWeek(closingWeekRes.count ?? 0)
-      setQuoteCount(quoteRes.count ?? 0)
-      setStatsLoading(false)
     }
     loadStats()
   }, [])
   useEffect(() => {
     async function loadSmartScore() {
-      if (!supabase) {
-        setSmartScore(0)
-        return
-      }
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
-        setSmartScore(0)
-        return
-      }
+      try {
+        if (!supabase) {
+          setSmartScore(0)
+          setSmartScoreError("SmartScore data is not configured.")
+          return
+        }
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser()
+        if (userError) throw userError
+        if (!user) {
+          setSmartScore(0)
+          setSmartScoreError("Sign in to load your SmartScore.")
+          return
+        }
 
-      const [profileRes, bankRes] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select(
-            "id, preferred_name, business_name, province, provinces, industry, phone, email, description, role, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, tax_clearance_url, tax_document_url, banking_verified, bank_verified, director_verified, capability_statement_url, updated_at"
-          )
-          .eq("id", user.id)
-          .maybeSingle(),
-        supabase
-          .from("supplier_bank_details")
-          .select("bank_name, account_number, verification_status")
-          .eq("supplier_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-      ])
-      const profileData = profileRes.data
-      const profileError = profileRes.error
-      const bankData = bankRes.data
-      const bankError = bankRes.error
-      console.log("SmartScore profile fetch:", profileData, profileError)
-      console.log("SmartScore bank fetch:", bankData, bankError)
+        const [profileRes, bankRes] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select(
+              "id, preferred_name, business_name, province, provinces, industry, phone, email, description, role, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, tax_clearance_url, tax_document_url, banking_verified, bank_verified, director_verified, capability_statement_url, updated_at"
+            )
+            .eq("id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("supplier_bank_details")
+            .select("bank_name, account_number, verification_status")
+            .eq("supplier_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ])
 
-      if (!profileRes.data) {
-        setSmartScore(calculateSmartScore({
-          business_name: user.user_metadata.business_name,
-          province: user.user_metadata.province,
-          industry: user.user_metadata.industry,
-          phone: user.user_metadata.phone,
-          email: user.email,
-          verification_status: user.user_metadata.verification_status,
-        }))
-        return
-      }
+        if (profileRes.error) throw profileRes.error
 
-      const storedScoreRaw = Number(profileRes.data.smart_score ?? 0)
-      const storedScore = storedScoreRaw > 100 ? Math.round(storedScoreRaw / 10) : storedScoreRaw
-      const calculatedScore = calculateSmartScore({
-        ...profileRes.data,
-        bank_name: bankRes.data?.bank_name ?? null,
-        bank_account_number: bankRes.data?.account_number ?? null,
-        bank_verification_status: bankRes.data?.verification_status ?? null,
-      })
-      const displayScore = storedScore > 0 ? storedScore : calculatedScore
+        if (!profileRes.data) {
+          setSmartScore(calculateSmartScore({
+            business_name: user.user_metadata.business_name,
+            province: user.user_metadata.province,
+            industry: user.user_metadata.industry,
+            phone: user.user_metadata.phone,
+            email: user.email,
+            verification_status: user.user_metadata.verification_status,
+          }))
+          setSmartScoreError("We couldn't find a profile record yet. This score is based on your account metadata.")
+          return
+        }
 
-      setSmartScore(displayScore)
+        if (bankRes.error) {
+          console.warn("SmartScore bank fetch failed:", bankRes.error)
+        }
 
-      if (displayScore !== storedScoreRaw) {
-        void supabase
-          .from("profiles")
-          .update({ smart_score: displayScore, updated_at: new Date().toISOString() })
-          .eq("id", user.id)
+        const storedScoreRaw = Number(profileRes.data.smart_score ?? 0)
+        const storedScore = storedScoreRaw > 100 ? Math.round(storedScoreRaw / 10) : storedScoreRaw
+        const calculatedScore = calculateSmartScore({
+          ...profileRes.data,
+          bank_name: bankRes.data?.bank_name ?? null,
+          bank_account_number: bankRes.data?.account_number ?? null,
+          bank_verification_status: bankRes.data?.verification_status ?? null,
+        })
+        const displayScore = storedScore > 0 ? storedScore : calculatedScore
+
+        setSmartScore(displayScore)
+        setSmartScoreError("")
+
+        if (displayScore !== storedScoreRaw) {
+          void supabase
+            .from("profiles")
+            .update({ smart_score: displayScore, updated_at: new Date().toISOString() })
+            .eq("id", user.id)
+        }
+      } finally {
+        setSmartScoreLoading(false)
       }
     }
     loadSmartScore().catch((e) => {
       console.error("SmartScore load failed:", e)
       setSmartScore(0)
+      setSmartScoreError("We couldn't load your SmartScore profile data.")
+      setSmartScoreLoading(false)
     })
   }, [])
 
@@ -249,12 +285,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function loadRecommendedOpportunities() {
-      const profile = await getCurrentProfile()
-      if (!profile?.id || profile.role === "admin" || profile.role === "buyer") {
-        setOpportunitiesLoading(false)
-        return
-      }
       try {
+        const profile = await getCurrentProfile()
+        if (!profile?.id || profile.role === "admin" || profile.role === "buyer") {
+          return
+        }
+
         const matches = await getSupplierMatches(profile.id)
         setRecommendedOpportunities(matches.filter((m) => m.match_score >= 40).slice(0, 5))
       } catch (e) { console.error("Recommended opportunities failed:", e) }
@@ -264,8 +300,10 @@ export default function DashboardPage() {
   }, [])
 
   const smartScoreLabel =
-    smartScore === null
+    smartScoreLoading
       ? "Calculating..."
+      : smartScore === null
+      ? "Profile unavailable"
       : smartScore >= 90
       ? "Excellent standing"
       : smartScore >= 75
@@ -324,6 +362,13 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {profileLoadError && !statsLoading && (
+        <div className="mb-6 rounded-md border border-warning/35 bg-warning-soft px-5 py-4">
+          <p className="text-sm font-semibold text-warning">Profile data unavailable</p>
+          <p className="mt-1 text-sm leading-6 text-secondary">{profileLoadError}</p>
+        </div>
+      )}
+
       <div className="mb-8">
         <div className="grid gap-6 grid-cols-1 xl:grid-cols-[320px_1fr]">
           <div className="rounded-xl border border-panel bg-surface p-6 shadow-panel">
@@ -339,6 +384,9 @@ export default function DashboardPage() {
                 <p className="mt-1 text-xs leading-5 text-secondary">
                   Stored score is refreshed in the background when your profile changes.
                 </p>
+                {smartScoreError && (
+                  <p className="mt-2 text-xs font-semibold leading-5 text-warning">{smartScoreError}</p>
+                )}
               </div>
             </div>
           </div>

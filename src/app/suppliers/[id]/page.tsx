@@ -4,7 +4,7 @@ import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import SmartScoreCircle from "@/components/SmartScoreCircle"
 import { calculateSupplierSmartScore } from "@/lib/smartScore"
-import { supabase } from "@/lib/supabase"
+import { createSupabaseServerClient } from "@/lib/supabase-server"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -95,7 +95,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
 export default async function SupplierProfilePage({ params }: Props) {
   const { id } = await params
 
-  if (!supabase) notFound()
+  const supabase = await createSupabaseServerClient()
 
   const { data, error } = await supabase
     .from("profiles")

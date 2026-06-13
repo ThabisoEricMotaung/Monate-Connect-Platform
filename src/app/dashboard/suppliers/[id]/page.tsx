@@ -1,7 +1,7 @@
 import Link from "next/link"
 import SmartScoreCircle from "@/components/SmartScoreCircle"
 import { calculateSupplierSmartScore } from "@/lib/smartScore"
-import { supabase } from "@/lib/supabase"
+import { createSupabaseServerClient } from "@/lib/supabase-server"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -82,7 +82,7 @@ function NotFoundState() {
 export default async function DashboardSupplierProfilePage({ params }: Props) {
   const { id } = await params
 
-  if (!supabase) return <NotFoundState />
+  const supabase = await createSupabaseServerClient()
 
   const { data, error } = await supabase
     .from("profiles")

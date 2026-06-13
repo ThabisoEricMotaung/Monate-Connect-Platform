@@ -387,30 +387,6 @@ async function getMatchingContext() {
   }
 }
 
-async function persistMatches(matches: SupplierMatchResult[]): Promise<void> {
-  if (!supabase || matches.length === 0) return
-
-  try {
-    await supabase.from("supplier_matches").insert(
-      matches
-        .filter((match) => match.supplier.id && match.rfq.id)
-        .map((match) => ({
-          supplier_id: match.supplier.id,
-          rfq_id: match.rfq.id,
-          match_score: match.match_score,
-          industry_score: match.industry_score,
-          province_score: match.province_score,
-          compliance_score: match.compliance_score,
-          smartscore_score: match.smartscore_score,
-          activity_score: match.activity_score,
-          match_level: match.match_level,
-        }))
-    )
-  } catch {
-    // Matching must remain available even before the supplier_matches migration is applied.
-  }
-}
-
 export async function calculateRFQMatches(rfqId?: number): Promise<SupplierMatchResult[]> {
   const { suppliers, rfqs, activityMap } = await getMatchingContext()
   const targetRfqs = rfqId ? rfqs.filter((rfq) => rfq.id === rfqId) : rfqs
@@ -421,7 +397,6 @@ export async function calculateRFQMatches(rfqId?: number): Promise<SupplierMatch
   )
 
   matches.sort((a, b) => b.match_score - a.match_score)
-  await persistMatches(matches)
   return matches
 }
 
@@ -440,6 +415,5 @@ export async function getSupplierMatches(supplierId: string): Promise<SupplierMa
   )
 
   matches.sort((a, b) => b.match_score - a.match_score)
-  await persistMatches(matches)
   return matches
 }

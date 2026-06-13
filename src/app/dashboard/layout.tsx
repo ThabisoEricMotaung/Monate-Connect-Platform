@@ -264,22 +264,27 @@ export default function DashboardLayout({
 
   useEffect(() => {
     async function loadRole() {
-      const currentProfile = await getCurrentProfile()
+      try {
+        const currentProfile = await getCurrentProfile()
 
-      if (supabase && currentProfile?.id) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("business_name, email, full_name, preferred_name, role")
-          .eq("id", currentProfile.id)
-          .maybeSingle()
+        if (supabase && currentProfile?.id) {
+          const { data } = await supabase
+            .from("profiles")
+            .select("business_name, email, full_name, preferred_name, role")
+            .eq("id", currentProfile.id)
+            .maybeSingle()
 
-        setProfile((data as AccountMenuProfile | null) ?? null)
-        setRole((data as { role?: string | null } | null)?.role ?? currentProfile.role ?? "supplier")
-      } else {
-        setRole(currentProfile?.role ?? "supplier")
+          setProfile((data as AccountMenuProfile | null) ?? null)
+          setRole((data as { role?: string | null } | null)?.role ?? currentProfile.role ?? "supplier")
+        } else {
+          setRole(currentProfile?.role ?? "supplier")
+        }
+      } catch (error) {
+        console.error("Dashboard role load failed:", error)
+        setRole("supplier")
+      } finally {
+        setRoleChecked(true)
       }
-
-      setRoleChecked(true)
     }
 
     loadRole()
@@ -352,10 +357,9 @@ export default function DashboardLayout({
       )}
 
       {/* Sidebar - mobile overlay or desktop persistent */}
-      <aside className="dashboard-sidebar fixed top-0 left-0 bottom-0 z-40 w-[280px] transform transition-transform duration-200 md:static md:transform-none md:translate-x-0 flex flex-col overflow-y-auto border-r border-panel bg-panel p-5 print:hidden md:w-full md:max-w-[280px]" style={{
-        transform: sidebarOpen ? 'translateX(0)' : (typeof window !== 'undefined' && window.innerWidth < 768) ? 'translateX(-100%)' : 'translateX(0)',
-        pointerEvents: sidebarOpen || typeof window !== 'undefined' && window.innerWidth >= 768 ? 'auto' : 'none'
-      }}>
+      <aside className={`dashboard-sidebar fixed top-0 left-0 bottom-0 z-40 w-[280px] transform transition-transform duration-200 md:static md:translate-x-0 flex flex-col overflow-y-auto border-r border-panel bg-panel p-5 print:hidden md:w-full md:max-w-[280px] ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      }`}>
         {/* Mobile-only close button */}
         <button
           type="button"
