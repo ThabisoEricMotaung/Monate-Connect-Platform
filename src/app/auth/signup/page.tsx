@@ -1,4 +1,4 @@
-Ôªø"use client"
+"use client"
 
 import { useEffect, useState, type FormEvent } from "react"
 import Link from "next/link"
@@ -134,7 +134,7 @@ function Stepper({
                         : "border-panel bg-surface text-muted"
                   }`}
                 >
-                  {isCompleted ? "‚úì" : stepNumber}
+                  {isCompleted ? "?" : stepNumber}
                 </span>
                 {index < steps.length - 1 && (
                   <span className={`ml-2 h-px flex-1 ${stepNumber < currentStep ? "bg-accent" : "bg-panel"}`} />
@@ -277,7 +277,7 @@ export default function SignupPage() {
     }
 
     if (!data.user) {
-      setErrors({ submit: "Account creation failed ‚Äî no user record was returned." })
+      setErrors({ submit: "Account creation failed ó no user record was returned." })
       setLoading(false)
       return
     }
@@ -372,7 +372,7 @@ export default function SignupPage() {
     setErrors({})
 
     if (!supabase || !userId) {
-      setErrors({ submit: "Session expired ‚Äî please reload and start over." })
+      setErrors({ submit: "Session expired ó please reload and start over." })
       setLoading(false)
       return
     }
@@ -457,7 +457,7 @@ export default function SignupPage() {
                       }`}
                     >
                       <span className={`text-sm font-bold ${form.role === r ? "text-accent" : "text-primary"}`}>
-                        {r === "supplier" ? "I‚Äôm a Supplier" : "I‚Äôm a Buyer"}
+                        {r === "supplier" ? "Iím a Supplier" : "Iím a Buyer"}
                       </span>
                       <span className="mt-1 text-xs text-secondary">
                         {r === "supplier" ? "Sell to government & corporates" : "Post RFQs & procure"}
@@ -476,7 +476,7 @@ export default function SignupPage() {
                 <div>
                   <label className="block text-sm font-medium text-secondary">Work email address <span className="font-semibold text-accent">*</span></label>
                   <input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} className={inputClass} />
-                  <p className="mt-2 text-xs leading-5 text-muted">Use your business email ‚Äî it helps with verification.</p>
+                  <p className="mt-2 text-xs leading-5 text-muted">Use your business email ó it helps with verification.</p>
                   <FieldError message={errors.email} />
                 </div>
                 <div>
@@ -491,7 +491,7 @@ export default function SignupPage() {
                   disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50"
                 >
-                  {loading ? "Creating account‚Ä¶" : "Continue ‚Üí"}
+                  {loading ? "Creating accountÖ" : "Continue ?"}
                 </button>
 
                 <div className="grid gap-2 text-xs font-semibold text-secondary sm:grid-cols-3">
@@ -573,10 +573,10 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="button" onClick={handleStep2Save} disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Saving‚Ä¶" : "Continue ‚Üí"}
+                  {loading ? "SavingÖ" : "Continue ?"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
-                  ‚Üê Back
+                  ? Back
                 </button>
               </div>
             </section>
@@ -632,10 +632,10 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="button" onClick={handleStep3Save} disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Saving‚Ä¶" : "Continue ‚Üí"}
+                  {loading ? "SavingÖ" : "Continue ?"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
-                  ‚Üê Back
+                  ? Back
                 </button>
               </div>
             </section>
@@ -654,12 +654,12 @@ export default function SignupPage() {
                   { title: "Account", detail: form.email, editStep: 1 },
                   {
                     title: "Business details",
-                    detail: `${form.businessName} ¬∑ ${form.industry} ¬∑ ${form.provinces.join(", ")}`,
+                    detail: `${form.businessName} ∑ ${form.industry} ∑ ${form.provinces.join(", ")}`,
                     editStep: 2,
                   },
                   {
                     title: "Compliance",
-                    detail: `${form.csdNumber} ¬∑ ${form.bbeeLevel}${form.vatNumber ? ` ¬∑ VAT ${form.vatNumber}` : ""}`,
+                    detail: `${form.csdNumber} ∑ ${form.bbeeLevel}${form.vatNumber ? ` ∑ VAT ${form.vatNumber}` : ""}`,
                     editStep: 3,
                   },
                 ].map((row) => (
@@ -698,10 +698,10 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="submit" disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Submitting registration‚Ä¶" : "Submit registration"}
+                  {loading ? "Submitting registrationÖ" : "Submit registration"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
-                  ‚Üê Back
+                  ? Back
                 </button>
               </div>
             </section>
@@ -712,7 +712,7 @@ export default function SignupPage() {
               <div className="text-center">
                 <p className="text-xs uppercase tracking-[0.24em] text-accent">{form.role === "buyer" ? "Buyer registration" : "Supplier onboarding"}</p>
                 <h1 className="mt-3 text-4xl font-semibold text-primary">
-                  Welcome to Monate Connect, {preferredFirstName(form.fullName)}!
+                  Welcome to AiForm Procure, {preferredFirstName(form.fullName)}!
                 </h1>
                 <p className="mt-4 text-sm leading-6 text-secondary">
                   We&apos;ve sent a verification email to{" "}
@@ -737,7 +737,7 @@ export default function SignupPage() {
                   disabled={resending}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50"
                 >
-                  {resending ? "Resending‚Ä¶" : "Resend verification email"}
+                  {resending ? "ResendingÖ" : "Resend verification email"}
                 </button>
                 <p className="pt-1 text-center text-xs text-muted">
                   Confirmed your email in another tab?
@@ -759,7 +759,7 @@ export default function SignupPage() {
                     e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)"
                   }}
                 >
-                  Already verified? Log in ‚Üí
+                  Already verified? Log in ?
                 </Link>
               </div>
             </section>
@@ -772,7 +772,7 @@ export default function SignupPage() {
             <path d="M6 1L1 4v4c0 3.3 2.1 6.4 5 7.4 2.9-1 5-4.1 5-7.4V4L6 1z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
             <path d="M4 8l1.5 1.5L8 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <span>Secured by Monate Connect</span>
+          <span>Secured by AiForm Procure</span>
         </div>
 
       </div>

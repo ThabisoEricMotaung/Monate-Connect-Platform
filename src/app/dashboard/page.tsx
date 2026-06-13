@@ -302,7 +302,7 @@ export default function DashboardPage() {
         <div className="mb-6 flex flex-col gap-4 rounded-md border border-accent/25 bg-accent/10 p-4 text-sm text-secondary sm:flex-row sm:items-center sm:justify-between">
           <p>
             <span className="font-semibold text-heading">
-              Welcome to Monate Connect, {firstName}.
+              Welcome to AiForm Procure, {firstName}.
             </span>{" "}
             Your supplier profile is ready to complete.
           </p>

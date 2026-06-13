@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[0.7rem] font-extrabold uppercase tracking-[0.24em] text-accent">
-                MonateConnect
+                AiForm Procure
               </p>
               <h1 className="mt-2 text-2xl font-extrabold leading-tight text-heading">
                 Password Recovery

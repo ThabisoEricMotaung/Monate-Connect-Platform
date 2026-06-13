@@ -6,7 +6,7 @@ const protectionSections = [
   {
     title: "POPIA-Aware Approach",
     body:
-      "Monate Connect should be operated with awareness of South Africa's Protection of Personal Information Act. Production policies should define responsible parties, lawful processing grounds, retention, access handling and cross-border considerations where relevant.",
+      "AiForm Procure should be operated with awareness of South Africa's Protection of Personal Information Act. Production policies should define responsible parties, lawful processing grounds, retention, access handling and cross-border considerations where relevant.",
   },
   {
     title: "Data Security Principles",
@@ -56,7 +56,7 @@ export default function DataProtectionPage() {
           <h1 className="newspaper-headline mt-5">Data Protection</h1>
           <p className="newspaper-body mt-6 max-w-3xl">
             This page sets out POPIA-aware placeholder principles for protecting supplier,
-            buyer, compliance and procurement workflow data inside Monate Connect.
+            buyer, compliance and procurement workflow data inside AiForm Procure.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/contact" className="masthead__btn-primary">

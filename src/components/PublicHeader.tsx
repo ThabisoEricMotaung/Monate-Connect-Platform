@@ -68,10 +68,10 @@ export default function PublicHeader() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <Link href="/" className="group">
             <p className="text-[0.63rem] font-bold uppercase tracking-[0.24em] text-accent">
-              Procurement Edition
+              Procurement Suite
             </p>
             <p className="mt-1 font-display text-3xl font-bold leading-none text-heading md:text-4xl">
-              Monate Connect
+              AiForm Procure
             </p>
           </Link>
 

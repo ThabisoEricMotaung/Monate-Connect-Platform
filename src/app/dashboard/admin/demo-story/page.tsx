@@ -164,7 +164,7 @@ export default function DemoStoryPage() {
           Demo Data Story Pack
         </h1>
         <p className="mt-2 max-w-3xl text-sm leading-7 text-secondary">
-          Load a realistic South African procurement story for presenting Monate Connect to pilot
+          Load a realistic South African procurement story for presenting AiForm Procure to pilot
           partners, municipalities, mining houses, supplier networks and investors.
         </p>
       </div>

@@ -89,7 +89,7 @@ export default function FeedbackPage() {
           <div className="entry-paper-panel">
             <p className="newspaper-kicker">Pilot Feedback</p>
             <h1 className="mt-4 font-display text-4xl font-bold leading-tight text-heading md:text-5xl">
-              Help shape Monate Connect.
+              Help shape AiForm Procure.
             </h1>
             <p className="mt-5 text-sm leading-7 text-secondary">
               Share what worked, what felt confusing, and what should improve before

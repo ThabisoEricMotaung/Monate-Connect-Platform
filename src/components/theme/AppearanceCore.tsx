@@ -103,7 +103,7 @@ export default function AppearanceCore() {
         <div className="appearance-core__panel" role="menu">
           <div className="mb-4 border-b border-panel pb-3">
             <p className="text-[10px] uppercase tracking-[0.32em] text-secondary">
-              Monate appearance
+              AiForm Procure appearance
             </p>
             <p className="mt-2 text-sm font-semibold text-primary">
               {active?.hint ?? "High-fidelity workspace tone"}

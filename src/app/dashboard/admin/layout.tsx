@@ -339,7 +339,7 @@ export default function AdminDashboardLayout({
                 Procurement workspace
               </p>
               <p className="mt-1 truncate text-sm font-semibold text-heading">
-                Monate Connect
+                AiForm Procure
               </p>
             </div>
           </Link>

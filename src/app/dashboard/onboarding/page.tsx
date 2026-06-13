@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -117,7 +117,7 @@ export default function OnboardingPage() {
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p className="text-sm text-secondary">Loading your workspace…</p>
+        <p className="text-sm text-secondary">Loading your workspace�</p>
       </div>
     )
   }
@@ -128,7 +128,7 @@ export default function OnboardingPage() {
       <div className="mb-8 text-center">
         <p className="text-xs uppercase tracking-[0.24em] text-accent">Supplier onboarding</p>
         <h1 className="mt-3 text-4xl font-semibold text-primary">
-          Welcome to Monate Connect, {firstName}.
+          Welcome to AiForm Procure, {firstName}.
         </h1>
         <p className="mt-3 text-sm leading-7 text-secondary">
           Your account is active. Complete the steps below to get matched with procurement opportunities.
@@ -162,7 +162,7 @@ export default function OnboardingPage() {
                 <CheckIcon done={item.done} />
                 <span className={item.done ? "line-through opacity-60" : ""}>{item.label}</span>
                 {!item.done && (
-                  <span className="ml-auto text-xs text-accent">→</span>
+                  <span className="ml-auto text-xs text-accent">?</span>
                 )}
               </Link>
             </li>
@@ -173,7 +173,7 @@ export default function OnboardingPage() {
       {completedCount === checklist.length && (
         <div className="mt-5 rounded-2xl border border-success/30 bg-success/10 px-5 py-4 text-center">
           <p className="text-sm font-semibold text-success">
-            All steps complete — your profile is fully set up!
+            All steps complete � your profile is fully set up!
           </p>
         </div>
       )}
@@ -185,7 +185,7 @@ export default function OnboardingPage() {
           disabled={markingDone}
           className="flex-1 rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50"
         >
-          {markingDone ? "Loading dashboard…" : "Go to dashboard →"}
+          {markingDone ? "Loading dashboard�" : "Go to dashboard ?"}
         </button>
         <Link
           href="/dashboard/profile"

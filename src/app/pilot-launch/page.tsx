@@ -36,10 +36,10 @@ export default function PilotLaunchPage() {
             <aside className="entry-paper-panel self-start">
               <p className="newspaper-kicker">Pilot Launch</p>
               <h1 className="mt-4 font-display text-4xl font-bold leading-tight text-heading md:text-5xl">
-                Welcome, Monate Connect pilot tester.
+                Welcome, AiForm Procure pilot tester.
               </h1>
               <p className="mt-5 text-sm leading-7 text-secondary">
-                Thank you for helping test Monate Connect. This pilot is focused on
+                Thank you for helping test AiForm Procure. This pilot is focused on
                 clarity, usability, trust, and whether suppliers and procurement teams
                 can move through the platform with confidence.
               </p>
@@ -62,13 +62,13 @@ export default function PilotLaunchPage() {
             <div className="grid gap-5">
               <section className="rounded-md border border-panel bg-card p-6 shadow-panel">
                 <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-accent">
-                  What Monate Connect Is
+                  What AiForm Procure Is
                 </p>
                 <h2 className="mt-3 text-2xl font-semibold text-heading">
                   Procurement and supplier intelligence for South African businesses.
                 </h2>
                 <p className="mt-4 text-sm leading-7 text-secondary">
-                  Monate Connect helps suppliers discover opportunities, build verified
+                  AiForm Procure helps suppliers discover opportunities, build verified
                   profiles, respond to RFQs, and share structured feedback during the
                   pilot. It also helps buyers and administrators review supplier
                   intelligence and procurement readiness.

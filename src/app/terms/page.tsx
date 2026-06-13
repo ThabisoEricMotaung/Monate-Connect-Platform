@@ -6,7 +6,7 @@ const termsSections = [
   {
     title: "Platform Usage Rules",
     body:
-      "Users must use Monate Connect for lawful procurement, supplier onboarding, quote management, contract tracking and related business purposes. Abuse, misrepresentation, unauthorised access or attempts to disrupt the platform are not permitted.",
+      "Users must use AiForm Procure for lawful procurement, supplier onboarding, quote management, contract tracking and related business purposes. Abuse, misrepresentation, unauthorised access or attempts to disrupt the platform are not permitted.",
   },
   {
     title: "Supplier Responsibilities",
@@ -36,7 +36,7 @@ const termsSections = [
   {
     title: "Limitation of Liability",
     body:
-      "To the extent permitted by applicable law, Monate Connect should not be treated as a substitute for professional procurement, legal, financial, compliance or audit advice.",
+      "To the extent permitted by applicable law, AiForm Procure should not be treated as a substitute for professional procurement, legal, financial, compliance or audit advice.",
   },
   {
     title: "Professional Placeholder",
@@ -55,7 +55,7 @@ export default function TermsOfUsePage() {
           <p className="newspaper-kicker">Legal Desk &middot; Terms of Use</p>
           <h1 className="newspaper-headline mt-5">Terms of Use</h1>
           <p className="newspaper-body mt-6 max-w-3xl">
-            These terms outline professional placeholder rules for using Monate Connect as a
+            These terms outline professional placeholder rules for using AiForm Procure as a
             procurement, supplier verification and procurement-to-payment workflow platform.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">

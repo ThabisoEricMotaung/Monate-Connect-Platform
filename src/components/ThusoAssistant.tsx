@@ -8,7 +8,7 @@ type ChatMessage = {
 }
 
 const greeting =
-  "Dumela! I'm Thuso. Ask me anything about using Monate Connect or how SA procurement works — CSD, BBBEE, tax clearance, RFQs, anything."
+  "Dumela! I'm Thuso. Ask me anything about using AiForm Procure or how SA procurement works — CSD, BBBEE, tax clearance, RFQs, anything."
 
 function ChatIcon() {
   return (
@@ -169,7 +169,7 @@ export default function ThusoAssistant() {
           <header className="flex items-start justify-between gap-4 border-b border-panel px-5 py-4">
             <div>
               <h2 className="text-base font-bold text-heading">Thuso</h2>
-              <p className="mt-1 text-xs text-secondary">Monate Connect assistant</p>
+              <p className="mt-1 text-xs text-secondary">AiForm Procure assistant</p>
             </div>
             <button
               type="button"
@@ -241,7 +241,7 @@ export default function ThusoAssistant() {
 
       {showNudge ? (
         <div className="thuso-nudge" role="status">
-          <p>Ask me anything about Monate or SA procurement</p>
+          <p>Ask me anything about AiForm Procure or SA procurement</p>
           <button type="button" aria-label="Dismiss Thuso tip" onClick={dismissNudge}>
             ×
           </button>

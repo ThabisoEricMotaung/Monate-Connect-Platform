@@ -13,7 +13,7 @@ const demoSteps = [
     show:
       "Open the public homepage and point out the supplier, buyer, municipality, pilot partner and investor entry points.",
     matters:
-      "The homepage frames Monate Connect as a South African procurement platform before the audience enters any logged-in workflow.",
+      "The homepage frames AiForm Procure as a South African procurement platform before the audience enters any logged-in workflow.",
     talkingPoint:
       "We start with a public, explainable procurement network: opportunities, suppliers, trust, pricing, help and pilot contact all have clear paths.",
   },
@@ -147,7 +147,7 @@ const demoSteps = [
     matters:
       "WhatsApp deep links support supplier communication without introducing paid messaging automation too early.",
     talkingPoint:
-      "We meet suppliers where they already communicate, while keeping the formal procurement record inside Monate Connect.",
+      "We meet suppliers where they already communicate, while keeping the formal procurement record inside AiForm Procure.",
   },
 ]
 
@@ -190,7 +190,7 @@ export default function DemoWalkthroughPage() {
         <section className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
           <div className="border-b border-t border-heading py-10">
             <p className="newspaper-kicker">Guided Pilot Demo &middot; Presenter Mode</p>
-            <h1 className="newspaper-headline mt-5">Walk partners through Monate Connect</h1>
+            <h1 className="newspaper-headline mt-5">Walk partners through AiForm Procure</h1>
             <p className="newspaper-body mt-6 max-w-3xl">
               A step-by-step presenter guide for pilot partners, investors, municipalities,
               mining houses and supplier networks. Use it to keep the demo focused on procurement

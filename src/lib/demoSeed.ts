@@ -331,7 +331,7 @@ export async function generateDemoData(): Promise<DemoSeedResult[]> {
       ...quote,
       timeline: index % 2 === 0 ? "45 days" : "60 days",
       scope: "Demo quote scope aligned to the RFQ specification.",
-      supporting_notes: "Generated for Monate Connect demo mode.",
+      supporting_notes: "Generated for AiForm Procure demo mode.",
       created_at: addDays(-35 + index * 3),
       is_demo: true,
     })),

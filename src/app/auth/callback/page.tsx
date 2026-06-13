@@ -97,7 +97,7 @@ export default function AuthCallbackPage() {
           </div>
           <h1 className="text-2xl font-semibold text-heading">Email verified</h1>
           <p className="mt-2 text-sm text-secondary">
-            Welcome to Monate Connect — opening your workspace&hellip;
+            Welcome to AiForm Procure — opening your workspace&hellip;
           </p>
         </div>
       </main>

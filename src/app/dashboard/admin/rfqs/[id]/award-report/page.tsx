@@ -520,7 +520,7 @@ export default function AwardReportPage() {
       {/* ── Print masthead ── */}
       <div className="hidden print:block print:mb-8 print:border-b print:border-gray-300 print:pb-5">
         <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-gray-500">
-          MonateConnect · Procurement Services · Confidential
+          AiForm Procure · Procurement Services · Confidential
         </p>
         <h1 className="mt-2 text-2xl font-bold text-gray-900">Award Recommendation Report</h1>
         <p className="mt-1 text-sm text-gray-600">
@@ -914,7 +914,7 @@ export default function AwardReportPage() {
           <SectionHeader n={6} title="Advisory Declaration" eyebrow="Compliance Notice" />
           <div className="space-y-3 text-sm leading-7 text-secondary print:text-gray-700">
             <p>
-              This award recommendation report has been generated from structured evaluation data recorded on the MonateConnect Procurement Platform. Evaluation scores are an advisory decision-support tool only. The final award decision remains the responsibility of an authorised procurement official in accordance with applicable procurement legislation, regulations, and organisational delegations of authority.
+              This award recommendation report has been generated from structured evaluation data recorded on the AiForm Procure Procurement Platform. Evaluation scores are an advisory decision-support tool only. The final award decision remains the responsibility of an authorised procurement official in accordance with applicable procurement legislation, regulations, and organisational delegations of authority.
             </p>
             <p>
               This report does not constitute a contract, letter of award, or binding commitment to any supplier. Formal contract award must be communicated through an official purchase order or letter of award issued by an authorised signatory.

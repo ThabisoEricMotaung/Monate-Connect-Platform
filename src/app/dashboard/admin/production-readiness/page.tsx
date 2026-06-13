@@ -441,7 +441,7 @@ export default function ProductionReadinessPage() {
           <p className="text-xs uppercase tracking-[0.28em] text-accent">Admin / Launch Governance</p>
           <h1 className="mt-3 text-2xl font-semibold text-heading">Production Readiness Centre</h1>
           <p className="mt-2 max-w-3xl text-sm leading-7 text-secondary">
-            Assess whether Monate Connect is ready for demo, pilot, or production use across
+            Assess whether AiForm Procure is ready for demo, pilot, or production use across
             environment, business workflow, security, and user experience controls.
           </p>
           <p className="mt-2 text-xs text-muted">

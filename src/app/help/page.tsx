@@ -10,7 +10,7 @@ const faqSections = [
     title: "Supplier Registration",
     items: [
       {
-        question: "Who can register as a supplier on Monate Connect?",
+        question: "Who can register as a supplier on AiForm Procure?",
         answer:
           "South African suppliers, SMEs, service providers and sector specialists can register to create a profile, view opportunities and participate in procurement workflows.",
       },
@@ -91,7 +91,7 @@ const faqSections = [
           "Contracts can be created from purchase orders so teams can track supplier, RFQ, purchase order, value, start date, end date, renewal status and lifecycle state.",
       },
       {
-        question: "Does Monate Connect track contract renewals?",
+        question: "Does AiForm Procure track contract renewals?",
         answer:
           "Yes. Contract pages can surface renewal due, expiring soon, expired and active status signals where contract dates are available.",
       },
@@ -131,7 +131,7 @@ const faqSections = [
     title: "WhatsApp Alerts",
     items: [
       {
-        question: "Does Monate Connect send paid WhatsApp API messages?",
+        question: "Does AiForm Procure send paid WhatsApp API messages?",
         answer:
           "Not yet. The current network uses WhatsApp-ready deep links and alert drafts rather than a paid WhatsApp API integration.",
       },
@@ -216,7 +216,7 @@ export default function HelpCentrePage() {
       <section className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
         <div className="border-b border-t border-heading py-10">
           <p className="newspaper-kicker">Help Centre &middot; Public FAQ</p>
-          <h1 className="newspaper-headline mt-5">Common questions about Monate Connect</h1>
+          <h1 className="newspaper-headline mt-5">Common questions about AiForm Procure</h1>
           <p className="newspaper-body mt-6 max-w-3xl">
             Find answers about supplier registration, verification, SmartScore trust signals,
             RFQs, purchase orders, contracts, invoices, payments, WhatsApp alerts and pilot

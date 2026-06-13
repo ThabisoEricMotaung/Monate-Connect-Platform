@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Script from "next/script";
 import { Libre_Franklin, Playfair_Display, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
@@ -32,7 +32,7 @@ const libreFranklin = Libre_Franklin({
 });
 
 export const metadata: Metadata = {
-  title: "Monate Connect",
+  title: "AiForm Procure",
   description:
     "Enterprise procurement portal for suppliers, RFQs, quotes, and verification.",
 };

@@ -121,7 +121,7 @@ export default function DemoModePage() {
         <p className="text-xs uppercase tracking-[0.28em] text-accent">Admin / Demo Environment</p>
         <h1 className="mt-3 text-2xl font-semibold text-heading">Demo Mode &amp; Seed Data Generator</h1>
         <p className="mt-2 max-w-3xl text-sm leading-7 text-secondary">
-          Populate Monate Connect with realistic South African procurement demo data for testing,
+          Populate AiForm Procure with realistic South African procurement demo data for testing,
           investor walkthroughs, stakeholder demos, and internal training.
         </p>
       </div>

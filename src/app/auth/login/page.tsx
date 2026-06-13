@@ -318,7 +318,7 @@ export default function LoginPage() {
             <path d="M6 1L1 4v4c0 3.3 2.1 6.4 5 7.4 2.9-1 5-4.1 5-7.4V4L6 1z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
             <path d="M4 8l1.5 1.5L8 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <span>Secured by Monate Connect</span>
+          <span>Secured by AiForm Procure</span>
         </div>
       </div>
     </main>

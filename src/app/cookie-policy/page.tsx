@@ -46,7 +46,7 @@ export default function CookiePolicyPage() {
           <h1 className="newspaper-headline mt-5">Cookie Policy</h1>
           <p className="newspaper-body mt-6 max-w-3xl">
             This page explains how cookies and browser storage may be used for sessions,
-            preferences, accessibility settings and future analytics in Monate Connect.
+            preferences, accessibility settings and future analytics in AiForm Procure.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/privacy" className="masthead__btn-primary">

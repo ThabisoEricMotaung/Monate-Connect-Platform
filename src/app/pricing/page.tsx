@@ -408,7 +408,7 @@ export default function PricingPage() {
             Pilot phase active — all plans free until 31 August 2026
           </div>
           <p className="mt-4 text-sm use-text-secondary max-w-2xl mx-auto">
-            Monate Connect is in its pilot phase. All features across all plans are available at no charge until 31 August 2026. After that, paid plans activate at the prices shown below.{" "}
+            AiForm Procure is in its pilot phase. All features across all plans are available at no charge until 31 August 2026. After that, paid plans activate at the prices shown below.{" "}
             <Link href="/contact" className="text-gold/80 underline underline-offset-2 hover:text-gold">
               Contact us
             </Link>{" "}

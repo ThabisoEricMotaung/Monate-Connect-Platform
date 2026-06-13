@@ -105,7 +105,7 @@ export default function ContactPage() {
     }
 
     setForm(initialForm)
-    setSuccess("Thank you. Monate Connect will contact you soon.")
+    setSuccess("Thank you. AiForm Procure will contact you soon.")
   }
 
   return (
@@ -115,7 +115,7 @@ export default function ContactPage() {
       <section className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[0.9fr_1.1fr] lg:py-20">
         <div className="border-b border-t border-heading py-10">
           <p className="newspaper-kicker">Contact &middot; Pilot Requests</p>
-          <h1 className="newspaper-headline mt-5">Start a Monate Connect conversation</h1>
+          <h1 className="newspaper-headline mt-5">Start an AiForm Procure conversation</h1>
           <p className="newspaper-body mt-6 max-w-3xl">
             Request a pilot demo, partnership discussion, supplier onboarding session,
             or buyer/procurement team setup.

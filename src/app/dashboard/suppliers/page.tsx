@@ -421,7 +421,7 @@ export default function SuppliersDirectoryPage() {
             const businessName = supplier.business_name || t("supplierProfile")
             const whatsappLink = createWhatsAppLink({
               phone: supplier.phone,
-              message: `Hi ${businessName}, we found your supplier profile on Monate Connect and would like to discuss procurement opportunities.`,
+              message: `Hi ${businessName}, we found your supplier profile on AiForm Procure and would like to discuss procurement opportunities.`,
             })
 
             return (

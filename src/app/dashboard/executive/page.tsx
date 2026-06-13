@@ -613,7 +613,7 @@ export default function ExecutiveCommandCentrePage() {
         <h1 className="enterprise-page-title">Executive Command Centre</h1>
         <p className="enterprise-page-description">
           A board-level view of procurement value, supplier risk, provincial
-          activity, and top supplier performance across the Monate Connect
+          activity, and top supplier performance across the AiForm Procure
           network.
         </p>
       </div>

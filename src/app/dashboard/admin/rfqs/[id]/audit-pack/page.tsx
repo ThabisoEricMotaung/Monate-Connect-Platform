@@ -400,7 +400,7 @@ export default function AuditPackPage() {
         <div className="print:flex print:items-start print:justify-between">
           <div>
             <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-gray-500">
-              MonateConnect Procurement Services — CONFIDENTIAL
+              AiForm Procure Procurement Services — CONFIDENTIAL
             </p>
             <h1 className="mt-2 text-2xl font-bold text-gray-900">Procurement Compliance Audit Pack</h1>
             <p className="mt-1 text-sm text-gray-600">
@@ -421,7 +421,7 @@ export default function AuditPackPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-accent print:text-gray-500">
-                MonateConnect · Procurement Compliance Certificate
+                AiForm Procure · Procurement Compliance Certificate
               </p>
               <h2 className="mt-1 text-xl font-bold text-heading print:text-gray-900">
                 Certificate Reference: {packRef}
@@ -467,7 +467,7 @@ export default function AuditPackPage() {
           </div>
 
           <p className="mt-4 text-xs text-muted print:text-gray-500">
-            This compliance certificate is generated from the MonateConnect procurement platform and is based on the records available at the time of generation. It does not constitute legal advice and must be reviewed by an authorised procurement official before reliance.
+            This compliance certificate is generated from the AiForm Procure procurement platform and is based on the records available at the time of generation. It does not constitute legal advice and must be reviewed by an authorised procurement official before reliance.
           </p>
         </div>
       )}
@@ -840,7 +840,7 @@ export default function AuditPackPage() {
 
             {/* Declaration */}
             <div className="rounded-md border border-panel bg-panel p-4 text-xs leading-6 text-secondary print:border-gray-200 print:text-gray-700">
-              This audit pack has been compiled from procurement records stored on the MonateConnect platform. All findings are based on data available at the time of generation. This document must be reviewed by an authorised procurement official and does not constitute a legal compliance opinion.
+              This audit pack has been compiled from procurement records stored on the AiForm Procure platform. All findings are based on data available at the time of generation. This document must be reviewed by an authorised procurement official and does not constitute a legal compliance opinion.
             </div>
           </div>
         </AuditSection>

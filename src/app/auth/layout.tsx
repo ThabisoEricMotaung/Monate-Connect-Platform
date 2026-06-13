@@ -7,10 +7,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <header className="flex justify-center px-6 py-8">
         <Link href="/">
           <p className="text-[0.63rem] font-bold uppercase tracking-[0.24em] text-accent">
-            Procurement Edition
+            Procurement Suite
           </p>
           <p className="mt-1 font-display text-3xl font-bold leading-none text-heading">
-            Monate Connect
+            AiForm Procure
           </p>
         </Link>
       </header>

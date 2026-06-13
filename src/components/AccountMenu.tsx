@@ -17,12 +17,12 @@ function displayName(profile: AccountMenuProfile | null): string {
     profile?.full_name?.trim() ||
     profile?.business_name?.trim() ||
     profile?.email?.trim() ||
-    "Monate user"
+    "AiForm Procure user"
   )
 }
 
 function initialsFromProfile(profile: AccountMenuProfile | null): string {
-  const source = displayName(profile) || profile?.email || "Monate user"
+  const source = displayName(profile) || profile?.email || "AiForm Procure user"
   const parts = source.split(/\s|@/).filter(Boolean)
 
   return (

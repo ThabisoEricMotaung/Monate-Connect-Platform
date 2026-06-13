@@ -331,12 +331,12 @@ export default function DashboardLayout({
         </button>
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="logo-mark flex h-10 w-10 items-center justify-center rounded-md bg-accent text-button font-extrabold text-lg shadow-md">
-            <span className="sr-only">Monate</span>
+            <span className="sr-only">AiForm Procure</span>
             M
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-secondary">Workspace</p>
-            <h2 className="text-sm font-semibold text-primary leading-none">Monate</h2>
+            <h2 className="text-sm font-semibold text-primary leading-none">AiForm Procure</h2>
           </div>
         </Link>
         <AccountMenu profile={profile} />
@@ -381,7 +381,7 @@ export default function DashboardLayout({
         <div className="mb-6 flex items-center gap-3 border-b border-panel pb-5">
           <Link href="/dashboard" onClick={closeSidebar} className="flex items-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
             <div className="logo-mark flex h-14 w-14 items-center justify-center rounded-md bg-accent text-button font-extrabold text-xl shadow-md">
-              <span className="sr-only">Monate</span>
+              <span className="sr-only">AiForm Procure</span>
               M
             </div>
             <div>
@@ -389,7 +389,7 @@ export default function DashboardLayout({
                 Supplier Workspace
               </p>
               <h2 className="text-xl font-semibold text-primary">
-                Monate Connect
+                AiForm Procure
               </h2>
             </div>
           </Link>
@@ -503,7 +503,7 @@ export default function DashboardLayout({
         </div>
         {children}
         <footer className="mt-10 flex flex-col gap-3 border-t border-panel pt-5 text-xs font-semibold text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>&copy; 2026 Monate Connect &middot; Procurement Edition</p>
+          <p>&copy; 2026 AiForm Procure &middot; Procurement Suite</p>
           <button
             type="button"
             onClick={openAccessibility}

@@ -260,7 +260,7 @@ export default function HomepageNewspaper() {
             <span>{dateStr}</span>
           </div>
           <div className="font-display" style={{ fontSize: 'clamp(32px, 6vw, 48px)', lineHeight: 1, color: '#1a1208', margin: '4px 0 2px' }}>
-            Monate Connect
+            AiForm Procure
           </div>
           <div style={{ fontSize: 14, color: '#5a4a2a', letterSpacing: '8px', margin: '2px 0' }}>
             — ✦ —
@@ -288,7 +288,7 @@ export default function HomepageNewspaper() {
             </p>
           </div>
           <p style={{ fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#5a4a2a', marginTop: 4 }}>
-            — Procurement Correspondent · Monate Connect Gazette
+            — Procurement Correspondent · AiForm Procure Gazette
           </p>
         </div>
 

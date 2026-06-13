@@ -6,7 +6,7 @@ const privacySections = [
   {
     title: "What Data Is Collected",
     body:
-      "Monate Connect may collect account details, supplier profile data, buyer organisation details, procurement activity, compliance evidence, contact information, usage analytics and operational logs needed to run a procurement platform.",
+      "AiForm Procure may collect account details, supplier profile data, buyer organisation details, procurement activity, compliance evidence, contact information, usage analytics and operational logs needed to run a procurement platform.",
   },
   {
     title: "Supplier Profile Data",
@@ -55,7 +55,7 @@ export default function PrivacyPolicyPage() {
           <p className="newspaper-kicker">Legal Desk &middot; Privacy Policy</p>
           <h1 className="newspaper-headline mt-5">Privacy Policy</h1>
           <p className="newspaper-body mt-6 max-w-3xl">
-            This page explains the types of information Monate Connect may collect and how that
+            This page explains the types of information AiForm Procure may collect and how that
             information may be used to support procurement, supplier verification and platform
             operations.
           </p>

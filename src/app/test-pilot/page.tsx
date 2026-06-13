@@ -8,7 +8,7 @@ import PublicHeader from "@/components/PublicHeader"
 const checklistSections = [
   {
     title: "First Impression",
-    task: "Open the public entry page and note whether the purpose of Monate Connect is immediately clear.",
+    task: "Open the public entry page and note whether the purpose of AiForm Procure is immediately clear.",
     expected: "You can quickly identify how to login, register, explore the demo, or browse public information.",
     href: "/",
   },
@@ -78,7 +78,7 @@ export default function TestPilotPage() {
             <aside className="entry-paper-panel self-start">
               <p className="newspaper-kicker">Pilot Testing</p>
               <h1 className="mt-4 font-display text-4xl font-bold leading-tight text-heading md:text-5xl">
-                Monate Connect tester checklist.
+                AiForm Procure tester checklist.
               </h1>
               <p className="mt-5 text-sm leading-7 text-secondary">
                 Work through the key pilot flows and mark each area as tested.

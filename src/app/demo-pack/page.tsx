@@ -16,10 +16,10 @@ const workflowSteps = [
 
 const sections = [
   {
-    title: "What Monate Connect Is",
+    title: "What AiForm Procure Is",
     eyebrow: "Platform Overview",
     body:
-      "Monate Connect is an enterprise procurement network for verified suppliers, buyers, compliance teams, and executives. It brings sourcing, supplier readiness, workflow governance, and procurement intelligence into one operating environment.",
+      "AiForm Procure is an enterprise procurement network for verified suppliers, buyers, compliance teams, and executives. It brings sourcing, supplier readiness, workflow governance, and procurement intelligence into one operating environment.",
   },
   {
     title: "Problem It Solves",
@@ -113,7 +113,7 @@ export default function DemoPackPage() {
         <div className="border-b border-t border-heading py-10">
           <p className="newspaper-kicker">Pilot Partner Edition &middot; Executive Brief</p>
           <h1 className="newspaper-headline mt-5">
-            Monate Connect pilot demo pack
+            AiForm Procure pilot demo pack
           </h1>
           <p className="newspaper-body mt-6 max-w-3xl">
             A polished procurement platform story for municipalities, mining houses,
@@ -197,7 +197,7 @@ export default function DemoPackPage() {
               Designed for credible first deployments
             </h2>
             <p className="mt-4 text-sm leading-7 text-secondary">
-              Monate Connect can be demonstrated with realistic South African procurement
+              AiForm Procure can be demonstrated with realistic South African procurement
               records, role-based journeys, executive reporting, and supplier readiness data.
             </p>
           </div>

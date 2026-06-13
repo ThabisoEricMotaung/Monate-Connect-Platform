@@ -220,7 +220,7 @@ export default function HeroSection() {
             <path d="M9 12l2 2 4-4" />
           </svg>
           <span style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#7a8a7a' }}>
-            — Procurement Correspondent &middot; Monate Connect Gazette
+            — Procurement Correspondent &middot; AiForm Procure Gazette
           </span>
         </div>
       </div>

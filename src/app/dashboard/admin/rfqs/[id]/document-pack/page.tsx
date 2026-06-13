@@ -279,7 +279,7 @@ export default function TenderDocumentPackPage() {
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.26em] text-accent print:text-slate-600">
-                MonateConnect Procurement Services
+                AiForm Procure Procurement Services
               </p>
               <p className="mt-2 text-xs uppercase tracking-[0.2em] text-secondary print:text-slate-500">
                 Structured Tender / RFQ Document Pack

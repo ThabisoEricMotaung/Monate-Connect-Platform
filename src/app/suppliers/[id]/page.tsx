@@ -226,7 +226,7 @@ export default async function SupplierProfilePage({ params }: Props) {
               <SmartScoreCircle score={smartScore} label="Supplier SmartScore" className="w-full max-w-none" />
               <div className="rounded-xl border border-accent/20 bg-accent/5 p-5">
                 <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-accent">Contact</p>
-                <h3 className="mt-1.5 text-sm font-bold text-heading">Contact through MonateConnect</h3>
+                <h3 className="mt-1.5 text-sm font-bold text-heading">Contact through AiForm Procure</h3>
                 <p className="mt-2 text-sm text-secondary">
                   Contact details are shared privately after an RFQ invitation is accepted.
                 </p>

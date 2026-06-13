@@ -60,7 +60,7 @@ export default function Navbar() {
             M
           </span>
           <span className="text-base font-semibold text-heading">
-            Monate Connect
+            AiForm Procure
           </span>
         </Link>
       </div>

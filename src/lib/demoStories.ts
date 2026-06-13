@@ -399,7 +399,7 @@ function buildRows(config: StoryConfig): Record<string, Record<string, unknown>[
         supplier_name: config.awardSupplierName,
         phone: suppliers.find((supplier) => supplier.id === config.awardSupplierId)?.phone ?? null,
         alert_type: config.alertType,
-        message: `Demo alert: ${config.poNumber} is ready for ${config.awardSupplierName}. Please review the procurement record in Monate Connect.`,
+        message: `Demo alert: ${config.poNumber} is ready for ${config.awardSupplierName}. Please review the procurement record in AiForm Procure.`,
         whatsapp_link: `https://wa.me/27135550101?text=${encodeURIComponent(`Demo alert: ${config.poNumber} is ready for review.`)}`,
         status: "Draft",
         created_at: daysFromNow(-14),

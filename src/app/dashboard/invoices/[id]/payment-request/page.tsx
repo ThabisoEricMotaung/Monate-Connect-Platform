@@ -213,7 +213,7 @@ export default function PaymentRequestPage() {
         <div className="print:flex print:items-start print:justify-between">
           <div>
             <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-gray-500">
-              MonateConnect Procurement Services
+              AiForm Procure Procurement Services
             </p>
             <h1 className="mt-1.5 text-2xl font-bold text-gray-900">Payment Request Pack</h1>
             <p className="mt-1 text-sm text-gray-600">
@@ -457,7 +457,7 @@ export default function PaymentRequestPage() {
         <PackSection n="8" title="Declaration & Authorisation">
           <div className="py-2 text-sm leading-7 text-secondary print:text-gray-700">
             <p>
-              This payment request pack has been generated from the MonateConnect Procurement Platform and constitutes the formal documentation package supporting the payment instruction below. Payment must only be processed after all of the following conditions are met:
+              This payment request pack has been generated from the AiForm Procure Procurement Platform and constitutes the formal documentation package supporting the payment instruction below. Payment must only be processed after all of the following conditions are met:
             </p>
             <ol className="mt-3 list-inside list-decimal space-y-1.5 text-sm text-secondary print:text-gray-700">
               <li>Invoice is in <strong>Approved</strong> status in the procurement system.</li>

@@ -31,7 +31,7 @@ export default function Features() {
         </h2>
 
         <p className="mx-auto mt-4 max-w-3xl font-serif text-lg text-secondary">
-          Monate Connect helps suppliers become discoverable,
+          AiForm Procure helps suppliers become discoverable,
           procurement-ready, and trusted by large buyers.
         </p>
       </div>

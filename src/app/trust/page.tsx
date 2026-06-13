@@ -237,7 +237,7 @@ export default function TrustCentrePage() {
               Built for South African procurement
             </span>
             <h1 className="mt-6 font-display text-4xl font-semibold leading-tight text-heading md:text-5xl">
-              How trust works on Monate Connect
+              How trust works on AiForm Procure
             </h1>
             <p className="mx-auto mt-5 max-w-[520px] font-serif text-base leading-8 text-secondary">
               Every supplier on the platform is verified against the Central Supplier Database,
@@ -258,7 +258,7 @@ export default function TrustCentrePage() {
           <p className="newspaper-kicker">For buyers</p>
           <h2 className="mt-3 font-display text-3xl font-semibold text-heading">How we verify every supplier</h2>
           <p className="mt-4 font-serif text-sm leading-7 text-secondary">
-            Before a supplier can respond to any RFQ on Monate Connect, they go through a mandatory
+            Before a supplier can respond to any RFQ on AiForm Procure, they go through a mandatory
             3-stage verification process. No shortcuts.
           </p>
 
@@ -427,11 +427,11 @@ export default function TrustCentrePage() {
               />
               <p className="newspaper-kicker mt-5">THE STUDIO BEHIND THE PLATFORM</p>
               <h2 id="who-builds-monate-connect" className="mt-3 font-display text-3xl font-semibold text-heading">
-                Who builds Monate Connect
+                Who builds AiForm Procure
               </h2>
               <div className="mt-5 space-y-5 font-serif text-sm leading-7 text-secondary">
                 <p>
-                  Monate Connect is designed and built by AiForm Studio, a South African product
+                  AiForm Procure is designed and built by AiForm Studio, a South African product
                   studio based in Pretoria.
                 </p>
                 <p>
@@ -443,7 +443,7 @@ export default function TrustCentrePage() {
                   form of something engineered. Noticed, not invented.
                 </p>
                 <p>
-                  That philosophy carries into everything we build. Monate Connect wasn&apos;t invented
+                  That philosophy carries into everything we build. AiForm Procure wasn&apos;t invented
                   from nothing either — it was noticed: thousands of capable South African suppliers
                   and serious buyers, separated by paperwork, spreadsheets, and missed connections.
                   We build the structure that lets them find each other.

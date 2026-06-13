@@ -71,22 +71,22 @@ function createGenericMessage(alertType: WhatsAppAlertType, supplier: SupplierPr
   const supplierName = supplier.business_name || "Supplier"
 
   if (alertType === "Compliance Reminder") {
-    return `Hi ${supplierName}, Monate Connect compliance reminder: please update your supplier profile, compliance documents, and banking details so procurement teams can continue processing opportunities.`
+    return `Hi ${supplierName}, AiForm Procure compliance reminder: please update your supplier profile, compliance documents, and banking details so procurement teams can continue processing opportunities.`
   }
 
   if (alertType === "Invoice Reminder") {
-    return `Hi ${supplierName}, Monate Connect invoice reminder: please review outstanding invoice actions in your supplier dashboard.`
+    return `Hi ${supplierName}, AiForm Procure invoice reminder: please review outstanding invoice actions in your supplier dashboard.`
   }
 
   if (alertType === "PO Issued") {
-    return `Hi ${supplierName}, Monate Connect notice: a purchase order action may require your review. Please sign in to your dashboard.`
+    return `Hi ${supplierName}, AiForm Procure notice: a purchase order action may require your review. Please sign in to your dashboard.`
   }
 
   if (alertType === "Award Notice") {
-    return `Hi ${supplierName}, Monate Connect award notice: please sign in to your supplier dashboard for procurement award updates.`
+    return `Hi ${supplierName}, AiForm Procure award notice: please sign in to your supplier dashboard for procurement award updates.`
   }
 
-  return `Hi ${supplierName}, procurement alert from Monate Connect. Please sign in to your supplier dashboard for the latest opportunity updates.`
+  return `Hi ${supplierName}, procurement alert from AiForm Procure. Please sign in to your supplier dashboard for the latest opportunity updates.`
 }
 
 export default function AdminWhatsAppNetworkPage() {

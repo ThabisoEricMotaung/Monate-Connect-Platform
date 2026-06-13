@@ -347,7 +347,7 @@ export async function notifyQuoteAwarded(quote: QuoteAutomation): Promise<void> 
   try {
     const supplier = await getSupplierById(quote.supplier_id)
     const title = quote.rfq_title || `RFQ-${quote.rfq_id ?? ""}`.trim() || "your RFQ"
-    const message = `Hi ${getSupplierName(supplier)}, Monate Connect award notice: your quote for ${title} has been awarded. Please sign in to review next steps.`
+    const message = `Hi ${getSupplierName(supplier)}, AiForm Procure award notice: your quote for ${title} has been awarded. Please sign in to review next steps.`
 
     await createSupplierNotification({
       supplierId: quote.supplier_id,
@@ -377,7 +377,7 @@ export async function notifyPOIssued(po: POAutomation): Promise<void> {
   try {
     const supplier = await getSupplierById(po.supplier_id)
     const poLabel = po.po_number || `PO-${po.id ?? ""}`.trim() || "a purchase order"
-    const message = `Hi ${getSupplierName(supplier)}, ${poLabel} has been issued through Monate Connect for ${po.title || "an awarded RFQ"}. Please sign in to review and accept the purchase order.`
+    const message = `Hi ${getSupplierName(supplier)}, ${poLabel} has been issued through AiForm Procure for ${po.title || "an awarded RFQ"}. Please sign in to review and accept the purchase order.`
 
     await createSupplierNotification({
       supplierId: po.supplier_id,
@@ -440,7 +440,7 @@ export async function notifyContractExpiring(contract: ContractAutomation): Prom
     await createWhatsAppDraft({
       supplier,
       alertType: "Compliance Reminder",
-      message: `Hi ${getSupplierName(supplier)}, Monate Connect reminder: ${contractLabel} is nearing expiry on ${formatDate(contract.end_date)}. Please review the contract in your dashboard.`,
+      message: `Hi ${getSupplierName(supplier)}, AiForm Procure reminder: ${contractLabel} is nearing expiry on ${formatDate(contract.end_date)}. Please review the contract in your dashboard.`,
       rfqId: contract.rfq_id ?? null,
       metadata: {
         contract_id: contract.id ?? null,
@@ -457,7 +457,7 @@ export async function notifyInvoiceApproved(invoice: InvoiceAutomation): Promise
   try {
     const supplier = await getSupplierById(invoice.supplier_id)
     const invoiceLabel = invoice.invoice_number || `Invoice-${invoice.id ?? ""}`.trim() || "Your invoice"
-    const message = `Hi ${getSupplierName(supplier)}, ${invoiceLabel} has been approved on Monate Connect. Payment processing can now proceed.`
+    const message = `Hi ${getSupplierName(supplier)}, ${invoiceLabel} has been approved on AiForm Procure. Payment processing can now proceed.`
 
     await createSupplierNotification({
       supplierId: invoice.supplier_id,
@@ -487,7 +487,7 @@ export async function notifyPaymentPaid(payment: PaymentAutomation): Promise<voi
   try {
     const supplier = await getSupplierById(payment.supplier_id)
     const paymentLabel = payment.payment_number || `Payment-${payment.id ?? ""}`.trim() || "A payment"
-    const message = `Hi ${getSupplierName(supplier)}, ${paymentLabel} has been marked as paid on Monate Connect. Payment date: ${formatDate(payment.payment_date)}.`
+    const message = `Hi ${getSupplierName(supplier)}, ${paymentLabel} has been marked as paid on AiForm Procure. Payment date: ${formatDate(payment.payment_date)}.`
 
     await createSupplierNotification({
       supplierId: payment.supplier_id,
@@ -530,7 +530,7 @@ export async function notifyComplianceExpiring(profile: SupplierAutomation): Pro
 
     if (expiringDocuments.length === 0) return
 
-    const message = `Hi ${getSupplierName(profile)}, Monate Connect compliance reminder: ${expiringDocuments.join("; ")}. Please update your supplier profile documents.`
+    const message = `Hi ${getSupplierName(profile)}, AiForm Procure compliance reminder: ${expiringDocuments.join("; ")}. Please update your supplier profile documents.`
 
     await createSupplierNotification({
       supplierId: profile.id,

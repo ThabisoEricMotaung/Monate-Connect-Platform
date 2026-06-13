@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -206,7 +206,7 @@ export default function BuyerDashboardLayout({
                 Buyer workspace
               </p>
               <p className="mt-1 truncate text-sm font-semibold text-heading">
-                Monate Connect
+                AiForm Procure
               </p>
             </div>
           </Link>

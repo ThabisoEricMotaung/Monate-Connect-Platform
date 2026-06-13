@@ -41,7 +41,7 @@ export default function PublicFooter() {
       <div className="mx-auto grid max-w-7xl gap-8 px-6 py-10 lg:grid-cols-[1.1fr_1.4fr]">
         <div>
           <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-accent">
-            Monate Connect
+            AiForm Procure
           </p>
           <h2 className="mt-3 font-display text-3xl font-bold text-heading">
             Public procurement intelligence, clearly signposted
@@ -77,7 +77,7 @@ export default function PublicFooter() {
       <div className="mx-auto flex max-w-7xl flex-col gap-3 border-t border-panel px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <p className="text-sm font-semibold text-muted">
-            &copy; 2026 Monate Connect &middot; Procurement Edition
+            &copy; 2026 AiForm Procure &middot; Procurement Suite
           </p>
           <div className="flex items-center gap-2 text-sm font-semibold text-muted">
             <Image

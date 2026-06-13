@@ -86,26 +86,26 @@ export function createRFQWhatsAppMessage(
   const budget = rfq?.budget ? ` Budget: ${rfq.budget}.` : ""
 
   if (alertType === "Closing Soon") {
-    return `Hi ${supplierName}, reminder from Monate Connect: ${rfqTitle} is closing soon. Deadline: ${deadline}.${category}${province} Please review and submit your quote if suitable.`
+    return `Hi ${supplierName}, reminder from AiForm Procure: ${rfqTitle} is closing soon. Deadline: ${deadline}.${category}${province} Please review and submit your quote if suitable.`
   }
 
   if (alertType === "Award Notice") {
-    return `Hi ${supplierName}, Monate Connect procurement notice: an award update is available for ${rfqTitle}. Please check your dashboard for the official award decision and next steps.`
+    return `Hi ${supplierName}, AiForm Procure procurement notice: an award update is available for ${rfqTitle}. Please check your dashboard for the official award decision and next steps.`
   }
 
   if (alertType === "PO Issued") {
-    return `Hi ${supplierName}, a purchase order has been issued through Monate Connect for ${rfqTitle}. Please sign in to review and accept the PO.`
+    return `Hi ${supplierName}, a purchase order has been issued through AiForm Procure for ${rfqTitle}. Please sign in to review and accept the PO.`
   }
 
   if (alertType === "Invoice Reminder") {
-    return `Hi ${supplierName}, Monate Connect reminder: please review outstanding invoice actions linked to ${rfqTitle}. Sign in to confirm status or submit required information.`
+    return `Hi ${supplierName}, AiForm Procure reminder: please review outstanding invoice actions linked to ${rfqTitle}. Sign in to confirm status or submit required information.`
   }
 
   if (alertType === "Compliance Reminder") {
-    return `Hi ${supplierName}, Monate Connect compliance reminder: please update your supplier documents and banking/compliance details so procurement teams can continue processing opportunities.`
+    return `Hi ${supplierName}, AiForm Procure compliance reminder: please update your supplier documents and banking/compliance details so procurement teams can continue processing opportunities.`
   }
 
-  return `Hi ${supplierName}, new RFQ available on Monate Connect: ${rfqTitle}. Deadline: ${deadline}.${category}${province}${budget} Please sign in to review and submit a quote if suitable.`
+  return `Hi ${supplierName}, new RFQ available on AiForm Procure: ${rfqTitle}. Deadline: ${deadline}.${category}${province}${budget} Please sign in to review and submit a quote if suitable.`
 }
 
 export async function logWhatsAppAlert({
