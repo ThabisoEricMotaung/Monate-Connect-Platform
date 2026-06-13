@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { roleHomeHref } from "@/lib/navigation"
 import { supabase } from "@/lib/supabase"
 
 export type AccountMenuProfile = {
@@ -9,6 +10,7 @@ export type AccountMenuProfile = {
   email?: string | null
   full_name?: string | null
   preferred_name?: string | null
+  role?: string | null
 }
 
 function displayName(profile: AccountMenuProfile | null): string {
@@ -45,6 +47,7 @@ export default function AccountMenu({
   const name = displayName(profile)
   const email = profile?.email?.trim() || "No email on profile"
   const initials = useMemo(() => initialsFromProfile(profile), [profile])
+  const homeHref = roleHomeHref(profile?.role)
 
   useEffect(() => {
     if (!open) return
@@ -61,7 +64,7 @@ export default function AccountMenu({
 
   async function handleLogout() {
     await supabase.auth.signOut()
-    window.location.assign("/auth/login?signedout=1")
+    window.location.assign("/?signedout=1")
   }
 
   return (
@@ -86,6 +89,14 @@ export default function AccountMenu({
             <p className="truncate font-semibold text-heading">{name}</p>
             <p className="mt-0.5 truncate text-xs text-secondary">{email}</p>
           </div>
+          <Link
+            href={homeHref}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-3 font-semibold text-secondary transition hover:bg-panel hover:text-primary"
+          >
+            Home dashboard
+          </Link>
           <Link
             href={businessProfileHref}
             role="menuitem"

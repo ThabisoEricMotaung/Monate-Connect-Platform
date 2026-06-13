@@ -49,13 +49,13 @@ export default function Navbar() {
       alert("Logout failed. Please try again.")
       return
     }
-    router.push("/auth/login")
+    router.push("/?signedout=1")
   }
 
   return (
     <header className="masthead sticky top-0 z-50">
       <div className="masthead__brand">
-        <Link href="/" className="flex items-center justify-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+        <Link href="/" className="flex cursor-pointer items-center justify-center gap-3 transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
           <span className="logo-mark flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-accent text-lg font-extrabold text-button shadow-md">
             M
           </span>

@@ -188,7 +188,7 @@ export default function AdminDashboardLayout({
       {
         items: [
           {
-            name: "Overview",
+            name: "Home dashboard",
             href: "/dashboard/admin",
             icon: "H",
           },

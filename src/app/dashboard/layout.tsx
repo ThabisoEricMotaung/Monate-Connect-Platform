@@ -7,6 +7,7 @@ import AccountMenu, { type AccountMenuProfile } from "@/components/AccountMenu"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
+import { roleHomeHref } from "@/lib/navigation"
 import { supabase } from "@/lib/supabase"
 
 type SupplierNavigationName =
@@ -250,6 +251,7 @@ export default function DashboardLayout({
   const [roleChecked, setRoleChecked] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const canViewAdminNavigation = role?.trim().toLowerCase() === "admin"
+  const homeHref = roleHomeHref(role)
   
   function closeSidebar() {
     setSidebarOpen(false)
@@ -329,7 +331,7 @@ export default function DashboardLayout({
             <line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href={homeHref} className="flex cursor-pointer items-center gap-2 rounded-sm transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
           <div className="logo-mark flex h-10 w-10 items-center justify-center rounded-md bg-accent text-button font-extrabold text-lg shadow-md">
             <span className="sr-only">AiForm Procure</span>
             M
@@ -370,16 +372,16 @@ export default function DashboardLayout({
 
         <div className="mb-4 rounded-2xl border border-panel bg-surface p-4 text-sm">
           <Link
-            href="/"
+            href={homeHref}
             onClick={closeSidebar}
             className="text-accent transition hover:text-accent-strong"
           >
-            Back to Portal
+            Home dashboard
           </Link>
         </div>
 
         <div className="mb-6 flex items-center gap-3 border-b border-panel pb-5">
-          <Link href="/dashboard" onClick={closeSidebar} className="flex items-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+          <Link href={homeHref} onClick={closeSidebar} className="flex cursor-pointer items-center gap-3 rounded-sm transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
             <div className="logo-mark flex h-14 w-14 items-center justify-center rounded-md bg-accent text-button font-extrabold text-xl shadow-md">
               <span className="sr-only">AiForm Procure</span>
               M

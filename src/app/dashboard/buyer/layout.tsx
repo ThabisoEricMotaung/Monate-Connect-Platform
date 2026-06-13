@@ -63,7 +63,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
 
 const BASE_NAVIGATION: NavGroup[] = [
   {
-    items: [{ name: "Overview", href: "/dashboard/buyer", icon: "H" }],
+    items: [{ name: "Home dashboard", href: "/dashboard/buyer", icon: "H" }],
   },
   {
     label: "Procurement",

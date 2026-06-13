@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
+import { roleHomeHref } from "@/lib/navigation"
 import { supabase } from "@/lib/supabase"
 
 const links = [
@@ -16,16 +17,11 @@ function isActiveLink(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-function roleHome(role?: string | null): string {
-  const normalizedRole = role?.trim().toLowerCase()
-  if (normalizedRole === "admin") return "/dashboard/admin"
-  if (normalizedRole === "buyer") return "/dashboard/buyer"
-  return "/dashboard"
-}
-
 export default function PublicHeader() {
   const pathname = usePathname() || "/"
   const [dashboardHref, setDashboardHref] = useState<string | null>(null)
+  const [signedOutNotice, setSignedOutNotice] = useState(false)
+  const homeHref = dashboardHref ?? "/"
 
   useEffect(() => {
     let cancelled = false
@@ -46,7 +42,7 @@ export default function PublicHeader() {
         .eq("id", session.user.id)
         .maybeSingle()
 
-      if (!cancelled) setDashboardHref(roleHome((data as { role?: string | null } | null)?.role))
+      if (!cancelled) setDashboardHref(roleHomeHref((data as { role?: string | null } | null)?.role))
     }
 
     loadSession()
@@ -56,21 +52,37 @@ export default function PublicHeader() {
     }
   }, [])
 
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const params = new URLSearchParams(window.location.search)
+    setSignedOutNotice(pathname === "/" && params.get("signedout") === "1")
+  }, [pathname])
+
   async function handleLogout() {
     await supabase.auth.signOut()
     setDashboardHref(null)
-    window.location.assign("/auth/login?signedout=1")
+    window.location.assign("/?signedout=1")
   }
 
   return (
     <header className="border-b border-panel bg-card text-primary shadow-panel">
+      {signedOutNotice && (
+        <div className="border-b border-panel bg-panel px-6 py-2 text-center text-xs font-semibold text-secondary">
+          You&apos;ve been signed out.
+        </div>
+      )}
       <div className="mx-auto max-w-7xl px-6 py-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <Link href="/" className="group">
-            <p className="text-[0.63rem] font-bold uppercase tracking-[0.24em] text-accent">
+          <Link
+            href={homeHref}
+            aria-label={dashboardHref ? "Go to your dashboard" : "Go to homepage"}
+            className="group cursor-pointer rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            <p className="text-[0.63rem] font-bold uppercase tracking-[0.24em] text-accent transition group-hover:text-accent-strong">
               Procurement Suite
             </p>
-            <p className="mt-1 font-display text-3xl font-bold leading-none text-heading md:text-4xl">
+            <p className="mt-1 font-display text-3xl font-bold leading-none text-heading transition group-hover:text-accent md:text-4xl">
               AiForm Procure
             </p>
           </Link>

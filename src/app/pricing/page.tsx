@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import PublicHeader from "@/components/PublicHeader"
 
 const supplierPlans = [
   {
@@ -252,7 +253,9 @@ export default function PricingPage() {
 
 
   return (
-    <div className="pricing-root">
+    <>
+      <PublicHeader />
+      <div className="pricing-root">
       <style>{`
         .pricing-root { transition: background-color 0.3s ease, color 0.3s ease; }
 
@@ -488,6 +491,7 @@ export default function PricingPage() {
           </Link>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   )
 }
