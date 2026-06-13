@@ -72,12 +72,22 @@ export default function AccountMenu({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex h-11 w-11 items-center justify-center rounded-full border border-panel bg-panel text-sm font-bold text-heading shadow-sm transition hover:border-accent hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+        className="group flex cursor-pointer items-center gap-1.5 rounded-full border border-transparent bg-transparent p-1 pr-2 text-heading transition hover:border-accent/30 hover:bg-panel hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label="Open account menu"
       >
-        {initials}
+        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-panel bg-panel text-sm font-bold shadow-sm transition group-hover:border-accent group-hover:brightness-105">
+          {initials}
+        </span>
+        <span
+          aria-hidden="true"
+          className={`text-xs leading-none text-secondary transition duration-200 group-hover:text-accent ${
+            open ? "rotate-180" : "rotate-0"
+          }`}
+        >
+          ▾
+        </span>
       </button>
 
       {open && (
@@ -104,6 +114,14 @@ export default function AccountMenu({
             className="block px-4 py-3 font-semibold text-secondary transition hover:bg-panel hover:text-primary"
           >
             Business profile
+          </Link>
+          <Link
+            href="/"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-3 font-semibold text-secondary transition hover:bg-panel hover:text-primary"
+          >
+            View public site
           </Link>
           <div className="border-t border-panel" />
           <button
