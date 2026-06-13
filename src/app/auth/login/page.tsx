@@ -39,7 +39,6 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [selectedRole, setSelectedRole] = useState<"supplier" | "buyer">("supplier")
   const [loading, setLoading] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
@@ -48,16 +47,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    if (params.get("role") === "buyer") setSelectedRole("buyer")
     if (params.get("verified") === "1") setVerifiedNotice(true)
     if (params.get("signedout") === "1") setSignedOutNotice(true)
   }, [])
-
-  const heading = selectedRole === "buyer" ? "Buyer login" : "Supplier login"
-  const subheading =
-    selectedRole === "buyer"
-      ? "Sign in to access the procurement dashboard and manage RFQs."
-      : "Sign in to manage your profile, respond to RFQs, and track quotes."
 
   const handleLogin = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
@@ -198,8 +190,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="rounded-3xl border border-panel bg-panel p-8 shadow-panel">
           <div className="mb-7 text-center">
-            <h1 className="text-3xl font-semibold text-heading">{heading}</h1>
-            <p className="mt-3 text-sm leading-6 text-secondary">{subheading}</p>
+            <h1 className="text-3xl font-semibold text-heading">Log in to AiForm Procure</h1>
+            <p className="mt-3 text-sm leading-6 text-secondary">Sign in to your account.</p>
           </div>
 
           {verifiedNotice && (
@@ -223,32 +215,6 @@ export default function LoginPage() {
           </p>
 
           <div className="space-y-5">
-            {/* Role selector */}
-            <div className="grid grid-cols-2 gap-2 rounded-2xl border border-panel bg-surface p-1.5">
-              <button
-                type="button"
-                onClick={() => setSelectedRole("supplier")}
-                className={`rounded-xl px-4 py-3 text-sm font-semibold transition duration-200 ${
-                  selectedRole === "supplier"
-                    ? "bg-accent text-button shadow-sm"
-                    : "text-secondary hover:bg-panel hover:text-primary"
-                }`}
-              >
-                Supplier
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedRole("buyer")}
-                className={`rounded-xl px-4 py-3 text-sm font-semibold transition duration-200 ${
-                  selectedRole === "buyer"
-                    ? "bg-accent text-button shadow-sm"
-                    : "text-secondary hover:bg-panel hover:text-primary"
-                }`}
-              >
-                Buyer
-              </button>
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-secondary">
                 Email address <span className="font-semibold text-accent">*</span>

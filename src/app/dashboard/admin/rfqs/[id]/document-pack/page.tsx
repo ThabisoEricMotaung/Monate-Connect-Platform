@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import SignedDocumentLink from "@/components/SignedDocumentLink"
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
@@ -364,14 +365,13 @@ export default function TenderDocumentPackPage() {
                 The supporting procurement attachment forms part of this RFQ pack
                 and must be reviewed before submission.
               </p>
-              <a
-                href={rfq.attachment_url}
-                target="_blank"
-                rel="noopener noreferrer"
+              <SignedDocumentLink
+                value={rfq.attachment_url}
+                bucket="rfq-documents"
                 className="mt-4 inline-flex break-all text-sm font-semibold text-accent underline decoration-accent/40 underline-offset-4 print:text-slate-700"
               >
                 {rfq.attachment_url}
-              </a>
+              </SignedDocumentLink>
             </section>
           )}
 

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import RFQClarifications from "@/components/rfqs/RFQClarifications"
 import SaveRFQControl from "@/components/rfqs/SaveRFQControl"
 import RFQIntelligence from "@/components/rfqs/RFQIntelligence"
+import SignedDocumentLink from "@/components/SignedDocumentLink"
 import ComplianceChecklist from "@/components/compliance/ComplianceChecklist"
 import ComplianceBanner from "@/components/compliance/ComplianceBanner"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
@@ -222,14 +223,13 @@ export default async function RFQDetailPage({ params }: Props) {
             supporting specifications, and submission context.
           </p>
 
-          <a
-            href={rfq.attachment_url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <SignedDocumentLink
+            value={rfq.attachment_url}
+            bucket="rfq-documents"
             className="mt-5 inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
           >
             Download RFQ Attachment
-          </a>
+          </SignedDocumentLink>
 
         </div>
       )}

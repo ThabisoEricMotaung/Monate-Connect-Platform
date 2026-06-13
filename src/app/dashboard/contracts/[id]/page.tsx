@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import SignedDocumentLink from "@/components/SignedDocumentLink"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
@@ -364,14 +365,9 @@ export default function ContractDetailPage() {
                 Document Link
               </p>
               {contract.document_url ? (
-                <a
-                  href={contract.document_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 inline-flex text-sm font-semibold text-accent transition hover:text-accent-strong"
-                >
+                <SignedDocumentLink value={contract.document_url} bucket="rfq-documents" className="mt-2 inline-flex text-sm font-semibold text-accent transition hover:text-accent-strong">
                   Open contract document
-                </a>
+                </SignedDocumentLink>
               ) : (
                 <p className="mt-2 text-sm font-semibold text-heading">-</p>
               )}

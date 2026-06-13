@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import SignedDocumentLink from "@/components/SignedDocumentLink"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { requireAdminOrBuyer } from "@/lib/auth"
@@ -162,14 +163,9 @@ export default function AdminRFQDetailPage() {
                 <p><span className="font-semibold text-heading">Created:</span> {formatDate(rfq.created_at)}</p>
               </div>
               {rfq.attachment_url && (
-                <a
-                  href={rfq.attachment_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-5 inline-flex text-sm font-semibold text-accent transition hover:text-accent-strong"
-                >
+                <SignedDocumentLink value={rfq.attachment_url} bucket="rfq-documents" className="mt-5 inline-flex text-sm font-semibold text-accent transition hover:text-accent-strong">
                   Open attachment
-                </a>
+                </SignedDocumentLink>
               )}
             </section>
           </aside>

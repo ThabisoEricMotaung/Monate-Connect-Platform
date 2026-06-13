@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import type { ReactNode } from "react"
 import { useRouter } from "next/navigation"
+import SignedDocumentLink from "@/components/SignedDocumentLink"
 import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 
@@ -150,14 +151,9 @@ function documentLink(url: string | null) {
   if (!url) return null
 
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-xs font-semibold text-accent underline-offset-4 transition hover:text-accent-strong hover:underline"
-    >
+    <SignedDocumentLink value={url} bucket="supplier-documents" className="text-xs font-semibold text-accent underline-offset-4 transition hover:text-accent-strong hover:underline">
       Open document
-    </a>
+    </SignedDocumentLink>
   )
 }
 

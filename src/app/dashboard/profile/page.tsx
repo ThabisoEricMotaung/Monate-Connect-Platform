@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import SignedDocumentLink from "@/components/SignedDocumentLink"
 import { logActivity } from "@/lib/activity"
 import {
   calculateSmartScore,
@@ -289,9 +290,9 @@ function FileRow({ label, url, status }: { label: string; url: string; status: "
       </svg>
       <span className="min-w-0 flex-1 truncate text-xs font-semibold text-heading">{label}</span>
       <Badge color={status === "Verified" ? "green" : "amber"}>{status}</Badge>
-      <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-accent hover:text-accent-strong">
+      <SignedDocumentLink value={url} bucket="supplier-documents" className="text-xs font-semibold text-accent hover:text-accent-strong">
         View
-      </a>
+      </SignedDocumentLink>
     </div>
   )
 }
@@ -729,9 +730,8 @@ function VerificationTab({
     const path = `${userId}/${type}/${cleanFileName(file.name)}`
     const { error: upErr } = await supabase.storage.from("supplier-documents").upload(path, file, { upsert: true })
     if (upErr) { setUploadError(upErr.message); setUploadingField(null); return }
-    const { data } = supabase.storage.from("supplier-documents").getPublicUrl(path)
-    await supabase.from("profiles").update({ [field]: data.publicUrl }).eq("id", userId)
-    onDocUploaded(field, data.publicUrl)
+    await supabase.from("profiles").update({ [field]: path }).eq("id", userId)
+    onDocUploaded(field, path)
     setUploadingField(null)
     e.target.value = ""
   }
@@ -862,9 +862,8 @@ function DocumentsTab({
     const path = `${userId}/${type}/${cleanFileName(file.name)}`
     const { error: upErr } = await supabase.storage.from("supplier-documents").upload(path, file, { upsert: true })
     if (upErr) { setUploadError(upErr.message); setUploading(false); return }
-    const { data } = supabase.storage.from("supplier-documents").getPublicUrl(path)
-    await supabase.from("profiles").update({ [uploadCategory]: data.publicUrl }).eq("id", userId)
-    onDocUploaded(uploadCategory, data.publicUrl)
+    await supabase.from("profiles").update({ [uploadCategory]: path }).eq("id", userId)
+    onDocUploaded(uploadCategory, path)
     setUploading(false)
     setUploadSuccess(`${docLabel(uploadCategory)} uploaded.`)
     e.target.value = ""
@@ -891,9 +890,9 @@ function DocumentsTab({
               </svg>
               <span className="min-w-0 flex-1 text-sm font-semibold text-heading">{docLabel(field)}</span>
               <Badge color={statusOfDoc() === "Verified" ? "green" : "amber"}>{statusOfDoc()}</Badge>
-              <a href={docUrls[field]} target="_blank" rel="noopener noreferrer" className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent">
+              <SignedDocumentLink value={docUrls[field]} bucket="supplier-documents" className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent">
                 Download
-              </a>
+              </SignedDocumentLink>
             </div>
           ))}
         </div>

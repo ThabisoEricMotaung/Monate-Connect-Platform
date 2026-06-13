@@ -680,8 +680,6 @@ export default function NewRFQPage() {
 
     if (uploadError) throw new Error(formatStorageUploadError(uploadError))
 
-    const { data: publicUrlData } = supabase.storage.from("rfq-documents").getPublicUrl(filePath)
-
     await logActivity({
       action: "document.uploaded",
       entity_type: "rfq_document",
@@ -690,11 +688,11 @@ export default function NewRFQPage() {
         bucket: "rfq-documents",
         file_name: firstDocument.name,
         file_path: filePath,
-        document_url: publicUrlData.publicUrl,
+        document_url: filePath,
       },
     })
 
-    return publicUrlData.publicUrl
+    return filePath
   }
 
   async function createRFQ(status: "Draft" | "Open") {
