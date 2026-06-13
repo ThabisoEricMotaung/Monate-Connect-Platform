@@ -5,6 +5,10 @@ import { supabase } from "@/lib/supabase"
 
 const PRIVATE_DOCUMENT_BUCKETS = ["supplier-documents", "rfq-documents"] as const
 type PrivateDocumentBucket = (typeof PRIVATE_DOCUMENT_BUCKETS)[number]
+const SIGNED_URL_EXPIRES_IN: Record<PrivateDocumentBucket, number> = {
+  "supplier-documents": 600,
+  "rfq-documents": 60 * 60,
+}
 
 function isPrivateBucket(bucket: string | null | undefined): bucket is PrivateDocumentBucket {
   return PRIVATE_DOCUMENT_BUCKETS.includes(bucket as PrivateDocumentBucket)
@@ -24,7 +28,18 @@ function extractStorageObject(
   try {
     const url = new URL(trimmed)
     const match = url.pathname.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+)$/)
-    if (!match) return null
+    if (!match) {
+      if (!fallbackBucket) return null
+
+      const marker = `/${fallbackBucket}/`
+      const markerIndex = url.pathname.indexOf(marker)
+      if (markerIndex === -1) return null
+
+      return {
+        bucket: fallbackBucket,
+        path: decodeURIComponent(url.pathname.slice(markerIndex + marker.length)),
+      }
+    }
 
     const bucket = decodeURIComponent(match[1])
     if (!isPrivateBucket(bucket)) return null
@@ -72,7 +87,7 @@ export default function SignedDocumentLink({
     setLoading(true)
     const { data, error: signedUrlError } = await supabase.storage
       .from(object.bucket)
-      .createSignedUrl(object.path, 600)
+      .createSignedUrl(object.path, SIGNED_URL_EXPIRES_IN[object.bucket])
     setLoading(false)
 
     if (signedUrlError || !data?.signedUrl) {

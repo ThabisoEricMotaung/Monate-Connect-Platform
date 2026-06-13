@@ -1,245 +1,257 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import PublicFooter from "@/components/PublicFooter"
-import PublicHeader from "@/components/PublicHeader"
-import SmartScoreCircle from "@/components/SmartScoreCircle"
-import { calculateSupplierSmartScore } from "@/lib/smartScore"
-import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { createClient } from "@supabase/supabase-js"
 
 type Props = {
   params: Promise<{ id: string }>
 }
 
-type SupplierProfile = {
+type PublicSupplierProfile = {
   id: string
   business_name: string | null
-  description: string | null
   province: string | null
+  provinces: string[] | null
   industry: string | null
-  verification_status: string | null
-  csd_number: string | null
   bbbee_level: string | null
-  tax_status: string | null
-  company_registration: string | null
   cidb_grade: string | null
-  verification_notes: string | null
-  csd_document_url: string | null
-  bbbee_document_url: string | null
-  tax_document_url: string | null
-  company_registration_url: string | null
-  cidb_document_url: string | null
-  capability_statement_url: string | null
-  smart_score?: number | string | null
-  created_at?: string | null
-  updated_at?: string | null
+  smart_score: number | string | null
+  csd_verified: boolean | null
+  bbbee_verified: boolean | null
+  tax_verified: boolean | null
+  banking_verified: boolean | null
+  bank_verified: boolean | null
+  director_verified: boolean | null
+  website: string | null
+  description: string | null
+  employee_count: number | string | null
+  linkedin_url: string | null
+  founded_year: number | string | null
+  created_at: string | null
 }
 
-function maskCSD(csd: string | null): string {
-  if (!csd?.trim()) return "-"
-  if (csd.length <= 4) return csd
-  return csd.slice(0, 4) + "*".repeat(Math.min(csd.length - 4, 6))
+const FOREST = "#1a3a2a"
+const GOLD = "#c8a060"
+const CREAM = "#f8f4ec"
+const TEAL = "#5DCAA5"
+
+async function getSupplier(id: string): Promise<PublicSupplierProfile> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) notFound()
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      persistSession: false,
+    },
+  })
+
+  const { data, error } = await supabase
+    .from("public_supplier_directory")
+    .select(
+      "id,business_name,province,provinces,industry,bbbee_level,cidb_grade,smart_score,csd_verified,bbbee_verified,tax_verified,banking_verified,bank_verified,director_verified,website,description,employee_count,linkedin_url,founded_year,created_at"
+    )
+    .eq("id", id)
+    .maybeSingle()
+
+  if (error || !data) notFound()
+
+  return data as PublicSupplierProfile
 }
 
-function valueOrDash(value: string | null): string {
-  return value?.trim() || "-"
+function asNumber(value: number | string | null | undefined): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null
+  if (value === null || value === undefined || value === "") return null
+  const parsed = Number(String(value).replace(/[^\d.]/g, ""))
+  return Number.isFinite(parsed) ? parsed : null
 }
 
-function formatYearsActive(createdAt: string | null | undefined): string {
-  if (!createdAt) return "-"
-  const d = new Date(createdAt)
-  if (Number.isNaN(d.getTime())) return "-"
-  const years = Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-  if (years < 1) return "< 1 year"
-  return years + " year" + (years === 1 ? "" : "s")
+function formatScore(value: number | string | null | undefined): string {
+  const score = asNumber(value)
+  if (score === null) return "-"
+  return String(Math.round(Math.min(100, Math.max(0, score))))
 }
 
-function getInitials(name: string | null): string {
-  if (!name?.trim()) return "??"
-  const words = name.trim().split(/\s+/)
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
-  return (words[0][0] + words[1][0]).toUpperCase()
+function valueOrDash(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "-"
+  return String(value)
 }
 
-function normalizeTax(v: string | null | undefined): boolean {
-  const n = (v ?? "").trim().toLowerCase()
-  return n.includes("valid") || n.includes("verified") || n.includes("clear")
+function primaryProvince(supplier: PublicSupplierProfile): string {
+  return supplier.province?.trim() || supplier.provinces?.find(Boolean)?.trim() || "National"
 }
 
-function ComplianceBadge({ label, status }: { label: string; status: "verified" | "pending" | "none" }) {
-  const styles: Record<string, string> = {
-    verified: "border-success/30 bg-success-soft text-success",
-    pending: "border-warning bg-warning-soft text-warning",
-    none: "border-panel bg-panel text-muted",
-  }
+function externalHref(value: string | null | undefined): string | null {
+  const href = value?.trim()
+  if (!href) return null
+  return /^https?:\/\//i.test(href) ? href : `https://${href}`
+}
+
+function ExternalLinkIcon() {
   return (
-    <span className={"inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.16em] " + styles[status]}>
-      {status === "verified" && (
-        <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24">
-          <path d="M20 6 9 17l-5-5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" />
-        </svg>
-      )}
-      {label}
+    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 17 17 7" />
+      <path d="M8 7h9v9" />
+    </svg>
+  )
+}
+
+function VerificationMark({ active }: { active: boolean }) {
+  return (
+    <span
+      className={[
+        "flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold",
+        active ? "bg-[#E1F5EE] text-[#085041]" : "bg-stone-100 text-stone-400",
+      ].join(" ")}
+      aria-label={active ? "Verified" : "Not verified"}
+    >
+      {active ? <span aria-hidden="true">&#10003;</span> : <span aria-hidden="true">-</span>}
     </span>
   )
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function VerificationRow({ label, active }: { label: string; active: boolean }) {
   return (
-    <div className="rounded-md border border-panel bg-panel p-4 text-center">
-      <p className="text-2xl font-bold text-heading">{value}</p>
-      <p className="mt-1 text-[0.6rem] font-bold uppercase tracking-[0.18em] text-muted">{label}</p>
+    <div className="flex items-center justify-between gap-4 border-b border-stone-100 py-3 last:border-b-0">
+      <span className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-stone-600">{label}</span>
+      <VerificationMark active={active} />
+    </div>
+  )
+}
+
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-stone-200 bg-[#fbf8f1] p-4">
+      <p className="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-stone-500">{label}</p>
+      <p className="mt-2 text-sm font-semibold text-[#1f2f28]">{value}</p>
     </div>
   )
 }
 
 export default async function SupplierProfilePage({ params }: Props) {
   const { id } = await params
-
-  const supabase = await createSupabaseServerClient()
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select(
-      "id,business_name,description,province,industry,verification_status,csd_number,bbbee_level,tax_status,company_registration,cidb_grade,verification_notes,csd_document_url,bbbee_document_url,tax_document_url,company_registration_url,cidb_document_url,capability_statement_url,smart_score,created_at,updated_at"
-    )
-    .eq("id", id)
-    .eq("verification_status", "Verified")
-    .single()
-
-  if (error || !data) notFound()
-
-  const supplier = data as SupplierProfile
-  const smartScore = calculateSupplierSmartScore(supplier)
-  const initials = getInitials(supplier.business_name)
-  const taxVerified = normalizeTax(supplier.tax_status)
-  const taxStatus = taxVerified ? "verified" : supplier.tax_status?.trim() ? "pending" : "none"
+  const supplier = await getSupplier(id)
+  const websiteHref = externalHref(supplier.website)
+  const linkedinHref = externalHref(supplier.linkedin_url)
+  const bankVerified = Boolean(supplier.banking_verified || supplier.bank_verified)
 
   return (
-    <>
-      <PublicHeader />
-      <main className="min-h-screen bg-page text-primary">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-          {/* Back link */}
-          <Link href="/suppliers"
-            className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-secondary hover:text-primary">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24">
-              <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-            </svg>
-            Back to directory
+    <main className="min-h-screen bg-[#f8f4ec] text-[#1f2f28]">
+      <header className="bg-[#1a3a2a]">
+        <div className="mx-auto max-w-6xl px-4 py-9 sm:px-6 lg:px-8">
+          <Link
+            href="/suppliers"
+            className="inline-flex items-center gap-2 text-sm font-semibold transition hover:brightness-110"
+            style={{ color: TEAL }}
+          >
+            <span aria-hidden="true">&larr;</span>
+            Supplier Directory
           </Link>
-
-          {/* Header card */}
-          <div className="mb-6 rounded-xl border border-panel bg-card p-6 shadow-panel">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex items-start gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xl font-bold text-accent ring-4 ring-accent/10">
-                  {initials}
-                </div>
-                <div>
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-accent">Verified supplier</p>
-                  <h1 className="mt-1 text-2xl font-bold text-heading">
-                    {supplier.business_name ?? "Supplier profile"}
-                  </h1>
-                  <p className="mt-0.5 text-sm text-secondary">
-                    {supplier.industry ?? "General procurement"}
-                    {supplier.province ? " · " + supplier.province : ""}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {supplier.csd_number && <ComplianceBadge label="CSD verified" status="verified" />}
-                    {supplier.bbbee_level && <ComplianceBadge label={"BBBEE " + supplier.bbbee_level} status="verified" />}
-                    {supplier.tax_status && <ComplianceBadge label="Tax clearance" status={taxStatus} />}
-                  </div>
-                </div>
-              </div>
-              <div className="flex shrink-0 flex-col gap-2 sm:items-end">
-                <a href="/auth/login?next=/suppliers"
-                  className="masthead__btn-primary whitespace-nowrap text-sm">
-                  Invite to RFQ
-                </a>
-                <a href="/auth/login?next=/suppliers"
-                  className="masthead__btn-secondary whitespace-nowrap text-sm">
-                  Shortlist supplier
-                </a>
-              </div>
-            </div>
-            {supplier.description && (
-              <div className="mt-5 border-t border-panel pt-5">
-                <p className="text-sm leading-relaxed text-secondary">{supplier.description}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-            {/* Left column */}
-            <div className="space-y-6">
-              {/* Compliance */}
-              <section className="rounded-xl border border-panel bg-card p-6 shadow-panel">
-                <div className="mb-4 border-b border-panel pb-4">
-                  <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">Compliance</p>
-                  <h2 className="mt-1 text-lg font-bold text-heading">Verification credentials</h2>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  <div className="rounded-md border border-panel bg-panel p-4">
-                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-muted">CSD number</p>
-                    <p className="mt-1.5 text-sm font-semibold text-heading">{maskCSD(supplier.csd_number)}</p>
-                  </div>
-                  <div className="rounded-md border border-panel bg-panel p-4">
-                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-muted">BBBEE level</p>
-                    <p className="mt-1.5 text-sm font-semibold text-heading">{valueOrDash(supplier.bbbee_level)}</p>
-                  </div>
-                  <div className="rounded-md border border-panel bg-panel p-4">
-                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-muted">Tax clearance</p>
-                    <p className="mt-1.5 text-sm font-semibold text-heading">{valueOrDash(supplier.tax_status)}</p>
-                  </div>
-                  <div className="rounded-md border border-panel bg-panel p-4">
-                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-muted">Company registration</p>
-                    <p className="mt-1.5 text-sm font-semibold text-heading">{valueOrDash(supplier.company_registration)}</p>
-                  </div>
-                  <div className="rounded-md border border-panel bg-panel p-4">
-                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-muted">CIDB grade</p>
-                    <p className="mt-1.5 text-sm font-semibold text-heading">{valueOrDash(supplier.cidb_grade)}</p>
-                  </div>
-                  <div className="rounded-md border border-panel bg-panel p-4">
-                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-muted">Province</p>
-                    <p className="mt-1.5 text-sm font-semibold text-heading">{valueOrDash(supplier.province)}</p>
-                  </div>
-                </div>
-              </section>
-
-              {/* Stats */}
-              <section className="rounded-xl border border-panel bg-card p-6 shadow-panel">
-                <div className="mb-4 border-b border-panel pb-4">
-                  <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">Performance</p>
-                  <h2 className="mt-1 text-lg font-bold text-heading">Procurement statistics</h2>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-4">
-                  <StatCard label="RFQs won" value="---" />
-                  <StatCard label="Quote rate" value="---" />
-                  <StatCard label="Buyer rating" value="---" />
-                  <StatCard label="Years active" value={formatYearsActive(supplier.created_at)} />
-                </div>
-              </section>
-            </div>
-
-            {/* Right column */}
-            <div className="space-y-6">
-              <SmartScoreCircle score={smartScore} label="Supplier SmartScore" className="w-full max-w-none" />
-              <div className="rounded-xl border border-accent/20 bg-accent/5 p-5">
-                <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-accent">Contact</p>
-                <h3 className="mt-1.5 text-sm font-bold text-heading">Contact through AiForm Procure</h3>
-                <p className="mt-2 text-sm text-secondary">
-                  Contact details are shared privately after an RFQ invitation is accepted.
-                </p>
-                <a href="/auth/login?next=/suppliers"
-                  className="mt-4 block w-full masthead__btn-primary text-center text-sm">
-                  Sign in to contact
-                </a>
-              </div>
-            </div>
+          <div className="mt-7">
+            <p className="text-[0.72rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
+              <span aria-hidden="true">&#10003;</span> Verified Supplier
+            </p>
+            <h1 className="mt-2 font-display text-[28px] font-medium leading-tight sm:text-4xl" style={{ color: CREAM }}>
+              {supplier.business_name ?? "Supplier profile"}
+            </h1>
           </div>
         </div>
-      </main>
-      <PublicFooter />
-    </>
+      </header>
+
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] lg:px-8">
+        <section className="space-y-6">
+          <div className="rounded-lg border border-stone-200 bg-white p-5 sm:p-6">
+            <h2 className="font-display text-xl font-medium text-[#1a3a2a]">Overview</h2>
+            <p className="mt-4 text-sm leading-7 text-stone-700">
+              {supplier.description?.trim() || "No description provided."}
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-stone-200 bg-white p-5 sm:p-6">
+            <h2 className="font-display text-xl font-medium text-[#1a3a2a]">Supplier details</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <DetailItem label="Industry" value={valueOrDash(supplier.industry)} />
+              <DetailItem label="Province" value={primaryProvince(supplier)} />
+              <DetailItem label="Founded year" value={valueOrDash(supplier.founded_year)} />
+              <DetailItem label="Employee count" value={valueOrDash(supplier.employee_count)} />
+            </div>
+          </div>
+
+          {(websiteHref || linkedinHref) && (
+            <div className="rounded-lg border border-stone-200 bg-white p-5 sm:p-6">
+              <h2 className="font-display text-xl font-medium text-[#1a3a2a]">Links</h2>
+              <div className="mt-4 flex flex-wrap gap-3">
+                {websiteHref && (
+                  <a
+                    href={websiteHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#c8a060]/50 bg-[#f8f4ec] px-4 py-2 text-sm font-semibold text-[#1a3a2a] transition hover:border-[#c8a060] hover:bg-[#fffaf0]"
+                  >
+                    Website
+                    <ExternalLinkIcon />
+                  </a>
+                )}
+                {linkedinHref && (
+                  <a
+                    href={linkedinHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#c8a060]/50 bg-[#f8f4ec] px-4 py-2 text-sm font-semibold text-[#1a3a2a] transition hover:border-[#c8a060] hover:bg-[#fffaf0]"
+                  >
+                    LinkedIn
+                    <ExternalLinkIcon />
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+
+        <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
+          <div className="rounded-lg border bg-white p-5 text-center" style={{ borderColor: GOLD }}>
+            <p className="text-[0.7rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
+              SmartScore
+            </p>
+            <p className="mt-3 font-display text-6xl font-medium leading-none text-[#1a3a2a]">{formatScore(supplier.smart_score)}</p>
+            <p className="mt-3 text-sm leading-6 text-stone-600">Independently verified by AiForm Procure</p>
+          </div>
+
+          <div className="rounded-lg border border-stone-200 bg-white p-5">
+            <h2 className="font-display text-xl font-medium text-[#1a3a2a]">Verification steps</h2>
+            <div className="mt-3">
+              <VerificationRow label="CSD" active={Boolean(supplier.csd_verified)} />
+              <VerificationRow label="BBBEE" active={Boolean(supplier.bbbee_verified)} />
+              <VerificationRow label="TAX" active={Boolean(supplier.tax_verified)} />
+              <VerificationRow label="BANKING" active={bankVerified} />
+              <VerificationRow label="DIRECTOR" active={Boolean(supplier.director_verified)} />
+            </div>
+          </div>
+
+          {(supplier.bbbee_level || supplier.cidb_grade) && (
+            <div className="rounded-lg border border-stone-200 bg-white p-5">
+              <h2 className="font-display text-xl font-medium text-[#1a3a2a]">Credentials</h2>
+              <div className="mt-4 space-y-3">
+                {supplier.bbbee_level && <DetailItem label="BBBEE Level" value={supplier.bbbee_level} />}
+                {supplier.cidb_grade && <DetailItem label="CIDB Grade" value={supplier.cidb_grade} />}
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-lg border border-stone-200 bg-white p-5">
+            <Link
+              href="/auth/login"
+              className="block rounded-lg px-4 py-3 text-center text-sm font-bold transition hover:brightness-105"
+              style={{ backgroundColor: GOLD, color: FOREST }}
+            >
+              Send RFQ
+            </Link>
+            <p className="mt-3 text-center text-xs leading-5 text-stone-500">Login as a buyer to send this supplier an RFQ</p>
+          </div>
+        </aside>
+      </div>
+    </main>
   )
 }
