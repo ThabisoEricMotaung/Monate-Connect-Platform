@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
 import { usePathname } from "next/navigation"
 import { useRouter } from "next/navigation"
+import BrandMark from "@/components/BrandMark"
 import { supabase } from "@/lib/supabase"
 
 const publicHeaderRoutes = new Set([
@@ -56,9 +57,7 @@ export default function Navbar() {
     <header className="masthead sticky top-0 z-50">
       <div className="masthead__brand">
         <Link href="/" className="flex cursor-pointer items-center justify-center gap-3 transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
-          <span className="logo-mark flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-accent text-lg font-extrabold text-button shadow-md">
-            M
-          </span>
+          <BrandMark className="h-11 w-11" imageClassName="h-7 w-auto" />
           <span className="text-base font-semibold text-heading">
             AiForm Procure
           </span>

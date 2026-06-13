@@ -2,73 +2,51 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useI18n, type TranslationKey } from "@/lib/i18n"
+import { dashboardBreadcrumbs, dashboardParentHref } from "@/lib/navigation"
 
-const labelMap: Record<string, TranslationKey> = {
-  dashboard: "dashboard",
-  rfqs: "rfqs",
-  quotes: "quotes",
-  profile: "supplierProfile",
-  verification: "verification",
-  suppliers: "supplierDirectory",
-  analytics: "analytics",
-  activity: "activityLog",
-  "purchase-orders": "purchaseOrders",
-}
-
-export default function Breadcrumbs() {
-  const { t } = useI18n()
+export default function Breadcrumbs({ role }: { role?: string | null }) {
   const pathname = usePathname() || "/"
-  const segments = pathname
-    .split("/")
-    .filter(Boolean)
+  const items = dashboardBreadcrumbs(pathname, role)
+  const parent = dashboardParentHref(pathname, role)
 
-  if (segments.length === 0) {
+  if (items.length === 0) {
     return null
   }
 
-  const items = segments.map((segment, index) => {
-    const path = `/${segments.slice(0, index + 1).join("/")}`
-    const isLast = index === segments.length - 1
-    let label = labelMap[segment] ? t(labelMap[segment]) : segment
-
-    if (segment.match(/^\d+$/) && segments[index - 1] === "rfqs") {
-      label = `RFQ #${segment}`
-    }
-
-    if (segment === "dashboard" && index === 0) {
-      label = t("dashboard")
-    }
-
-    return {
-      label,
-      path,
-      isLast,
-    }
-  })
+  const current = items[items.length - 1]
+  const showBack = Boolean(parent && items.length > 2 && current?.href !== parent.href)
 
   return (
-    <div className="dashboard-breadcrumbs mb-6 rounded-2xl border border-panel bg-surface p-4 text-sm text-secondary shadow-sm">
+    <div className="dashboard-breadcrumbs rounded-md border border-panel bg-surface p-4 text-sm text-secondary shadow-sm">
       <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2">
-        <Link href="/" className="text-accent transition-colors hover:text-accent-strong">
-          {t("home")}
-        </Link>
-        <span className="text-secondary">/</span>
         {items.map((item, index) => (
-          <span key={`${item.path}-${index}`} className="inline-flex items-center gap-2">
-            {!item.isLast ? (
+          <span key={`${item.href}-${index}`} className="inline-flex items-center gap-2">
+            {index < items.length - 1 ? (
               <>
-                <Link href={item.path} className="text-secondary transition-colors hover:text-primary">
+                <Link
+                  href={item.href}
+                  className="cursor-pointer font-semibold text-accent transition-colors hover:text-accent-strong hover:underline hover:underline-offset-4"
+                >
                   {item.label}
                 </Link>
-                <span className="text-secondary">/</span>
+                <span className="text-muted">/</span>
               </>
             ) : (
-              <span className="font-semibold text-primary">{item.label}</span>
+              <span aria-current="page" className="font-semibold text-muted">
+                {item.label}
+              </span>
             )}
           </span>
         ))}
       </nav>
+      {showBack && parent && (
+        <Link
+          href={parent.href}
+          className="mt-3 inline-flex cursor-pointer items-center text-xs font-bold uppercase tracking-[0.14em] text-accent transition hover:text-accent-strong hover:underline hover:underline-offset-4"
+        >
+          &larr; Back to {parent.label}
+        </Link>
+      )}
     </div>
   )
 }

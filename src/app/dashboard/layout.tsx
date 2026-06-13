@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
 import AccountMenu, { type AccountMenuProfile } from "@/components/AccountMenu"
+import BrandMark from "@/components/BrandMark"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
@@ -332,10 +333,8 @@ export default function DashboardLayout({
           </svg>
         </button>
         <Link href={homeHref} className="flex cursor-pointer items-center gap-2 rounded-sm transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
-          <div className="logo-mark flex h-10 w-10 items-center justify-center rounded-md bg-accent text-button font-extrabold text-lg shadow-md">
-            <span className="sr-only">AiForm Procure</span>
-            M
-          </div>
+          <BrandMark className="h-10 w-10" imageClassName="h-6 w-auto" />
+          <span className="sr-only">AiForm Procure home</span>
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-secondary">Workspace</p>
             <h2 className="text-sm font-semibold text-primary leading-none">AiForm Procure</h2>
@@ -382,10 +381,8 @@ export default function DashboardLayout({
 
         <div className="mb-6 flex items-center gap-3 border-b border-panel pb-5">
           <Link href={homeHref} onClick={closeSidebar} className="flex cursor-pointer items-center gap-3 rounded-sm transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
-            <div className="logo-mark flex h-14 w-14 items-center justify-center rounded-md bg-accent text-button font-extrabold text-xl shadow-md">
-              <span className="sr-only">AiForm Procure</span>
-              M
-            </div>
+            <BrandMark className="h-14 w-14" imageClassName="h-8 w-auto" />
+            <span className="sr-only">AiForm Procure home</span>
             <div>
               <p className="text-sm uppercase tracking-[0.24em] text-secondary">
                 Supplier Workspace
@@ -498,7 +495,7 @@ export default function DashboardLayout({
       {/* Main content area - padding-bottom accounts for fixed news ticker */}
       <section className="flex-1 min-w-0 overflow-x-hidden mt-16 md:mt-0 p-4 md:p-6 lg:p-8" style={{ paddingBottom: 'var(--news-ticker-height)' }}>
         <div className="print:hidden mb-4 flex items-center justify-between gap-4">
-          <Breadcrumbs />
+          <Breadcrumbs role={role} />
           <div className="hidden md:block">
             <AccountMenu profile={profile} />
           </div>

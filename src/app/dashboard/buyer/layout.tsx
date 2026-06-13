@@ -4,6 +4,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
 import AccountMenu from "@/components/AccountMenu"
+import BrandMark from "@/components/BrandMark"
+import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
 import { useRequireRole } from "@/hooks/useRequireRole"
 import { supabase } from "@/lib/supabase"
@@ -196,11 +198,10 @@ export default function BuyerDashboardLayout({
         <div className="dashboard-chrome print:hidden mb-6 flex items-center justify-between gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
           <Link
             href="/dashboard/buyer"
-            className="flex min-w-0 items-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            className="flex min-w-0 cursor-pointer items-center gap-3 rounded-sm transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
           >
-            <div className="logo-mark flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-accent text-button text-lg font-extrabold shadow-md">
-              M
-            </div>
+            <BrandMark className="h-11 w-11" imageClassName="h-7 w-auto" />
+            <span className="sr-only">AiForm Procure home</span>
             <div className="min-w-0">
               <p className="truncate text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-secondary">
                 Buyer workspace
@@ -215,6 +216,10 @@ export default function BuyerDashboardLayout({
             <NotificationBell />
             <AccountMenu profile={profile} />
           </div>
+        </div>
+
+        <div className="print:hidden mb-6">
+          <Breadcrumbs role="buyer" />
         </div>
 
         {children}

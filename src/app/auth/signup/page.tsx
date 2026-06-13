@@ -277,7 +277,7 @@ export default function SignupPage() {
     }
 
     if (!data.user) {
-      setErrors({ submit: "Account creation failed — no user record was returned." })
+      setErrors({ submit: "Account creation failed â€” no user record was returned." })
       setLoading(false)
       return
     }
@@ -372,7 +372,7 @@ export default function SignupPage() {
     setErrors({})
 
     if (!supabase || !userId) {
-      setErrors({ submit: "Session expired — please reload and start over." })
+      setErrors({ submit: "Session expired â€” please reload and start over." })
       setLoading(false)
       return
     }
@@ -457,7 +457,7 @@ export default function SignupPage() {
                       }`}
                     >
                       <span className={`text-sm font-bold ${form.role === r ? "text-accent" : "text-primary"}`}>
-                        {r === "supplier" ? "I’m a Supplier" : "I’m a Buyer"}
+                        {r === "supplier" ? "Iâ€™m a Supplier" : "Iâ€™m a Buyer"}
                       </span>
                       <span className="mt-1 text-xs text-secondary">
                         {r === "supplier" ? "Sell to government & corporates" : "Post RFQs & procure"}
@@ -476,7 +476,7 @@ export default function SignupPage() {
                 <div>
                   <label className="block text-sm font-medium text-secondary">Work email address <span className="font-semibold text-accent">*</span></label>
                   <input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} className={inputClass} />
-                  <p className="mt-2 text-xs leading-5 text-muted">Use your business email — it helps with verification.</p>
+                  <p className="mt-2 text-xs leading-5 text-muted">Use your business email â€” it helps with verification.</p>
                   <FieldError message={errors.email} />
                 </div>
                 <div>
@@ -491,7 +491,7 @@ export default function SignupPage() {
                   disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50"
                 >
-                  {loading ? "Creating account…" : "Continue ?"}
+                  {loading ? "Creating accountâ€¦" : "Continue ?"}
                 </button>
 
                 <div className="grid gap-2 text-xs font-semibold text-secondary sm:grid-cols-3">
@@ -573,7 +573,7 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="button" onClick={handleStep2Save} disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Saving…" : "Continue ?"}
+                  {loading ? "Savingâ€¦" : "Continue ?"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
                   ? Back
@@ -632,7 +632,7 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="button" onClick={handleStep3Save} disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Saving…" : "Continue ?"}
+                  {loading ? "Savingâ€¦" : "Continue ?"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
                   ? Back
@@ -654,12 +654,12 @@ export default function SignupPage() {
                   { title: "Account", detail: form.email, editStep: 1 },
                   {
                     title: "Business details",
-                    detail: `${form.businessName} · ${form.industry} · ${form.provinces.join(", ")}`,
+                    detail: `${form.businessName} Â· ${form.industry} Â· ${form.provinces.join(", ")}`,
                     editStep: 2,
                   },
                   {
                     title: "Compliance",
-                    detail: `${form.csdNumber} · ${form.bbeeLevel}${form.vatNumber ? ` · VAT ${form.vatNumber}` : ""}`,
+                    detail: `${form.csdNumber} Â· ${form.bbeeLevel}${form.vatNumber ? ` Â· VAT ${form.vatNumber}` : ""}`,
                     editStep: 3,
                   },
                 ].map((row) => (
@@ -698,7 +698,7 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="submit" disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Submitting registration…" : "Submit registration"}
+                  {loading ? "Submitting registrationâ€¦" : "Submit registration"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
                   ? Back
@@ -737,7 +737,7 @@ export default function SignupPage() {
                   disabled={resending}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50"
                 >
-                  {resending ? "Resending…" : "Resend verification email"}
+                  {resending ? "Resendingâ€¦" : "Resend verification email"}
                 </button>
                 <p className="pt-1 text-center text-xs text-muted">
                   Confirmed your email in another tab?

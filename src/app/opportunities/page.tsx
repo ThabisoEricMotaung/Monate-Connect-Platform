@@ -58,9 +58,9 @@ const DEADLINE_OPTIONS: { key: DeadlineFilter; label: string }[] = [
 ]
 
 const BBBEE_OPTIONS: { key: BBBEEFilter; label: string }[] = [
-  { key: "level1to2", label: "Level 1–2 (Preferred)" },
-  { key: "level3to4", label: "Level 3–4" },
-  { key: "level5to8", label: "Level 5–8" },
+  { key: "level1to2", label: "Level 1â€“2 (Preferred)" },
+  { key: "level3to4", label: "Level 3â€“4" },
+  { key: "level5to8", label: "Level 5â€“8" },
   { key: "any", label: "Any level / not specified" },
 ]
 
@@ -549,7 +549,7 @@ function CTABanner() {
             Respond to tenders and win more contracts
           </h3>
           <p className="mt-1 text-sm text-secondary">
-            Join thousands of verified South African suppliers — submit quotes, get matched to
+            Join thousands of verified South African suppliers â€” submit quotes, get matched to
             opportunities, and grow your business on AiForm Procure.
           </p>
         </div>
@@ -626,7 +626,7 @@ function RFQCard({
         </div>
       </div>
 
-      {/* Description — blurred for every 3rd card when unauthenticated */}
+      {/* Description â€” blurred for every 3rd card when unauthenticated */}
       <div className="relative mt-3">
         <p
           className={
@@ -838,7 +838,7 @@ export default function OpportunitiesPage() {
               </svg>
               <input
                 type="search"
-                placeholder="Search by keyword, industry, province or buyer…"
+                placeholder="Search by keyword, industry, province or buyerâ€¦"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full rounded-lg border border-panel bg-panel py-3 pl-11 pr-4 text-sm text-primary outline-none placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30"
@@ -926,7 +926,7 @@ export default function OpportunitiesPage() {
                   </button>
                   <p className="text-sm text-secondary">
                     {loading
-                      ? "Loading…"
+                      ? "Loadingâ€¦"
                       : filtered.length === 1
                       ? "1 opportunity"
                       : `${filtered.length} opportunities`}

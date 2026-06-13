@@ -117,7 +117,7 @@ export default function OnboardingPage() {
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p className="text-sm text-secondary">Loading your workspace…</p>
+        <p className="text-sm text-secondary">Loading your workspaceâ€¦</p>
       </div>
     )
   }
@@ -173,7 +173,7 @@ export default function OnboardingPage() {
       {completedCount === checklist.length && (
         <div className="mt-5 rounded-2xl border border-success/30 bg-success/10 px-5 py-4 text-center">
           <p className="text-sm font-semibold text-success">
-            All steps complete — your profile is fully set up!
+            All steps complete â€” your profile is fully set up!
           </p>
         </div>
       )}
@@ -185,7 +185,7 @@ export default function OnboardingPage() {
           disabled={markingDone}
           className="flex-1 rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50"
         >
-          {markingDone ? "Loading dashboard…" : "Go to dashboard ?"}
+          {markingDone ? "Loading dashboardâ€¦" : "Go to dashboard ?"}
         </button>
         <Link
           href="/dashboard/profile"
