@@ -22,9 +22,18 @@ const INFO_STYLES = `
     transition: border-color 200ms ease, background 200ms ease;
     cursor: pointer;
   }
+  .ic-register-box--primary {
+    border: 0;
+    background: #c8a060;
+    color: #1a3a2a;
+  }
   .ic-register-box:hover {
     border-color: #1a3a2a;
     background: #f8f4ec;
+  }
+  .ic-register-box--primary:hover {
+    border-color: transparent;
+    background: #c8a060;
   }
   .ic-source-box {
     border: 1px solid #d4c8a8;
@@ -107,7 +116,7 @@ export default function InfoCards() {
             SmartScore &middot; CSD &middot; BBBEE &middot; SARS
           </div>
 
-          <Link href="/auth/signup" className="ic-register-box" style={{ textDecoration: 'none' }}>
+          <Link href="/auth/signup" className="ic-register-box ic-register-box--primary" style={{ textDecoration: 'none' }}>
             <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#f0ebe0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a3a2a" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
@@ -117,7 +126,7 @@ export default function InfoCards() {
               </svg>
             </div>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#1a2e1a', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>Register Free</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: '#1a3a2a', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>Register Free</div>
               <div style={{ fontSize: 11, color: '#6a7a6a' }}>Verified in 48 hours. No credit card.</div>
             </div>
           </Link>
@@ -229,19 +238,14 @@ export default function InfoCards() {
             <CheckItem text="Compare quotes side by side — each carrying a SmartScore and verification badge." />
           </ul>
 
-          <Link href="/auth/login?role=admin" className="ic-register-box" style={{ textDecoration: 'none' }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#f0ebe0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a3a2a" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="4" y="2" width="16" height="20" rx="1" />
-                <path d="M9 22V12h6v10" />
-                <path d="M9 7h.01M12 7h.01M15 7h.01" />
-              </svg>
-            </div>
+          <div>
+            <Link href="/auth/login?role=admin" style={{ color: '#c8a060', textDecoration: 'underline', fontSize: 12, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              Request Access →
+            </Link>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#1a2e1a', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>Request Access</div>
               <div style={{ fontSize: 11, color: '#6a7a6a' }}>For verified organisations. Municipalities welcome.</div>
             </div>
-          </Link>
+          </div>
         </div>
 
       </div>

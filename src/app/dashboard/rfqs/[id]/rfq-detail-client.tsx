@@ -61,7 +61,7 @@ export default function RFQDetailClient({
 
       await submitQuote({
         rfq_id: rfq.id,
-        supplier_name: "Monate Electrical Services",
+        supplier_name: "AiForm Procure Electrical Services",
         amount: quoteAmount,
         message: message,
       })

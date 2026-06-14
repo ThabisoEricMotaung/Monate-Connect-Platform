@@ -6,6 +6,7 @@ import { ReactNode, useEffect, useState } from "react"
 import AccountMenu, { type AccountMenuProfile } from "@/components/AccountMenu"
 import BrandMark from "@/components/BrandMark"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
+import NewsTicker from "@/components/NewsTicker"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
 import { roleHomeHref } from "@/lib/navigation"
@@ -313,11 +314,21 @@ export default function DashboardLayout({
   }, [pathname, role, roleChecked, router])
 
   if (pathname.startsWith("/dashboard/admin")) {
-    return <>{children}</>
+    return (
+      <>
+        {children}
+        <NewsTicker />
+      </>
+    )
   }
 
   if (pathname.startsWith("/dashboard/buyer")) {
-    return <>{children}</>
+    return (
+      <>
+        {children}
+        <NewsTicker />
+      </>
+    )
   }
 
   return (
@@ -523,6 +534,7 @@ export default function DashboardLayout({
         </footer>
       </section>
 
+      <NewsTicker />
     </main>
   )
 }

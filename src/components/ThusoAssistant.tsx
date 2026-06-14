@@ -1,6 +1,7 @@
 "use client"
 
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react"
+import { usePathname } from "next/navigation"
 
 type ChatMessage = {
   role: "user" | "assistant"
@@ -62,6 +63,7 @@ function stripMarkdownMarkers(text: string): string {
 }
 
 export default function ThusoAssistant() {
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
@@ -160,6 +162,14 @@ export default function ThusoAssistant() {
       event.preventDefault()
       void sendMessage()
     }
+  }
+
+  if (
+    pathname?.startsWith("/auth/") ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password"
+  ) {
+    return null
   }
 
   return (

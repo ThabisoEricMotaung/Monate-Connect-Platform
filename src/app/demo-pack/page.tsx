@@ -129,7 +129,7 @@ export default function DemoPackPage() {
             <Link href="/auth/login" className="masthead__btn-secondary">
               Supplier Login
             </Link>
-            <a href="mailto:pilot@monateconnect.co.za" className="masthead__btn-secondary">
+            <a href="mailto:hello@aiformprocure.co.za" className="masthead__btn-secondary">
               Contact for Pilot
             </a>
           </div>
