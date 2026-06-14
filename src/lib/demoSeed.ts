@@ -120,7 +120,7 @@ const suppliers: DemoSupplier[] = [
     business_name: "Sisonke PPE Supplies",
     industry: "PPE",
     province: "Eastern Cape",
-    email: "sales@sisonkeppe.co.za",
+    email: "hello@aiformprocure.co.za",
     phone: "+27 43 555 0157",
     verification_status: "Verified",
   },

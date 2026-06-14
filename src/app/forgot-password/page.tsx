@@ -48,6 +48,13 @@ export default function ForgotPasswordPage() {
     <main className="flex min-h-screen items-center justify-center bg-page px-4 py-10 text-primary sm:px-6">
       <section className="w-full max-w-[520px] border border-strong bg-panel shadow-panel">
         <div className="border-b border-strong bg-muted px-6 py-4 sm:px-8">
+          <Link
+            href="/"
+            className="mb-4 inline-block text-[13px] font-semibold text-[#5DCAA5] no-underline transition hover:underline"
+          >
+            ← Back to home
+          </Link>
+
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[0.7rem] font-extrabold uppercase tracking-[0.24em] text-accent">

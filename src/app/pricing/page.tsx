@@ -53,7 +53,7 @@ const supplierPlans = [
     period: "pricing",
     sub: "Annual contract · Volume discounts",
     badge: null,
-    cta: "Contact sales",
+    cta: "Get in touch",
     ctaHref: "/contact",
     ctaStyle: "outline",
     included: [
@@ -481,7 +481,7 @@ export default function PricingPage() {
             href="/contact"
             className="rounded-lg border border-gold/40 px-8 py-3 text-sm font-bold uppercase tracking-widest text-gold transition hover:border-gold hover:bg-gold/10"
           >
-            Contact sales
+            Get in touch
           </Link>
           <Link
             href="/auth/signup"

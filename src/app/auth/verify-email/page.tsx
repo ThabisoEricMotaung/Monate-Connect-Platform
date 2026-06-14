@@ -62,6 +62,12 @@ function VerifyEmailContent() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-page px-6 py-10 text-primary">
       <div className="w-full max-w-lg rounded-3xl border border-panel bg-panel p-8 shadow-panel text-center">
+        <Link
+          href="/"
+          className="mb-5 inline-block text-[13px] font-semibold text-[#5DCAA5] no-underline transition hover:underline"
+        >
+          ← Back to home
+        </Link>
 
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-accent bg-surface text-accent">
           <svg aria-hidden="true" className="h-7 w-7" fill="none" viewBox="0 0 24 24">

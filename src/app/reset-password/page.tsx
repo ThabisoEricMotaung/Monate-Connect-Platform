@@ -7,6 +7,65 @@ import { supabase } from "@/lib/supabase"
 
 type PageStatus = "waiting" | "ready" | "invalid" | "success"
 
+type PasswordRule = {
+  label: string
+  met: boolean
+}
+
+function BackHomeLink() {
+  return (
+    <Link
+      href="/"
+      className="mb-5 inline-block text-[13px] font-semibold text-[#5DCAA5] no-underline transition hover:underline"
+    >
+      ← Back to home
+    </Link>
+  )
+}
+
+function getPasswordRules(password: string): PasswordRule[] {
+  return [
+    { label: "Add at least 8 characters", met: password.length >= 8 },
+    { label: "Add uppercase", met: /[A-Z]/.test(password) },
+    { label: "Add lowercase", met: /[a-z]/.test(password) },
+    { label: "Add a number", met: /\d/.test(password) },
+  ]
+}
+
+function isStrongPassword(password: string) {
+  return getPasswordRules(password).every((rule) => rule.met)
+}
+
+function PasswordStrengthMeter({ password }: { password: string }) {
+  if (!password) return null
+
+  const rules = getPasswordRules(password)
+  const metCount = rules.filter((rule) => rule.met).length
+  const unmetRules = rules.filter((rule) => !rule.met)
+  const barColor =
+    metCount === 4 ? "bg-emerald-600" : metCount >= 2 ? "bg-amber-500" : "bg-rose-600"
+
+  return (
+    <div className="mt-3" aria-live="polite">
+      <div className="grid grid-cols-4 gap-1.5" aria-hidden="true">
+        {rules.map((rule, index) => (
+          <span
+            key={rule.label}
+            className={`h-1.5 rounded-full ${index < metCount ? barColor : "bg-panel"}`}
+          />
+        ))}
+      </div>
+      {metCount === 4 ? (
+        <p className="mt-2 text-xs font-semibold text-emerald-700">Strong password ✓</p>
+      ) : (
+        <p className="mt-2 text-xs leading-5 text-muted">
+          {unmetRules.map((rule) => rule.label).join(" · ")}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export default function ResetPasswordPage() {
   const router = useRouter()
   const [status, setStatus] = useState<PageStatus>("waiting")
@@ -32,7 +91,14 @@ export default function ResetPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    if (password.length < 8) { setError("Password must be at least 8 characters."); return }
+    if (!isStrongPassword(password)) {
+      setError("Password does not meet the minimum requirements.")
+      return
+    }
+    if (!isStrongPassword(confirm)) {
+      setError("Password does not meet the minimum requirements.")
+      return
+    }
     if (password !== confirm) { setError("Passwords do not match."); return }
     if (!supabase) { setError("Supabase is not configured."); return }
     setLoading(true)
@@ -46,6 +112,7 @@ export default function ResetPasswordPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-page px-6 text-primary">
         <div className="w-full max-w-md rounded-3xl border border-panel bg-panel p-8 shadow-panel text-center">
+          <BackHomeLink />
           <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-panel bg-surface">
             <svg className="h-5 w-5 animate-spin text-accent" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -66,6 +133,7 @@ export default function ResetPasswordPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-page px-6 text-primary">
         <div className="w-full max-w-md rounded-3xl border border-panel bg-panel p-8 shadow-panel">
+          <BackHomeLink />
           <div className="mb-6 flex justify-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-full border border-rose-500/25 bg-rose-500/10">
               <svg className="h-6 w-6 text-rose-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -96,6 +164,7 @@ export default function ResetPasswordPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-page px-6 text-primary">
         <div className="w-full max-w-md rounded-3xl border border-panel bg-panel p-8 shadow-panel">
+          <BackHomeLink />
           <div className="mb-6 flex justify-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-full border border-success/30 bg-success-soft">
               <svg className="h-6 w-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -123,6 +192,7 @@ export default function ResetPasswordPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-page px-6 text-primary">
       <div className="w-full max-w-md rounded-3xl border border-panel bg-panel p-8 shadow-panel">
+        <BackHomeLink />
         <div className="mb-8 text-center">
           <p className="text-xs uppercase tracking-[0.24em] text-accent">Procurement portal</p>
           <h1 className="mt-3 text-4xl font-semibold text-primary">New password</h1>
@@ -142,6 +212,7 @@ export default function ResetPasswordPage() {
               required
               className="mt-2 w-full rounded-2xl border border-panel bg-surface px-5 py-4 text-primary outline-none transition focus:border-accent"
             />
+            <PasswordStrengthMeter password={password} />
           </div>
 
           <div>

@@ -189,6 +189,13 @@ export default function LoginPage() {
     <main className="flex flex-1 items-center justify-center px-6 py-10">
       <div className="w-full max-w-md">
         <div className="rounded-3xl border border-panel bg-panel p-8 shadow-panel">
+          <Link
+            href="/"
+            className="mb-5 inline-block text-[13px] font-semibold text-[#5DCAA5] no-underline transition hover:underline"
+          >
+            ← Back to home
+          </Link>
+
           <div className="mb-7 text-center">
             <h1 className="text-3xl font-semibold text-heading">Log in to AiForm Procure</h1>
             <p className="mt-3 text-sm leading-6 text-secondary">Sign in to your account.</p>

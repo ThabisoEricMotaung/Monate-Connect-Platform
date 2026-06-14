@@ -64,6 +64,11 @@ type SignupForm = {
 
 type SignupErrors = Partial<Record<keyof SignupForm | "submit", string>>
 
+type PasswordRule = {
+  label: string
+  met: boolean
+}
+
 const inputClass =
   "mt-2 w-full rounded-2xl border border-panel bg-surface px-5 py-4 text-primary outline-none transition focus:border-accent"
 
@@ -94,6 +99,49 @@ function isValidEmail(value: string) {
 
 function preferredFirstName(value: string) {
   return value.trim().split(/\s+/)[0] || "there"
+}
+
+function getPasswordRules(password: string): PasswordRule[] {
+  return [
+    { label: "Add at least 8 characters", met: password.length >= 8 },
+    { label: "Add uppercase", met: /[A-Z]/.test(password) },
+    { label: "Add lowercase", met: /[a-z]/.test(password) },
+    { label: "Add a number", met: /\d/.test(password) },
+  ]
+}
+
+function isStrongPassword(password: string) {
+  return getPasswordRules(password).every((rule) => rule.met)
+}
+
+function PasswordStrengthMeter({ password }: { password: string }) {
+  if (!password) return null
+
+  const rules = getPasswordRules(password)
+  const metCount = rules.filter((rule) => rule.met).length
+  const unmetRules = rules.filter((rule) => !rule.met)
+  const barColor =
+    metCount === 4 ? "bg-emerald-600" : metCount >= 2 ? "bg-amber-500" : "bg-rose-600"
+
+  return (
+    <div className="mt-3" aria-live="polite">
+      <div className="grid grid-cols-4 gap-1.5" aria-hidden="true">
+        {rules.map((rule, index) => (
+          <span
+            key={rule.label}
+            className={`h-1.5 rounded-full ${index < metCount ? barColor : "bg-panel"}`}
+          />
+        ))}
+      </div>
+      {metCount === 4 ? (
+        <p className="mt-2 text-xs font-semibold text-emerald-700">Strong password ✓</p>
+      ) : (
+        <p className="mt-2 text-xs leading-5 text-muted">
+          {unmetRules.map((rule) => rule.label).join(" · ")}
+        </p>
+      )}
+    </div>
+  )
 }
 
 function FieldError({ message }: { message?: string }) {
@@ -213,7 +261,9 @@ export default function SignupPage() {
       if (!form.email.trim()) nextErrors.email = "Work email address is required."
       else if (!isValidEmail(form.email)) nextErrors.email = "Enter a valid email address."
       if (!form.password) nextErrors.password = "Password is required."
-      else if (form.password.length < 8) nextErrors.password = "Password must be at least 8 characters."
+      else if (!isStrongPassword(form.password)) {
+        nextErrors.password = "Password does not meet the minimum requirements."
+      }
     }
 
     if (targetStep === 2) {
@@ -420,6 +470,13 @@ export default function SignupPage() {
     <main className="flex flex-1 items-center justify-center px-6 py-10">
       <div className="w-full max-w-3xl">
         <div className="rounded-3xl border border-panel bg-panel p-8 shadow-panel">
+        <Link
+          href="/"
+          className="mb-5 inline-block text-[13px] font-semibold text-[#5DCAA5] no-underline transition hover:underline"
+        >
+          ← Back to home
+        </Link>
+
         <Stepper currentStep={step} onStepClick={setStep} />
 
         <form onSubmit={handleSignup} className="space-y-6">
@@ -482,6 +539,7 @@ export default function SignupPage() {
                 <div>
                   <label className="block text-sm font-medium text-secondary">Password <span className="font-semibold text-accent">*</span></label>
                   <input type="password" value={form.password} onChange={(e) => updateField("password", e.target.value)} className={inputClass} />
+                  <PasswordStrengthMeter password={form.password} />
                   <FieldError message={errors.password} />
                 </div>
 
@@ -491,7 +549,7 @@ export default function SignupPage() {
                   disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50"
                 >
-                  {loading ? "Creating account…" : "Continue ?"}
+                  {loading ? "Creating account…" : "Continue?"}
                 </button>
 
                 <div className="grid gap-2 text-xs font-semibold text-secondary sm:grid-cols-3">
@@ -573,7 +631,7 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="button" onClick={handleStep2Save} disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Saving…" : "Continue ?"}
+                  {loading ? "Saving…" : "Continue?"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
                   ? Back
@@ -632,7 +690,7 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="button" onClick={handleStep3Save} disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Saving…" : "Continue ?"}
+                  {loading ? "Saving…" : "Continue?"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
                   ? Back
