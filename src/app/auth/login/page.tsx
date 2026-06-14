@@ -34,6 +34,39 @@ function getPostLoginPath(role?: string | null): string {
   return "/dashboard/onboarding"
 }
 
+function GoogleLogo() {
+  return (
+    <svg aria-hidden="true" className="h-[18px] w-[18px]" viewBox="0 0 18 18">
+      <path
+        fill="#4285F4"
+        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"
+      />
+      <path
+        fill="#34A853"
+        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.33-1.58-5.04-3.72H.94v2.33A9 9 0 0 0 9 18z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M3.96 10.7A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.16.28-1.7V4.97H.94A9 9 0 0 0 0 9c0 1.45.34 2.82.94 4.03l3.02-2.33z"
+      />
+      <path
+        fill="#EA4335"
+        d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.9 11.43 0 9 0A9 9 0 0 0 .94 4.97L3.96 7.3C4.67 5.16 6.66 3.58 9 3.58z"
+      />
+    </svg>
+  )
+}
+
+function AuthDivider() {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="h-px flex-1 bg-panel" />
+      <span className="text-xs text-muted">or</span>
+      <span className="h-px flex-1 bg-panel" />
+    </div>
+  )
+}
+
 export default function LoginPage() {
   const router = useRouter()
 
@@ -185,6 +218,26 @@ export default function LoginPage() {
     router.push(postLoginPath)
   }
 
+  const handleGoogleSignIn = async () => {
+    setErrorMessage("")
+
+    if (!supabase) {
+      setErrorMessage("Supabase environment variables are not configured.")
+      return
+    }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/post-oauth`,
+      },
+    })
+
+    if (error) {
+      setErrorMessage(error.message)
+    }
+  }
+
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-10">
       <div className="w-full max-w-md">
@@ -217,11 +270,22 @@ export default function LoginPage() {
             </div>
           )}
 
-          <p className="mb-5 text-xs text-secondary">
-            <span className="font-semibold text-accent">*</span> Required fields
-          </p>
-
           <div className="space-y-5">
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              className="flex w-full items-center justify-center gap-3 rounded-lg border border-[#dadce0] bg-white px-4 py-2.5 text-[14px] font-medium text-[#3c4043] transition hover:bg-[#f8f9fa]"
+            >
+              <GoogleLogo />
+              <span>Continue with Google</span>
+            </button>
+
+            <AuthDivider />
+
+            <p className="text-xs text-secondary">
+              <span className="font-semibold text-accent">*</span> Required fields
+            </p>
+
             <div>
               <label className="block text-sm font-medium text-secondary">
                 Email address <span className="font-semibold text-accent">*</span>

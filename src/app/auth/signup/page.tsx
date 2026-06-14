@@ -144,6 +144,39 @@ function PasswordStrengthMeter({ password }: { password: string }) {
   )
 }
 
+function GoogleLogo() {
+  return (
+    <svg aria-hidden="true" className="h-[18px] w-[18px]" viewBox="0 0 18 18">
+      <path
+        fill="#4285F4"
+        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"
+      />
+      <path
+        fill="#34A853"
+        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.33-1.58-5.04-3.72H.94v2.33A9 9 0 0 0 9 18z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M3.96 10.7A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.16.28-1.7V4.97H.94A9 9 0 0 0 0 9c0 1.45.34 2.82.94 4.03l3.02-2.33z"
+      />
+      <path
+        fill="#EA4335"
+        d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.9 11.43 0 9 0A9 9 0 0 0 .94 4.97L3.96 7.3C4.67 5.16 6.66 3.58 9 3.58z"
+      />
+    </svg>
+  )
+}
+
+function AuthDivider() {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="h-px flex-1 bg-panel" />
+      <span className="text-xs text-muted">or</span>
+      <span className="h-px flex-1 bg-panel" />
+    </div>
+  )
+}
+
 function FieldError({ message }: { message?: string }) {
   if (!message) return null
   return <p className="mt-2 text-xs font-semibold text-rose-700">{message}</p>
@@ -232,11 +265,21 @@ export default function SignupPage() {
   const [resending, setResending] = useState(false)
   const [resendMessage, setResendMessage] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [isOauthSignup, setIsOauthSignup] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get("role") === "buyer") {
       setForm((current) => ({ ...current, role: "buyer" }))
+    }
+    if (params.get("oauth") === "true") {
+      const oauthEmail = params.get("email") ?? ""
+      setIsOauthSignup(true)
+      setForm((current) => ({
+        ...current,
+        email: oauthEmail,
+        password: "",
+      }))
     }
   }, [])
 
@@ -260,8 +303,8 @@ export default function SignupPage() {
       if (!form.fullName.trim()) nextErrors.fullName = "Full name is required."
       if (!form.email.trim()) nextErrors.email = "Work email address is required."
       else if (!isValidEmail(form.email)) nextErrors.email = "Enter a valid email address."
-      if (!form.password) nextErrors.password = "Password is required."
-      else if (!isStrongPassword(form.password)) {
+      if (!isOauthSignup && !form.password) nextErrors.password = "Password is required."
+      else if (!isOauthSignup && !isStrongPassword(form.password)) {
         nextErrors.password = "Password does not meet the minimum requirements."
       }
     }
@@ -307,6 +350,29 @@ export default function SignupPage() {
     }
 
     const normalizedEmail = form.email.trim().toLowerCase()
+
+    if (isOauthSignup) {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+
+      if (userError || !user) {
+        setErrors({ submit: userError?.message ?? "Google sign-in session expired. Please try again." })
+        setLoading(false)
+        return
+      }
+
+      setUserId(user.id)
+      setForm((current) => ({
+        ...current,
+        email: user.email ?? normalizedEmail,
+        fullName: current.fullName || user.user_metadata?.full_name || user.user_metadata?.name || "",
+      }))
+      setLoading(false)
+      setStep(2)
+      return
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email: normalizedEmail,
@@ -466,6 +532,26 @@ export default function SignupPage() {
     setLoading(false)
     setStep(5)
   }
+
+  const handleGoogleSignIn = async () => {
+    setErrors({})
+
+    if (!supabase) {
+      setErrors({ submit: "Supabase environment variables are not configured." })
+      return
+    }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/post-oauth`,
+      },
+    })
+
+    if (error) {
+      setErrors({ submit: error.message })
+    }
+  }
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-10">
       <div className="w-full max-w-3xl">
@@ -496,11 +582,26 @@ export default function SignupPage() {
                 </div>
               )}
 
-              <p className="mb-1 text-xs text-secondary">
-                <span className="font-semibold text-accent">*</span> Required fields
-              </p>
-
               <div className="space-y-5">
+                {!isOauthSignup && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleGoogleSignIn}
+                      className="flex w-full items-center justify-center gap-3 rounded-lg border border-[#dadce0] bg-white px-4 py-2.5 text-[14px] font-medium text-[#3c4043] transition hover:bg-[#f8f9fa]"
+                    >
+                      <GoogleLogo />
+                      <span>Continue with Google</span>
+                    </button>
+
+                    <AuthDivider />
+                  </>
+                )}
+
+                <p className="text-xs text-secondary">
+                  <span className="font-semibold text-accent">*</span> Required fields
+                </p>
+
                 <div className="grid grid-cols-2 gap-3">
                   {(["supplier", "buyer"] as const).map((r) => (
                     <button
@@ -536,12 +637,14 @@ export default function SignupPage() {
                   <p className="mt-2 text-xs leading-5 text-muted">Use your business email — it helps with verification.</p>
                   <FieldError message={errors.email} />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-secondary">Password <span className="font-semibold text-accent">*</span></label>
-                  <input type="password" value={form.password} onChange={(e) => updateField("password", e.target.value)} className={inputClass} />
-                  <PasswordStrengthMeter password={form.password} />
-                  <FieldError message={errors.password} />
-                </div>
+                {!isOauthSignup && (
+                  <div>
+                    <label className="block text-sm font-medium text-secondary">Password <span className="font-semibold text-accent">*</span></label>
+                    <input type="password" value={form.password} onChange={(e) => updateField("password", e.target.value)} className={inputClass} />
+                    <PasswordStrengthMeter password={form.password} />
+                    <FieldError message={errors.password} />
+                  </div>
+                )}
 
                 <button
                   type="button"
