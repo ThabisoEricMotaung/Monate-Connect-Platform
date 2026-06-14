@@ -860,7 +860,7 @@ export default function NewRFQPage() {
   }
 
   return (
-    <div>
+    <div className="w-full max-w-full overflow-x-hidden">
       <div className="mb-8 border-b border-panel pb-6">
         <p className="text-xs uppercase tracking-[0.28em] text-accent">
           Procurement &gt; RFQs &gt; New RFQ
@@ -949,9 +949,9 @@ export default function NewRFQPage() {
         </div>
       )}
 
-      <form onSubmit={(event: FormEvent) => event.preventDefault()}>
-        <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
-          <div className="space-y-5">
+      <form onSubmit={(event: FormEvent) => event.preventDefault()} className="w-full max-w-full">
+        <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
+          <div className="min-w-0 space-y-5">
             {step === 1 && (
               <>
                 <section className="rounded-md border border-panel bg-card p-6 shadow-panel">
@@ -1456,7 +1456,7 @@ export default function NewRFQPage() {
             )}
           </div>
 
-          <aside className="space-y-5 xl:sticky xl:top-6 xl:self-start">
+          <aside className="min-w-0 w-full overflow-hidden space-y-5 lg:sticky lg:top-6 lg:self-start">
             {step === 1 && (
               <section className="rounded-md border border-panel bg-card p-5 shadow-panel">
                 <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 1 of 3</p>

@@ -377,7 +377,7 @@ export default function DashboardLayout({
           <Link
             href={homeHref}
             onClick={closeSidebar}
-            className="text-accent transition hover:text-accent-strong"
+            className="block overflow-hidden text-ellipsis whitespace-nowrap text-accent transition hover:text-accent-strong"
           >
             Home dashboard
           </Link>
@@ -427,7 +427,9 @@ export default function DashboardLayout({
                             : "border-transparent text-secondary hover:bg-surface hover:text-primary"
                         }`}
                       >
-                        {supplierNavigationLabel(item.name, t)}
+                        <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
+                          {supplierNavigationLabel(item.name, t)}
+                        </span>
                       </Link>
                     )
                   })}
@@ -457,7 +459,9 @@ export default function DashboardLayout({
                         : "border-transparent text-secondary hover:bg-surface hover:text-primary"
                     }`}
                   >
-                    {item.name}
+                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
+                      {item.name}
+                    </span>
                   </Link>
                 )
               })}
@@ -487,7 +491,9 @@ export default function DashboardLayout({
                         : "border-transparent text-secondary hover:bg-surface hover:text-primary"
                     }`}
                   >
-                    {item.name === "Executive Command Centre" || item.name === "Board Pack" || item.name === "System Health" || item.name === "Production Readiness" || item.name === "Demo Mode" || item.name === "Demo Story Pack" || item.name === "Pilot Requests" || item.name === "Pilot Feedback" || item.name === "Audit Trail" || item.name === "Automation Rules" || item.name === "Reports" || item.name === "Settings" || item.name === "WhatsApp Network" || item.name === "Contract Renewals" || item.name === "Supplier Reviews" || item.name === "Compliance Risk" || item.name === "Buyer Onboarding" || item.name === "RFQ Templates" || item.name === "Banking Review" || item.name === "Supplier Risk" || item.name === "Decision Board" || item.name === "Workflow Rules" || item.name === "Overrides" || item.name === "Approval Matrix" || item.name === "Delegation Authority" ? item.name : t(item.name)}
+                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
+                      {item.name === "Executive Command Centre" || item.name === "Board Pack" || item.name === "System Health" || item.name === "Production Readiness" || item.name === "Demo Mode" || item.name === "Demo Story Pack" || item.name === "Pilot Requests" || item.name === "Pilot Feedback" || item.name === "Audit Trail" || item.name === "Automation Rules" || item.name === "Reports" || item.name === "Settings" || item.name === "WhatsApp Network" || item.name === "Contract Renewals" || item.name === "Supplier Reviews" || item.name === "Compliance Risk" || item.name === "Buyer Onboarding" || item.name === "RFQ Templates" || item.name === "Banking Review" || item.name === "Supplier Risk" || item.name === "Decision Board" || item.name === "Workflow Rules" || item.name === "Overrides" || item.name === "Approval Matrix" || item.name === "Delegation Authority" ? item.name : t(item.name)}
+                    </span>
                   </Link>
                 )
               })}

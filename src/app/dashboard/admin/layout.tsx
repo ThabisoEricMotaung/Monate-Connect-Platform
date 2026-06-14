@@ -75,7 +75,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
         <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-panel bg-panel text-[0.72rem] text-accent">
           {item.icon}
         </span>
-        <span className="truncate">{item.name}</span>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap">{item.name}</span>
       </span>
       {item.badge != null && item.badge > 0 && (
         <span
@@ -285,7 +285,7 @@ export default function AdminDashboardLayout({
 
   return (
     <main className="flex min-h-screen bg-page text-primary">
-      <aside className="dashboard-sidebar print:hidden flex w-full max-w-[200px] shrink-0 flex-col border-r border-panel bg-panel p-4">
+      <aside className="dashboard-sidebar print:hidden flex w-56 min-w-[14rem] shrink-0 flex-col border-r border-panel bg-panel p-4">
         <Link
           href="/dashboard/admin/rfqs/new"
           className="mb-5 inline-flex w-full justify-center rounded-md border border-accent bg-accent px-4 py-3 text-sm font-bold text-button shadow-sm transition hover:bg-accent-strong"
