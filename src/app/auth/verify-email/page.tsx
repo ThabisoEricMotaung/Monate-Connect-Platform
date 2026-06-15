@@ -79,17 +79,17 @@ function VerifyEmailContent() {
         <h1 className="mt-3 text-4xl font-semibold text-primary">Check your email</h1>
 
         <p className="mx-auto mt-4 max-w-sm text-sm leading-7 text-secondary">
-          We sent a verification link to{" "}
+          We&apos;ve sent a verification email to{" "}
           {email ? (
             <strong className="text-primary">{email}</strong>
           ) : (
             "your email address"
           )}
-          . Click it to activate your profile.
+          .
         </p>
 
         <p className="mt-3 text-xs leading-6 text-muted">
-          The link expires in 24 hours. Check your spam folder if you do not see it.
+          Please check your inbox and click the link.
         </p>
 
         {resendMessage && (
@@ -115,17 +115,10 @@ function VerifyEmailContent() {
           </button>
 
           <Link
-            href="/dashboard"
-            className="block w-full rounded-2xl bg-accent py-4 text-sm font-semibold text-button transition duration-200 hover:bg-accent-strong"
-          >
-            Already verified? Continue to dashboard →
-          </Link>
-
-          <Link
             href="/auth/login"
-            className="block text-sm text-secondary transition hover:text-primary"
+            className="block text-sm font-semibold text-accent transition hover:text-accent-strong"
           >
-            Back to login
+            Verified in another tab? Continue →
           </Link>
         </div>
 

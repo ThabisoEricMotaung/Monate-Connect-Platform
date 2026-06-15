@@ -53,6 +53,14 @@ type BankDetails = {
   verification_status: string | null
 }
 
+const PENDING_QUEUE_STATUSES = ["pending review", "pending", "submitted"]
+const VERIFICATION_QUEUE_STATUS_FILTER = [
+  "verification_status.ilike.Pending Review",
+  "verification_status.ilike.pending",
+  "verification_status.ilike.Submitted",
+  "verification_status.ilike.Verified",
+].join(",")
+
 const profileSelect = [
   "id",
   "business_name",
@@ -105,6 +113,18 @@ function isFullyVerified(profile: SupplierProfile): boolean {
       profile.tax_verified &&
       profile.bank_verified,
   )
+}
+
+function normalizedVerificationStatus(profile: SupplierProfile): string {
+  return profile.verification_status?.trim().toLowerCase() ?? ""
+}
+
+function isPendingQueueProfile(profile: SupplierProfile): boolean {
+  return PENDING_QUEUE_STATUSES.includes(normalizedVerificationStatus(profile))
+}
+
+function isVerifiedQueueProfile(profile: SupplierProfile): boolean {
+  return normalizedVerificationStatus(profile) === "verified"
 }
 
 function hasValue(value: string | null | undefined): boolean {
@@ -352,6 +372,7 @@ export default function AdminVerificationQueuePage() {
         .from("profiles")
         .select(profileSelect)
         .eq("role", "supplier")
+        .or(VERIFICATION_QUEUE_STATUS_FILTER)
         .order("created_at", { ascending: false })
 
       if (error) {
@@ -362,7 +383,9 @@ export default function AdminVerificationQueuePage() {
         return
       }
 
-      const supplierProfiles = ((data ?? []) as unknown) as SupplierProfile[]
+      const supplierProfiles = (((data ?? []) as unknown) as SupplierProfile[]).filter(
+        (profile) => isPendingQueueProfile(profile) || isVerifiedQueueProfile(profile),
+      )
       const supplierIds = supplierProfiles.map((profile) => profile.id)
       let bankMap: Record<string, BankDetails> = {}
 
@@ -411,16 +434,16 @@ export default function AdminVerificationQueuePage() {
   }, [router])
 
   const counts = useMemo(() => {
-    const verified = profiles.filter(isFullyVerified).length
+    const verified = profiles.filter(isVerifiedQueueProfile).length
     return {
-      pending: profiles.length - verified,
+      pending: profiles.filter(isPendingQueueProfile).length,
       verified,
     }
   }, [profiles])
 
   const filteredProfiles = useMemo(() => {
-    if (filter === "verified") return profiles.filter(isFullyVerified)
-    if (filter === "pending") return profiles.filter((profile) => !isFullyVerified(profile))
+    if (filter === "verified") return profiles.filter(isVerifiedQueueProfile)
+    if (filter === "pending") return profiles.filter(isPendingQueueProfile)
     return profiles
   }, [filter, profiles])
 

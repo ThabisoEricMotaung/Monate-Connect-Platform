@@ -335,18 +335,14 @@ export default function DashboardLayout({
     <main className="flex min-h-screen flex-col bg-page text-primary md:flex-row">
       
       {/* Mobile header bar */}
-      <header className="fixed top-0 left-0 right-0 z-40 flex md:hidden h-16 items-center justify-between gap-4 border-b border-panel bg-panel px-4 py-3">
+      <header className="fixed top-0 left-0 right-0 z-30 flex md:hidden h-16 items-center justify-between gap-4 border-b border-panel bg-panel px-4 py-3">
         <button
           type="button"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="rounded-md border border-panel bg-surface p-2 text-secondary transition hover:text-primary"
-          aria-label="Toggle navigation menu"
+          onClick={() => setSidebarOpen(true)}
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-panel bg-surface text-xl font-semibold text-secondary transition hover:text-primary"
+          aria-label="Open navigation menu"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
+          ☰
         </button>
         <Link href={homeHref} className="flex cursor-pointer items-center gap-2 rounded-sm transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
           <BrandMark className="h-10 w-10" imageClassName="h-6 w-auto" />
@@ -362,26 +358,23 @@ export default function DashboardLayout({
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/35 md:hidden"
+          className="fixed inset-0 z-40 bg-black/60 md:hidden"
           onClick={closeSidebar}
         />
       )}
 
       {/* Sidebar - mobile overlay or desktop persistent */}
-      <aside className={`dashboard-sidebar fixed top-0 left-0 bottom-0 z-40 w-[280px] transform transition-transform duration-200 md:static md:translate-x-0 flex flex-col overflow-y-auto border-r border-panel bg-panel p-5 print:hidden md:w-full md:max-w-[280px] ${
+      <aside className={`dashboard-sidebar fixed inset-y-0 left-0 z-50 w-[min(20rem,100vw)] transform transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 flex flex-col overflow-y-auto border-r border-panel bg-panel p-5 print:hidden md:w-full md:max-w-[280px] ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       }`}>
         {/* Mobile-only close button */}
         <button
           type="button"
           onClick={closeSidebar}
-          className="md:hidden mb-4 rounded-md border border-panel bg-surface p-2 text-secondary transition hover:text-primary w-fit"
+          className="md:hidden mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md border border-panel bg-surface text-xl text-secondary transition hover:text-primary"
           aria-label="Close navigation menu"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+          ×
         </button>
 
         <div className="mb-4 rounded-2xl border border-panel bg-surface p-4 text-sm">
@@ -514,7 +507,7 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main content area - padding-bottom accounts for fixed news ticker */}
-      <section className="flex-1 min-w-0 overflow-x-hidden mt-16 md:mt-0 p-4 md:p-6 lg:p-8" style={{ paddingBottom: 'var(--news-ticker-height)' }}>
+      <section className="mt-16 w-full min-w-0 flex-1 overflow-x-hidden px-4 py-5 md:mt-0 md:p-6 lg:p-8" style={{ paddingBottom: 'var(--news-ticker-height)' }}>
         <div className="print:hidden mb-4 flex items-center justify-between gap-4">
           <Breadcrumbs role={role} />
           <div className="hidden md:block">

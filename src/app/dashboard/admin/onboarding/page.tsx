@@ -47,6 +47,13 @@ import { useRouter } from "next/navigation"
 import { useAutosave } from "@/hooks/useAutosave"
 import { logActivity } from "@/lib/activity"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
+import {
+  NATIONAL_PROVINCE_VALUE,
+  SA_PHONE_ERROR,
+  displayProvinceList,
+  isNationalSelection,
+  validateSAPhone,
+} from "@/lib/formValidation"
 import { supabase } from "@/lib/supabase"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -230,6 +237,11 @@ const inputCls =
 const labelCls =
   "mb-1.5 block text-[0.68rem] font-bold uppercase tracking-[0.22em] text-secondary"
 
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null
+  return <p className="mt-2 text-xs font-semibold text-rose-700">{message}</p>
+}
+
 // ─── Wizard constants ─────────────────────────────────────────────────────────
 
 const STEPS = [
@@ -300,13 +312,16 @@ function CheckGrid({
   selected,
   onChange,
   columns = 2,
+  disabled = false,
 }: {
   options: string[]
   selected: string[]
   onChange: (next: string[]) => void
   columns?: 2 | 3
+  disabled?: boolean
 }) {
   function toggle(opt: string) {
+    if (disabled) return
     onChange(
       selected.includes(opt)
         ? selected.filter((s) => s !== opt)
@@ -323,6 +338,7 @@ function CheckGrid({
             key={opt}
             className={[
               "flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2.5 transition",
+              disabled ? "cursor-not-allowed opacity-45" : "",
               checked
                 ? "border-accent/40 bg-accent/10 text-heading"
                 : "border-panel bg-surface text-secondary hover:border-accent/25 hover:bg-accent/5",
@@ -347,6 +363,7 @@ function CheckGrid({
               checked={checked}
               onChange={() => toggle(opt)}
               value={opt}
+              disabled={disabled}
             />
             <span className="text-xs font-semibold leading-snug">{opt}</span>
           </label>
@@ -579,6 +596,7 @@ export default function BuyerOnboardingPage() {
   const [accessDenied, setAccessDenied] = useState(false)
   const [error, setError] = useState("")
   const [stepSuccess, setStepSuccess] = useState("")
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | undefined>>({})
   const [tableError, setTableError] = useState(false)
   const formRef = useRef<HTMLDivElement>(null)
 
@@ -721,10 +739,19 @@ export default function BuyerOnboardingPage() {
   async function handleNext() {
     setError("")
     setStepSuccess("")
+    setFieldErrors({})
 
     if (step === 1) {
+      const nextFieldErrors: Record<string, string> = {}
       if (!step1.organisation_name.trim()) {
-        setError("Organisation name is required before continuing.")
+        nextFieldErrors.organisation_name = "Organisation name is required before continuing."
+      }
+      if (step1.phone.trim() && !validateSAPhone(step1.phone)) {
+        nextFieldErrors.phone = SA_PHONE_ERROR
+      }
+      if (Object.keys(nextFieldErrors).length > 0) {
+        setFieldErrors(nextFieldErrors)
+        setError(nextFieldErrors.organisation_name ?? "")
         return
       }
       const ok = await upsert({ ...step1 })
@@ -741,6 +768,10 @@ export default function BuyerOnboardingPage() {
       } catch { /* swallow */ }
       advance()
     } else if (step === 2) {
+      if (step2.preferred_provinces.length === 0) {
+        setFieldErrors({ preferred_provinces: "Select at least one province or choose national." })
+        return
+      }
       const ok = await upsert({
         preferred_categories: step2.preferred_categories,
         preferred_provinces: step2.preferred_provinces,
@@ -989,6 +1020,7 @@ export default function BuyerOnboardingPage() {
                       className={inputCls}
                       required
                     />
+                    <FieldError message={fieldErrors.organisation_name} />
                   </div>
 
                   <div className="grid gap-5 sm:grid-cols-2">
@@ -1051,11 +1083,15 @@ export default function BuyerOnboardingPage() {
                       <input
                         id="phone"
                         type="tel"
-                        placeholder="+27 12 000 0000"
+                        placeholder="+27821234567"
                         value={step1.phone}
-                        onChange={(e) => setStep1((p) => ({ ...p, phone: e.target.value }))}
+                        onChange={(e) => {
+                          setStep1((p) => ({ ...p, phone: e.target.value }))
+                          setFieldErrors((p) => ({ ...p, phone: undefined }))
+                        }}
                         className={inputCls}
                       />
+                      <FieldError message={fieldErrors.phone} />
                     </div>
                   </div>
                 </div>
@@ -1101,17 +1137,39 @@ export default function BuyerOnboardingPage() {
                   <div>
                     <label className={labelCls}>Preferred Supplier Provinces</label>
                     <p className="mb-3 text-xs text-muted">
-                      Filter supplier sourcing to specific provinces. Leave blank to source from all provinces.
+                      Filter supplier sourcing to specific provinces, or choose national coverage.
                     </p>
+                    <label className="mb-3 flex items-center gap-3 rounded-md border border-panel bg-surface px-4 py-3 text-sm font-semibold text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={isNationalSelection(step2.preferred_provinces)}
+                        onChange={(e) => {
+                          setStep2((p) => ({
+                            ...p,
+                            preferred_provinces: e.target.checked ? [NATIONAL_PROVINCE_VALUE] : [],
+                          }))
+                          setFieldErrors((p) => ({ ...p, preferred_provinces: undefined }))
+                        }}
+                        className="h-4 w-4 rounded border-panel accent-[var(--accent)]"
+                      />
+                      <span>I operate nationally</span>
+                    </label>
                     <CheckGrid
                       options={SA_PROVINCES}
                       selected={step2.preferred_provinces}
-                      onChange={(next) => setStep2((p) => ({ ...p, preferred_provinces: next }))}
+                      onChange={(next) => {
+                        setStep2((p) => ({ ...p, preferred_provinces: next }))
+                        setFieldErrors((p) => ({ ...p, preferred_provinces: undefined }))
+                      }}
                       columns={3}
+                      disabled={isNationalSelection(step2.preferred_provinces)}
                     />
+                    <FieldError message={fieldErrors.preferred_provinces} />
                     {step2.preferred_provinces.length > 0 && (
                       <p className="mt-2 text-xs text-accent">
-                        {step2.preferred_provinces.length} province{step2.preferred_provinces.length > 1 ? "s" : ""} selected
+                        {isNationalSelection(step2.preferred_provinces)
+                          ? "National selected"
+                          : `${step2.preferred_provinces.length} province${step2.preferred_provinces.length > 1 ? "s" : ""} selected`}
                       </p>
                     )}
                   </div>
@@ -1309,7 +1367,9 @@ export default function BuyerOnboardingPage() {
                       },
                       {
                         label: "Preferred Provinces",
-                        value: step2.preferred_provinces.length > 0 ? step2.preferred_provinces : ["All provinces"],
+                        value: step2.preferred_provinces.length > 0
+                          ? [displayProvinceList(step2.preferred_provinces)]
+                          : ["All provinces"],
                       },
                       { label: "Minimum Verification Level", value: step2.minimum_verification_level },
                       {

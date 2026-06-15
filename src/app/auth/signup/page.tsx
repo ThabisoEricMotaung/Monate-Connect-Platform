@@ -1,9 +1,19 @@
 "use client"
 
-import { useEffect, useState, type FormEvent } from "react"
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
 import Link from "next/link"
 import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
+import {
+  NATIONAL_PROVINCE_VALUE,
+  SA_PHONE_ERROR,
+  displayProvinceList,
+  isNationalSelection,
+  validateCsdNumber,
+  validateSAPhone,
+  validateTaxNumber,
+  validateVatNumber,
+} from "@/lib/formValidation"
 
 const steps = ["Account", "Business details", "Compliance", "Review", "Submitted"]
 
@@ -56,6 +66,8 @@ type SignupForm = {
   industry: string
   provinces: string[]
   csdNumber: string
+  csdDocumentFile: File | null
+  csdDocumentPath: string
   taxReference: string
   bbeeLevel: string
   vatNumber: string
@@ -88,6 +100,8 @@ const initialForm: SignupForm = {
   industry: "",
   provinces: [],
   csdNumber: "",
+  csdDocumentFile: null,
+  csdDocumentPath: "",
   taxReference: "",
   bbeeLevel: "",
   vatNumber: "",
@@ -97,6 +111,10 @@ const initialForm: SignupForm = {
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
+function cleanFileName(name: string) {
+  return name.trim().replace(/[^a-zA-Z0-9._-]/g, "-").replace(/-+/g, "-")
 }
 
 function preferredFirstName(value: string) {
@@ -271,7 +289,7 @@ function Stepper({
                         : "border-panel bg-surface text-muted"
                   }`}
                 >
-                  {isCompleted ? "?" : stepNumber}
+                  {isCompleted ? "✓" : stepNumber}
                 </span>
                 {index < steps.length - 1 && (
                   <span className={`ml-2 h-px flex-1 ${stepNumber < currentStep ? "bg-accent" : "bg-panel"}`} />
@@ -353,10 +371,36 @@ export default function SignupPage() {
   }
 
   const toggleProvince = (province: string) => {
+    if (isNationalSelection(form.provinces)) return
     const nextProvinces = form.provinces.includes(province)
       ? form.provinces.filter((item) => item !== province)
       : [...form.provinces, province]
     updateField("provinces", nextProvinces)
+  }
+
+  const toggleNationalProvinces = (checked: boolean) => {
+    updateField("provinces", checked ? [NATIONAL_PROVINCE_VALUE] : [])
+  }
+
+  const handleCsdDocumentChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null
+    setForm((current) => ({ ...current, csdDocumentFile: file, csdDocumentPath: file ? "" : current.csdDocumentPath }))
+    setErrors((current) => ({ ...current, csdDocumentFile: undefined, submit: undefined }))
+  }
+
+  const uploadCsdDocumentIfNeeded = async () => {
+    if (!form.csdDocumentFile || form.csdDocumentPath) return form.csdDocumentPath || null
+    if (!supabase || !userId) throw new Error("Session expired — please reload and start over.")
+
+    const path = `${userId}/csd-certificate/${Date.now()}-${cleanFileName(form.csdDocumentFile.name)}`
+    const { error } = await supabase.storage
+      .from("supplier-documents")
+      .upload(path, form.csdDocumentFile, { upsert: true })
+
+    if (error) throw new Error(error.message)
+
+    setForm((current) => ({ ...current, csdDocumentPath: path, csdDocumentFile: null }))
+    return path
   }
 
   const validateStep = (targetStep: number) => {
@@ -379,13 +423,19 @@ export default function SignupPage() {
       if (!form.businessName.trim()) nextErrors.businessName = "Registered business name is required."
       if (!form.registrationNumber.trim()) nextErrors.registrationNumber = "Company registration number is required."
       if (!form.phone.trim()) nextErrors.phone = "Phone number is required."
+      else if (!validateSAPhone(form.phone)) nextErrors.phone = SA_PHONE_ERROR
       if (!form.industry) nextErrors.industry = "Industry is required."
       if (form.provinces.length === 0) nextErrors.provinces = "Select at least one province."
     }
 
     if (targetStep === 3) {
       if (!form.csdNumber.trim()) nextErrors.csdNumber = "CSD supplier number is required."
+      else if (!validateCsdNumber(form.csdNumber)) nextErrors.csdNumber = "Enter a valid CSD number in MAAA-XXXXXXXX format."
       if (!form.taxReference.trim()) nextErrors.taxReference = "Tax reference number is required."
+      else if (!validateTaxNumber(form.taxReference)) nextErrors.taxReference = "Tax number must be exactly 10 digits."
+      if (form.vatNumber.trim() && !validateVatNumber(form.vatNumber)) {
+        nextErrors.vatNumber = "VAT number must be exactly 10 digits and start with 4."
+      }
       if (!form.bbeeLevel) nextErrors.bbeeLevel = "BBBEE level is required."
       if (!form.csdConfirmed) nextErrors.csdConfirmed = "Confirm that your CSD profile is active."
     }
@@ -488,7 +538,7 @@ export default function SignupPage() {
         phone: form.phone,
         industry: form.industry,
         provinces: form.provinces,
-        province: form.provinces.join(", "),
+        province: displayProvinceList(form.provinces),
         smart_score: smartScore,
         updated_at: new Date().toISOString(),
       }, { onConflict: "id" })
@@ -502,8 +552,17 @@ export default function SignupPage() {
   const handleStep3Save = async () => {
     if (!validateStep(3)) return
     setLoading(true)
+    setErrors({})
 
     if (supabase && userId) {
+      let csdDocumentPath: string | null = null
+      try {
+        csdDocumentPath = await uploadCsdDocumentIfNeeded()
+      } catch (error) {
+        setErrors({ csdDocumentFile: error instanceof Error ? error.message : "CSD certificate upload failed." })
+        setLoading(false)
+        return
+      }
       const smartScore = calculateSmartScore({
         business_name: form.businessName,
         industry: form.industry,
@@ -515,6 +574,7 @@ export default function SignupPage() {
       await supabase.from("profiles").upsert({
         id: userId,
         csd_number: form.csdNumber,
+        ...(csdDocumentPath ? { csd_document_url: csdDocumentPath } : {}),
         tax_reference: form.taxReference,
         bbbee_level: form.bbeeLevel,
         vat_number: form.vatNumber || null,
@@ -570,6 +630,15 @@ export default function SignupPage() {
       bbbee_level: form.bbeeLevel,
     })
 
+    let csdDocumentPath: string | null = null
+    try {
+      csdDocumentPath = await uploadCsdDocumentIfNeeded()
+    } catch (error) {
+      setErrors({ csdDocumentFile: error instanceof Error ? error.message : "CSD certificate upload failed." })
+      setLoading(false)
+      return
+    }
+
     const { error: profileError } = await supabase.from("profiles").upsert({
       id: userId,
       email: normalizedEmail,
@@ -579,12 +648,13 @@ export default function SignupPage() {
       phone: form.phone,
       industry: form.industry,
       provinces: form.provinces,
-      province: form.provinces.join(", "),
+      province: displayProvinceList(form.provinces),
       csd_number: form.csdNumber,
+      ...(csdDocumentPath ? { csd_document_url: csdDocumentPath } : {}),
       tax_reference: form.taxReference,
       bbbee_level: form.bbeeLevel,
       vat_number: form.vatNumber || null,
-      verification_status: "pending",
+      verification_status: "Pending Review",
       registration_complete: true,
       role: form.role,
       smart_score: smartScore,
@@ -798,7 +868,7 @@ export default function SignupPage() {
               <div className="mt-5 grid gap-5 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-secondary">Phone number</label>
-                  <input type="tel" placeholder="+27 XX XXX XXXX" value={form.phone} onChange={(e) => updateField("phone", e.target.value)} className={inputClass} />
+                  <input type="tel" placeholder="+27821234567" value={form.phone} onChange={(e) => updateField("phone", e.target.value)} className={inputClass} />
                   <FieldError message={errors.phone} />
                 </div>
                 <div>
@@ -814,12 +884,22 @@ export default function SignupPage() {
               <div className="mt-5">
                 <label className="block text-sm font-medium text-secondary">Province(s) you operate in</label>
                 <p className="mt-2 text-xs leading-5 text-muted">Select all provinces where you can fulfil contracts.</p>
+                <label className="mt-3 flex items-center gap-3 rounded-2xl border border-panel bg-surface px-4 py-3 text-sm font-semibold text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={isNationalSelection(form.provinces)}
+                    onChange={(e) => toggleNationalProvinces(e.target.checked)}
+                    className="h-4 w-4 rounded border-panel accent-[var(--accent)]"
+                  />
+                  <span>I operate nationally</span>
+                </label>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {provinces.map((province) => {
                     const selected = form.provinces.includes(province)
+                    const nationallySelected = isNationalSelection(form.provinces)
                     return (
-                      <button key={province} type="button" onClick={() => toggleProvince(province)}
-                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition duration-200 ${selected ? "border-accent bg-accent text-button" : "border-panel bg-surface text-secondary hover:border-accent hover:bg-accent/10 hover:text-accent"}`}
+                      <button key={province} type="button" onClick={() => toggleProvince(province)} disabled={nationallySelected}
+                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition duration-200 disabled:cursor-not-allowed disabled:opacity-45 ${selected ? "border-accent bg-accent text-button" : "border-panel bg-surface text-secondary hover:border-accent hover:bg-accent/10 hover:text-accent"}`}
                       >
                         {province}
                       </button>
@@ -835,7 +915,7 @@ export default function SignupPage() {
                   {loading ? "Saving…" : "Continue?"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
-                  ? Back
+                  ← Back
                 </button>
               </div>
             </section>
@@ -852,11 +932,31 @@ export default function SignupPage() {
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-secondary">CSD supplier number</label>
-                  <input type="text" placeholder="MAAA000000000" value={form.csdNumber} onChange={(e) => updateField("csdNumber", e.target.value)} className={inputClass} />
+                  <label className="block text-sm font-medium text-secondary">CSD Number</label>
+                  <input type="text" placeholder="MAAA-12345678" value={form.csdNumber} onChange={(e) => updateField("csdNumber", e.target.value)} className={inputClass} />
                   <p className="mt-2 text-xs leading-5 text-muted">Central Supplier Database</p>
                   <FieldError message={errors.csdNumber} />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary">CSD Certificate</label>
+                  <label className="mt-2 flex min-h-[58px] cursor-pointer items-center justify-between gap-3 rounded-2xl border border-panel bg-surface px-5 py-4 text-sm text-secondary transition hover:border-accent hover:text-accent">
+                    <span className="min-w-0 flex-1 truncate">
+                      {form.csdDocumentFile?.name || (form.csdDocumentPath ? "CSD certificate uploaded" : "Upload PDF, JPG or PNG")}
+                    </span>
+                    <span className="shrink-0 text-xs font-semibold text-accent">Browse</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="sr-only"
+                      onChange={handleCsdDocumentChange}
+                    />
+                  </label>
+                  <p className="mt-2 text-xs leading-5 text-muted">Upload your latest CSD registration document.</p>
+                  <FieldError message={errors.csdDocumentFile} />
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-5 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-secondary">Tax reference number</label>
                   <input type="text" placeholder="e.g. 1234567890" value={form.taxReference} onChange={(e) => updateField("taxReference", e.target.value)} className={inputClass} />
@@ -878,6 +978,7 @@ export default function SignupPage() {
                   VAT registration number <span className="text-muted">(optional)</span>
                 </label>
                 <input type="text" value={form.vatNumber} onChange={(e) => updateField("vatNumber", e.target.value)} className={inputClass} />
+                <FieldError message={errors.vatNumber} />
               </div>
 
               <div className="mt-5 rounded-2xl border border-panel bg-surface px-5 py-4">
@@ -894,7 +995,7 @@ export default function SignupPage() {
                   {loading ? "Saving…" : "Continue?"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
-                  ? Back
+                  ← Back
                 </button>
               </div>
             </section>
@@ -913,7 +1014,7 @@ export default function SignupPage() {
                   { title: "Account", detail: form.email, editStep: 1 },
                   {
                     title: "Business details",
-                    detail: `${form.businessName} · ${form.industry} · ${form.provinces.join(", ")}`,
+                    detail: `${form.businessName} · ${form.industry} · ${displayProvinceList(form.provinces)}`,
                     editStep: 2,
                   },
                   {
@@ -960,7 +1061,7 @@ export default function SignupPage() {
                   {loading ? "Submitting registration…" : "Submit registration"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
-                  ? Back
+                  ← Back
                 </button>
               </div>
             </section>
@@ -977,9 +1078,6 @@ export default function SignupPage() {
                   We&apos;ve sent a verification email to{" "}
                   <span className="font-semibold text-heading">{form.email.trim().toLowerCase()}</span>.
                   {" "}Please check your inbox and click the link to activate your account.
-                </p>
-                <p className="mt-3 text-sm leading-6 text-muted">
-                  Once verified, you&apos;ll be able to log in and access your supplier dashboard.
                 </p>
               </div>
 
@@ -998,27 +1096,11 @@ export default function SignupPage() {
                 >
                   {resending ? "Resending…" : "Resend verification email"}
                 </button>
-                <p className="pt-1 text-center text-xs text-muted">
-                  Confirmed your email in another tab?
-                </p>
                 <Link
                   href="/auth/login"
-                  className="block w-full rounded-2xl border py-4 text-center font-semibold transition"
-                  style={{
-                    borderColor: "rgba(201,168,76,0.5)",
-                    color: "#A8893B",
-                    background: "transparent",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(201,168,76,0.08)"
-                    e.currentTarget.style.borderColor = "rgba(201,168,76,0.75)"
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent"
-                    e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)"
-                  }}
+                  className="block text-center text-sm font-semibold text-accent transition hover:text-accent-strong"
                 >
-                  Already verified? Log in ?
+                  Verified in another tab? Continue →
                 </Link>
               </div>
             </section>

@@ -12,6 +12,17 @@ import {
 } from "@/lib/smartScore"
 import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning"
 import { supabase } from "@/lib/supabase"
+import {
+  NATIONAL_PROVINCE_VALUE,
+  SA_PHONE_ERROR,
+  displayProvinceList,
+  displayProvinceValue,
+  isNationalSelection,
+  validateCsdNumber,
+  validateSAPhone,
+  validateTaxNumber,
+  validateVatNumber,
+} from "@/lib/formValidation"
 
 // --- Types ---
 
@@ -175,6 +186,17 @@ function docLabel(field: DocumentField): string {
     capability_statement_url: "Company Profile",
   }
   return map[field]
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null
+  return <p className="mt-2 text-xs font-semibold text-rose-700">{message}</p>
+}
+
+function profileProvinceValues(profile: Profile) {
+  if (profile.provinces?.length) return profile.provinces
+  if (profile.province) return [profile.province]
+  return []
 }
 
 function cleanFileName(name: string) {
@@ -376,6 +398,7 @@ function ProfileTab({
   const [saveError, setSaveError] = useState("")
   const [saveSuccess, setSaveSuccess] = useState("")
   const [lastSavedSection, setLastSavedSection] = useState<"business" | "compliance" | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | undefined>>({})
   const [bizForm, setBizForm] = useState({
     preferred_name: profile.preferred_name ?? "",
     business_name: profile.business_name ?? "",
@@ -384,6 +407,7 @@ function ProfileTab({
     email: profile.email ?? "",
     website: profile.website ?? "",
     province: profile.province ?? "",
+    provinces: profileProvinceValues(profile),
     description: profile.description ?? "",
     company_registration: profile.company_registration ?? "",
   })
@@ -404,19 +428,72 @@ function ProfileTab({
 
   function handleBizChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setBizForm((p) => ({ ...p, [e.target.name]: e.target.value }))
+    setFieldErrors((p) => ({ ...p, [e.target.name]: undefined }))
     onDirtyChange(true)
   }
 
   function handleCompChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setCompForm((p) => ({ ...p, [e.target.name]: e.target.value }))
+    setFieldErrors((p) => ({ ...p, [e.target.name]: undefined }))
     onDirtyChange(true)
+  }
+
+  function toggleBizProvince(province: string) {
+    if (isNationalSelection(bizForm.provinces)) return
+    setBizForm((p) => {
+      const provinces = p.provinces.includes(province)
+        ? p.provinces.filter((item) => item !== province)
+        : [...p.provinces, province]
+      return { ...p, provinces, province: displayProvinceList(provinces) }
+    })
+    setFieldErrors((p) => ({ ...p, provinces: undefined }))
+    onDirtyChange(true)
+  }
+
+  function toggleBizNational(checked: boolean) {
+    const provinces = checked ? [NATIONAL_PROVINCE_VALUE] : []
+    setBizForm((p) => ({ ...p, provinces, province: displayProvinceList(provinces) }))
+    setFieldErrors((p) => ({ ...p, provinces: undefined }))
+    onDirtyChange(true)
+  }
+
+  function validateBizForm() {
+    const nextErrors: Record<string, string> = {}
+    if (bizForm.phone.trim() && !validateSAPhone(bizForm.phone)) {
+      nextErrors.phone = SA_PHONE_ERROR
+    }
+    if (bizForm.provinces.length === 0) {
+      nextErrors.provinces = "Select at least one province."
+    }
+    setFieldErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
+
+  function validateCompForm() {
+    const nextErrors: Record<string, string> = {}
+    if (compForm.csd_number.trim() && !validateCsdNumber(compForm.csd_number)) {
+      nextErrors.csd_number = "Enter a valid CSD number in MAAA-XXXXXXXX format."
+    }
+    if (compForm.tax_reference.trim() && !validateTaxNumber(compForm.tax_reference)) {
+      nextErrors.tax_reference = "Tax number must be exactly 10 digits."
+    }
+    if (compForm.vat_number.trim() && !validateVatNumber(compForm.vat_number)) {
+      nextErrors.vat_number = "VAT number must be exactly 10 digits and start with 4."
+    }
+    setFieldErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
   }
 
   async function saveBiz() {
     setSaveError("")
     setSaveSuccess("")
     setLastSavedSection(null)
-    const result = await onSave(bizForm)
+    if (!validateBizForm()) return
+    const result = await onSave({
+      ...bizForm,
+      province: displayProvinceList(bizForm.provinces),
+      provinces: bizForm.provinces,
+    })
     if (!result.ok) {
       setSaveError(result.error ?? "We could not save your profile changes.")
       return
@@ -431,6 +508,7 @@ function ProfileTab({
     setSaveError("")
     setSaveSuccess("")
     setLastSavedSection(null)
+    if (!validateCompForm()) return
     const result = await onSave(compForm)
     if (!result.ok) {
       setSaveError(result.error ?? "We could not save your profile changes.")
@@ -451,9 +529,11 @@ function ProfileTab({
       email: profile.email ?? "",
       website: profile.website ?? "",
       province: profile.province ?? "",
+      provinces: profileProvinceValues(profile),
       description: profile.description ?? "",
       company_registration: profile.company_registration ?? "",
     })
+    setFieldErrors({})
     setSaveError("")
     setSaveSuccess("")
     setLastSavedSection(null)
@@ -470,6 +550,7 @@ function ProfileTab({
       vat_number: profile.vat_number ?? "",
       cidb_grade: profile.cidb_grade ?? "",
     })
+    setFieldErrors({})
     setSaveError("")
     setSaveSuccess("")
     setLastSavedSection(null)
@@ -522,7 +603,8 @@ function ProfileTab({
               </div>
               <div>
                 <label htmlFor="phone" className={labelCls}>Phone number</label>
-                <input id="phone" name="phone" type="tel" value={bizForm.phone} onChange={handleBizChange} className={inputCls} />
+                <input id="phone" name="phone" type="tel" placeholder="+27821234567" value={bizForm.phone} onChange={handleBizChange} className={inputCls} />
+                <FieldError message={fieldErrors.phone} />
               </div>
               <div>
                 <label htmlFor="email" className={labelCls}>Work email</label>
@@ -533,11 +615,38 @@ function ProfileTab({
                 <input id="website" name="website" type="url" placeholder="https://" value={bizForm.website} onChange={handleBizChange} className={inputCls} />
               </div>
               <div className="sm:col-span-2">
-                <label htmlFor="province" className={labelCls}>Province</label>
-                <select id="province" name="province" value={bizForm.province} onChange={handleBizChange} className={inputCls}>
-                  <option value="">Select province</option>
-                  {PROVINCES.map((p) => <option key={p} value={p}>{p}</option>)}
-                </select>
+                <p className={labelCls}>Province(s) you operate in</p>
+                <label className="mb-3 flex items-center gap-3 rounded-md border border-panel bg-card px-4 py-3 text-sm font-semibold text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={isNationalSelection(bizForm.provinces)}
+                    onChange={(e) => toggleBizNational(e.target.checked)}
+                    className="h-4 w-4 rounded border-panel accent-[var(--accent)]"
+                  />
+                  <span>I operate nationally</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {PROVINCES.map((province) => {
+                    const selected = bizForm.provinces.includes(province)
+                    const nationallySelected = isNationalSelection(bizForm.provinces)
+                    return (
+                      <button
+                        key={province}
+                        type="button"
+                        onClick={() => toggleBizProvince(province)}
+                        disabled={nationallySelected}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-45 ${
+                          selected
+                            ? "border-accent bg-accent text-button"
+                            : "border-panel bg-card text-secondary hover:border-accent hover:bg-accent/10 hover:text-accent"
+                        }`}
+                      >
+                        {province}
+                      </button>
+                    )
+                  })}
+                </div>
+                <FieldError message={fieldErrors.provinces} />
               </div>
               <div className="sm:col-span-2">
                 <label htmlFor="description" className={labelCls}>Business description</label>
@@ -568,9 +677,15 @@ function ProfileTab({
               </div>
             ))}
             <div className="rounded-md border border-panel bg-card p-4 sm:col-span-2">
-              <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Province</p>
-              {profile.province ? (
-                <span className="mt-2 inline-flex rounded-full border border-accent/40 bg-accent/10 px-3 py-0.5 text-xs font-semibold text-accent">{profile.province}</span>
+              <p className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">Province(s)</p>
+              {profileProvinceValues(profile).length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {profileProvinceValues(profile).map((province) => (
+                    <span key={province} className="inline-flex rounded-full border border-accent/40 bg-accent/10 px-3 py-0.5 text-xs font-semibold text-accent">
+                      {displayProvinceValue(province)}
+                    </span>
+                  ))}
+                </div>
               ) : (
                 <p className="mt-2 text-sm font-semibold text-muted">Not added</p>
               )}
@@ -601,7 +716,8 @@ function ProfileTab({
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="csd_number" className={labelCls}>CSD supplier number</label>
-                <input id="csd_number" name="csd_number" type="text" placeholder="MAAA0000000" value={compForm.csd_number} onChange={handleCompChange} className={inputCls} />
+                <input id="csd_number" name="csd_number" type="text" placeholder="MAAA-12345678" value={compForm.csd_number} onChange={handleCompChange} className={inputCls} />
+                <FieldError message={fieldErrors.csd_number} />
               </div>
               <div>
                 <label htmlFor="bbbee_level" className={labelCls}>BBBEE level</label>
@@ -613,10 +729,12 @@ function ProfileTab({
               <div>
                 <label htmlFor="tax_reference" className={labelCls}>Tax reference number</label>
                 <input id="tax_reference" name="tax_reference" type="text" value={compForm.tax_reference} onChange={handleCompChange} className={inputCls} />
+                <FieldError message={fieldErrors.tax_reference} />
               </div>
               <div>
                 <label htmlFor="vat_number" className={labelCls}>VAT registration number</label>
                 <input id="vat_number" name="vat_number" type="text" placeholder="Optional" value={compForm.vat_number} onChange={handleCompChange} className={inputCls} />
+                <FieldError message={fieldErrors.vat_number} />
               </div>
               <div>
                 <label htmlFor="tax_status" className={labelCls}>Tax status</label>

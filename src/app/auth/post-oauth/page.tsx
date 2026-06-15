@@ -24,14 +24,15 @@ export default function PostOAuthPage() {
         .from("profiles")
         .select("role")
         .eq("id", session.user.id)
-        .single()
-      if (!profile) {
+        .maybeSingle()
+      const role = profile?.role?.trim()
+      if (!role) {
         router.replace(
           `/auth/signup?oauth=true&email=${encodeURIComponent(session.user.email ?? "")}`
         )
         return
       }
-      switch (profile.role) {
+      switch (role) {
         case "admin":
           router.replace("/dashboard/admin")
           break
