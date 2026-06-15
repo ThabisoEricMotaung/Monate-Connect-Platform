@@ -86,27 +86,27 @@ export default function BuyerHomePage() {
 
       {/* Metrics row */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-md border border-panel bg-card p-6 shadow-panel">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
+        <div className="overflow-hidden rounded-md border border-panel bg-card p-6 shadow-panel">
+          <p className="break-words text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
             Active RFQs
           </p>
-          <p className="mt-2 text-4xl font-bold text-heading">
+          <p className="mt-2 break-words text-4xl font-bold text-heading">
             {loading ? "—" : metrics.activeRfqs}
           </p>
-          <p className="mt-1 text-xs text-muted">Open &amp; under evaluation</p>
+          <p className="mt-1 break-words text-xs text-muted">Open &amp; under evaluation</p>
         </div>
 
-        <div className="rounded-md border border-panel bg-card p-6 shadow-panel">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
+        <div className="overflow-hidden rounded-md border border-panel bg-card p-6 shadow-panel">
+          <p className="break-words text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
             Quotes received
           </p>
-          <p className="mt-2 text-4xl font-bold text-heading">
+          <p className="mt-2 break-words text-4xl font-bold text-heading">
             {loading ? "—" : metrics.quotesReceived}
           </p>
-          <p className="mt-1 text-xs text-muted">Total across all RFQs</p>
+          <p className="mt-1 break-words text-xs text-muted">Total across all RFQs</p>
         </div>
 
-        <div className="flex items-center justify-center rounded-md border border-accent/30 bg-accent/5 p-6">
+        <div className="flex items-center justify-center overflow-hidden rounded-md border border-accent/30 bg-accent/5 p-6">
           <Link
             href="/dashboard/admin/rfqs/new"
             className="inline-flex items-center gap-2 rounded-md border border-accent bg-accent px-5 py-3 text-sm font-bold text-button shadow-sm transition hover:bg-accent-strong"
@@ -119,7 +119,7 @@ export default function BuyerHomePage() {
 
       {/* Recent RFQs */}
       <section>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-secondary">
             Recent RFQs
           </h2>
@@ -163,7 +163,9 @@ export default function BuyerHomePage() {
                 {recentRfqs.map((rfq) => (
                   <tr key={rfq.id} className="transition hover:bg-surface">
                     <td className="px-5 py-4 font-semibold text-primary">
-                      {rfq.title ?? "Untitled RFQ"}
+                      <span className="line-clamp-2 break-words">
+                        {rfq.title ?? "Untitled RFQ"}
+                      </span>
                     </td>
                     <td className="px-5 py-4">
                       <span

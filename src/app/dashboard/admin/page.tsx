@@ -551,18 +551,18 @@ export default function AdminOverviewPage() {
                 tone: derived.spendChange >= 0 ? "text-success" : "text-warning",
               },
             ].map((card) => (
-              <article key={card.label} className="rounded-md border border-panel bg-card p-5 shadow-panel">
-                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-secondary">
+              <article key={card.label} className="overflow-hidden rounded-md border border-panel bg-card p-5 shadow-panel">
+                <p className="break-words text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-secondary">
                   {card.label}
                 </p>
-                <p className="mt-4 text-3xl font-bold tabular-nums text-heading">{card.value}</p>
-                <p className={`mt-2 text-xs font-semibold ${card.tone}`}>{card.sub}</p>
+                <p className="mt-4 break-words text-3xl font-bold tabular-nums text-heading">{card.value}</p>
+                <p className={`mt-2 break-words text-xs font-semibold ${card.tone}`}>{card.sub}</p>
               </article>
             ))}
           </section>
 
-          <section className="mt-6 rounded-md border border-panel bg-card p-5 shadow-panel">
-            <div className="mb-5 flex items-center justify-between gap-4 border-b border-panel pb-4">
+          <section className="mt-6 overflow-hidden rounded-md border border-panel bg-card p-5 shadow-panel">
+            <div className="mb-5 flex flex-col items-start gap-3 border-b border-panel pb-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] text-secondary">
                   Procurement pipeline
@@ -577,11 +577,11 @@ export default function AdminOverviewPage() {
             <div className="overflow-x-auto pb-2">
               <div className="grid min-w-[1040px] grid-cols-5 gap-3">
                 {derived.pipeline.map(({ stage, rfqs }) => (
-                  <div key={stage} className="rounded-md border border-panel bg-panel p-3">
-                    <div className="mb-3 flex items-start justify-between gap-2">
-                      <div>
+                  <div key={stage} className="overflow-hidden rounded-md border border-panel bg-panel p-3">
+                    <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:justify-between">
+                      <div className="min-w-0">
                         <p className="text-sm font-semibold text-heading">{stage}</p>
-                        <p className="mt-1 text-[0.68rem] leading-5 text-muted">
+                        <p className="mt-1 break-words text-[0.68rem] leading-5 text-muted">
                           {stageDescriptions[stage]}
                         </p>
                       </div>
@@ -600,15 +600,15 @@ export default function AdminOverviewPage() {
                           <Link
                             key={rfq.id}
                             href={`/dashboard/admin/rfqs/${rfq.id}`}
-                            className="block rounded-md border border-panel bg-card p-3 transition hover:border-accent/50"
+                            className="block overflow-hidden rounded-md border border-panel bg-card p-3 transition hover:border-accent/50"
                           >
                             <p className="line-clamp-2 text-sm font-semibold leading-5 text-heading">
                               {rfq.title ?? `RFQ-${rfq.id}`}
                             </p>
-                            <p className="mt-2 text-[0.68rem] text-secondary">
+                            <p className="mt-2 truncate text-[0.68rem] text-secondary">
                               {rfq.category ?? "No industry"} · {rfq.province ?? rfq.region ?? "No province"}
                             </p>
-                            <p className="mt-2 text-xs font-semibold text-heading">
+                            <p className="mt-2 break-words text-xs font-semibold text-heading">
                               {formatCurrency(rfq.budget)}
                             </p>
                             {stage === "Open" && remaining != null && (
@@ -647,8 +647,8 @@ export default function AdminOverviewPage() {
           </section>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-2">
-            <section className="rounded-md border border-panel bg-card p-5 shadow-panel">
-              <div className="mb-4 flex items-center justify-between gap-4 border-b border-panel pb-4">
+            <section className="overflow-hidden rounded-md border border-panel bg-card p-5 shadow-panel">
+              <div className="mb-4 flex flex-col items-start gap-3 border-b border-panel pb-4 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-lg font-semibold text-heading">Quotes awaiting review</h2>
                 <Link href="/dashboard/admin/quotes" className="text-sm font-semibold text-accent transition hover:text-accent-strong">
                   Review all
@@ -677,24 +677,26 @@ export default function AdminOverviewPage() {
                           : 61
 
                     return (
-                      <article key={quote.id} className="flex items-center gap-3 rounded-md border border-panel bg-panel p-3">
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold ${supplierTone(supplier?.industry ?? null)}`}>
-                          {initials(quote.supplier_name ?? supplier?.business_name ?? null)}
+                      <article key={quote.id} className="flex flex-col gap-3 overflow-hidden rounded-md border border-panel bg-panel p-3 md:flex-row md:items-center">
+                        <div className="flex min-w-0 items-start gap-3 md:flex-1">
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold ${supplierTone(supplier?.industry ?? null)}`}>
+                            {initials(quote.supplier_name ?? supplier?.business_name ?? null)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-bold text-heading">
+                              {quote.supplier_name ?? supplier?.business_name ?? "Supplier pending"}
+                            </p>
+                            <p className="mt-1 truncate text-[0.68rem] text-muted">
+                              {rfq?.title ?? (quote.rfq_id ? `RFQ-${quote.rfq_id}` : "RFQ pending")}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-xs font-bold text-heading">
-                            {quote.supplier_name ?? supplier?.business_name ?? "Supplier pending"}
-                          </p>
-                          <p className="mt-1 truncate text-[0.68rem] text-muted">
-                            {rfq?.title ?? (quote.rfq_id ? `RFQ-${quote.rfq_id}` : "RFQ pending")}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-heading">{formatCurrency(quote.amount)}</p>
-                          <p className="mt-1 text-[0.62rem] text-muted">SmartScore {score}</p>
+                        <div className="w-full min-w-0 text-left md:w-auto md:shrink-0 md:text-right">
+                          <p className="break-words text-sm font-bold text-heading">{formatCurrency(quote.amount)}</p>
+                          <p className="mt-1 break-words text-[0.62rem] text-muted">SmartScore {score}</p>
                         </div>
                         <span
-                          className={`rounded-md border px-2 py-1 text-[0.62rem] font-bold uppercase tracking-[0.16em] ${
+                          className={`w-fit rounded-md border px-2 py-1 text-[0.62rem] font-bold uppercase tracking-[0.16em] md:shrink-0 ${
                             pill === "Shortlisted"
                               ? "border-success bg-success-soft text-success"
                               : pill === "Review"
@@ -711,8 +713,8 @@ export default function AdminOverviewPage() {
               )}
             </section>
 
-            <section className="rounded-md border border-panel bg-card p-5 shadow-panel">
-              <div className="mb-4 flex items-center justify-between gap-4 border-b border-panel pb-4">
+            <section className="overflow-hidden rounded-md border border-panel bg-card p-5 shadow-panel">
+              <div className="mb-4 flex flex-col items-start gap-3 border-b border-panel pb-4 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-lg font-semibold text-heading">YTD spend by category</h2>
                 <Link href="/dashboard/admin/reports/spend" className="text-sm font-semibold text-accent transition hover:text-accent-strong">
                   Full report
@@ -725,9 +727,9 @@ export default function AdminOverviewPage() {
                 <div className="space-y-4">
                   {derived.spendByCategory.map((row, index) => (
                     <div key={row.category}>
-                      <div className="mb-1 flex items-center justify-between gap-3">
-                        <p className="truncate text-xs font-semibold text-heading">{row.category}</p>
-                        <p className="text-xs font-bold text-heading">{formatRand(row.value)}</p>
+                      <div className="mb-1 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                        <p className="min-w-0 truncate text-xs font-semibold text-heading">{row.category}</p>
+                        <p className="break-words text-xs font-bold text-heading sm:shrink-0">{formatRand(row.value)}</p>
                       </div>
                       <div className="h-2 overflow-hidden rounded-full bg-panel">
                         <div
@@ -769,12 +771,12 @@ export default function AdminOverviewPage() {
                           tone: "text-heading",
                         },
                       ].map((bucket) => (
-                        <div key={bucket.label} className="rounded-md border border-panel bg-panel p-3">
-                          <p className="text-[0.62rem] uppercase tracking-[0.16em] text-muted">
+                        <div key={bucket.label} className="overflow-hidden rounded-md border border-panel bg-panel p-3">
+                          <p className="break-words text-[0.62rem] uppercase tracking-[0.16em] text-muted">
                             {bucket.label}
                           </p>
                           <p className={`mt-2 text-lg font-bold ${bucket.tone}`}>{bucket.percent}%</p>
-                          <p className="mt-1 text-[0.68rem] text-secondary">{formatRand(bucket.value)}</p>
+                          <p className="mt-1 break-words text-[0.68rem] text-secondary">{formatRand(bucket.value)}</p>
                         </div>
                       ))}
                     </div>
@@ -784,8 +786,8 @@ export default function AdminOverviewPage() {
             </section>
           </div>
 
-          <section className="mt-6 rounded-md border border-panel bg-card p-5 shadow-panel">
-            <div className="mb-4 flex items-center justify-between gap-4 border-b border-panel pb-4">
+          <section className="mt-6 overflow-hidden rounded-md border border-panel bg-card p-5 shadow-panel">
+            <div className="mb-4 flex flex-col items-start gap-3 border-b border-panel pb-4 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-lg font-semibold text-heading">Recent activity</h2>
               <Link href="/dashboard/admin/activity" className="text-sm font-semibold text-accent transition hover:text-accent-strong">
                 View all
@@ -797,9 +799,9 @@ export default function AdminOverviewPage() {
             ) : (
               <div className="space-y-3">
                 {derived.recentActivity.map((item, index) => (
-                  <article key={`${item.entity}-${index}`} className="flex items-start gap-3 rounded-md border border-panel bg-panel p-3">
+                  <article key={`${item.entity}-${index}`} className="flex flex-col gap-3 overflow-hidden rounded-md border border-panel bg-panel p-3 sm:flex-row sm:items-start">
                     <span
-                      className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
+                      className={`h-2.5 w-2.5 shrink-0 rounded-full sm:mt-1 ${
                         item.tone === "success"
                           ? "bg-success"
                           : item.tone === "warn"
@@ -808,11 +810,11 @@ export default function AdminOverviewPage() {
                       }`}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm leading-6 text-secondary">
+                      <p className="break-words text-sm leading-6 text-secondary">
                         <span className="font-semibold text-heading">{item.entity}</span> {item.text}
                       </p>
                     </div>
-                    <p className="shrink-0 text-xs text-muted">{relativeDate(item.date)}</p>
+                    <p className="break-words text-xs text-muted sm:shrink-0">{relativeDate(item.date)}</p>
                   </article>
                 ))}
               </div>
