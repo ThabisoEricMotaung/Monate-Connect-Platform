@@ -574,10 +574,10 @@ export default function AdminOverviewPage() {
               </Link>
             </div>
 
-            <div className="overflow-x-auto pb-2">
-              <div className="grid min-w-[1040px] grid-cols-5 gap-3">
+            <div className="pb-2 md:overflow-x-auto">
+              <div className="flex w-full flex-col gap-3 md:min-w-[1040px] md:flex-row">
                 {derived.pipeline.map(({ stage, rfqs }) => (
-                  <div key={stage} className="overflow-hidden rounded-md border border-panel bg-panel p-3">
+                  <div key={stage} className="w-full overflow-hidden rounded-md border border-panel bg-panel p-3 md:flex-1">
                     <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:justify-between">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-heading">{stage}</p>
@@ -602,10 +602,10 @@ export default function AdminOverviewPage() {
                             href={`/dashboard/admin/rfqs/${rfq.id}`}
                             className="block overflow-hidden rounded-md border border-panel bg-card p-3 transition hover:border-accent/50"
                           >
-                            <p className="line-clamp-2 text-sm font-semibold leading-5 text-heading">
+                            <p className="break-words text-sm font-semibold leading-5 text-heading">
                               {rfq.title ?? `RFQ-${rfq.id}`}
                             </p>
-                            <p className="mt-2 truncate text-[0.68rem] text-secondary">
+                            <p className="mt-2 break-words text-[0.68rem] text-secondary">
                               {rfq.category ?? "No industry"} · {rfq.province ?? rfq.region ?? "No province"}
                             </p>
                             <p className="mt-2 break-words text-xs font-semibold text-heading">
@@ -622,7 +622,7 @@ export default function AdminOverviewPage() {
                               </p>
                             )}
                             {stage === "Awarded" && awardedQuote && (
-                              <p className="mt-1 text-[0.68rem] text-success">
+                              <p className="mt-1 break-words text-[0.68rem] text-success">
                                 {awardedQuote.supplier_name ?? "Supplier"} · {formatCurrency(awardedQuote.amount)}
                               </p>
                             )}

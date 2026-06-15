@@ -357,7 +357,7 @@ export default function AdminDashboardLayout({
         </div>
       </aside>
 
-      <section className="w-full min-w-0 flex-1 overflow-x-hidden px-4 py-5 pb-[calc(var(--news-ticker-height)+1.25rem)] md:p-8 md:pb-[calc(var(--news-ticker-height)+2rem)]">
+      <section className="w-full min-w-0 flex-1 overflow-x-hidden px-4 py-5 pb-[calc(var(--news-ticker-height)+3rem)] md:p-8 md:pb-[calc(var(--news-ticker-height)+2rem)]">
         <div className="dashboard-chrome print:hidden mb-6 flex items-center justify-between gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
           <button
             type="button"
