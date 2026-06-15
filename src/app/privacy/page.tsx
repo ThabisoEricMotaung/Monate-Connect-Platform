@@ -2,46 +2,49 @@ import Link from "next/link"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 
+const draftNotice =
+  "This document is a draft for review purposes only and does not constitute legal advice or a binding agreement. Final version pending legal review."
+
 const privacySections = [
   {
-    title: "What Data Is Collected",
+    title: "Who we are",
     body:
-      "AiForm Procure may collect account details, supplier profile data, buyer organisation details, procurement activity, compliance evidence, contact information, usage analytics and operational logs needed to run a procurement platform.",
+      "AiForm Procure is a procurement platform and a product of AiForm Studio, based in Pretoria, South Africa.",
   },
   {
-    title: "Supplier Profile Data",
+    title: "What information we collect",
     body:
-      "Supplier profile data may include business name, registration details, province, industry, verification status, readiness information, contact roles and information submitted to support supplier discovery and onboarding.",
+      "We may collect your name, email address, phone number, company details, CSD number, BBBEE certificate, tax clearance information, banking details, uploaded documents, and related account or procurement records.",
   },
   {
-    title: "Procurement Activity",
+    title: "Why we collect it",
     body:
-      "Procurement activity may include RFQs, clarification questions, quotes, award records, purchase orders, contracts, invoices, payments, workflow decisions, audit records and related lifecycle statuses.",
+      "We collect this information to support supplier verification, RFQ matching, platform operation, account management, procurement workflows, and communication between suppliers and buyers.",
   },
   {
-    title: "Compliance Documents",
+    title: "How we store it",
     body:
-      "Compliance documents may include uploaded records such as company registration evidence, tax clearance, BBBEE, CSD, banking verification support and other documents required for procurement readiness checks.",
+      "Platform data is stored using Supabase, hosted in the EU, with encryption at rest and access controls intended to protect operational and compliance information.",
   },
   {
-    title: "Contact Information",
+    title: "Who we share it with",
     body:
-      "Contact information may include names, email addresses, phone numbers, organisation details and pilot request information used for support, onboarding, procurement communication and partnership discussions.",
+      "We do not sell personal information to third parties. Supplier information is shared with buyers only when a supplier responds to an RFQ or where sharing is necessary to operate the platform.",
   },
   {
-    title: "Analytics and Logs",
+    title: "Your rights under POPIA",
     body:
-      "The platform may collect technical logs, timestamps, device or browser signals, page interactions, error records and analytics placeholders to protect the service, improve reliability and understand usage trends.",
+      "Under the Protection of Personal Information Act, you may request access to your personal information, correction of inaccurate information, deletion where legally permitted, or object to certain processing.",
   },
   {
-    title: "How Data Is Used",
+    title: "How long we retain data",
     body:
-      "Data is used to operate supplier onboarding, procurement workflows, verification, marketplace previews, RFQ and quote management, auditability, notifications, support, platform diagnostics and executive reporting.",
+      "We retain data while an account is active and for up to 2 years after account closure, unless a longer retention period is required for audit, legal, security, or legitimate operational reasons.",
   },
   {
-    title: "Professional Placeholder",
+    title: "How to contact us",
     body:
-      "This privacy policy is professional placeholder language for pilot and SaaS readiness. It should be reviewed by qualified legal counsel before production use.",
+      "For privacy questions, data access requests, or POPIA-related queries, contact us at hello@aiformprocure.co.za.",
   },
 ]
 
@@ -50,48 +53,49 @@ export default function PrivacyPolicyPage() {
     <>
       <PublicHeader />
       <main className="min-h-screen bg-page text-primary">
-      <section className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
-        <div className="border-b border-t border-heading py-10">
-          <p className="newspaper-kicker">Legal Desk &middot; Privacy Policy</p>
-          <h1 className="newspaper-headline mt-5">Privacy Policy</h1>
-          <p className="newspaper-body mt-6 max-w-3xl">
-            This page explains the types of information AiForm Procure may collect and how that
-            information may be used to support procurement, supplier verification and platform
-            operations.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/contact" className="masthead__btn-primary">
-              Contact for Data Queries
-            </Link>
-            <Link href="/terms" className="masthead__btn-secondary">
-              Terms of Use
-            </Link>
+        <section className="mx-auto max-w-7xl px-6 py-8">
+          <div className="rounded-md border border-warning bg-warning-soft px-5 py-4 text-sm font-semibold leading-6 text-warning shadow-panel">
+            {draftNotice}
           </div>
-        </div>
+        </section>
 
-        <aside className="rounded-md border border-panel bg-card p-6 shadow-panel">
-          <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-accent">
-            Legal Notice
-          </p>
-          <h2 className="mt-3 text-2xl font-semibold text-heading">Placeholder policy language</h2>
-          <p className="mt-4 text-sm leading-7 text-secondary">
-            This is not final legal advice. Organisations should adapt this policy to their
-            operating model, contracts, data flows and applicable legal obligations.
-          </p>
-          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Last updated: 4 June 2026
-          </p>
-        </aside>
-      </section>
+        <section className="mx-auto grid max-w-7xl gap-8 px-6 pb-16 lg:grid-cols-[1.1fr_0.9fr] lg:pb-20">
+          <div className="border-b border-t border-heading py-10">
+            <p className="newspaper-kicker">Legal Desk &middot; Privacy Policy</p>
+            <h1 className="newspaper-headline mt-5">Privacy Policy</h1>
+            <p className="mt-5 font-display text-xl text-heading">
+              Effective date: Draft — not yet in effect
+            </p>
+            <p className="newspaper-body mt-6 max-w-3xl">
+              This draft explains how AiForm Procure expects to collect, use, store, and protect
+              information submitted by suppliers, buyers, and platform users.
+            </p>
+          </div>
 
-      <section className="mx-auto grid max-w-7xl gap-5 px-6 pb-20 md:grid-cols-2">
-        {privacySections.map((section) => (
-          <article key={section.title} className="rounded-md border border-panel bg-card p-6 shadow-panel">
-            <h2 className="text-2xl font-semibold text-heading">{section.title}</h2>
-            <p className="mt-4 text-sm leading-7 text-secondary">{section.body}</p>
-          </article>
-        ))}
-      </section>
+          <aside className="rounded-md border border-panel bg-card p-6 shadow-panel">
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-accent">
+              AiForm Procure
+            </p>
+            <h2 className="mt-3 font-display text-2xl font-semibold text-heading">
+              Product of AiForm Studio
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-secondary">
+              Built in Pretoria for South African procurement teams, suppliers, and pilot partners.
+            </p>
+            <Link href="/contact" className="mt-6 inline-flex text-sm font-bold text-accent transition hover:text-accent-strong">
+              Contact us
+            </Link>
+          </aside>
+        </section>
+
+        <section className="mx-auto grid max-w-7xl gap-5 px-6 pb-20 md:grid-cols-2">
+          {privacySections.map((section) => (
+            <article key={section.title} className="rounded-md border border-panel bg-card p-6 shadow-panel">
+              <h2 className="font-display text-2xl font-semibold text-heading">{section.title}</h2>
+              <p className="mt-4 text-sm leading-7 text-secondary">{section.body}</p>
+            </article>
+          ))}
+        </section>
       </main>
       <PublicFooter />
     </>

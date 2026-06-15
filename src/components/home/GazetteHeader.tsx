@@ -20,7 +20,7 @@ export default function GazetteHeader() {
           CSD &middot; BBBEE &middot; SARS &middot; CIPC &middot; National Treasury
         </span>
         <span className="gz-side" style={{ fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6a5a3a', whiteSpace: 'nowrap' }}>
-          Free during pilot &middot; Until Aug 2026
+          Free during pilot &middot; Until Oct 2026
         </span>
       </div>
     </div>

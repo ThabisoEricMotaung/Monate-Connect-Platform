@@ -16,11 +16,11 @@ const stats = [
 const verificationSteps = [
   {
     title: "CSD registration check",
-    badge: "Automated",
+    badge: "Manual review",
     description:
-      "We verify every supplier's CSD number directly against the National Treasury Central Supplier Database. Inactive, suspended, or invalid CSD registrations are blocked from the platform automatically.",
+      "Suppliers submit their CSD number and registration certificate. Our compliance team verifies the submission against the Central Supplier Database and confirms active status before approving.",
     detail:
-      "What we check: active status, entity type, registration number, blacklist status.",
+      "Suppliers with invalid or inactive CSD registrations are not approved onto the platform.",
     complete: true,
   },
   {
@@ -34,10 +34,10 @@ const verificationSteps = [
   },
   {
     title: "SARS tax clearance validation",
-    badge: "Automated",
+    badge: "Manual review",
     description:
-      "Tax clearance certificates are validated against SARS records. A supplier with outstanding tax obligations cannot be listed as verified on the platform - regardless of their CSD or BBBEE status.",
-    detail: "Tax clearance is re-validated every 90 days to maintain current status.",
+      "Suppliers upload their SARS tax clearance certificate. Our compliance team reviews and validates the document before approving tax clearance status.",
+    detail: "Suppliers are responsible for uploading updated certificates when their tax clearance expires.",
     complete: true,
   },
   {
@@ -135,17 +135,17 @@ const buyerTrustCards = [
   {
     title: "Buyer organisation verification",
     body:
-      "Every buyer organisation is verified against CIPC records before they can post an RFQ. We confirm company registration, director information, and active trading status.",
+      "Buyer organisations complete a registration process and are reviewed by our team before being permitted to post RFQs.",
   },
   {
     title: "Procurement officer validation",
     body:
-      "Individual buyer accounts must use a work email domain that matches their registered organisation. Consumer email addresses (Gmail, Yahoo) are not permitted for buyer accounts.",
+      "Buyer accounts are reviewed during onboarding. We recommend using a work email address that matches your organisation.",
   },
   {
     title: "No ghost RFQs",
     body:
-      "RFQs that receive no quotes within 48 hours of closing are automatically reviewed by our team. Buyers who repeatedly post and cancel RFQs without awarding are flagged and suspended.",
+      "RFQs that receive no quotes are flagged for review. Buyers are expected to close or award RFQs within a reasonable timeframe.",
   },
   {
     title: "Dispute resolution",
@@ -158,7 +158,7 @@ const faqs = [
   {
     question: "How long does verification take?",
     answer:
-      "CSD and tax clearance checks are automated and complete within minutes of submission. BBBEE certificate review is manual and typically takes 1-2 business days. Banking verification takes up to 24 hours. Most suppliers are fully verified within 48 hours of completing their profile.",
+      "CSD, BBBEE, tax clearance, and banking verification are all reviewed manually by our compliance team. Most suppliers are fully verified within 48 hours of submitting complete documentation.",
   },
   {
     question: "What if my CSD registration is pending?",

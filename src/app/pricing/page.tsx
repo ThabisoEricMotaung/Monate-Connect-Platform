@@ -140,7 +140,7 @@ const buyerPlans = [
 const faqs = [
   {
     q: "When does pilot pricing end?",
-    a: "The pilot phase runs until 31 August 2026. All features across all plans are free during this period. Paid plans will activate automatically from 1 September 2026. You will receive 30 days' notice before billing begins, and you can cancel or downgrade at any time before that date.",
+    a: "The pilot phase runs until 31 October 2026. All features across all plans are free during this period. Paid plans will activate automatically from 1 September 2026. You will receive 30 days' notice before billing begins, and you can cancel or downgrade at any time before that date.",
   },
   {
     q: "Can I stay on the free Basic plan as a supplier?",
@@ -408,10 +408,10 @@ export default function PricingPage() {
         <div className="mx-auto max-w-4xl text-center">
           <div className="inline-flex items-center gap-3 rounded-full border border-gold/30 bg-gold/10 px-5 py-2 text-sm text-gold">
             <span className="h-2 w-2 rounded-full bg-gold animate-pulse" />
-            Pilot phase active — all plans free until 31 August 2026
+            Pilot phase active — all plans free until 31 October 2026
           </div>
           <p className="mt-4 text-sm use-text-secondary max-w-2xl mx-auto">
-            AiForm Procure is in its pilot phase. All features across all plans are available at no charge until 31 August 2026. After that, paid plans activate at the prices shown below.{" "}
+            AiForm Procure is in its pilot phase. All features across all plans are available at no charge until 31 October 2026. After that, paid plans activate at the prices shown below.{" "}
             <Link href="/contact" className="text-gold/80 underline underline-offset-2 hover:text-gold">
               Contact us
             </Link>{" "}

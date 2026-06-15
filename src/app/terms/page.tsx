@@ -2,95 +2,111 @@ import Link from "next/link"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 
+const draftNotice =
+  "This document is a draft for review purposes only and does not constitute legal advice or a binding agreement. Final version pending legal review."
+
 const termsSections = [
   {
-    title: "Platform Usage Rules",
+    title: "Acceptance of terms",
     body:
-      "Users must use AiForm Procure for lawful procurement, supplier onboarding, quote management, contract tracking and related business purposes. Abuse, misrepresentation, unauthorised access or attempts to disrupt the platform are not permitted.",
+      "By accessing or using AiForm Procure, users agree to follow these draft terms and any platform rules made available during onboarding or use.",
   },
   {
-    title: "Supplier Responsibilities",
+    title: "Who may use the platform",
     body:
-      "Suppliers are responsible for submitting accurate business information, maintaining current compliance documents, responding honestly to RFQs and keeping account access secure.",
+      "Supplier accounts are intended for South African-registered entities only. Buyer accounts must be used by registered organisations and authorised representatives.",
   },
   {
-    title: "Buyer Responsibilities",
+    title: "Supplier obligations",
     body:
-      "Buyers and procurement teams are responsible for fair RFQ publication, transparent evaluation, proper award governance, responsible document handling and compliance with their internal procurement policies.",
+      "Suppliers must provide accurate information, maintain a valid CSD registration, and keep BBBEE and tax clearance documentation current where those documents are submitted or required.",
   },
   {
-    title: "No Guarantee of Award",
+    title: "Buyer obligations",
     body:
-      "Registration, verification, SmartScore visibility, marketplace listing or quote submission does not guarantee shortlisting, award, contract creation, payment or any commercial outcome.",
+      "Buyers must post legitimate RFQs only, must not publish spam RFQs, and must award or formally close RFQs within a reasonable procurement timeframe.",
   },
   {
-    title: "Accuracy of Submitted Information",
+    title: "Platform rules",
     body:
-      "Users must ensure that information, quotes, documents, banking details, evaluation records and approvals submitted through the platform are complete, truthful and authorised.",
+      "Users must not misrepresent their identity, organisation, compliance status, procurement authority, pricing, documents, or banking information. Fraudulent documents are not permitted.",
   },
   {
-    title: "Account Security",
+    title: "Intellectual property",
     body:
-      "Users are responsible for protecting login credentials, limiting account access to authorised people and reporting suspected unauthorised access or security concerns promptly.",
+      "AiForm Studio owns the AiForm Procure platform, including its product design, software, interface, workflows, brand assets, and related intellectual property.",
   },
   {
-    title: "Limitation of Liability",
+    title: "Limitation of liability",
     body:
-      "To the extent permitted by applicable law, AiForm Procure should not be treated as a substitute for professional procurement, legal, financial, compliance or audit advice.",
+      "AiForm Procure facilitates procurement connections and workflows. It is not responsible for contract outcomes, supplier performance, buyer decisions, payment disputes, or commercial results between users.",
   },
   {
-    title: "Professional Placeholder",
+    title: "Termination",
     body:
-      "These terms are professional placeholder language and should be reviewed by legal counsel before being relied on for production contracting or commercial use.",
+      "AiForm Procure may suspend or terminate accounts that breach platform rules, submit fraudulent documents, misuse procurement workflows, or otherwise violate these terms.",
+  },
+  {
+    title: "Governing law",
+    body:
+      "These draft terms are intended to be governed by the laws of the Republic of South Africa.",
+  },
+  {
+    title: "Contact",
+    body:
+      "For questions about these terms, contact hello@aiformprocure.co.za.",
   },
 ]
 
-export default function TermsOfUsePage() {
+export default function TermsOfServicePage() {
   return (
     <>
       <PublicHeader />
       <main className="min-h-screen bg-page text-primary">
-      <section className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
-        <div className="border-b border-t border-heading py-10">
-          <p className="newspaper-kicker">Legal Desk &middot; Terms of Use</p>
-          <h1 className="newspaper-headline mt-5">Terms of Use</h1>
-          <p className="newspaper-body mt-6 max-w-3xl">
-            These terms outline professional placeholder rules for using AiForm Procure as a
-            procurement, supplier verification and procurement-to-payment workflow platform.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/auth/signup" className="masthead__btn-primary">
-              Register Supplier
-            </Link>
-            <Link href="/privacy" className="masthead__btn-secondary">
-              Privacy Policy
-            </Link>
+        <section className="mx-auto max-w-7xl px-6 py-8">
+          <div className="rounded-md border border-warning bg-warning-soft px-5 py-4 text-sm font-semibold leading-6 text-warning shadow-panel">
+            {draftNotice}
           </div>
-        </div>
+        </section>
 
-        <aside className="rounded-md border border-panel bg-card p-6 shadow-panel">
-          <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-accent">
-            Legal Notice
-          </p>
-          <h2 className="mt-3 text-2xl font-semibold text-heading">Not final legal advice</h2>
-          <p className="mt-4 text-sm leading-7 text-secondary">
-            These terms should be adapted for the final operating entity, commercial agreements,
-            acceptable use rules and jurisdiction-specific legal requirements.
-          </p>
-          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Last updated: 4 June 2026
-          </p>
-        </aside>
-      </section>
+        <section className="mx-auto grid max-w-7xl gap-8 px-6 pb-16 lg:grid-cols-[1.1fr_0.9fr] lg:pb-20">
+          <div className="border-b border-t border-heading py-10">
+            <p className="newspaper-kicker">Legal Desk &middot; Terms of Service</p>
+            <h1 className="newspaper-headline mt-5">Terms of Service</h1>
+            <p className="mt-5 font-display text-xl text-heading">
+              Effective date: Draft — not yet in effect
+            </p>
+            <p className="newspaper-body mt-6 max-w-3xl">
+              These draft terms describe the expected rules for using AiForm Procure as a supplier,
+              buyer, or authorised platform user.
+            </p>
+          </div>
 
-      <section className="mx-auto grid max-w-7xl gap-5 px-6 pb-20 md:grid-cols-2">
-        {termsSections.map((section) => (
-          <article key={section.title} className="rounded-md border border-panel bg-card p-6 shadow-panel">
-            <h2 className="text-2xl font-semibold text-heading">{section.title}</h2>
-            <p className="mt-4 text-sm leading-7 text-secondary">{section.body}</p>
-          </article>
-        ))}
-      </section>
+          <aside className="rounded-md border border-panel bg-card p-6 shadow-panel">
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-accent">
+              Platform owner
+            </p>
+            <h2 className="mt-3 font-display text-2xl font-semibold text-heading">
+              AiForm Studio
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-secondary">
+              AiForm Procure is operated as a procurement platform for verified supplier discovery,
+              RFQ workflows, and buyer-supplier coordination.
+            </p>
+            <Link href="/privacy" className="mt-6 inline-flex text-sm font-bold text-accent transition hover:text-accent-strong">
+              Read Privacy Policy
+            </Link>
+          </aside>
+        </section>
+
+        <section className="mx-auto grid max-w-7xl gap-5 px-6 pb-20 md:grid-cols-2">
+          {termsSections.map((section) => (
+            <article key={section.title} className="rounded-md border border-panel bg-card p-6 shadow-panel">
+              <h2 className="font-display text-2xl font-semibold text-heading">{section.title}</h2>
+              <p className="mt-4 text-sm leading-7 text-secondary">{section.body}</p>
+            </article>
+          ))}
+        </section>
       </main>
       <PublicFooter />
     </>

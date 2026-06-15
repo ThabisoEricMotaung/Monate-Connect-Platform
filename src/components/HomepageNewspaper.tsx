@@ -274,7 +274,7 @@ export default function HomepageNewspaper() {
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 24px', borderBottom: '1px solid #1a1208', borderTop: '1px solid #1a1208', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3a2e1a', background: 'rgba(237,232,212,0.85)' }}>
           <span>Vol. I · No. 1</span>
           <span className="np-edition-center">CSD · BBBEE · SARS · CIPC · National Treasury</span>
-          <span>Free during pilot · Until Aug 2026</span>
+          <span>Free during pilot · Until Oct 2026</span>
         </div>
 
         {/* D) MAIN HEADLINE BLOCK */}
