@@ -126,10 +126,20 @@ function hasAnyValue(value: unknown): boolean {
 }
 
 function profileProvinces(profile: SupplierSmartScoreProfile | RFQMatchProfile): string[] {
-  const provinces = Array.isArray(profile.provinces) ? profile.provinces : []
-  const province = typeof profile.province === "string" ? profile.province.split(/[,;|/]+/) : []
+  const provinces = Array.isArray(profile.provinces)
+    ? profile.provinces.map((item) => item.trim()).filter(Boolean)
+    : []
 
-  return [...provinces, ...province].map((item) => item.trim()).filter(Boolean)
+  if (provinces.length > 0) {
+    return provinces
+  }
+
+  const province = profile.province
+  if (typeof province === "string" && province.trim()) {
+    return [province.trim()]
+  }
+
+  return []
 }
 
 function parseLevel(value: string | null | undefined): number {
@@ -237,7 +247,7 @@ export function calculateSmartScore(profile: SupplierSmartScoreProfile | null | 
   if (profileBBBEEVerified(profile)) {
     const level = parseLevel(profile.bbbee_level)
     if (level >= 1 && level <= 4) score += 20
-    else if (level >= 5 && level <= 8) score += 10
+    else score += 10
   }
 
   if (profileTaxVerified(profile)) {
@@ -315,8 +325,8 @@ export function getSmartScoreBreakdown(
       key: "bbbee",
       label: "BBBEE certificate verified",
       points: 20,
-      earnedPoints: bbbeeVerified && bbbeeLevel >= 1 && bbbeeLevel <= 4 ? 20 : bbbeeVerified && bbbeeLevel >= 5 && bbbeeLevel <= 8 ? 10 : 0,
-      status: bbbeeVerified && bbbeeLevel >= 1 && bbbeeLevel <= 8 ? "earned" : hasAnyValue(safeProfile.bbbee_level) ? "pending" : "missing",
+      earnedPoints: bbbeeVerified && bbbeeLevel >= 1 && bbbeeLevel <= 4 ? 20 : bbbeeVerified ? 10 : 0,
+      status: bbbeeVerified ? "earned" : hasAnyValue(safeProfile.bbbee_level) ? "pending" : "missing",
     },
     {
       key: "tax",
