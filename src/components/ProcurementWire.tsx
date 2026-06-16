@@ -180,11 +180,6 @@ export default function ProcurementWire({ scope = "public" }: { scope?: Procurem
 
   const smartScore = toSmartScore(profile?.smart_score)
   const showSmartScoreNudge = loggedIn && smartScore < 90
-  const panelBackground = loggedIn ? "#1a3a2a" : "#f8f4ec"
-  const panelBorder = loggedIn ? "none" : "1px solid #e0d9cc"
-  const headerTextColor = loggedIn ? "#f0ebe0" : "#1a3a2a"
-  const headerDivider = loggedIn ? "1px solid rgba(240,235,224,0.15)" : "1px solid #e0d9cc"
-
   return (
     <>
       <div
@@ -198,8 +193,8 @@ export default function ProcurementWire({ scope = "public" }: { scope?: Procurem
           transform: `translateX(-50%) translateY(${open ? "0" : "12px"})`,
           width: 340,
           maxWidth: "calc(100vw - 32px)",
-          background: panelBackground,
-          border: panelBorder,
+          background: "#f8f4ec",
+          border: "1px solid #e0d9cc",
           borderRadius: 16,
           padding: 20,
           boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
@@ -214,13 +209,13 @@ export default function ProcurementWire({ scope = "public" }: { scope?: Procurem
             display: "flex",
             alignItems: "center",
             gap: 8,
-            borderBottom: headerDivider,
+            borderBottom: "1px solid #e0d9cc",
             marginBottom: 12,
             paddingBottom: 12,
           }}
         >
           <IconAntenna aria-hidden="true" color="#c8a060" size={18} stroke={1.8} />
-          <p style={{ margin: 0, color: headerTextColor, fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}>
+          <p style={{ margin: 0, color: "#1a3a2a", fontSize: 13, fontWeight: 500, letterSpacing: "0.05em" }}>
             AIFORMS PROCUREMENT WIRE
           </p>
         </div>
@@ -228,18 +223,18 @@ export default function ProcurementWire({ scope = "public" }: { scope?: Procurem
         {loggedIn ? (
           <div style={{ display: "grid", gap: 14 }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <div style={{ borderRadius: 8, background: "rgba(255,255,255,0.06)", padding: 10 }}>
-                <p style={{ margin: 0, color: "#9FE1CB", fontSize: 10, letterSpacing: "0.08em" }}>OPEN RFQS</p>
+              <div style={{ border: "0.5px solid #e0d9cc", borderRadius: 8, background: "#ffffff", padding: 10 }}>
+                <p style={{ margin: 0, color: "#888888", fontSize: 10, letterSpacing: "0.08em" }}>OPEN RFQS</p>
                 <p style={{ margin: "4px 0 0", color: "#c8a060", fontSize: 20, fontWeight: 600 }}>{stats.openRfqs}</p>
               </div>
-              <div style={{ borderRadius: 8, background: "rgba(255,255,255,0.06)", padding: 10 }}>
-                <p style={{ margin: 0, color: "#9FE1CB", fontSize: 10, letterSpacing: "0.08em" }}>QUOTES PENDING</p>
+              <div style={{ border: "0.5px solid #e0d9cc", borderRadius: 8, background: "#ffffff", padding: 10 }}>
+                <p style={{ margin: 0, color: "#888888", fontSize: 10, letterSpacing: "0.08em" }}>QUOTES PENDING</p>
                 <p style={{ margin: "4px 0 0", color: "#c8a060", fontSize: 20, fontWeight: 600 }}>{stats.pendingQuotes}</p>
               </div>
             </div>
 
             <div>
-              <p style={{ margin: "0 0 8px", color: "#9FE1CB", fontSize: 11, letterSpacing: "0.08em" }}>
+              <p style={{ margin: "0 0 8px", color: "#888888", fontSize: 11, letterSpacing: "0.08em" }}>
                 QUICK ACTIONS
               </p>
               <div style={{ display: "grid", gap: 6 }}>
@@ -251,17 +246,17 @@ export default function ProcurementWire({ scope = "public" }: { scope?: Procurem
 
             {showSmartScoreNudge && (
               <div>
-                <p style={{ margin: "0 0 8px", color: "#9FE1CB", fontSize: 11, letterSpacing: "0.08em" }}>
+                <p style={{ margin: "0 0 8px", color: "#888888", fontSize: 11, letterSpacing: "0.08em" }}>
                   SMARTSCORE NUDGE
                 </p>
                 <p
                   style={{
                     margin: 0,
-                    background: "rgba(200,160,96,0.15)",
+                    background: "rgba(200,160,96,0.1)",
                     border: "1px solid rgba(200,160,96,0.3)",
                     borderRadius: 6,
                     padding: 8,
-                    color: "#f0ebe0",
+                    color: "#1a3a2a",
                     fontSize: 11,
                     lineHeight: 1.5,
                   }}
@@ -375,8 +370,9 @@ function WireAction({
         gap: 8,
         width: "100%",
         borderRadius: 8,
-        background: "rgba(255,255,255,0.08)",
-        color: "#f0ebe0",
+        background: "#ffffff",
+        border: "0.5px solid #e0d9cc",
+        color: "#1a3a2a",
         padding: "9px 10px",
         textAlign: "left",
         textDecoration: "none",
