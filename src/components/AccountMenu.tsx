@@ -85,6 +85,7 @@ export default function AccountMenu({
           className="h-10 w-10 rounded-full border border-panel object-cover shadow-sm transition group-hover:border-accent group-hover:brightness-105"
           fallbackClassName="flex h-10 w-10 items-center justify-center rounded-full border border-panel bg-panel text-sm font-bold shadow-sm transition group-hover:border-accent group-hover:brightness-105"
           fallbackText={initials}
+          seedName={name}
         />
         <span
           aria-hidden="true"

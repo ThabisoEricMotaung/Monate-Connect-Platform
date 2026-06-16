@@ -684,9 +684,10 @@ export default function AdminOverviewPage() {
                           <ProfileImage
                             src={supplier?.company_logo_url}
                             alt={`${quote.supplier_name ?? supplier?.business_name ?? "Supplier"} logo`}
-                            className="h-10 w-10 rounded-full border border-panel bg-white object-contain p-1"
-                            fallbackClassName={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold ${supplierTone(supplier?.industry ?? null)}`}
+                            className="h-10 w-10 rounded-xl border border-panel bg-white object-contain p-1"
+                            fallbackClassName={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${supplierTone(supplier?.industry ?? null)}`}
                             fallbackText={initials(quote.supplier_name ?? supplier?.business_name ?? null)}
+                            seedName={quote.supplier_name ?? supplier?.business_name}
                           />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-xs font-bold text-heading">

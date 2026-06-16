@@ -522,9 +522,10 @@ export default function AdminQuotesPage() {
                         <ProfileImage
                           src={quote.company_logo_url}
                           alt={`${quote.supplier_name || "Supplier"} logo`}
-                          className="h-9 w-9 rounded-full border border-panel bg-white object-contain p-1"
-                          fallbackClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-panel bg-panel text-xs font-bold text-heading"
+                          className="h-9 w-9 rounded-xl border border-panel bg-white object-contain p-1"
+                          fallbackClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-panel bg-panel text-xs font-bold text-heading"
                           fallbackText={initialsFromName(quote.supplier_name, "S")}
+                          seedName={quote.supplier_name}
                         />
                         <p className="font-semibold text-heading">
                           {quote.supplier_name || "-"}

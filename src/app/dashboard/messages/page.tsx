@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import {
   getInboxMessages,
   getSentMessages,
@@ -30,6 +31,7 @@ type ProfileSummary = {
   email: string | null
   role: string | null
   province?: string | null
+  avatar_url?: string | null
 }
 
 type RfqSummary = {
@@ -64,6 +66,7 @@ type Thread = {
   id: string
   senderName: string
   senderRole: string | null
+  senderAvatarUrl: string | null
   senderOrg: string
   contextType: ContextType
   contextTitle: string
@@ -85,17 +88,6 @@ type Thread = {
 
 const searchInputClass =
   "w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30"
-
-function initials(name: string): string {
-  return (
-    name
-      .split(/\s|@/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
-      .join("") || "M"
-  )
-}
 
 function profileName(profile: ProfileSummary | undefined, fallback = "Platform"): string {
   if (!profile) return fallback
@@ -302,6 +294,7 @@ function buildThreads({
         id,
         senderName,
         senderRole: counterpart?.role ?? null,
+        senderAvatarUrl: counterpart?.avatar_url ?? null,
         senderOrg: counterpart?.business_name || counterpart?.email || senderName,
         contextType,
         contextTitle,
@@ -335,6 +328,7 @@ function buildPlatformThreads(notifications: Notification[], archivedIds: Set<st
       id,
       senderName: "Platform",
       senderRole: null,
+      senderAvatarUrl: null,
       senderOrg: "AiForm Procure",
       contextType: notification.title.toLowerCase().includes("quote") ? "Quote" : "RFQ",
       contextTitle: notification.title,
@@ -392,15 +386,20 @@ function IconButton({
 }
 
 function ThreadAvatar({ thread }: { thread: Thread }) {
+  const fallbackName = thread.platform ? "Monate" : thread.senderName
+
   return (
-    <div
-      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${avatarTone(
+    <ProfileImage
+      src={thread.senderAvatarUrl}
+      alt={`${fallbackName} avatar`}
+      className="h-10 w-10 rounded-full border object-cover"
+      fallbackClassName={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${avatarTone(
         thread.senderRole,
         thread.platform,
       )}`}
-    >
-      {thread.platform ? "M" : initials(thread.senderName)}
-    </div>
+      fallbackText={thread.platform ? "M" : initialsFromName(thread.senderName, "M")}
+      seedName={fallbackName}
+    />
   )
 }
 
@@ -448,7 +447,7 @@ export default function MessagesPage() {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, business_name, full_name, email, role, province")
+      .select("id, business_name, full_name, email, role, province, avatar_url")
       .in("id", profileIds)
 
     if (error) {

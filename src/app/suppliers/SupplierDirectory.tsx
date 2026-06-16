@@ -153,9 +153,10 @@ function SupplierCard({ supplier }: { supplier: PublicSupplierDirectoryRow }) {
           <ProfileImage
             src={supplier.company_logo_url}
             alt={`${supplier.business_name || "Supplier"} logo`}
-            className="h-12 w-12 rounded-md border border-stone-200 bg-white object-contain p-1"
-            fallbackClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#E7F8F2] text-sm font-bold text-[#085041]"
+            className="h-12 w-12 rounded-xl border border-stone-200 bg-white object-contain p-1"
+            fallbackClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#E7F8F2] text-sm font-bold text-[#085041]"
             fallbackText={initialsFromName(supplier.business_name, "S")}
+            seedName={supplier.business_name}
           />
           <div className="min-w-0">
             <p className="mb-1 text-[0.68rem] font-semibold" style={{ color: TEAL }}>&#10003; Verified</p>
@@ -208,9 +209,10 @@ function SupplierList({ suppliers }: { suppliers: PublicSupplierDirectoryRow[] }
               <ProfileImage
                 src={supplier.company_logo_url}
                 alt={`${supplier.business_name || "Supplier"} logo`}
-                className="h-10 w-10 rounded-md border border-stone-200 bg-white object-contain p-1"
-                fallbackClassName="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E7F8F2] text-xs font-bold text-[#085041]"
+                className="h-10 w-10 rounded-xl border border-stone-200 bg-white object-contain p-1"
+                fallbackClassName="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E7F8F2] text-xs font-bold text-[#085041]"
                 fallbackText={initialsFromName(supplier.business_name, "S")}
+                seedName={supplier.business_name}
               />
               <div className="min-w-0">
                 <h3 className="font-display text-[14px] font-medium leading-snug text-[#1f2f28]">

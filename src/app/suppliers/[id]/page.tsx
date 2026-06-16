@@ -174,9 +174,10 @@ export default async function SupplierProfilePage({ params }: Props) {
             <ProfileImage
               src={supplier.company_logo_url}
               alt={`${supplier.business_name || "Supplier"} logo`}
-              className="mb-5 h-24 w-24 rounded-lg border border-[#c8a060]/45 bg-white object-contain p-2"
-              fallbackClassName="mb-5 flex h-24 w-24 items-center justify-center rounded-lg border border-[#c8a060]/45 bg-[#f8f4ec]/10 text-2xl font-bold text-[#f8f4ec]"
+              className="mb-5 h-24 w-24 rounded-xl border border-[#c8a060]/45 bg-white object-contain p-2"
+              fallbackClassName="mb-5 flex h-24 w-24 items-center justify-center rounded-xl border border-[#c8a060]/45 bg-[#f8f4ec]/10 text-2xl font-bold text-[#f8f4ec]"
               fallbackText={initialsFromName(supplier.business_name, "S")}
+              seedName={supplier.business_name}
             />
             <p className="text-[0.72rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
               <span aria-hidden="true">&#10003;</span> Verified Supplier
@@ -202,6 +203,7 @@ export default async function SupplierProfilePage({ params }: Props) {
                 className="h-12 w-12 rounded-full border border-stone-200 object-cover"
                 fallbackClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#E7F8F2] text-sm font-bold text-[#085041]"
                 fallbackText={initialsFromName(contactName, "S")}
+                seedName={contactName}
               />
               <div className="min-w-0">
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-stone-500">Contact</p>

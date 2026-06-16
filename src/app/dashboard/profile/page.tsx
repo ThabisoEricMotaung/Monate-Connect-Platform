@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { Suspense, useEffect, useState } from "react"
+import { Suspense, useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import SignedDocumentLink from "@/components/SignedDocumentLink"
 import { logActivity } from "@/lib/activity"
@@ -157,13 +158,6 @@ const labelCls =
 
 // --- Helpers ---
 
-function initials(name: string | null): string {
-  if (!name) return "?"
-  const words = name.trim().split(/\s+/).filter(Boolean)
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
-  return (words[0][0] + words[words.length - 1][0]).toUpperCase()
-}
-
 function profileDisplayName(profile: Profile | null): string {
   const preferredName = profile?.preferred_name?.trim()
   if (preferredName) return preferredName
@@ -172,6 +166,11 @@ function profileDisplayName(profile: Profile | null): string {
   if (fullName) return fullName.split(/\s+/)[0] || "Your"
 
   return "Your"
+}
+
+function profileHeading(profile: Profile | null): string {
+  const name = profileDisplayName(profile)
+  return name === "Your" ? "Your business profile" : `${name}'s business profile`
 }
 
 function daysAgo(dateStr: string | null): string {
@@ -215,6 +214,48 @@ function cleanFileName(name: string) {
 
 function publicStorageUrl(bucket: "avatars" | "company-logos", path: string): string {
   return `${PUBLIC_STORAGE_BASE}/${bucket}/${path}`
+}
+
+function centerSquareCrop(width: number, height: number): Crop {
+  return centerCrop(
+    makeAspectCrop({ unit: "%", width: 88 }, 1, width, height),
+    width,
+    height,
+  )
+}
+
+async function getCroppedImageBlob(image: HTMLImageElement, crop: PixelCrop): Promise<Blob> {
+  const scaleX = image.naturalWidth / image.width
+  const scaleY = image.naturalHeight / image.height
+  const canvas = document.createElement("canvas")
+  const width = Math.max(1, Math.round(crop.width * scaleX))
+  const height = Math.max(1, Math.round(crop.height * scaleY))
+  const context = canvas.getContext("2d")
+
+  canvas.width = width
+  canvas.height = height
+  if (!context) throw new Error("Image crop could not be prepared.")
+
+  context.fillStyle = "#ffffff"
+  context.fillRect(0, 0, width, height)
+  context.drawImage(
+    image,
+    crop.x * scaleX,
+    crop.y * scaleY,
+    crop.width * scaleX,
+    crop.height * scaleY,
+    0,
+    0,
+    width,
+    height,
+  )
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob)
+      else reject(new Error("Cropped image could not be saved."))
+    }, "image/jpeg", 0.92)
+  })
 }
 
 function scoreProfile(profile: Profile | null, bank: BankRecord | null): SupplierSmartScoreProfile | null {
@@ -341,10 +382,24 @@ function ProfileImageUploads({
   onSave: (patch: Partial<Profile>) => Promise<SaveResult>
 }) {
   const [uploading, setUploading] = useState<"avatar" | "logo" | null>(null)
+  const [pendingUpload, setPendingUpload] = useState<{
+    file: File
+    kind: "avatar" | "logo"
+    previewUrl: string
+  } | null>(null)
+  const [crop, setCrop] = useState<Crop>()
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
+  const cropImageRef = useRef<HTMLImageElement | null>(null)
 
-  async function uploadImage(
+  useEffect(() => {
+    return () => {
+      if (pendingUpload?.previewUrl) URL.revokeObjectURL(pendingUpload.previewUrl)
+    }
+  }, [pendingUpload?.previewUrl])
+
+  function startImageCrop(
     e: React.ChangeEvent<HTMLInputElement>,
     kind: "avatar" | "logo",
   ) {
@@ -369,14 +424,70 @@ function ProfileImageUploads({
       return
     }
 
-    setUploading(kind)
+    setCrop(undefined)
+    setCompletedCrop(null)
+    setPendingUpload({ file, kind, previewUrl: URL.createObjectURL(file) })
+  }
+
+  function closeCropModal() {
+    setPendingUpload(null)
+    setCrop(undefined)
+    setCompletedCrop(null)
+    setUploading(null)
+  }
+
+  function imageCropToPixels(image: HTMLImageElement): PixelCrop | null {
+    if (completedCrop?.width && completedCrop?.height) return completedCrop
+    if (!crop?.width || !crop?.height) return null
+
+    if (crop.unit === "%") {
+      return {
+        unit: "px",
+        x: ((crop.x ?? 0) / 100) * image.width,
+        y: ((crop.y ?? 0) / 100) * image.height,
+        width: (crop.width / 100) * image.width,
+        height: (crop.height / 100) * image.height,
+      }
+    }
+
+    return {
+      unit: "px",
+      x: crop.x ?? 0,
+      y: crop.y ?? 0,
+      width: crop.width,
+      height: crop.height,
+    }
+  }
+
+  async function saveCroppedImage() {
+    if (!pendingUpload || !supabase || !cropImageRef.current) return
+    const pixelCrop = imageCropToPixels(cropImageRef.current)
+    if (!pixelCrop) {
+      setError("Choose a square crop before saving.")
+      return
+    }
+
+    const isAvatar = pendingUpload.kind === "avatar"
+    setUploading(pendingUpload.kind)
+    setError("")
+    setMessage("")
+
+    let blob: Blob
+    try {
+      blob = await getCroppedImageBlob(cropImageRef.current, pixelCrop)
+    } catch (cropError) {
+      setError(cropError instanceof Error ? cropError.message : "Image crop failed.")
+      setUploading(null)
+      return
+    }
+
     const bucket = isAvatar ? "avatars" : "company-logos"
     const path = isAvatar ? `${profile.id}/avatar.jpg` : `${profile.id}/logo.jpg`
     const column = isAvatar ? "avatar_url" : "company_logo_url"
     const publicUrl = publicStorageUrl(bucket, path)
     const { error: uploadError } = await supabase.storage
       .from(bucket)
-      .upload(path, file, { contentType: file.type, upsert: true })
+      .upload(path, blob, { contentType: "image/jpeg", upsert: true })
 
     if (uploadError) {
       setError(uploadError.message)
@@ -392,6 +503,7 @@ function ProfileImageUploads({
     }
 
     setMessage(isAvatar ? "Personal photo updated." : "Company logo updated.")
+    closeCropModal()
   }
 
   return (
@@ -414,7 +526,8 @@ function ProfileImageUploads({
             alt="Personal avatar"
             className="h-20 w-20 rounded-full border border-panel object-cover"
             fallbackClassName="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-panel bg-accent text-xl font-bold text-button"
-            fallbackText={initialsFromName(profile.full_name || profile.preferred_name || profile.email, "?")}
+            fallbackText={initialsFromName(profile.full_name || profile.preferred_name || profile.email, "S")}
+            seedName={profile.full_name || profile.preferred_name || profile.email}
           />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-heading">Personal photo</p>
@@ -426,7 +539,7 @@ function ProfileImageUploads({
                 accept="image/jpeg,image/png,image/webp"
                 className="sr-only"
                 disabled={uploading !== null}
-                onChange={(e) => uploadImage(e, "avatar")}
+                onChange={(e) => startImageCrop(e, "avatar")}
               />
             </label>
           </div>
@@ -438,9 +551,10 @@ function ProfileImageUploads({
           <ProfileImage
             src={profile.company_logo_url}
             alt="Company logo"
-            className="h-20 w-20 rounded-md border border-panel bg-white object-contain p-1"
-            fallbackClassName="flex h-20 w-20 shrink-0 items-center justify-center rounded-md border border-panel bg-panel text-xl font-bold text-heading"
-            fallbackText={initialsFromName(profile.business_name, "?")}
+            className="h-20 w-20 rounded-xl border border-panel bg-white object-contain p-1"
+            fallbackClassName="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border border-panel bg-panel text-xl font-bold text-heading"
+            fallbackText={initialsFromName(profile.business_name, "S")}
+            seedName={profile.business_name}
           />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-heading">Company logo</p>
@@ -452,12 +566,76 @@ function ProfileImageUploads({
                 accept="image/jpeg,image/png,image/webp,image/svg+xml"
                 className="sr-only"
                 disabled={uploading !== null}
-                onChange={(e) => uploadImage(e, "logo")}
+                onChange={(e) => startImageCrop(e, "logo")}
               />
             </label>
           </div>
         </div>
       </section>
+
+      {pendingUpload && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4" role="dialog" aria-modal="true" aria-labelledby="crop-image-title">
+          <div className="w-full max-w-xl rounded-md border border-panel bg-card p-5 shadow-panel">
+            <div className="mb-4 flex items-start justify-between gap-4 border-b border-panel pb-3">
+              <div>
+                <h3 id="crop-image-title" className="text-base font-bold text-heading">
+                  Crop {pendingUpload.kind === "avatar" ? "personal photo" : "company logo"}
+                </h3>
+                <p className="mt-1 text-xs text-secondary">Drag to position a 1:1 square crop before saving.</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeCropModal}
+                className="rounded-md border border-panel bg-panel px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent"
+              >
+                Cancel
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-auto rounded-md border border-panel bg-panel p-3">
+              <ReactCrop
+                crop={crop}
+                aspect={1}
+                minWidth={80}
+                minHeight={80}
+                keepSelection
+                onChange={(_, percentCrop) => setCrop(percentCrop)}
+                onComplete={(pixelCrop) => setCompletedCrop(pixelCrop)}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- react-image-crop needs an HTMLImageElement for canvas cropping. */}
+                <img
+                  ref={cropImageRef}
+                  src={pendingUpload.previewUrl}
+                  alt="Crop preview"
+                  className="max-h-[52vh] w-auto max-w-full"
+                  onLoad={(event) => {
+                    const nextCrop = centerSquareCrop(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight)
+                    setCrop(nextCrop)
+                  }}
+                />
+              </ReactCrop>
+            </div>
+
+            <div className="mt-4 flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeCropModal}
+                className="rounded-md border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-surface"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={uploading !== null}
+                onClick={saveCroppedImage}
+                className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {uploading ? "Saving..." : "Crop & Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -487,9 +665,10 @@ function ProfileHeaderCard({
         <ProfileImage
           src={profile.company_logo_url}
           alt={`${profile.business_name || "Supplier"} logo`}
-          className="h-14 w-14 rounded-md border border-panel bg-white object-contain p-1"
-          fallbackClassName="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent text-lg font-bold text-button"
-          fallbackText={initials(profile.business_name)}
+          className="h-14 w-14 rounded-xl border border-panel bg-white object-contain p-1"
+          fallbackClassName="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-accent text-lg font-bold text-button"
+          fallbackText={initialsFromName(profile.business_name, "S")}
+          seedName={profile.business_name}
         />
         <div className="min-w-0 flex-1">
           <p className="text-[0.95rem] font-bold text-heading">
@@ -1621,7 +1800,7 @@ function ProfilePageInner() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-heading">
-          {profile ? `${profileDisplayName(profile)}'s business profile` : "Your business profile"}
+          {profileHeading(profile)}
         </h1>
         <p className="mt-1 text-sm text-secondary">Manage your supplier profile and compliance documents.</p>
       </div>

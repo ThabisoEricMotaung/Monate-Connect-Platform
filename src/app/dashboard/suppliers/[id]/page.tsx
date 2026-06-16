@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import SmartScoreCircle from "@/components/SmartScoreCircle"
 import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
@@ -19,6 +20,7 @@ type SupplierProfile = {
   tax_status: string | null
   company_registration: string | null
   cidb_grade: string | null
+  company_logo_url: string | null
   smart_score?: number | string | null
   created_at?: string | null
   updated_at?: string | null
@@ -26,13 +28,6 @@ type SupplierProfile = {
 
 function valueOrDash(value: string | null | undefined): string {
   return value?.trim() || "-"
-}
-
-function initials(name: string | null): string {
-  if (!name?.trim()) return "??"
-  const words = name.trim().split(/\s+/)
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
-  return (words[0][0] + words[1][0]).toUpperCase()
 }
 
 function statusClass(status: string | null): string {
@@ -87,7 +82,7 @@ export default async function DashboardSupplierProfilePage({ params }: Props) {
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id,business_name,description,province,industry,verification_status,csd_number,bbbee_level,tax_status,company_registration,cidb_grade,smart_score,created_at,updated_at"
+      "id,business_name,description,province,industry,verification_status,csd_number,bbbee_level,tax_status,company_registration,cidb_grade,company_logo_url,smart_score,created_at,updated_at"
     )
     .eq("id", id)
     .maybeSingle()
@@ -108,9 +103,14 @@ export default async function DashboardSupplierProfilePage({ params }: Props) {
         </Link>
         <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-accent text-xl font-bold text-button">
-              {initials(supplier.business_name)}
-            </div>
+            <ProfileImage
+              src={supplier.company_logo_url}
+              alt={`${supplier.business_name || "Supplier"} logo`}
+              className="h-16 w-16 rounded-xl border border-panel bg-white object-contain p-1"
+              fallbackClassName="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-accent text-xl font-bold text-button"
+              fallbackText={initialsFromName(supplier.business_name, "S")}
+              seedName={supplier.business_name}
+            />
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
                 Supplier profile

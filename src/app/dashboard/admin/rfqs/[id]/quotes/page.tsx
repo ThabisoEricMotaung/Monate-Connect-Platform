@@ -1023,9 +1023,10 @@ export default function AdminRFQQuotesPage() {
                               <ProfileImage
                                 src={quote.company_logo_url}
                                 alt={`${quote.supplier_name || "Supplier"} logo`}
-                                className="h-9 w-9 rounded-full border border-panel bg-white object-contain p-1"
-                                fallbackClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-panel bg-panel text-xs font-bold text-heading"
+                                className="h-9 w-9 rounded-xl border border-panel bg-white object-contain p-1"
+                                fallbackClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-panel bg-panel text-xs font-bold text-heading"
                                 fallbackText={initialsFromName(quote.supplier_name, "S")}
+                                seedName={quote.supplier_name}
                               />
                               <div>
                                 <p className="font-semibold text-heading">
@@ -1255,9 +1256,10 @@ export default function AdminRFQQuotesPage() {
                             <ProfileImage
                               src={quote.company_logo_url}
                               alt={`${quote.supplier_name || "Supplier"} logo`}
-                              className="h-12 w-12 rounded-full border border-panel bg-white object-contain p-1"
-                              fallbackClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-panel bg-panel text-sm font-bold text-heading"
+                              className="h-12 w-12 rounded-xl border border-panel bg-white object-contain p-1"
+                              fallbackClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-panel bg-panel text-sm font-bold text-heading"
                               fallbackText={initialsFromName(quote.supplier_name, "S")}
+                              seedName={quote.supplier_name}
                             />
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2">
@@ -1423,9 +1425,10 @@ export default function AdminRFQQuotesPage() {
                                 <ProfileImage
                                   src={quote.company_logo_url}
                                   alt={`${quote.supplier_name || "Supplier"} logo`}
-                                  className="h-9 w-9 rounded-full border border-panel bg-white object-contain p-1"
-                                  fallbackClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-panel bg-panel text-xs font-bold text-heading"
+                                  className="h-9 w-9 rounded-xl border border-panel bg-white object-contain p-1"
+                                  fallbackClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-panel bg-panel text-xs font-bold text-heading"
                                   fallbackText={initialsFromName(quote.supplier_name, "S")}
+                                  seedName={quote.supplier_name}
                                 />
                                 <div className="min-w-0 flex-1">
                                   <p className="text-sm font-semibold text-heading">
