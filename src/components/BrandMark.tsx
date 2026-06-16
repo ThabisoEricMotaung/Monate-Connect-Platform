@@ -11,20 +11,18 @@ export default function BrandMark({
 }) {
   return (
     <span
-      className={`logo-mark flex shrink-0 items-center justify-center rounded-md bg-accent p-1.5 text-button shadow-md ${className}`}
+      className={`logo-mark flex shrink-0 items-center justify-center ${className}`}
       aria-hidden="true"
     >
-      <span className="flex h-full w-full items-center justify-center rounded-[5px] bg-white/95 p-1 shadow-sm ring-1 ring-black/5">
-        <Image
-          src="/aiform-mark.png"
-          alt=""
-          width={29}
-          height={36}
-          className={imageClassName}
-          sizes="36px"
-          priority={false}
-        />
-      </span>
+      <Image
+        src="/aiform-mark.png"
+        alt=""
+        width={29}
+        height={36}
+        className={imageClassName}
+        sizes="36px"
+        priority={false}
+      />
     </span>
   )
 }

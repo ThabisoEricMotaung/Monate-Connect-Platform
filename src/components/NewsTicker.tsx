@@ -27,6 +27,9 @@ type RFQWireRow = {
   industry: string | null;
 };
 
+const COLLAPSED_HEIGHT = "24px";
+const LS_KEY = "ticker-collapsed";
+
 const updates: TickerUpdate[] = [
   {
     category: "Mining",
@@ -153,6 +156,7 @@ function TickerItem({ update, index }: { update: TickerUpdate; index: number }) 
 export default function NewsTicker() {
   const [liveUpdates, setLiveUpdates] = useState<TickerUpdate[] | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -163,7 +167,13 @@ export default function NewsTicker() {
       return;
     }
 
-    document.documentElement.style.removeProperty("--news-ticker-height");
+    const isCollapsed = window.localStorage.getItem(LS_KEY) === "1";
+    if (isCollapsed) {
+      setCollapsed(true);
+      document.documentElement.style.setProperty("--news-ticker-height", COLLAPSED_HEIGHT);
+    } else {
+      document.documentElement.style.removeProperty("--news-ticker-height");
+    }
 
     async function loadLatestRFQs() {
       if (!supabase) return;
@@ -193,7 +203,31 @@ export default function NewsTicker() {
     setDismissed(true);
   }
 
+  function toggleCollapsed() {
+    const next = !collapsed;
+    setCollapsed(next);
+    window.localStorage.setItem(LS_KEY, next ? "1" : "0");
+    if (next) {
+      document.documentElement.style.setProperty("--news-ticker-height", COLLAPSED_HEIGHT);
+    } else {
+      document.documentElement.style.removeProperty("--news-ticker-height");
+    }
+  }
+
   if (dismissed) return null;
+
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        className="news-ticker-tab"
+        onClick={toggleCollapsed}
+        aria-label="Expand procurement wire"
+      >
+        Procurement Wire ∨
+      </button>
+    );
+  }
 
   const sourceItems = liveUpdates?.length ? liveUpdates : updates;
   const tickerItems = [...sourceItems, ...sourceItems];
@@ -212,6 +246,14 @@ export default function NewsTicker() {
           ))}
         </div>
       </div>
+      <button
+        type="button"
+        className="news-ticker__collapse"
+        onClick={toggleCollapsed}
+        aria-label="Collapse procurement wire"
+      >
+        ∧
+      </button>
       <button
         type="button"
         className="news-ticker__dismiss"

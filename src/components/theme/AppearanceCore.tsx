@@ -77,7 +77,7 @@ export default function AppearanceCore() {
       ref={containerRef}
       className="appearance-core"
       data-theme-mode={theme}
-      style={{ position: "fixed", right: 18, bottom: "calc(var(--news-ticker-height) + 16px)", zIndex: 80 }}
+      style={{ position: "fixed", right: 88, bottom: "calc(var(--news-ticker-height, 50px) + 16px)", zIndex: 80 }}
     >
       <button
         type="button"

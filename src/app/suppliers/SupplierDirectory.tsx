@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
+import { supabase } from "@/lib/supabase"
 
 export type PublicSupplierDirectoryRow = {
   id: string
@@ -290,11 +291,19 @@ export default function SupplierDirectory({ suppliers }: { suppliers: PublicSupp
   const [bbbee, setBbee] = useState("")
   const [view, setView] = useState<ViewMode>("grid")
   const [hydrated, setHydrated] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
     const stored = window.localStorage.getItem("sp-view")
     if (stored === "list" || stored === "grid") setView(stored)
     setHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    if (!supabase) return
+    supabase.auth.getSession().then(({ data }) => {
+      setIsLoggedIn(!!data.session)
+    })
   }, [])
 
   function changeView(nextView: ViewMode) {
@@ -333,6 +342,31 @@ export default function SupplierDirectory({ suppliers }: { suppliers: PublicSupp
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: CREAM }}>
+      <nav
+        aria-label="Site navigation"
+        className="border-b px-4 sm:px-6 lg:px-8"
+        style={{ backgroundColor: FOREST, borderBottomColor: "rgba(200,160,96,0.15)" }}
+      >
+        <div className="mx-auto flex max-w-7xl items-center gap-6 py-2.5">
+          <Link
+            href="/"
+            className="text-xs font-medium transition-opacity hover:opacity-100"
+            style={{ color: "rgba(248,244,236,0.7)" }}
+          >
+            ← Home
+          </Link>
+          {isLoggedIn ? (
+            <Link
+              href="/dashboard"
+              className="ml-auto text-xs font-medium transition-opacity hover:opacity-100"
+              style={{ color: "rgba(248,244,236,0.7)" }}
+            >
+              Go to Dashboard →
+            </Link>
+          ) : null}
+        </div>
+      </nav>
+
       <section className="px-4 py-12 sm:px-6 lg:px-8" style={{ backgroundColor: FOREST }}>
         <div className="mx-auto max-w-7xl">
           <p className="text-xs font-semibold uppercase tracking-[0.28em]" style={{ color: GOLD }}>AiForm Procure</p>
