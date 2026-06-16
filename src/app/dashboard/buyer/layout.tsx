@@ -249,7 +249,7 @@ export default function BuyerDashboardLayout({
         </nav>
       </aside>
 
-      <section className="w-full min-w-0 flex-1 overflow-x-hidden px-4 py-5 pb-[calc(var(--news-ticker-height)+3rem)] md:p-8 md:pb-[calc(var(--news-ticker-height)+2rem)]">
+      <section className="w-full min-w-0 flex-1 overflow-x-hidden px-4 py-5 pb-24 md:p-8 md:pb-24">
         <div className="dashboard-chrome print:hidden -mx-4 -mt-5 mb-6 flex items-center justify-between gap-4 border-b-[0.5px] border-[#ebebeb] bg-white px-5 py-4 md:-mx-8 md:-mt-8">
           <button
             type="button"

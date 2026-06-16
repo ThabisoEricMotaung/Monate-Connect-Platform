@@ -33,7 +33,7 @@
   --card-shadow: rgba(31, 39, 46, 0.13);
   --surface-sheen: rgba(255, 255, 255, 0.84);
   --surface-metal: rgba(78, 91, 101, 0.14);
-  --news-ticker-height: 50px;
+  --news-ticker-height: 0px;
   --newsprint: #f5f0e8;
   --ink: #1a1a1a;
   --ink-muted: #555555;

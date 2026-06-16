@@ -6,7 +6,7 @@ import { ReactNode, useEffect, useState } from "react"
 import AccountMenu, { type AccountMenuProfile } from "@/components/AccountMenu"
 import BrandMark from "@/components/BrandMark"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
-import NewsTicker from "@/components/NewsTicker"
+import ProcurementWire from "@/components/ProcurementWire"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
 import { roleHomeHref } from "@/lib/navigation"
@@ -317,7 +317,7 @@ export default function DashboardLayout({
     return (
       <>
         {children}
-        <NewsTicker />
+        <ProcurementWire scope="dashboard" />
       </>
     )
   }
@@ -326,7 +326,7 @@ export default function DashboardLayout({
     return (
       <>
         {children}
-        <NewsTicker />
+        <ProcurementWire scope="dashboard" />
       </>
     )
   }
@@ -506,8 +506,7 @@ export default function DashboardLayout({
         )}
       </aside>
 
-      {/* Main content area - padding-bottom accounts for fixed news ticker */}
-      <section className="mt-16 w-full min-w-0 flex-1 overflow-x-hidden px-4 py-5 md:mt-0 md:p-6 lg:p-8" style={{ paddingBottom: 'var(--news-ticker-height)' }}>
+      <section className="mt-16 w-full min-w-0 flex-1 overflow-x-hidden px-4 py-5 md:mt-0 md:p-6 lg:p-8">
         <div className="print:hidden mb-4 flex items-center justify-between gap-4">
           <Breadcrumbs role={role} />
           <div className="hidden md:block">
@@ -527,7 +526,7 @@ export default function DashboardLayout({
         </footer>
       </section>
 
-      <NewsTicker />
+      <ProcurementWire scope="dashboard" />
     </main>
   )
 }
