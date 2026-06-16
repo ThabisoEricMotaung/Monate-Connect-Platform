@@ -15,20 +15,30 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
     },
   })
 
-  const { data, error } = await supabase
-    .from("public_supplier_directory")
-    .select(
-      "id,business_name,province,provinces,industry,bbbee_level,cidb_grade,smart_score,csd_verified,bbbee_verified,tax_verified,banking_verified,bank_verified,director_verified,website,description,employee_count,linkedin_url,founded_year,created_at"
-    )
+  const baseSelect =
+    "id,business_name,province,provinces,industry,bbbee_level,cidb_grade,smart_score,csd_verified,bbbee_verified,tax_verified,banking_verified,bank_verified,director_verified,website,description,employee_count,linkedin_url,founded_year,created_at"
+  let { data, error } = await supabase
+    .from("profiles")
+    .select(`${baseSelect},company_logo_url`)
     .order("smart_score", { ascending: false, nullsFirst: false })
     .order("business_name", { ascending: true })
+
+  if (error?.code === "42703") {
+    const retry = await supabase
+      .from("profiles")
+      .select(baseSelect)
+      .order("smart_score", { ascending: false, nullsFirst: false })
+      .order("business_name", { ascending: true })
+    data = retry.data?.map((supplier) => ({ ...supplier, company_logo_url: null })) ?? null
+    error = retry.error
+  }
 
   if (error) {
     console.error("Public supplier directory fetch failed:", error)
     return []
   }
 
-  return (data ?? []) as PublicSupplierDirectoryRow[]
+  return (data ?? []) as unknown as PublicSupplierDirectoryRow[]
 }
 
 export default async function SuppliersPage() {

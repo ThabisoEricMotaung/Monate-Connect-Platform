@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import { logActivity } from "@/lib/activity"
 import { logAuditAction } from "@/lib/audit"
 import { notifyQuoteAwarded } from "@/lib/automationRules"
@@ -17,6 +18,7 @@ type Quote = {
   supplier_id: string | null
   supplier_name: string | null
   supplier_phone: string | null
+  company_logo_url: string | null
   amount: string | null
   timeline: string | null
   status: string | null
@@ -132,7 +134,7 @@ export default function AdminQuotesPage() {
         return
       }
 
-      const quoteRows = (data ?? []) as Omit<Quote, "supplier_phone">[]
+      const quoteRows = (data ?? []) as Omit<Quote, "supplier_phone" | "company_logo_url">[]
       const supplierIds = Array.from(
         new Set(
           quoteRows
@@ -148,15 +150,16 @@ export default function AdminQuotesPage() {
         )
       )
       let phoneBySupplierId = new Map<string, string | null>()
+      let logoBySupplierId = new Map<string, string | null>()
       let profileByEmail = new Map<
         string,
-        { id: string; business_name: string | null; phone: string | null }
+        { id: string; business_name: string | null; phone: string | null; company_logo_url: string | null }
       >()
 
       if (supplierIds.length > 0) {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, phone")
+          .select("id, phone, company_logo_url")
           .in("id", supplierIds)
 
         if (profileError) {
@@ -171,12 +174,18 @@ export default function AdminQuotesPage() {
             profile.phone as string | null,
           ])
         )
+        logoBySupplierId = new Map(
+          (profileData ?? []).map((profile) => [
+            profile.id as string,
+            profile.company_logo_url as string | null,
+          ])
+        )
       }
 
       if (supplierEmails.length > 0) {
         const { data: emailProfileData, error: emailProfileError } = await supabase
           .from("profiles")
-          .select("id, business_name, email, phone")
+          .select("id, business_name, email, phone, company_logo_url")
           .in("email", supplierEmails)
 
         if (emailProfileError) {
@@ -192,6 +201,7 @@ export default function AdminQuotesPage() {
               id: profile.id as string,
               business_name: profile.business_name as string | null,
               phone: profile.phone as string | null,
+              company_logo_url: profile.company_logo_url as string | null,
             },
           ])
         )
@@ -214,6 +224,9 @@ export default function AdminQuotesPage() {
             supplier_phone: supplierId
               ? phoneBySupplierId.get(supplierId) ?? emailProfile?.phone ?? null
               : null,
+            company_logo_url: supplierId
+              ? logoBySupplierId.get(supplierId) ?? emailProfile?.company_logo_url ?? null
+              : emailProfile?.company_logo_url ?? null,
           }
         })
       )
@@ -505,9 +518,18 @@ export default function AdminQuotesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <p className="font-semibold text-heading">
-                        {quote.supplier_name || "-"}
-                      </p>
+                      <div className="flex items-center gap-3">
+                        <ProfileImage
+                          src={quote.company_logo_url}
+                          alt={`${quote.supplier_name || "Supplier"} logo`}
+                          className="h-9 w-9 rounded-full border border-panel bg-white object-contain p-1"
+                          fallbackClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-panel bg-panel text-xs font-bold text-heading"
+                          fallbackText={initialsFromName(quote.supplier_name, "S")}
+                        />
+                        <p className="font-semibold text-heading">
+                          {quote.supplier_name || "-"}
+                        </p>
+                      </div>
                     </td>
                     <td className="px-4 py-4">
                       {(() => {

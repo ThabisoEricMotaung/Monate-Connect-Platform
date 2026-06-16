@@ -271,7 +271,7 @@ export default function DashboardLayout({
         if (supabase && currentProfile?.id) {
           const { data } = await supabase
             .from("profiles")
-            .select("business_name, email, full_name, preferred_name, role")
+            .select("business_name, email, full_name, preferred_name, role, avatar_url")
             .eq("id", currentProfile.id)
             .maybeSingle()
 

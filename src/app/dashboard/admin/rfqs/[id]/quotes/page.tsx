@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import { logActivity } from "@/lib/activity"
 import { logAuditAction } from "@/lib/audit"
 import { notifyQuoteAwarded } from "@/lib/automationRules"
@@ -44,6 +45,7 @@ type Quote = {
   supplier_id: string | null
   supplier_name: string | null
   supplier_phone: string | null
+  company_logo_url: string | null
   amount: string | null
   timeline: string | null
   status: string | null
@@ -371,7 +373,7 @@ export default function AdminRFQQuotesPage() {
         return
       }
 
-      const quoteRows = (quoteData ?? []) as Omit<Quote, "supplier_phone">[]
+      const quoteRows = (quoteData ?? []) as Omit<Quote, "supplier_phone" | "company_logo_url">[]
       const supplierIds = Array.from(
         new Set(quoteRows.map((q) => q.supplier_id).filter((id): id is string => Boolean(id)))
       )
@@ -379,23 +381,25 @@ export default function AdminRFQQuotesPage() {
         new Set(quoteRows.filter((q) => !q.supplier_id && q.supplier_name?.includes("@")).map((q) => q.supplier_name as string))
       )
       let phoneBySupplierId = new Map<string, string | null>()
-      let profileByEmail = new Map<string, { id: string; business_name: string | null; phone: string | null }>()
+      let logoBySupplierId = new Map<string, string | null>()
+      let profileByEmail = new Map<string, { id: string; business_name: string | null; phone: string | null; company_logo_url: string | null }>()
 
       if (supplierIds.length > 0) {
         const { data: profileData, error: profileError } = await supabase
-          .from("profiles").select("id, phone").in("id", supplierIds)
+          .from("profiles").select("id, phone, company_logo_url").in("id", supplierIds)
         if (profileError) { setErrorMessage(profileError.message); setLoading(false); return }
         phoneBySupplierId = new Map((profileData ?? []).map((p) => [p.id as string, p.phone as string | null]))
+        logoBySupplierId = new Map((profileData ?? []).map((p) => [p.id as string, p.company_logo_url as string | null]))
       }
 
       if (supplierEmails.length > 0) {
         const { data: emailProfileData, error: emailProfileError } = await supabase
-          .from("profiles").select("id, business_name, email, phone").in("email", supplierEmails)
+          .from("profiles").select("id, business_name, email, phone, company_logo_url").in("email", supplierEmails)
         if (emailProfileError) { setErrorMessage(emailProfileError.message); setLoading(false); return }
         profileByEmail = new Map(
           (emailProfileData ?? []).map((p) => [
             p.email as string,
-            { id: p.id as string, business_name: p.business_name as string | null, phone: p.phone as string | null },
+            { id: p.id as string, business_name: p.business_name as string | null, phone: p.phone as string | null, company_logo_url: p.company_logo_url as string | null },
           ])
         )
       }
@@ -419,6 +423,9 @@ export default function AdminRFQQuotesPage() {
             supplier_phone: supplierId
               ? phoneBySupplierId.get(supplierId) ?? emailProfile?.phone ?? null
               : null,
+            company_logo_url: supplierId
+              ? logoBySupplierId.get(supplierId) ?? emailProfile?.company_logo_url ?? null
+              : emailProfile?.company_logo_url ?? null,
           }
         })
       )
@@ -1013,6 +1020,13 @@ export default function AdminRFQQuotesPage() {
                           {/* Supplier */}
                           <td className="px-4 py-4">
                             <div className="flex items-center gap-2">
+                              <ProfileImage
+                                src={quote.company_logo_url}
+                                alt={`${quote.supplier_name || "Supplier"} logo`}
+                                className="h-9 w-9 rounded-full border border-panel bg-white object-contain p-1"
+                                fallbackClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-panel bg-panel text-xs font-bold text-heading"
+                                fallbackText={initialsFromName(quote.supplier_name, "S")}
+                              />
                               <div>
                                 <p className="font-semibold text-heading">
                                   {quote.supplier_name || "-"}
@@ -1238,6 +1252,13 @@ export default function AdminRFQQuotesPage() {
                           {/* Card header */}
                           <div className="flex items-start gap-4">
                             <ScoreRing score={currentTotal} />
+                            <ProfileImage
+                              src={quote.company_logo_url}
+                              alt={`${quote.supplier_name || "Supplier"} logo`}
+                              className="h-12 w-12 rounded-full border border-panel bg-white object-contain p-1"
+                              fallbackClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-panel bg-panel text-sm font-bold text-heading"
+                              fallbackText={initialsFromName(quote.supplier_name, "S")}
+                            />
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2">
                                 {rank !== null && (
@@ -1399,6 +1420,13 @@ export default function AdminRFQQuotesPage() {
                                     {rank}
                                   </span>
                                 )}
+                                <ProfileImage
+                                  src={quote.company_logo_url}
+                                  alt={`${quote.supplier_name || "Supplier"} logo`}
+                                  className="h-9 w-9 rounded-full border border-panel bg-white object-contain p-1"
+                                  fallbackClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-panel bg-panel text-xs font-bold text-heading"
+                                  fallbackText={initialsFromName(quote.supplier_name, "S")}
+                                />
                                 <div className="min-w-0 flex-1">
                                   <p className="text-sm font-semibold text-heading">
                                     {quote.supplier_name || `Q-${quote.id}`}

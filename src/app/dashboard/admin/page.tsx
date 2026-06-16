@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
+import { ProfileImage } from "@/components/ProfileImage"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { formatRand, parseMoney } from "@/lib/format"
 import { supabase } from "@/lib/supabase"
@@ -66,6 +67,7 @@ type SupplierProfile = {
   industry: string | null
   bbbee_level: string | null
   verification_status: string | null
+  company_logo_url: string | null
 }
 
 type BuyerProfile = {
@@ -296,7 +298,7 @@ export default function AdminOverviewPage() {
           ? await readRows<SupplierProfile>(
               supabase
                 .from("profiles")
-                .select("id, business_name, industry, bbbee_level, verification_status")
+                .select("id, business_name, industry, bbbee_level, verification_status, company_logo_url")
                 .in("id", supplierIds),
             )
           : []
@@ -679,9 +681,13 @@ export default function AdminOverviewPage() {
                     return (
                       <article key={quote.id} className="flex flex-col gap-3 overflow-hidden rounded-md border border-panel bg-panel p-3 md:flex-row md:items-center">
                         <div className="flex min-w-0 items-start gap-3 md:flex-1">
-                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold ${supplierTone(supplier?.industry ?? null)}`}>
-                            {initials(quote.supplier_name ?? supplier?.business_name ?? null)}
-                          </div>
+                          <ProfileImage
+                            src={supplier?.company_logo_url}
+                            alt={`${quote.supplier_name ?? supplier?.business_name ?? "Supplier"} logo`}
+                            className="h-10 w-10 rounded-full border border-panel bg-white object-contain p-1"
+                            fallbackClassName={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold ${supplierTone(supplier?.industry ?? null)}`}
+                            fallbackText={initials(quote.supplier_name ?? supplier?.business_name ?? null)}
+                          />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-xs font-bold text-heading">
                               {quote.supplier_name ?? supplier?.business_name ?? "Supplier pending"}

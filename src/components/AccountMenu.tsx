@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { ProfileImage } from "@/components/ProfileImage"
 import { roleHomeHref } from "@/lib/navigation"
 import { supabase } from "@/lib/supabase"
 
@@ -11,6 +12,7 @@ export type AccountMenuProfile = {
   full_name?: string | null
   preferred_name?: string | null
   role?: string | null
+  avatar_url?: string | null
 }
 
 function displayName(profile: AccountMenuProfile | null): string {
@@ -77,9 +79,13 @@ export default function AccountMenu({
         aria-haspopup="menu"
         aria-label="Open account menu"
       >
-        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-panel bg-panel text-sm font-bold shadow-sm transition group-hover:border-accent group-hover:brightness-105">
-          {initials}
-        </span>
+        <ProfileImage
+          src={profile?.avatar_url}
+          alt={`${name} avatar`}
+          className="h-10 w-10 rounded-full border border-panel object-cover shadow-sm transition group-hover:border-accent group-hover:brightness-105"
+          fallbackClassName="flex h-10 w-10 items-center justify-center rounded-full border border-panel bg-panel text-sm font-bold shadow-sm transition group-hover:border-accent group-hover:brightness-105"
+          fallbackText={initials}
+        />
         <span
           aria-hidden="true"
           className={`text-xs leading-none text-secondary transition duration-200 group-hover:text-accent ${

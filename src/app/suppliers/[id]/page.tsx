@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 
@@ -8,6 +9,11 @@ type Props = {
 
 type PublicSupplierProfile = {
   id: string
+  full_name: string | null
+  preferred_name: string | null
+  email: string | null
+  avatar_url: string | null
+  company_logo_url: string | null
   business_name: string | null
   province: string | null
   provinces: string[] | null
@@ -48,13 +54,23 @@ async function getSupplier(id: string): Promise<PublicSupplierProfile> {
     },
   })
 
-  const { data, error } = await supabase
-    .from("public_supplier_directory")
-    .select(
-      "id,business_name,province,provinces,industry,bbbee_level,cidb_grade,smart_score,csd_verified,bbbee_verified,tax_verified,banking_verified,bank_verified,director_verified,website,description,employee_count,linkedin_url,founded_year,created_at"
-    )
+  const baseSelect =
+    "id,full_name,preferred_name,email,business_name,province,provinces,industry,bbbee_level,cidb_grade,smart_score,csd_verified,bbbee_verified,tax_verified,banking_verified,bank_verified,director_verified,website,description,employee_count,linkedin_url,founded_year,created_at"
+  let { data, error } = await supabase
+    .from("profiles")
+    .select(`${baseSelect},avatar_url,company_logo_url`)
     .eq("id", id)
     .maybeSingle()
+
+  if (error?.code === "42703") {
+    const retry = await supabase
+      .from("profiles")
+      .select(baseSelect)
+      .eq("id", id)
+      .maybeSingle()
+    data = retry.data ? { ...retry.data, avatar_url: null, company_logo_url: null } : null
+    error = retry.error
+  }
 
   if (error || !data) notFound()
 
@@ -136,6 +152,11 @@ export default async function SupplierProfilePage({ params }: Props) {
   const websiteHref = externalHref(supplier.website)
   const linkedinHref = externalHref(supplier.linkedin_url)
   const bankVerified = Boolean(supplier.banking_verified || supplier.bank_verified)
+  const contactName =
+    supplier.preferred_name?.trim() ||
+    supplier.full_name?.trim() ||
+    supplier.email?.trim() ||
+    "Supplier contact"
 
   return (
     <main className="min-h-screen bg-[#f8f4ec] text-[#1f2f28]">
@@ -150,6 +171,13 @@ export default async function SupplierProfilePage({ params }: Props) {
             Supplier Directory
           </Link>
           <div className="mt-7">
+            <ProfileImage
+              src={supplier.company_logo_url}
+              alt={`${supplier.business_name || "Supplier"} logo`}
+              className="mb-5 h-24 w-24 rounded-lg border border-[#c8a060]/45 bg-white object-contain p-2"
+              fallbackClassName="mb-5 flex h-24 w-24 items-center justify-center rounded-lg border border-[#c8a060]/45 bg-[#f8f4ec]/10 text-2xl font-bold text-[#f8f4ec]"
+              fallbackText={initialsFromName(supplier.business_name, "S")}
+            />
             <p className="text-[0.72rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
               <span aria-hidden="true">&#10003;</span> Verified Supplier
             </p>
@@ -167,6 +195,19 @@ export default async function SupplierProfilePage({ params }: Props) {
             <p className="mt-4 text-sm leading-7 text-stone-700">
               {supplier.description?.trim() || "No description provided."}
             </p>
+            <div className="mt-5 flex items-center gap-3 rounded-lg border border-stone-200 bg-[#fbf8f1] p-4">
+              <ProfileImage
+                src={supplier.avatar_url}
+                alt={`${contactName} avatar`}
+                className="h-12 w-12 rounded-full border border-stone-200 object-cover"
+                fallbackClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#E7F8F2] text-sm font-bold text-[#085041]"
+                fallbackText={initialsFromName(contactName, "S")}
+              />
+              <div className="min-w-0">
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-stone-500">Contact</p>
+                <p className="truncate text-sm font-semibold text-[#1f2f28]">{contactName}</p>
+              </div>
+            </div>
           </div>
 
           <div className="rounded-lg border border-stone-200 bg-white p-5 sm:p-6">

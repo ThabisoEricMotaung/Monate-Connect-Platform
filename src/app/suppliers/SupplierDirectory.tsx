@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
+import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 
 export type PublicSupplierDirectoryRow = {
   id: string
@@ -24,6 +25,7 @@ export type PublicSupplierDirectoryRow = {
   linkedin_url: string | null
   founded_year: number | string | null
   created_at: string | null
+  company_logo_url: string | null
 }
 
 type ViewMode = "grid" | "list"
@@ -147,11 +149,20 @@ function SupplierCard({ supplier }: { supplier: PublicSupplierDirectoryRow }) {
   return (
     <article className="flex min-h-[248px] flex-col rounded-lg border border-stone-200 bg-white p-5">
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="mb-1 text-[0.68rem] font-semibold" style={{ color: TEAL }}>&#10003; Verified</p>
-          <h2 className="font-display text-[15px] font-medium leading-snug text-[#1f2f28]">
-            {supplier.business_name || "Verified supplier"}
-          </h2>
+        <div className="flex min-w-0 items-start gap-3">
+          <ProfileImage
+            src={supplier.company_logo_url}
+            alt={`${supplier.business_name || "Supplier"} logo`}
+            className="h-12 w-12 rounded-md border border-stone-200 bg-white object-contain p-1"
+            fallbackClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#E7F8F2] text-sm font-bold text-[#085041]"
+            fallbackText={initialsFromName(supplier.business_name, "S")}
+          />
+          <div className="min-w-0">
+            <p className="mb-1 text-[0.68rem] font-semibold" style={{ color: TEAL }}>&#10003; Verified</p>
+            <h2 className="font-display text-[15px] font-medium leading-snug text-[#1f2f28]">
+              {supplier.business_name || "Verified supplier"}
+            </h2>
+          </div>
         </div>
         <ScoreBadge score={supplier.smart_score} />
       </div>
@@ -193,13 +204,22 @@ function SupplierList({ suppliers }: { suppliers: PublicSupplierDirectoryRow[] }
       <div className="divide-y divide-stone-200">
         {suppliers.map((supplier) => (
           <div key={supplier.id} className="grid gap-4 px-5 py-4 md:grid-cols-[1fr_auto_150px] md:items-center">
-            <div className="min-w-0">
-              <h3 className="font-display text-[14px] font-medium leading-snug text-[#1f2f28]">
-                {supplier.business_name || "Verified supplier"}
-              </h3>
-              <p className="mt-1 text-xs text-stone-500">
-                {[supplier.industry, primaryProvince(supplier), levelValue(supplier.bbbee_level)].filter(Boolean).join(" | ")}
-              </p>
+            <div className="flex min-w-0 items-center gap-3">
+              <ProfileImage
+                src={supplier.company_logo_url}
+                alt={`${supplier.business_name || "Supplier"} logo`}
+                className="h-10 w-10 rounded-md border border-stone-200 bg-white object-contain p-1"
+                fallbackClassName="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E7F8F2] text-xs font-bold text-[#085041]"
+                fallbackText={initialsFromName(supplier.business_name, "S")}
+              />
+              <div className="min-w-0">
+                <h3 className="font-display text-[14px] font-medium leading-snug text-[#1f2f28]">
+                  {supplier.business_name || "Verified supplier"}
+                </h3>
+                <p className="mt-1 text-xs text-stone-500">
+                  {[supplier.industry, primaryProvince(supplier), levelValue(supplier.bbbee_level)].filter(Boolean).join(" | ")}
+                </p>
+              </div>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {verificationItems(supplier).map(([label, active]) => (

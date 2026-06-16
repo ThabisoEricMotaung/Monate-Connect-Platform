@@ -116,7 +116,7 @@ export default function BuyerDashboardLayout({
       const [profileResult, rfqResult, quoteResult] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, business_name, email, full_name, preferred_name, role")
+          .select("id, business_name, email, full_name, preferred_name, role, avatar_url")
           .eq("id", user.id)
           .maybeSingle(),
         supabase.from("rfqs").select("id, status"),

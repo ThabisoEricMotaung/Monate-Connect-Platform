@@ -130,7 +130,7 @@ export default function AdminDashboardLayout({
 
       const { data } = await supabase
         .from("profiles")
-        .select("id, business_name, email, full_name, preferred_name, role")
+        .select("id, business_name, email, full_name, preferred_name, role, avatar_url")
         .eq("id", currentProfile?.id)
         .maybeSingle()
 

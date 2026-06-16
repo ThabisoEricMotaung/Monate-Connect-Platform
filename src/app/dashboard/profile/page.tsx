@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import SignedDocumentLink from "@/components/SignedDocumentLink"
 import { logActivity } from "@/lib/activity"
 import {
@@ -32,6 +33,8 @@ type Profile = {
   id: string
   full_name: string | null
   preferred_name: string | null
+  avatar_url: string | null
+  company_logo_url: string | null
   business_name: string | null
   province: string | null
   provinces?: string[] | null
@@ -137,6 +140,13 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "banking", label: "Banking details" },
 ]
 
+const PUBLIC_STORAGE_BASE =
+  "https://enoyrbdflwihxzitpour.supabase.co/storage/v1/object/public"
+const PERSONAL_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"]
+const COMPANY_LOGO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"]
+const PERSONAL_PHOTO_MAX_BYTES = 2 * 1024 * 1024
+const COMPANY_LOGO_MAX_BYTES = 5 * 1024 * 1024
+
 // --- Style helpers ---
 
 const inputCls =
@@ -201,6 +211,10 @@ function profileProvinceValues(profile: Profile) {
 
 function cleanFileName(name: string) {
   return name.trim().replace(/[^a-zA-Z0-9._-]/g, "-").replace(/-+/g, "-")
+}
+
+function publicStorageUrl(bucket: "avatars" | "company-logos", path: string): string {
+  return `${PUBLIC_STORAGE_BASE}/${bucket}/${path}`
 }
 
 function scoreProfile(profile: Profile | null, bank: BankRecord | null): SupplierSmartScoreProfile | null {
@@ -319,6 +333,135 @@ function FileRow({ label, url, status }: { label: string; url: string; status: "
   )
 }
 
+function ProfileImageUploads({
+  profile,
+  onSave,
+}: {
+  profile: Profile
+  onSave: (patch: Partial<Profile>) => Promise<SaveResult>
+}) {
+  const [uploading, setUploading] = useState<"avatar" | "logo" | null>(null)
+  const [message, setMessage] = useState("")
+  const [error, setError] = useState("")
+
+  async function uploadImage(
+    e: React.ChangeEvent<HTMLInputElement>,
+    kind: "avatar" | "logo",
+  ) {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file || !supabase) return
+
+    const isAvatar = kind === "avatar"
+    const validTypes = isAvatar ? PERSONAL_PHOTO_TYPES : COMPANY_LOGO_TYPES
+    const maxBytes = isAvatar ? PERSONAL_PHOTO_MAX_BYTES : COMPANY_LOGO_MAX_BYTES
+
+    setError("")
+    setMessage("")
+
+    if (!validTypes.includes(file.type)) {
+      setError(isAvatar ? "Upload a JPEG, PNG, or WebP photo." : "Upload a JPEG, PNG, WebP, or SVG logo.")
+      return
+    }
+
+    if (file.size > maxBytes) {
+      setError(isAvatar ? "Personal photo must be 2MB or smaller." : "Company logo must be 5MB or smaller.")
+      return
+    }
+
+    setUploading(kind)
+    const bucket = isAvatar ? "avatars" : "company-logos"
+    const path = isAvatar ? `${profile.id}/avatar.jpg` : `${profile.id}/logo.jpg`
+    const column = isAvatar ? "avatar_url" : "company_logo_url"
+    const publicUrl = publicStorageUrl(bucket, path)
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(path, file, { contentType: file.type, upsert: true })
+
+    if (uploadError) {
+      setError(uploadError.message)
+      setUploading(null)
+      return
+    }
+
+    const result = await onSave({ [column]: publicUrl } as Partial<Profile>)
+    setUploading(null)
+    if (!result.ok) {
+      setError(result.error ?? "The image uploaded, but the profile URL could not be saved.")
+      return
+    }
+
+    setMessage(isAvatar ? "Personal photo updated." : "Company logo updated.")
+  }
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      {error && (
+        <div className="rounded-md border border-rose-500/25 bg-rose-500/10 px-4 py-3 lg:col-span-2">
+          <p className="text-xs font-semibold text-rose-700">{error}</p>
+        </div>
+      )}
+      {message && (
+        <div className="rounded-md border border-success/30 bg-success-soft px-4 py-3 lg:col-span-2">
+          <p className="text-xs font-semibold text-success">{message}</p>
+        </div>
+      )}
+
+      <section className="rounded-md border border-panel bg-card p-5">
+        <div className="flex items-center gap-4">
+          <ProfileImage
+            src={profile.avatar_url}
+            alt="Personal avatar"
+            className="h-20 w-20 rounded-full border border-panel object-cover"
+            fallbackClassName="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-panel bg-accent text-xl font-bold text-button"
+            fallbackText={initialsFromName(profile.full_name || profile.preferred_name || profile.email, "?")}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-heading">Personal photo</p>
+            <p className="mt-1 text-xs leading-5 text-secondary">JPEG, PNG, or WebP. Max 2MB.</p>
+            <label className="mt-3 inline-flex cursor-pointer rounded-md border border-accent bg-accent px-3 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong">
+              {uploading === "avatar" ? "Uploading..." : "Upload photo"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                disabled={uploading !== null}
+                onChange={(e) => uploadImage(e, "avatar")}
+              />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-md border border-panel bg-card p-5">
+        <div className="flex items-center gap-4">
+          <ProfileImage
+            src={profile.company_logo_url}
+            alt="Company logo"
+            className="h-20 w-20 rounded-md border border-panel bg-white object-contain p-1"
+            fallbackClassName="flex h-20 w-20 shrink-0 items-center justify-center rounded-md border border-panel bg-panel text-xl font-bold text-heading"
+            fallbackText={initialsFromName(profile.business_name, "?")}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-heading">Company logo</p>
+            <p className="mt-1 text-xs leading-5 text-secondary">JPEG, PNG, WebP, or SVG. Max 5MB.</p>
+            <label className="mt-3 inline-flex cursor-pointer rounded-md border border-accent bg-accent px-3 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong">
+              {uploading === "logo" ? "Uploading..." : "Upload logo"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                className="sr-only"
+                disabled={uploading !== null}
+                onChange={(e) => uploadImage(e, "logo")}
+              />
+            </label>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 // --- Profile Header Card ---
 
 function ProfileHeaderCard({
@@ -341,9 +484,13 @@ function ProfileHeaderCard({
   return (
     <div className="mt-5 rounded-md border border-panel bg-card p-5 shadow-panel">
       <div className="flex flex-wrap items-start gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent text-lg font-bold text-button">
-          {initials(profile.business_name)}
-        </div>
+        <ProfileImage
+          src={profile.company_logo_url}
+          alt={`${profile.business_name || "Supplier"} logo`}
+          className="h-14 w-14 rounded-md border border-panel bg-white object-contain p-1"
+          fallbackClassName="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent text-lg font-bold text-button"
+          fallbackText={initials(profile.business_name)}
+        />
         <div className="min-w-0 flex-1">
           <p className="text-[0.95rem] font-bold text-heading">
             {profile.business_name || "Your business"}
@@ -560,6 +707,8 @@ function ProfileTab({
 
   return (
     <div className="space-y-4">
+      <ProfileImageUploads profile={profile} onSave={onSave} />
+
       <div className="rounded-md border border-panel bg-panel p-6">
         <div className="mb-5 flex items-center justify-between gap-4 border-b border-panel pb-4">
           <h2 className="text-base font-bold text-heading">Business details</h2>
@@ -1377,7 +1526,7 @@ function ProfilePageInner() {
 
       const [profileRes, bankRes] = await Promise.all([
         supabase.from("profiles").select(
-          "id, full_name, preferred_name, business_name, province, provinces, industry, phone, email, website, description, company_registration, tax_reference, vat_number, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, banking_verified, bank_verified, director_verified, tax_clearance_url, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date, updated_at"
+          "id, full_name, preferred_name, avatar_url, company_logo_url, business_name, province, provinces, industry, phone, email, website, description, company_registration, tax_reference, vat_number, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, banking_verified, bank_verified, director_verified, tax_clearance_url, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date, updated_at"
         ).eq("id", user.id).maybeSingle(),
         supabase.from("supplier_bank_details").select(
           "id, bank_name, account_holder, account_number, branch_code, account_type, verification_status, verification_notes"
