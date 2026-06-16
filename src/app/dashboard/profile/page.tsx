@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { Suspense, useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop"
@@ -147,6 +148,14 @@ const PERSONAL_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"]
 const COMPANY_LOGO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"]
 const PERSONAL_PHOTO_MAX_BYTES = 2 * 1024 * 1024
 const COMPANY_LOGO_MAX_BYTES = 5 * 1024 * 1024
+const COVER_GRADIENTS = [
+  ["#1a3a2a", "#2d5a3d"],
+  ["#c8a060", "#a67c3a"],
+  ["#2d4a6b", "#1a2f45"],
+  ["#6b3a2d", "#4a2419"],
+  ["#1a4a4a", "#0d2d2d"],
+  ["#4a3a6b", "#2d2145"],
+] as const
 
 // --- Style helpers ---
 
@@ -214,6 +223,12 @@ function cleanFileName(name: string) {
 
 function publicStorageUrl(bucket: "avatars" | "company-logos", path: string): string {
   return `${PUBLIC_STORAGE_BASE}/${bucket}/${path}`
+}
+
+function coverGradient(name: string | null | undefined): string {
+  const firstLetter = name?.trim().charAt(0).toUpperCase() || "S"
+  const [from, to] = COVER_GRADIENTS[firstLetter.charCodeAt(0) % COVER_GRADIENTS.length]
+  return `linear-gradient(135deg, ${from}, ${to})`
 }
 
 function centerSquareCrop(width: number, height: number): Crop {
@@ -530,7 +545,7 @@ function ProfileImageUploads({
             seedName={profile.full_name || profile.preferred_name || profile.email}
           />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-heading">Personal photo</p>
+            <p className="text-sm font-bold text-heading">Profile photo (shown on your public listing)</p>
             <p className="mt-1 text-xs leading-5 text-secondary">JPEG, PNG, or WebP. Max 2MB.</p>
             <label className="mt-3 inline-flex cursor-pointer rounded-md border border-accent bg-accent px-3 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong">
               {uploading === "avatar" ? "Uploading..." : "Upload photo"}
@@ -557,7 +572,7 @@ function ProfileImageUploads({
             seedName={profile.business_name}
           />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-heading">Company logo</p>
+            <p className="text-sm font-bold text-heading">Cover image (shown as your profile banner)</p>
             <p className="mt-1 text-xs leading-5 text-secondary">JPEG, PNG, WebP, or SVG. Max 5MB.</p>
             <label className="mt-3 inline-flex cursor-pointer rounded-md border border-accent bg-accent px-3 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong">
               {uploading === "logo" ? "Uploading..." : "Upload logo"}
@@ -658,26 +673,55 @@ function ProfileHeaderCard({
   const taxPending = Boolean(profile.tax_document_url) && !isVerified(profile.verification_status)
   const taxVerified = Boolean(profile.tax_document_url) && isVerified(profile.verification_status)
   const bankingMissing = !bank?.id
+  const businessName = profile.business_name?.trim() || "Your business"
+  const contactName =
+    profile.preferred_name?.trim() ||
+    profile.full_name?.trim() ||
+    profile.email?.trim() ||
+    businessName
+  const smartScore = calculateSmartScore(scoreProfile(profile, bank))
+  const location = profile.province ? displayProvinceValue(profile.province) : ""
+  const profileMeta = [profile.industry, location].filter(Boolean).join(" | ") || "Industry | Province"
 
   return (
-    <div className="mt-5 rounded-md border border-panel bg-card p-5 shadow-panel">
-      <div className="flex flex-wrap items-start gap-4">
-        <ProfileImage
-          src={profile.company_logo_url}
-          alt={`${profile.business_name || "Supplier"} logo`}
-          className="h-14 w-14 rounded-xl border border-panel bg-white object-contain p-1"
-          fallbackClassName="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-accent text-lg font-bold text-button"
-          fallbackText={initialsFromName(profile.business_name, "S")}
-          seedName={profile.business_name}
-        />
-        <div className="min-w-0 flex-1">
-          <p className="text-[0.95rem] font-bold text-heading">
-            {profile.business_name || "Your business"}
-          </p>
-          <p className="mt-0.5 text-xs text-secondary">
-            {[profile.industry, profile.province].filter(Boolean).join(" · ") || "Industry · Province"}
-          </p>
-          <div className="mt-2.5 flex flex-wrap gap-2">
+    <div className="mt-5 overflow-hidden rounded-md border border-panel bg-card shadow-panel">
+      <div className="relative h-[180px]">
+        {profile.company_logo_url ? (
+          <Image
+            src={profile.company_logo_url}
+            alt={`${businessName} cover image`}
+            fill
+            unoptimized
+            className="object-cover"
+            sizes="(min-width: 1280px) 896px, 100vw"
+          />
+        ) : (
+          <div className="h-full w-full" style={{ background: coverGradient(businessName) }} />
+        )}
+        <div className="absolute bottom-0 left-6 translate-y-1/2">
+          <ProfileImage
+            src={profile.avatar_url}
+            alt={`${contactName} avatar`}
+            className="h-[72px] w-[72px] rounded-full border-[3px] border-card object-cover shadow-lg"
+            fallbackClassName="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full border-[3px] border-card bg-accent text-lg font-bold text-button shadow-lg"
+            fallbackText={initialsFromName(contactName, "S")}
+            seedName={contactName}
+          />
+        </div>
+      </div>
+      <div className="px-6 pb-5 pt-12">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-xl font-bold text-heading">{businessName}</p>
+            <p className="mt-1 text-xs text-secondary">{profileMeta}</p>
+          </div>
+          <div className="w-fit rounded-md border border-accent/50 bg-panel px-4 py-3 text-center">
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-accent">SmartScore</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-heading">{smartScore}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
             {csdVerified && <Badge color="green">CSD verified</Badge>}
             {bbbeeVerified && (
               <Badge color="green">BBBEE Level {profile.bbbee_level?.replace("Level ", "")}</Badge>
@@ -694,14 +738,14 @@ function ProfileHeaderCard({
               </button>
             )}
           </div>
-        </div>
-      </div>
-      <p className="mt-3 text-[0.68rem] text-muted">
+
+        <p className="mt-3 text-[0.68rem] text-muted">
         Profile last updated {daysAgo(profile.updated_at)} ·{" "}
         <Link href="/suppliers" className="text-accent hover:text-accent-strong">
           Preview public profile →
         </Link>
-      </p>
+        </p>
+      </div>
     </div>
   )
 }

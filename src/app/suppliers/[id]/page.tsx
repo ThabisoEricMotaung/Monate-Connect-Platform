@@ -1,3 +1,4 @@
+import Image from "next/image"
 import Link from "next/link"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import { notFound } from "next/navigation"
@@ -37,8 +38,14 @@ type PublicSupplierProfile = {
 
 const FOREST = "#1a3a2a"
 const GOLD = "#c8a060"
-const CREAM = "#f8f4ec"
-const TEAL = "#5DCAA5"
+const COVER_GRADIENTS = [
+  ["#1a3a2a", "#2d5a3d"],
+  ["#c8a060", "#a67c3a"],
+  ["#2d4a6b", "#1a2f45"],
+  ["#6b3a2d", "#4a2419"],
+  ["#1a4a4a", "#0d2d2d"],
+  ["#4a3a6b", "#2d2145"],
+] as const
 
 async function getSupplier(id: string): Promise<PublicSupplierProfile> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -90,6 +97,12 @@ function formatScore(value: number | string | null | undefined): string {
   return String(Math.round(Math.min(100, Math.max(0, score))))
 }
 
+function coverGradient(name: string | null | undefined): string {
+  const firstLetter = name?.trim().charAt(0).toUpperCase() || "S"
+  const [from, to] = COVER_GRADIENTS[firstLetter.charCodeAt(0) % COVER_GRADIENTS.length]
+  return `linear-gradient(135deg, ${from}, ${to})`
+}
+
 function valueOrDash(value: number | string | null | undefined): string {
   if (value === null || value === undefined || value === "") return "-"
   return String(value)
@@ -137,6 +150,19 @@ function VerificationRow({ label, active }: { label: string; active: boolean }) 
   )
 }
 
+function VerificationPill({ label, active }: { label: string; active: boolean }) {
+  return (
+    <span
+      className={[
+        "rounded-full px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em]",
+        active ? "bg-[#E1F5EE] text-[#085041]" : "bg-stone-100 text-stone-500",
+      ].join(" ")}
+    >
+      {label}
+    </span>
+  )
+}
+
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-stone-200 bg-[#fbf8f1] p-4">
@@ -152,6 +178,7 @@ export default async function SupplierProfilePage({ params }: Props) {
   const websiteHref = externalHref(supplier.website)
   const linkedinHref = externalHref(supplier.linkedin_url)
   const bankVerified = Boolean(supplier.banking_verified || supplier.bank_verified)
+  const supplierName = supplier.business_name?.trim() || "Supplier profile"
   const contactName =
     supplier.preferred_name?.trim() ||
     supplier.full_name?.trim() ||
@@ -160,31 +187,69 @@ export default async function SupplierProfilePage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-[#f8f4ec] text-[#1f2f28]">
-      <header className="bg-[#1a3a2a]">
-        <div className="mx-auto max-w-6xl px-4 py-9 sm:px-6 lg:px-8">
+      <header className="px-4 pt-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
           <Link
             href="/suppliers"
-            className="inline-flex items-center gap-2 text-sm font-semibold transition hover:brightness-110"
-            style={{ color: TEAL }}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#1a3a2a] transition hover:text-[#8c6a2f]"
           >
             <span aria-hidden="true">&larr;</span>
             Supplier Directory
           </Link>
-          <div className="mt-7">
-            <ProfileImage
-              src={supplier.company_logo_url}
-              alt={`${supplier.business_name || "Supplier"} logo`}
-              className="mb-5 h-24 w-24 rounded-xl border border-[#c8a060]/45 bg-white object-contain p-2"
-              fallbackClassName="mb-5 flex h-24 w-24 items-center justify-center rounded-xl border border-[#c8a060]/45 bg-[#f8f4ec]/10 text-2xl font-bold text-[#f8f4ec]"
-              fallbackText={initialsFromName(supplier.business_name, "S")}
-              seedName={supplier.business_name}
-            />
-            <p className="text-[0.72rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
-              <span aria-hidden="true">&#10003;</span> Verified Supplier
-            </p>
-            <h1 className="mt-2 font-display text-[28px] font-medium leading-tight sm:text-4xl" style={{ color: CREAM }}>
-              {supplier.business_name ?? "Supplier profile"}
-            </h1>
+
+          <div className="mt-5 overflow-hidden rounded-lg border border-stone-200 bg-white">
+            <div className="relative h-[180px]">
+              {supplier.company_logo_url ? (
+                <Image
+                  src={supplier.company_logo_url}
+                  alt={`${supplierName} cover image`}
+                  fill
+                  unoptimized
+                  className="object-cover"
+                  sizes="(min-width: 1152px) 1152px, 100vw"
+                />
+              ) : (
+                <div className="h-full w-full" style={{ background: coverGradient(supplierName) }} />
+              )}
+              <div className="absolute bottom-0 left-6 translate-y-1/2">
+                <ProfileImage
+                  src={supplier.avatar_url}
+                  alt={`${contactName} avatar`}
+                  className="h-[72px] w-[72px] rounded-full border-[3px] border-white object-cover shadow-lg"
+                  fallbackClassName="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full border-[3px] border-white bg-[#E7F8F2] text-lg font-bold text-[#085041] shadow-lg"
+                  fallbackText={initialsFromName(contactName, "S")}
+                  seedName={contactName}
+                />
+              </div>
+            </div>
+
+            <div className="px-6 pb-6 pt-12">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[0.72rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
+                    <span aria-hidden="true">&#10003;</span> Verified Supplier
+                  </p>
+                  <h1 className="mt-2 font-display text-[28px] font-medium leading-tight text-[#1a3a2a] sm:text-4xl">
+                    {supplierName}
+                  </h1>
+                  <p className="mt-2 text-sm text-stone-600">
+                    {[supplier.industry, primaryProvince(supplier)].filter(Boolean).join(" | ")}
+                  </p>
+                </div>
+                <div className="w-fit rounded-lg border bg-white px-4 py-3 text-center" style={{ borderColor: GOLD }}>
+                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>SmartScore</p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums text-[#1a3a2a]">{formatScore(supplier.smart_score)}</p>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                <VerificationPill label="CSD" active={Boolean(supplier.csd_verified)} />
+                <VerificationPill label="BBBEE" active={Boolean(supplier.bbbee_verified)} />
+                <VerificationPill label="Tax" active={Boolean(supplier.tax_verified)} />
+                <VerificationPill label="Banking" active={bankVerified} />
+                <VerificationPill label="Director" active={Boolean(supplier.director_verified)} />
+              </div>
+            </div>
           </div>
         </div>
       </header>
@@ -196,20 +261,6 @@ export default async function SupplierProfilePage({ params }: Props) {
             <p className="mt-4 text-sm leading-7 text-stone-700">
               {supplier.description?.trim() || "No description provided."}
             </p>
-            <div className="mt-5 flex items-center gap-3 rounded-lg border border-stone-200 bg-[#fbf8f1] p-4">
-              <ProfileImage
-                src={supplier.avatar_url}
-                alt={`${contactName} avatar`}
-                className="h-12 w-12 rounded-full border border-stone-200 object-cover"
-                fallbackClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#E7F8F2] text-sm font-bold text-[#085041]"
-                fallbackText={initialsFromName(contactName, "S")}
-                seedName={contactName}
-              />
-              <div className="min-w-0">
-                <p className="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-stone-500">Contact</p>
-                <p className="truncate text-sm font-semibold text-[#1f2f28]">{contactName}</p>
-              </div>
-            </div>
           </div>
 
           <div className="rounded-lg border border-stone-200 bg-white p-5 sm:p-6">
