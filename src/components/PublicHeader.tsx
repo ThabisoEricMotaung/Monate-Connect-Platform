@@ -200,8 +200,8 @@ export default function PublicHeader() {
                 <Link
                   href={dashboardHref}
                   style={{
-                    background: "#1a3a2a",
-                    color: "#ffffff",
+                    background: "#c8960c",
+                    color: "#1a3a2a",
                     border: "none",
                     borderRadius: "6px",
                     padding: "8px 16px",
@@ -346,8 +346,8 @@ export default function PublicHeader() {
                       href={dashboardHref}
                       onClick={() => setMenuOpen(false)}
                       style={{
-                        background: "#1a3a2a",
-                        color: "#ffffff",
+                        background: "#c8960c",
+                        color: "#1a3a2a",
                         border: "none",
                         borderRadius: "6px",
                         padding: "10px 16px",

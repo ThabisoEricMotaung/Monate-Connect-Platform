@@ -8,7 +8,6 @@ const NP_STYLES = `
     grid-template-columns: 1fr 1px 1.6fr 1px 1fr;
   }
   .np-col-divider { background: #1a1208; }
-  .np-edition-center { }
   .np-cta-btn { transition: background 0.15s, color 0.15s; }
   .np-cta-btn:hover { background: #5DCAA5 !important; color: #1a3a2a !important; }
   @media (max-width: 767px) {
@@ -16,9 +15,6 @@ const NP_STYLES = `
     .np-col-divider { display: none; }
     .np-cta-bar { flex-direction: column !important; align-items: stretch !important; }
     .np-cta-btn { width: 100%; text-align: center; display: block !important; box-sizing: border-box; }
-  }
-  @media (max-width: 479px) {
-    .np-edition-center { display: none; }
   }
 `
 
@@ -273,7 +269,6 @@ export default function HomepageNewspaper() {
         {/* C) EDITION BAR */}
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 24px', borderBottom: '1px solid #1a1208', borderTop: '1px solid #1a1208', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3a2e1a', background: 'rgba(237,232,212,0.85)' }}>
           <span>Vol. I · No. 1</span>
-          <span className="np-edition-center">CSD · BBBEE · SARS · CIPC · National Treasury</span>
           <span>Free during pilot · Until Oct 2026</span>
         </div>
 
