@@ -417,7 +417,10 @@ export default function ThusoAssistant() {
     <>
       {open ? (
         <section className="thuso-panel" aria-label="Thuso assistant panel">
-          <header className="flex items-center justify-between gap-3 border-b border-panel px-4 py-3">
+          <header
+            className="flex items-center justify-between gap-3 px-4 py-3"
+            style={{ background: "#1a3a2a", borderBottom: "1px solid rgba(240,235,224,0.12)" }}
+          >
             <div className="flex items-center gap-2.5">
               <Image
                 src="/aiform-mark.png"
@@ -428,15 +431,16 @@ export default function ThusoAssistant() {
                 priority
               />
               <div>
-                <h2 className="text-sm font-bold text-heading leading-tight">Thuso</h2>
-                <p className="text-xs text-secondary leading-tight">AiForm Procure assistant</p>
+                <h2 className="text-sm font-bold leading-tight" style={{ color: "#f0ebe0" }}>Thuso</h2>
+                <p className="text-xs leading-tight" style={{ color: "rgba(240,235,224,0.65)" }}>AiForm Procure assistant</p>
               </div>
             </div>
             <button
               type="button"
               aria-label="Close Thuso assistant"
               onClick={() => setOpen(false)}
-              className="rounded-full border border-panel bg-panel px-3 py-1 text-sm font-bold text-secondary transition hover:border-accent hover:text-accent"
+              className="rounded-full px-3 py-1 text-sm font-bold transition"
+              style={{ color: "#f0ebe0", border: "1px solid rgba(240,235,224,0.35)", background: "rgba(240,235,224,0.08)" }}
             >
               ×
             </button>
@@ -521,7 +525,7 @@ export default function ThusoAssistant() {
             <div ref={messageEndRef} />
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t border-panel p-4">
+          <form onSubmit={handleSubmit} className="p-4 thuso-input-area">
             {pendingImage ? (
               <div className="relative mb-2 inline-block">
                 <DataImg
@@ -557,7 +561,7 @@ export default function ThusoAssistant() {
                 type="button"
                 aria-label="Attach image"
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex h-12 w-10 shrink-0 items-center justify-center rounded-md border border-panel text-secondary transition hover:border-accent hover:text-accent"
+                className="thuso-attach-btn inline-flex h-12 w-10 shrink-0 items-center justify-center rounded-md border transition"
               >
                 <PaperclipIcon />
               </button>
@@ -579,7 +583,8 @@ export default function ThusoAssistant() {
                 type="submit"
                 aria-label="Send message to Thuso"
                 disabled={loading || (input.trim().length === 0 && !pendingImage)}
-                className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-accent bg-accent text-button shadow-panel transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-panel transition disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ background: "#1a3a2a", border: "1px solid #1a3a2a", color: "#f0ebe0" }}
               >
                 <SendIcon />
               </button>

@@ -4,7 +4,7 @@ import Image from "next/image"
 
 export default function BrandMark({
   className = "",
-  imageClassName = "h-7 w-auto",
+  imageClassName = "h-9 w-auto",
 }: {
   className?: string
   imageClassName?: string
@@ -13,6 +13,12 @@ export default function BrandMark({
     <span
       className={`logo-mark flex shrink-0 items-center justify-center ${className}`}
       aria-hidden="true"
+      style={{
+        background: "rgba(30, 58, 100, 0.15)",
+        border: "1px solid rgba(30, 58, 100, 0.2)",
+        borderRadius: "10px",
+        padding: "6px",
+      }}
     >
       <Image
         src="/aiform-mark.png"

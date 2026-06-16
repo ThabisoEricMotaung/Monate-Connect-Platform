@@ -737,7 +737,7 @@ a.bg-accent:hover,
   max-height: 70vh;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid #1a3a2a;
   border-radius: 16px;
   background: var(--card);
   color: var(--text-primary);
@@ -745,7 +745,7 @@ a.bg-accent:hover,
 }
 
 :root[data-theme="light"] .thuso-panel {
-  background: #fffaf0;
+  background: #f8f4ec;
   box-shadow: 0 24px 70px rgba(10, 32, 32, 0.18);
 }
 
@@ -772,20 +772,19 @@ a.bg-accent:hover,
 
 .thuso-bubble--assistant {
   align-self: flex-start;
-  border: 1px solid rgba(201, 168, 76, 0.28);
-  background: #F5F1E8;
-  color: #1F2F2F;
+  background: #1a3a2a;
+  color: #f0ebe0;
 }
 
 .thuso-bubble--user {
   align-self: flex-end;
-  background: #0A3030;
-  color: #FFFAF0;
+  background: #c8a060;
+  color: #1a3a2a;
 }
 
 :root[data-theme="dark"] .thuso-bubble--assistant {
-  background: #F0E6D2;
-  color: #1F2F2F;
+  background: #f0ebe0;
+  color: #1a3a2a;
 }
 
 .thuso-nudge {
@@ -852,7 +851,7 @@ a.bg-accent:hover,
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #C9A84C;
+  background: #c8a060;
   animation: thuso-bounce 1.2s infinite ease-in-out;
 }
 
@@ -865,21 +864,22 @@ a.bg-accent:hover,
 
 .thuso-suggestion-card {
   text-align: left;
-  border: 1px solid rgba(201, 168, 76, 0.35);
+  border: 1px solid #1a3a2a;
   border-radius: 10px;
-  background: rgba(201, 168, 76, 0.06);
-  color: var(--text-primary);
+  background: transparent;
+  color: #1a3a2a;
   font-size: 0.8rem;
   font-weight: 600;
   line-height: 1.4;
   padding: 0.625rem 0.75rem;
   cursor: pointer;
-  transition: background 140ms ease, border-color 140ms ease;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
 }
 
 .thuso-suggestion-card:hover {
-  background: rgba(201, 168, 76, 0.14);
-  border-color: rgba(201, 168, 76, 0.65);
+  background: #1a3a2a;
+  color: #f0ebe0;
+  border-color: #1a3a2a;
 }
 
 .thuso-feedback-row {
@@ -900,24 +900,26 @@ a.bg-accent:hover,
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: 1px solid #1a3a2a;
   border-radius: 6px;
   background: transparent;
-  color: var(--text-secondary);
+  color: #1a3a2a;
   font-size: 0.7rem;
   font-weight: 600;
   padding: 0.2rem 0.5rem;
   cursor: pointer;
-  transition: color 120ms ease, border-color 120ms ease;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
 
 :root[data-theme="dark"] .thuso-feedback-btn {
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(240, 235, 224, 0.35);
+  color: rgba(240, 235, 224, 0.75);
 }
 
 .thuso-feedback-btn:hover {
-  color: #C9A84C;
-  border-color: #C9A84C;
+  background: #1a3a2a;
+  color: #f0ebe0;
+  border-color: #1a3a2a;
 }
 
 .thuso-feedback-thanks {
@@ -964,7 +966,27 @@ a.bg-accent:hover,
 }
 
 .thuso-feedback-send:hover {
-  background: rgba(201, 168, 76, 0.12);
+  background: rgba(26, 58, 42, 0.08);
+}
+
+.thuso-attach-btn {
+  border-color: rgba(26, 58, 42, 0.25);
+  color: rgba(26, 58, 42, 0.6);
+}
+
+.thuso-attach-btn:hover {
+  border-color: #1a3a2a;
+  color: #1a3a2a;
+}
+
+.thuso-input-area {
+  border-top: 1px solid #1a3a2a;
+  background: #fff;
+}
+
+:root[data-theme="dark"] .thuso-input-area {
+  background: #0c3535;
+  border-top-color: rgba(240, 235, 224, 0.12);
 }
 
 .appearance-core {
