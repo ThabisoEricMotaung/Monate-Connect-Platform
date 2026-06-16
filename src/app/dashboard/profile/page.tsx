@@ -389,6 +389,7 @@ function FileRow({ label, url, status }: { label: string; url: string; status: "
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Kept temporarily while the upload UX migrates to the cover header.
 function ProfileImageUploads({
   profile,
   onSave,
@@ -661,13 +662,13 @@ function ProfileHeaderCard({
   profile,
   bank,
   onTabChange,
+  onSave,
 }: {
-  profile: Profile | null
+  profile: Profile
   bank: BankRecord | null
   onTabChange: (tab: Tab) => void
+  onSave: (patch: Partial<Profile>) => Promise<SaveResult>
 }) {
-  if (!profile) return null
-
   const csdVerified = Boolean(profile.csd_number) && isVerified(profile.verification_status)
   const bbbeeVerified = Boolean(profile.bbbee_level) && isVerified(profile.verification_status)
   const taxPending = Boolean(profile.tax_document_url) && !isVerified(profile.verification_status)
@@ -682,10 +683,153 @@ function ProfileHeaderCard({
   const smartScore = calculateSmartScore(scoreProfile(profile, bank))
   const location = profile.province ? displayProvinceValue(profile.province) : ""
   const profileMeta = [profile.industry, location].filter(Boolean).join(" | ") || "Industry | Province"
+  const [uploading, setUploading] = useState<"avatar" | "logo" | null>(null)
+  const [pendingUpload, setPendingUpload] = useState<{
+    file: File
+    kind: "avatar" | "logo"
+    previewUrl: string
+  } | null>(null)
+  const [crop, setCrop] = useState<Crop>()
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null)
+  const [message, setMessage] = useState("")
+  const [error, setError] = useState("")
+  const coverInputRef = useRef<HTMLInputElement | null>(null)
+  const avatarInputRef = useRef<HTMLInputElement | null>(null)
+  const cropImageRef = useRef<HTMLImageElement | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (pendingUpload?.previewUrl) URL.revokeObjectURL(pendingUpload.previewUrl)
+    }
+  }, [pendingUpload?.previewUrl])
+
+  function startImageCrop(
+    e: React.ChangeEvent<HTMLInputElement>,
+    kind: "avatar" | "logo",
+  ) {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file || !supabase) return
+
+    const isAvatar = kind === "avatar"
+    const validTypes = isAvatar ? PERSONAL_PHOTO_TYPES : COMPANY_LOGO_TYPES
+    const maxBytes = isAvatar ? PERSONAL_PHOTO_MAX_BYTES : COMPANY_LOGO_MAX_BYTES
+
+    setError("")
+    setMessage("")
+
+    if (!validTypes.includes(file.type)) {
+      setError(isAvatar ? "Upload a JPEG, PNG, or WebP photo." : "Upload a JPEG, PNG, WebP, or SVG cover image.")
+      return
+    }
+
+    if (file.size > maxBytes) {
+      setError(isAvatar ? "Personal photo must be 2MB or smaller." : "Cover image must be 5MB or smaller.")
+      return
+    }
+
+    setCrop(undefined)
+    setCompletedCrop(null)
+    setPendingUpload({ file, kind, previewUrl: URL.createObjectURL(file) })
+  }
+
+  function closeCropModal() {
+    setPendingUpload(null)
+    setCrop(undefined)
+    setCompletedCrop(null)
+    setUploading(null)
+  }
+
+  function imageCropToPixels(image: HTMLImageElement): PixelCrop | null {
+    if (completedCrop?.width && completedCrop?.height) return completedCrop
+    if (!crop?.width || !crop?.height) return null
+
+    if (crop.unit === "%") {
+      return {
+        unit: "px",
+        x: ((crop.x ?? 0) / 100) * image.width,
+        y: ((crop.y ?? 0) / 100) * image.height,
+        width: (crop.width / 100) * image.width,
+        height: (crop.height / 100) * image.height,
+      }
+    }
+
+    return {
+      unit: "px",
+      x: crop.x ?? 0,
+      y: crop.y ?? 0,
+      width: crop.width,
+      height: crop.height,
+    }
+  }
+
+  async function saveCroppedImage() {
+    if (!pendingUpload || !supabase || !cropImageRef.current) return
+    const pixelCrop = imageCropToPixels(cropImageRef.current)
+    if (!pixelCrop) {
+      setError("Choose a square crop before saving.")
+      return
+    }
+
+    const isAvatar = pendingUpload.kind === "avatar"
+    setUploading(pendingUpload.kind)
+    setError("")
+    setMessage("")
+
+    let blob: Blob
+    try {
+      blob = await getCroppedImageBlob(cropImageRef.current, pixelCrop)
+    } catch (cropError) {
+      setError(cropError instanceof Error ? cropError.message : "Image crop failed.")
+      setUploading(null)
+      return
+    }
+
+    const bucket = isAvatar ? "avatars" : "company-logos"
+    const path = isAvatar ? `${profile.id}/avatar.jpg` : `${profile.id}/logo.jpg`
+    const column = isAvatar ? "avatar_url" : "company_logo_url"
+    const publicUrl = publicStorageUrl(bucket, path)
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(path, blob, { contentType: "image/jpeg", upsert: true })
+
+    if (uploadError) {
+      setError(uploadError.message)
+      setUploading(null)
+      return
+    }
+
+    const result = await onSave({ [column]: publicUrl } as Partial<Profile>)
+    setUploading(null)
+    if (!result.ok) {
+      setError(result.error ?? "The image uploaded, but the profile URL could not be saved.")
+      return
+    }
+
+    setMessage(isAvatar ? "Profile photo updated." : "Cover image updated.")
+    closeCropModal()
+  }
 
   return (
+    <>
     <div className="mt-5 overflow-hidden rounded-md border border-panel bg-card shadow-panel">
       <div className="relative h-[180px]">
+        <input
+          ref={coverInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/svg+xml"
+          className="sr-only"
+          disabled={uploading !== null}
+          onChange={(e) => startImageCrop(e, "logo")}
+        />
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="sr-only"
+          disabled={uploading !== null}
+          onChange={(e) => startImageCrop(e, "avatar")}
+        />
         {profile.company_logo_url ? (
           <Image
             src={profile.company_logo_url}
@@ -698,18 +842,56 @@ function ProfileHeaderCard({
         ) : (
           <div className="h-full w-full" style={{ background: coverGradient(businessName) }} />
         )}
-        <div className="absolute bottom-0 left-6 translate-y-1/2">
+        <button
+          type="button"
+          onClick={() => coverInputRef.current?.click()}
+          className="group absolute inset-0 z-10 cursor-pointer"
+          aria-label="Change cover image"
+        >
+          <span className="flex h-full w-full items-center justify-center bg-black/0 opacity-0 transition group-hover:bg-black/45 group-hover:opacity-100 group-focus-visible:bg-black/45 group-focus-visible:opacity-100">
+            <span className="inline-flex items-center gap-2 rounded-full bg-black/55 px-4 py-2 text-sm font-bold text-white shadow-lg">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+              Change cover
+            </span>
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => avatarInputRef.current?.click()}
+          className="group absolute bottom-0 left-6 z-20 translate-y-1/2 cursor-pointer rounded-full"
+          aria-label="Change profile photo"
+        >
           <ProfileImage
             src={profile.avatar_url}
             alt={`${contactName} avatar`}
-            className="h-[72px] w-[72px] rounded-full border-[3px] border-card object-cover shadow-lg"
-            fallbackClassName="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full border-[3px] border-card bg-accent text-lg font-bold text-button shadow-lg"
+            className="h-24 w-24 rounded-full border-[3px] border-card object-cover shadow-lg"
+            fallbackClassName="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-[3px] border-card bg-accent text-2xl font-bold text-button shadow-lg"
             fallbackText={initialsFromName(contactName, "S")}
             seedName={contactName}
           />
-        </div>
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 opacity-0 transition group-hover:bg-black/55 group-hover:opacity-100 group-focus-visible:bg-black/55 group-focus-visible:opacity-100">
+            <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+              <circle cx="12" cy="13" r="3" />
+            </svg>
+          </span>
+        </button>
       </div>
-      <div className="px-6 pb-5 pt-12">
+      <div className="px-6 pb-5 pt-14">
+        <p className="mb-4 text-[13px] text-secondary">Click your cover or profile photo to update</p>
+        {error && (
+          <div className="mb-4 rounded-md border border-rose-500/25 bg-rose-500/10 px-4 py-3">
+            <p className="text-xs font-semibold text-rose-700">{error}</p>
+          </div>
+        )}
+        {message && (
+          <div className="mb-4 rounded-md border border-success/30 bg-success-soft px-4 py-3">
+            <p className="text-xs font-semibold text-success">{message}</p>
+          </div>
+        )}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <p className="text-xl font-bold text-heading">{businessName}</p>
@@ -747,6 +929,70 @@ function ProfileHeaderCard({
         </p>
       </div>
     </div>
+    {pendingUpload && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4" role="dialog" aria-modal="true" aria-labelledby="crop-image-title">
+        <div className="w-full max-w-xl rounded-md border border-panel bg-card p-5 shadow-panel">
+          <div className="mb-4 flex items-start justify-between gap-4 border-b border-panel pb-3">
+            <div>
+              <h3 id="crop-image-title" className="text-base font-bold text-heading">
+                Crop {pendingUpload.kind === "avatar" ? "profile photo" : "cover image"}
+              </h3>
+              <p className="mt-1 text-xs text-secondary">Drag to position a 1:1 square crop before saving.</p>
+            </div>
+            <button
+              type="button"
+              onClick={closeCropModal}
+              className="rounded-md border border-panel bg-panel px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent"
+            >
+              Cancel
+            </button>
+          </div>
+
+          <div className="max-h-[60vh] overflow-auto rounded-md border border-panel bg-panel p-3">
+            <ReactCrop
+              crop={crop}
+              aspect={1}
+              minWidth={80}
+              minHeight={80}
+              keepSelection
+              onChange={(_, percentCrop) => setCrop(percentCrop)}
+              onComplete={(pixelCrop) => setCompletedCrop(pixelCrop)}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element -- react-image-crop needs an HTMLImageElement for canvas cropping. */}
+              <img
+                ref={cropImageRef}
+                src={pendingUpload.previewUrl}
+                alt="Crop preview"
+                className="max-h-[52vh] w-auto max-w-full"
+                onLoad={(event) => {
+                  const nextCrop = centerSquareCrop(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight)
+                  setCrop(nextCrop)
+                }}
+              />
+            </ReactCrop>
+          </div>
+
+          <div className="mt-4 flex flex-wrap justify-end gap-3">
+            <button
+              type="button"
+              onClick={closeCropModal}
+              className="rounded-md border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-surface"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={uploading !== null}
+              onClick={saveCroppedImage}
+              className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {uploading ? "Saving..." : "Crop & Save"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   )
 }
 
@@ -930,8 +1176,6 @@ function ProfileTab({
 
   return (
     <div className="space-y-4">
-      <ProfileImageUploads profile={profile} onSave={onSave} />
-
       <div className="rounded-md border border-panel bg-panel p-6">
         <div className="mb-5 flex items-center justify-between gap-4 border-b border-panel pb-4">
           <h2 className="text-base font-bold text-heading">Business details</h2>
@@ -1872,7 +2116,7 @@ function ProfilePageInner() {
         ))}
       </div>
 
-      {profile && <ProfileHeaderCard profile={profile} bank={bank} onTabChange={requestTabChange} />}
+      {profile && <ProfileHeaderCard profile={profile} bank={bank} onTabChange={requestTabChange} onSave={handleSave} />}
 
       <div className="mt-4 flex flex-col gap-4 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1">

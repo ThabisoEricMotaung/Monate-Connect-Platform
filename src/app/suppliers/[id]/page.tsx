@@ -215,15 +215,15 @@ export default async function SupplierProfilePage({ params }: Props) {
                 <ProfileImage
                   src={supplier.avatar_url}
                   alt={`${contactName} avatar`}
-                  className="h-[72px] w-[72px] rounded-full border-[3px] border-white object-cover shadow-lg"
-                  fallbackClassName="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full border-[3px] border-white bg-[#E7F8F2] text-lg font-bold text-[#085041] shadow-lg"
+                  className="h-24 w-24 rounded-full border-[3px] border-white object-cover shadow-lg"
+                  fallbackClassName="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-[3px] border-white bg-[#E7F8F2] text-2xl font-bold text-[#085041] shadow-lg"
                   fallbackText={initialsFromName(contactName, "S")}
                   seedName={contactName}
                 />
               </div>
             </div>
 
-            <div className="px-6 pb-6 pt-12">
+            <div className="px-6 pb-6 pt-14">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-[0.72rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
