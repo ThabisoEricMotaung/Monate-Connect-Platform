@@ -1,5 +1,18 @@
 "use client"
 
+import {
+  IconBuildingStore,
+  IconFileCertificate,
+  IconFileText,
+  IconHome,
+  IconMenu2,
+  IconMessageCircle,
+  IconPlus,
+  IconReceipt,
+  IconShoppingCart,
+  IconX,
+  type TablerIcon,
+} from "@tabler/icons-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
@@ -22,7 +35,7 @@ type BuyerProfile = {
 type NavItem = {
   name: string
   href: string
-  icon: string
+  icon: TablerIcon
   badge?: number
 }
 
@@ -37,52 +50,67 @@ function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + "/")
 }
 
-function NavLink({ item, pathname, onNavigate }: { item: NavItem; pathname: string; onNavigate?: () => void }) {
+function NavLink({
+  item,
+  pathname,
+  onNavigate,
+}: {
+  item: NavItem
+  pathname: string
+  onNavigate?: () => void
+}) {
   const active = isActivePath(pathname, item.href)
+  const IconComponent = item.icon
+
   return (
     <Link
       href={item.href}
       onClick={onNavigate}
-      className={`flex items-center justify-between gap-3 rounded-md border px-3 py-2.5 text-sm font-semibold transition-colors ${
+      className={`flex items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition-colors ${
         active
-          ? "border-accent bg-surface text-primary shadow-sm"
-          : "border-transparent text-secondary hover:bg-surface hover:text-primary"
+          ? "bg-[#f0f7f3] text-[#1a3a2a]"
+          : "bg-white text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
       }`}
     >
       <span className="flex min-w-0 flex-1 items-center gap-2">
-        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-panel bg-panel text-[0.72rem] text-accent">
-          {item.icon}
-        </span>
+        <IconComponent
+          aria-hidden="true"
+          className={`h-5 w-5 shrink-0 ${active ? "text-[#1a3a2a]" : "text-[#aaaaaa]"}`}
+          stroke={1.8}
+        />
         <span className="min-w-0 flex-1 whitespace-normal break-words leading-tight">{item.name}</span>
       </span>
-      {item.badge != null && item.badge > 0 && (
-        <span className="inline-flex min-w-7 shrink-0 items-center justify-center rounded-full border border-sky-500/25 bg-sky-500/10 px-2 py-0.5 text-[0.62rem] font-bold tabular-nums text-sky-200">
-          {item.badge > 99 ? "99+" : item.badge}
-        </span>
-      )}
+      <span className="flex shrink-0 items-center gap-2">
+        {item.badge != null && item.badge > 0 && (
+          <span className="inline-flex min-w-7 items-center justify-center rounded-full border border-sky-500/20 bg-sky-50 px-2 py-0.5 text-[0.62rem] font-bold tabular-nums text-sky-700">
+            {item.badge > 99 ? "99+" : item.badge}
+          </span>
+        )}
+        {active && <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#c8a060]" />}
+      </span>
     </Link>
   )
 }
 
 const BASE_NAVIGATION: NavGroup[] = [
   {
-    items: [{ name: "Home dashboard", href: "/dashboard/buyer", icon: "H" }],
+    items: [{ name: "Home dashboard", href: "/dashboard/buyer", icon: IconHome }],
   },
   {
     label: "Procurement",
     items: [
-      { name: "Create RFQ", href: "/dashboard/buyer/rfqs/new", icon: "+" },
-      { name: "My RFQs", href: "/dashboard/buyer/rfqs", icon: "R" },
-      { name: "Quotes received", href: "/dashboard/buyer/quotes", icon: "Q" },
-      { name: "Purchase orders", href: "/dashboard/buyer/purchase-orders", icon: "P" },
-      { name: "Contracts", href: "/dashboard/buyer/contracts", icon: "C" },
-      { name: "Invoices", href: "/dashboard/buyer/invoices", icon: "I" },
+      { name: "Create RFQ", href: "/dashboard/buyer/rfqs/new", icon: IconPlus },
+      { name: "My RFQs", href: "/dashboard/buyer/rfqs", icon: IconFileText },
+      { name: "Quotes received", href: "/dashboard/buyer/quotes", icon: IconMessageCircle },
+      { name: "Purchase orders", href: "/dashboard/buyer/purchase-orders", icon: IconShoppingCart },
+      { name: "Contracts", href: "/dashboard/buyer/contracts", icon: IconFileCertificate },
+      { name: "Invoices", href: "/dashboard/buyer/invoices", icon: IconReceipt },
     ],
   },
   {
     label: "Suppliers",
     divider: true,
-    items: [{ name: "Supplier directory", href: "/suppliers", icon: "S" }],
+    items: [{ name: "Supplier directory", href: "/suppliers", icon: IconBuildingStore }],
   },
 ]
 
@@ -137,9 +165,7 @@ export default function BuyerDashboardLayout({
       const quotes = (quoteResult.data ?? []) as { status: string | null }[]
       setUnreviewedQuotes(
         quotes.filter((q) =>
-          ["", "pending", "under review"].includes(
-            String(q.status ?? "").toLowerCase(),
-          ),
+          ["", "pending", "under review"].includes(String(q.status ?? "").toLowerCase()),
         ).length,
       )
     }
@@ -152,8 +178,8 @@ export default function BuyerDashboardLayout({
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-page text-primary">
-        <div className="rounded-md border border-panel bg-card p-6 text-sm text-secondary shadow-panel">
+      <main className="flex min-h-screen items-center justify-center bg-[#f8f8f6] text-[#1a3a2a]">
+        <div className="rounded-md border border-[#ebebeb] bg-white p-6 text-sm text-[#555555] shadow-sm">
           Loading your workspace&hellip;
         </div>
       </main>
@@ -170,7 +196,7 @@ export default function BuyerDashboardLayout({
   }))
 
   return (
-    <main className="flex min-h-screen bg-page text-primary">
+    <main className="flex min-h-screen bg-[#f8f8f6] text-[#1a3a2a]">
       {sidebarOpen && (
         <button
           type="button"
@@ -181,35 +207,35 @@ export default function BuyerDashboardLayout({
       )}
 
       <aside
-        className={`dashboard-sidebar fixed inset-y-0 left-0 z-50 flex w-[min(20rem,100vw)] -translate-x-full flex-col overflow-y-auto border-r border-panel bg-panel p-4 transition-transform duration-200 print:hidden md:sticky md:top-0 md:h-screen md:w-56 md:min-w-[14rem] md:translate-x-0 ${
+        className={`dashboard-sidebar fixed inset-y-0 left-0 z-50 flex w-[min(20rem,100vw)] -translate-x-full flex-col overflow-y-auto border-r-[0.5px] border-[#ebebeb] bg-white p-4 transition-transform duration-200 print:hidden md:sticky md:top-0 md:h-screen md:w-56 md:min-w-[14rem] md:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : ""
         }`}
       >
         <button
           type="button"
           onClick={closeSidebar}
-          className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md border border-panel bg-surface text-xl text-secondary transition hover:text-primary md:hidden"
+          className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#ebebeb] bg-white text-[#555555] transition hover:text-[#1a3a2a] md:hidden"
           aria-label="Close navigation menu"
         >
-          ×
+          <IconX aria-hidden="true" className="h-5 w-5" stroke={1.8} />
         </button>
 
         <Link
           href="/dashboard/buyer/rfqs/new"
           onClick={closeSidebar}
-          className="mb-5 inline-flex w-full justify-center rounded-md border border-accent bg-accent px-4 py-3 text-sm font-bold text-button shadow-sm transition hover:bg-accent-strong"
+          className="mb-5 inline-flex w-full justify-center rounded-md border border-[#1a3a2a] bg-[#1a3a2a] px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#244f39]"
         >
           New RFQ
         </Link>
 
-        <nav className="space-y-5 flex-1">
+        <nav className="flex-1 space-y-5">
           {navWithBadges.map((group) => (
             <div
               key={group.label ?? "main"}
-              className={group.divider ? "border-t border-panel pt-5" : ""}
+              className={group.divider ? "border-t border-[#ebebeb] pt-5" : ""}
             >
               {group.label && (
-                <p className="mb-2 px-1 text-[0.64rem] font-semibold uppercase tracking-[0.22em] text-secondary">
+                <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#aaaaaa]">
                   {group.label}
                 </p>
               )}
@@ -224,26 +250,26 @@ export default function BuyerDashboardLayout({
       </aside>
 
       <section className="w-full min-w-0 flex-1 overflow-x-hidden px-4 py-5 pb-[calc(var(--news-ticker-height)+3rem)] md:p-8 md:pb-[calc(var(--news-ticker-height)+2rem)]">
-        <div className="dashboard-chrome print:hidden mb-6 flex items-center justify-between gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
+        <div className="dashboard-chrome print:hidden -mx-4 -mt-5 mb-6 flex items-center justify-between gap-4 border-b-[0.5px] border-[#ebebeb] bg-white px-5 py-4 md:-mx-8 md:-mt-8">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-panel bg-surface text-xl font-semibold text-secondary transition hover:text-primary md:hidden"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#ebebeb] bg-white text-[#555555] transition hover:text-[#1a3a2a] md:hidden"
             aria-label="Open navigation menu"
           >
-            ☰
+            <IconMenu2 aria-hidden="true" className="h-5 w-5" stroke={1.8} />
           </button>
           <Link
             href="/dashboard/buyer"
-            className="flex min-w-0 cursor-pointer items-center gap-3 rounded-sm transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            className="flex min-w-0 cursor-pointer items-center gap-3 rounded-sm transition hover:text-[#1a3a2a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c8a060]"
           >
             <BrandMark className="h-11 w-11" imageClassName="h-7 w-auto" />
             <span className="sr-only">AiForm Procure home</span>
             <div className="min-w-0">
-              <p className="truncate text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-secondary">
+              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-[#aaaaaa]">
                 Buyer workspace
               </p>
-              <p className="mt-1 truncate text-sm font-semibold text-heading">
+              <p className="mt-1 truncate text-sm font-semibold text-[#1a3a2a]">
                 AiForm Procure
               </p>
             </div>
