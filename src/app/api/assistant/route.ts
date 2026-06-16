@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { THUSO_SYSTEM_PROMPT } from "@/lib/thuso/prompt"
 
+type TextPart = { type: "text"; text: string }
+type ImagePart = { type: "image_url"; image_url: { url: string } }
+type ContentPart = TextPart | ImagePart
+
 type AssistantMessage = {
   role: "user" | "assistant"
-  content: string
+  content: string | ContentPart[]
 }
 
 type OpenAIChatCompletionResponse = {
@@ -44,6 +48,41 @@ function isRateLimited(ip: string): boolean {
   return false
 }
 
+function validateContent(value: unknown): string | ContentPart[] | null {
+  if (typeof value === "string") {
+    return value.length <= 2000 ? value : null
+  }
+
+  if (!Array.isArray(value) || value.length === 0 || value.length > 2) return null
+
+  const parts: ContentPart[] = []
+
+  for (const item of value) {
+    if (!item || typeof item !== "object") return null
+    const part = item as Record<string, unknown>
+
+    if (typeof part.type !== "string") return null
+
+    if (part.type === "text") {
+      if (typeof part.text !== "string" || part.text.length > 2000) return null
+      parts.push({ type: "text", text: part.text })
+    } else if (part.type === "image_url") {
+      if (!part.image_url || typeof part.image_url !== "object") return null
+      const imgObj = part.image_url as Record<string, unknown>
+      if (typeof imgObj.url !== "string") return null
+      const url = imgObj.url
+      if (!url.startsWith("data:image/")) return null
+      // ~10 MB base64 string ≈ 7.5 MB binary — enforces the 5 MB file-size limit
+      if (url.length > 10_000_000) return null
+      parts.push({ type: "image_url", image_url: { url } })
+    } else {
+      return null
+    }
+  }
+
+  return parts
+}
+
 function validateMessages(value: unknown): AssistantMessage[] | null {
   if (!Array.isArray(value) || value.length > 20) return null
 
@@ -59,18 +98,15 @@ function validateMessages(value: unknown): AssistantMessage[] | null {
       return null
     }
 
-    const role = message.role
-    const content = message.content
+    const msg = message as { role: unknown; content: unknown }
+    const { role, content } = msg
 
-    if (
-      (role !== "user" && role !== "assistant") ||
-      typeof content !== "string" ||
-      content.length > 1000
-    ) {
-      return null
-    }
+    if (role !== "user" && role !== "assistant") return null
 
-    messages.push({ role, content })
+    const validContent = validateContent(content)
+    if (validContent === null) return null
+
+    messages.push({ role: role as "user" | "assistant", content: validContent })
   }
 
   return messages
@@ -96,13 +132,13 @@ export async function POST(request: NextRequest) {
 
   const messages = validateMessages(
     body && typeof body === "object" && "messages" in body
-      ? body.messages
+      ? (body as { messages: unknown }).messages
       : undefined
   )
 
   if (!messages) {
     return NextResponse.json(
-      { error: "Send up to 20 messages, each under 1000 characters." },
+      { error: "Send up to 20 messages, each under 2000 characters." },
       { status: 400 }
     )
   }

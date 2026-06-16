@@ -767,6 +767,7 @@ a.bg-accent:hover,
   max-width: 86%;
   border-radius: 14px;
   padding: 0.75rem 0.875rem;
+  animation: thuso-fadein 200ms ease forwards;
 }
 
 .thuso-bubble--assistant {
@@ -779,7 +780,7 @@ a.bg-accent:hover,
 .thuso-bubble--user {
   align-self: flex-end;
   background: #0A3030;
-  color: #FFFFFF;
+  color: #FFFAF0;
 }
 
 :root[data-theme="dark"] .thuso-bubble--assistant {
@@ -812,6 +813,158 @@ a.bg-accent:hover,
   font-size: 1rem;
   font-weight: 800;
   line-height: 1;
+}
+
+@keyframes thuso-fadein {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes thuso-bounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.thuso-message-row {
+  animation: thuso-fadein 200ms ease forwards;
+}
+
+.thuso-avatar {
+  border-radius: 4px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.thuso-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #C9A84C;
+  animation: thuso-bounce 1.2s infinite ease-in-out;
+}
+
+.thuso-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 0.25rem;
+}
+
+.thuso-suggestion-card {
+  text-align: left;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 10px;
+  background: rgba(201, 168, 76, 0.06);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 0.625rem 0.75rem;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.thuso-suggestion-card:hover {
+  background: rgba(201, 168, 76, 0.14);
+  border-color: rgba(201, 168, 76, 0.65);
+}
+
+.thuso-feedback-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  padding-left: 0.125rem;
+}
+
+.thuso-feedback-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.thuso-feedback-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+:root[data-theme="dark"] .thuso-feedback-btn {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.thuso-feedback-btn:hover {
+  color: #C9A84C;
+  border-color: #C9A84C;
+}
+
+.thuso-feedback-thanks {
+  margin-top: 0.35rem;
+  padding-left: 0.125rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #C9A84C;
+}
+
+.thuso-feedback-detail {
+  display: flex;
+  gap: 0.375rem;
+  margin-top: 0.35rem;
+}
+
+.thuso-feedback-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--page);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+
+.thuso-feedback-input:focus {
+  border-color: #C9A84C;
+}
+
+.thuso-feedback-send {
+  border: 1px solid #C9A84C;
+  border-radius: 6px;
+  background: transparent;
+  color: #C9A84C;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.625rem;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.thuso-feedback-send:hover {
+  background: rgba(201, 168, 76, 0.12);
 }
 
 .appearance-core {
