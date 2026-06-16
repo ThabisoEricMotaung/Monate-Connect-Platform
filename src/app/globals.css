@@ -1,4 +1,4 @@
-@import "react-image-crop/dist/ReactCrop.css";
+﻿@import "react-image-crop/dist/ReactCrop.css";
 
 @tailwind base;
 @tailwind components;
@@ -107,13 +107,13 @@ body {
 .bg-page {
   /*
    * Aged newsprint / archival paper.
-   * All layers are non-tiling radial gradients — no visible repeat, no grid.
-   * Layer order (front → back):
-   *  1. Outer vignette          — soft brownish edge darkening
-   *  2-5. Corner aging patches  — organic discoloration, corners only
-   *  6-7. Mid-edge fade         — left / right edge toning
-   *  8.   Ultra-faint grain     — single-direction 2% opacity (subliminal, not a visible line)
-   *  9.   Warm ivory base       — overall parchment warmth
+   * All layers are non-tiling radial gradients â€” no visible repeat, no grid.
+   * Layer order (front â†’ back):
+   *  1. Outer vignette          â€” soft brownish edge darkening
+   *  2-5. Corner aging patches  â€” organic discoloration, corners only
+   *  6-7. Mid-edge fade         â€” left / right edge toning
+   *  8.   Ultra-faint grain     â€” single-direction 2% opacity (subliminal, not a visible line)
+   *  9.   Warm ivory base       â€” overall parchment warmth
    */
   background:
     radial-gradient(ellipse 100% 100% at 50% 50%, transparent 52%, rgba(98, 65, 16, 0.13) 100%),
@@ -670,7 +670,7 @@ a.bg-accent:hover,
   letter-spacing: 0.18em;
 }
 
-/* ── Global theme toggle button ─────────────────────────────────── */
+/* â”€â”€ Global theme toggle button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .mc-theme-toggle {
   position: fixed;
   bottom: calc(var(--news-ticker-height, 56px) + 84px);
@@ -2025,7 +2025,7 @@ html[data-low-data="on"] .news-ticker__track {
   }
 }
 
-/* Mobile-first: even smaller on narrow screens — !important overrides inline styles */
+/* Mobile-first: even smaller on narrow screens â€” !important overrides inline styles */
 @media (max-width: 640px) {
   .mc-theme-toggle {
     right: 18px;
@@ -2103,9 +2103,9 @@ html[data-low-data="on"] .news-ticker__track {
 }
 
 
-/* ───────────────────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Newspaper Masthead
-─────────────────────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .masthead {
   background: var(--bg-page);
@@ -2324,9 +2324,9 @@ html[data-low-data="on"] .news-ticker__track {
   border-color: var(--border-strong);
 }
 
-/* ───────────────────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Newspaper Hero
-─────────────────────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .newspaper-hero {
   display: grid;
@@ -2485,9 +2485,9 @@ html[data-low-data="on"] .news-ticker__track {
 }
 
 
-/* ───────────────────────────────────────────────────────────────────────────
-   Premium Card System — named aliases + compound overrides
-─────────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   Premium Card System â€” named aliases + compound overrides
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 /* Border-radius upgrade for all Tailwind-compound card containers */
 .rounded-md.bg-card,
@@ -2503,7 +2503,7 @@ html[data-low-data="on"] .news-ticker__track {
   transform: translateY(-1px);
 }
 
-/* Named card aliases — all inherit enterprise-card glass treatment */
+/* Named card aliases â€” all inherit enterprise-card glass treatment */
 .dashboard-card {
   background:
     linear-gradient(145deg,
@@ -2641,7 +2641,7 @@ html[data-low-data="on"] .news-ticker__track {
     0 3px 8px var(--shadow-sm);
 }
 
-/* ── Dark mode overrides ─────────────────────────────────────── */
+/* â”€â”€ Dark mode overrides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .theme-dark .bg-card {
   background:
@@ -2726,9 +2726,9 @@ html[data-low-data="on"] .news-ticker__track {
 }
 
 
-/* ───────────────────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Tactile Glass Card System
-─────────────────────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .tactile-card {
   background:
@@ -2799,7 +2799,7 @@ html[data-low-data="on"] .news-ticker__track {
     0 40px 80px rgba(31, 39, 46, 0.12);
 }
 
-/* ── Dark mode ────────────────────────────────────────────────── */
+/* â”€â”€ Dark mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .theme-dark .tactile-card {
   background:
@@ -3160,4 +3160,52 @@ html[data-low-data="on"] .news-ticker__track {
   @page {
     margin: 14mm;
   }
+}
+
+/* Public header nav link hover */
+.public-nav-link:hover {
+  color: #1a3a2a !important;
+  background: #f5f5f5 !important;
+}
+
+
+/* ─── Dashboard white theme ──────────────────────────────────────────────── */
+/* Overrides the parchment/archival palette with a clean white system.        */
+/* Applied via the dashboard-theme class on the root <main> element.          */
+
+.dashboard-theme {
+  --bg-page: #f8f8f6;
+  --bg-surface: #f8f8f6;
+  --bg-panel: #ffffff;
+  --bg-card: #ffffff;
+  --bg-muted: #f0f0f0;
+  --border: #ebebeb;
+  --border-strong: #d4d4d4;
+  --text-secondary: #555555;
+  --text-muted: #aaaaaa;
+  --hover-surface: #f0f7f3;
+  --glass-highlight: rgba(255, 255, 255, 0);
+  --surface-sheen: rgba(255, 255, 255, 0);
+  --surface-metal: rgba(0, 0, 0, 0);
+  --panel-shadow: rgba(0, 0, 0, 0.04);
+  --card-shadow: rgba(0, 0, 0, 0.04);
+  --shadow-xs: rgba(0, 0, 0, 0.02);
+  --shadow-sm: rgba(0, 0, 0, 0.04);
+  --shadow-md: rgba(0, 0, 0, 0.06);
+  --card-lift-shadow: rgba(0, 0, 0, 0.08);
+}
+
+/* Flatten the parchment gradient layers inside the dashboard */
+.dashboard-theme .bg-page  { background: #f8f8f6; }
+.dashboard-theme .bg-panel { background: #ffffff; }
+.dashboard-theme .bg-card  { background: #ffffff; }
+.dashboard-theme .bg-surface { background: #f8f8f6; }
+
+/* Subtle, clean shadows instead of the deep parchment lift */
+.dashboard-theme .border.bg-card,
+.dashboard-theme .border.bg-surface,
+.dashboard-theme .border.bg-panel {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 2px 6px rgba(0, 0, 0, 0.03);
 }
