@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
@@ -7,16 +7,14 @@ import { useRouter } from "next/navigation"
 import BrandMark from "@/components/BrandMark"
 import { supabase } from "@/lib/supabase"
 
-const publicHeaderRoutes = new Set([
+const publicRoutes = new Set([
   "/",
-  "/auth/login",
-  "/auth/signup",
-  "/auth/verify-email",
-  "/auth/callback",
   "/opportunities",
   "/suppliers",
   "/trust",
+  "/trust-centre",
   "/pricing",
+  "/about",
   "/demo-pack",
   "/demo-walkthrough",
   "/contact",
@@ -24,7 +22,11 @@ const publicHeaderRoutes = new Set([
   "/privacy",
   "/terms",
   "/cookie-policy",
+  "/cookies",
   "/data-protection",
+  "/pilot-launch",
+  "/test-pilot",
+  "/feedback",
 ])
 
 export default function Navbar() {
@@ -32,7 +34,12 @@ export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname() || ""
 
-  if (publicHeaderRoutes.has(pathname) || pathname.startsWith("/dashboard")) {
+  // Return null on all public pages, auth routes, and dashboard
+  if (
+    publicRoutes.has(pathname) ||
+    pathname.startsWith("/auth/") ||
+    pathname.startsWith("/dashboard")
+  ) {
     return null
   }
 
@@ -56,11 +63,12 @@ export default function Navbar() {
   return (
     <header className="masthead sticky top-0 z-50">
       <div className="masthead__brand">
-        <Link href="/" className="flex cursor-pointer items-center justify-center gap-3 transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+        <Link
+          href="/"
+          className="flex cursor-pointer items-center justify-center gap-3 transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+        >
           <BrandMark className="h-11 w-11" imageClassName="h-7 w-auto" />
-          <span className="text-base font-semibold text-heading">
-            AiForm Procure
-          </span>
+          <span className="text-base font-semibold text-heading">AiForm Procure</span>
         </Link>
       </div>
 
@@ -85,11 +93,7 @@ export default function Navbar() {
             >
               {t("rfqs")}
             </Link>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="masthead__nav-link"
-            >
+            <button type="button" onClick={handleLogout} className="masthead__nav-link">
               {t("logout")}
             </button>
           </div>
