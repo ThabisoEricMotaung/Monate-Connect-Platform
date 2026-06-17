@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import BrandMark from "@/components/BrandMark"
-import { roleHomeHref } from "@/lib/navigation"
+import { useRegistrationStatus } from "@/hooks/useRegistrationStatus"
 import { supabase } from "@/lib/supabase"
 
 const NAV_LINKS = [
@@ -20,41 +20,20 @@ function isActiveLink(pathname: string, href: string) {
 
 export default function PublicHeader() {
   const pathname = usePathname() || "/"
-  const [dashboardHref, setDashboardHref] = useState<string | null>(null)
   const [signedOutNotice, setSignedOutNotice] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const registrationStatus = useRegistrationStatus()
+  const dashboardHref =
+    registrationStatus.state === "complete"
+      ? registrationStatus.dashboardHref
+      : registrationStatus.state === "incomplete"
+        ? "/register?source=oauth"
+        : null
+  const dashboardLabel =
+    registrationStatus.state === "incomplete"
+      ? "Complete registration"
+      : "Go to Dashboard"
   const homeHref = dashboardHref ?? "/"
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadSession() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session?.user) {
-        if (!cancelled) setDashboardHref(null)
-        return
-      }
-
-      const { data } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .maybeSingle()
-
-      if (!cancelled)
-        setDashboardHref(
-          roleHomeHref((data as { role?: string | null } | null)?.role),
-        )
-    }
-
-    loadSession()
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -64,7 +43,6 @@ export default function PublicHeader() {
 
   async function handleLogout() {
     await supabase.auth.signOut()
-    setDashboardHref(null)
     window.location.assign("/?signedout=1")
   }
 
@@ -131,7 +109,7 @@ export default function PublicHeader() {
           {/* Logo */}
           <Link
             href={homeHref}
-            aria-label={dashboardHref ? "Go to your dashboard" : "Go to homepage"}
+            aria-label={dashboardHref ? dashboardLabel : "Go to homepage"}
             style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}
           >
             <BrandMark className="h-10 w-10" imageClassName="h-6 w-auto" />
@@ -212,7 +190,7 @@ export default function PublicHeader() {
                     alignItems: "center",
                   }}
                 >
-                  Go to Dashboard
+                  {dashboardLabel}
                 </Link>
                 <button
                   type="button"
@@ -358,7 +336,7 @@ export default function PublicHeader() {
                         display: "block",
                       }}
                     >
-                      Go to Dashboard
+                      {dashboardLabel}
                     </Link>
                     <button
                       type="button"

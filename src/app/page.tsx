@@ -8,6 +8,7 @@ import InfoCards from "@/components/home/InfoCards"
 import CTASection from "@/components/home/CTASection"
 import TrustStrip from "@/components/home/TrustStrip"
 import AccountDeletedNotice from "@/components/AccountDeletedNotice"
+import IncompleteRegistrationBanner from "@/components/IncompleteRegistrationBanner"
 
 const audienceCards = [
   {
@@ -129,6 +130,7 @@ export default function Home() {
       <GazetteHeader />
       <PublicHeader />
       <main className="min-h-screen bg-page text-primary">
+        <IncompleteRegistrationBanner />
         <HeroSection />
         <InfoCards />
         <MakersMark />
