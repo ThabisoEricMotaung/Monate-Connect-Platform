@@ -1978,6 +1978,9 @@ function ProfilePageInner() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [saving, setSaving] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteConfirmation, setDeleteConfirmation] = useState("")
+  const [deletePending, setDeletePending] = useState(false)
   const { confirmNavigation } = useUnsavedChangesWarning(hasUnsaved)
 
   useEffect(() => {
@@ -2057,6 +2060,43 @@ function ProfilePageInner() {
   function handleBankSaved(record: BankRecord) {
     setBank(record)
     syncSmartScore(userId, profile, record)
+  }
+
+  async function handleDeleteAccount() {
+    if (!supabase || !userId || deleteConfirmation !== "DELETE") return
+
+    setDeletePending(true)
+    setError("")
+
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession()
+
+    if (sessionError || !session) {
+      setError(sessionError?.message ?? "Your session has expired. Please sign in again.")
+      setDeletePending(false)
+      return
+    }
+
+    const response = await fetch("/api/admin/delete-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ userId }),
+    })
+    const result = (await response.json()) as { success?: boolean; error?: string }
+
+    if (!response.ok || !result.success) {
+      setError(result.error ?? "Account deletion failed.")
+      setDeletePending(false)
+      return
+    }
+
+    await supabase.auth.signOut()
+    router.push("/?accountDeleted=1")
   }
 
   function requestTabChange(tab: Tab) {
@@ -2145,6 +2185,62 @@ function ProfilePageInner() {
           <RFQVisibilityCard profile={profile} />
         </aside>
       </div>
+
+      <section className="mt-8 rounded-md border border-rose-500/30 bg-rose-500/10 p-6">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-rose-700">Danger zone</p>
+        <h2 className="mt-2 text-lg font-semibold text-rose-800">Delete my account</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-rose-800">
+          This will permanently delete your account after 30 days. Your name and contact details will be anonymised immediately.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setDeleteConfirmation("")
+            setDeleteModalOpen(true)
+          }}
+          className="mt-4 rounded-md border border-rose-600 bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700"
+        >
+          Delete my account
+        </button>
+      </section>
+
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+          <div className="w-full max-w-md rounded-md border border-panel bg-card p-6 shadow-panel">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-rose-700">Confirm deletion</p>
+            <h2 className="mt-2 text-xl font-semibold text-heading">Delete your account?</h2>
+            <p className="mt-3 text-sm leading-6 text-secondary">
+              This will permanently delete your account after 30 days. Your name and contact details will be anonymised immediately.
+            </p>
+            <label className="mt-5 block text-sm font-semibold text-heading">
+              Type DELETE to confirm
+              <input
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                className={`${inputCls} mt-2`}
+              />
+            </label>
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(false)}
+                disabled={deletePending}
+                className="rounded-md border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-card disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmation !== "DELETE" || deletePending}
+                className="rounded-md border border-rose-600 bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deletePending ? "Deleting..." : "Delete account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

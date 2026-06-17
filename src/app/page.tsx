@@ -7,6 +7,7 @@ import HeroSection from "@/components/home/HeroSection"
 import InfoCards from "@/components/home/InfoCards"
 import CTASection from "@/components/home/CTASection"
 import TrustStrip from "@/components/home/TrustStrip"
+import AccountDeletedNotice from "@/components/AccountDeletedNotice"
 
 const audienceCards = [
   {
@@ -124,6 +125,7 @@ function MakersMark() {
 export default function Home() {
   return (
     <>
+      <AccountDeletedNotice />
       <GazetteHeader />
       <PublicHeader />
       <main className="min-h-screen bg-page text-primary">

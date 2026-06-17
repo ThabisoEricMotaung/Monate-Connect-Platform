@@ -44,6 +44,8 @@ type SupplierProfile = {
   smart_score: number | string | null
   created_at: string | null
   verification_notes: string | null
+  is_deleted?: boolean | null
+  deleted_at?: string | null
 }
 
 type BankDetails = {
@@ -92,6 +94,8 @@ const profileSelect = [
   "smart_score",
   "created_at",
   "verification_notes",
+  "is_deleted",
+  "deleted_at",
 ].join(", ")
 
 const STEP_LABELS: Record<VerificationStep, string> = {
@@ -301,6 +305,11 @@ function DetailLine({ label, value }: { label: string; value: string | null | un
   )
 }
 
+function supplierDisplayName(profile: SupplierProfile): string {
+  if (profile.is_deleted) return "Deleted User"
+  return profile.business_name || profile.full_name || "Unnamed supplier"
+}
+
 function SkeletonQueue() {
   return (
     <div className="space-y-4">
@@ -336,6 +345,9 @@ export default function AdminVerificationQueuePage() {
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const [inlineFeedback, setInlineFeedback] = useState<Record<string, InlineFeedback>>({})
   const [scoreHighlight, setScoreHighlight] = useState<Record<string, boolean>>({})
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [deleteTarget, setDeleteTarget] = useState<SupplierProfile | null>(null)
+  const [deletePending, setDeletePending] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -431,7 +443,7 @@ export default function AdminVerificationQueuePage() {
     return () => {
       cancelled = true
     }
-  }, [router])
+  }, [router, refreshKey])
 
   const counts = useMemo(() => {
     const verified = profiles.filter(isVerifiedQueueProfile).length
@@ -710,6 +722,45 @@ export default function AdminVerificationQueuePage() {
     setActionFeedback(profile.id, pendingKey, { message: "Note saved", type: "success" })
   }
 
+  async function deleteSupplierAccount(profile: SupplierProfile) {
+    if (!supabase) return
+
+    setDeletePending(true)
+    setErrorMessage("")
+
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession()
+
+    if (sessionError || !session) {
+      setErrorMessage(sessionError?.message ?? "Your session has expired. Please sign in again.")
+      setDeletePending(false)
+      return
+    }
+
+    const response = await fetch("/api/admin/delete-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ userId: profile.id }),
+    })
+    const result = (await response.json()) as { success?: boolean; error?: string }
+
+    if (!response.ok || !result.success) {
+      setErrorMessage(result.error ?? "Account deletion failed.")
+      setDeletePending(false)
+      return
+    }
+
+    setDeleteTarget(null)
+    setDeletePending(false)
+    setLoading(true)
+    setRefreshKey((current) => current + 1)
+  }
+
   function renderStepRow(
     profile: SupplierProfile,
     step: VerificationStep,
@@ -718,6 +769,7 @@ export default function AdminVerificationQueuePage() {
     options?: { expired?: boolean },
   ) {
     const verified = stepVerified(step, profile)
+    const isDeleted = profile.is_deleted === true
     const approveKey = `${step}-approve`
     const revokeKey = `${step}-revoke`
     const stepPending =
@@ -749,7 +801,7 @@ export default function AdminVerificationQueuePage() {
         <div className="flex flex-wrap items-center gap-2 md:justify-end">
           <ActionButton
             loading={approvePending}
-            disabled={Boolean(options?.expired) || stepPending || verified}
+            disabled={isDeleted || Boolean(options?.expired) || stepPending || verified}
             onClick={() => updateStep(profile, step, true)}
           >
             Approve
@@ -757,7 +809,7 @@ export default function AdminVerificationQueuePage() {
           <ActionButton
             tone="danger"
             loading={revokePending}
-            disabled={stepPending || !verified}
+            disabled={isDeleted || stepPending || !verified}
             onClick={() => updateStep(profile, step, false)}
           >
             Revoke
@@ -848,9 +900,15 @@ export default function AdminVerificationQueuePage() {
             const notesPending =
               pendingAction?.supplierId === profile.id && pendingAction.key === "notes"
             const scoreFlashing = Boolean(scoreHighlight[profile.id])
+            const isDeleted = profile.is_deleted === true
 
             return (
-              <article key={profile.id} className="rounded-xl border border-panel bg-card p-5 shadow-panel">
+              <article
+                key={profile.id}
+                className={`rounded-xl border p-5 shadow-panel ${
+                  isDeleted ? "border-slate-300 bg-slate-100/60 opacity-75" : "border-panel bg-card"
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => setExpandedId(expanded ? null : profile.id)}
@@ -862,9 +920,11 @@ export default function AdminVerificationQueuePage() {
                       Supplier
                     </p>
                     <h2 className="mt-1 text-lg font-semibold text-heading">
-                      {profile.business_name || profile.full_name || "Unnamed supplier"}
+                      {supplierDisplayName(profile)}
                     </h2>
-                    <p className="mt-1 text-sm text-secondary">{profile.email || "No email on profile"}</p>
+                    <p className="mt-1 text-sm text-secondary">
+                      {isDeleted ? "Deleted account" : profile.email || "No email on profile"}
+                    </p>
                     <p className="mt-1 text-xs text-muted">
                       {[profile.industry, profile.province].filter(Boolean).join(" / ") || "No category details"}
                     </p>
@@ -920,7 +980,7 @@ export default function AdminVerificationQueuePage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <ActionButton
                             loading={pendingAction?.supplierId === profile.id && pendingAction.key === "bulk-verify"}
-                            disabled={bulkPending}
+                            disabled={bulkPending || isDeleted}
                             onClick={() => updateSupplierStatus(profile, "verify")}
                           >
                             Verify Supplier
@@ -928,7 +988,7 @@ export default function AdminVerificationQueuePage() {
                           <ActionButton
                             tone="danger"
                             loading={pendingAction?.supplierId === profile.id && pendingAction.key === "bulk-reject"}
-                            disabled={bulkPending}
+                            disabled={bulkPending || isDeleted}
                             onClick={() => updateSupplierStatus(profile, "reject")}
                           >
                             Reject Supplier
@@ -936,6 +996,7 @@ export default function AdminVerificationQueuePage() {
                           <button
                             type="button"
                             disabled={
+                              isDeleted ||
                               bulkPending ||
                               (pendingAction?.supplierId === profile.id && pendingAction.key === "bulk-pending")
                             }
@@ -953,6 +1014,17 @@ export default function AdminVerificationQueuePage() {
                             ) : (
                               "Mark Pending"
                             )}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isDeleted}
+                            onClick={() => setDeleteTarget(profile)}
+                            aria-label={`Delete ${supplierDisplayName(profile)} account`}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-rose-500/30 bg-rose-500/10 text-rose-700 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" aria-hidden>
+                              <path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+                            </svg>
                           </button>
                           <InlineFeedbackBadge
                             feedback={
@@ -1076,6 +1148,38 @@ export default function AdminVerificationQueuePage() {
               </article>
             )
           })}
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+          <div className="w-full max-w-md rounded-xl border border-panel bg-card p-6 shadow-panel">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-rose-700">Delete account</p>
+            <h2 className="mt-2 text-xl font-semibold text-heading">
+              Delete {supplierDisplayName(deleteTarget)}&apos;s account?
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-secondary">
+              Their data will be anonymised immediately and permanently deleted after 30 days.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                disabled={deletePending}
+                onClick={() => setDeleteTarget(null)}
+                className="rounded-md border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-card disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deletePending}
+                onClick={() => deleteSupplierAccount(deleteTarget)}
+                className="rounded-md border border-rose-600 bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deletePending ? "Deleting..." : "Delete account"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
