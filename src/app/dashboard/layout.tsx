@@ -7,7 +7,7 @@ import AccountMenu, { type AccountMenuProfile } from "@/components/AccountMenu"
 import BrandMark from "@/components/BrandMark"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import ProcurementWire from "@/components/ProcurementWire"
-import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
+import { hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
 import { roleHomeHref } from "@/lib/navigation"
 import { supabase } from "@/lib/supabase"
@@ -265,31 +265,54 @@ export default function DashboardLayout({
 
   useEffect(() => {
     async function loadRole() {
+      let canRenderDashboard = false
+
       try {
-        const currentProfile = await getCurrentProfile()
-
-        if (supabase && currentProfile?.id) {
-          const { data } = await supabase
-            .from("profiles")
-            .select("business_name, email, full_name, preferred_name, role, avatar_url")
-            .eq("id", currentProfile.id)
-            .maybeSingle()
-
-          setProfile((data as AccountMenuProfile | null) ?? null)
-          setRole((data as { role?: string | null } | null)?.role ?? currentProfile.role ?? "supplier")
-        } else {
-          setRole(currentProfile?.role ?? "supplier")
+        if (!supabase) {
+          router.replace("/auth/login")
+          return
         }
+
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession()
+
+        if (sessionError || !session?.user) {
+          router.replace("/auth/login")
+          return
+        }
+
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, business_name, email, full_name, preferred_name, role, avatar_url")
+          .eq("id", session.user.id)
+          .maybeSingle()
+
+        if (error) {
+          console.error("Dashboard profile guard failed:", error)
+          router.replace("/auth/login")
+          return
+        }
+
+        if (!data) {
+          router.replace("/register?source=oauth")
+          return
+        }
+
+        setProfile((data as AccountMenuProfile | null) ?? null)
+        setRole((data as { role?: string | null } | null)?.role ?? "supplier")
+        canRenderDashboard = true
       } catch (error) {
         console.error("Dashboard role load failed:", error)
-        setRole("supplier")
+        router.replace("/auth/login")
       } finally {
-        setRoleChecked(true)
+        if (canRenderDashboard) setRoleChecked(true)
       }
     }
 
     loadRole()
-  }, [])
+  }, [router])
 
   useEffect(() => {
     if (!roleChecked) return
@@ -312,6 +335,16 @@ export default function DashboardLayout({
       router.replace("/dashboard")
     }
   }, [pathname, role, roleChecked, router])
+
+  if (!roleChecked) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-page text-primary">
+        <div className="rounded-md border border-panel bg-card p-6 text-sm font-semibold text-secondary shadow-panel">
+          Checking workspace access...
+        </div>
+      </main>
+    )
+  }
 
   if (pathname.startsWith("/dashboard/admin")) {
     return (

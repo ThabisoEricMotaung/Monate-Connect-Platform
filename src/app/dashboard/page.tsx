@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { getCurrentProfile } from "@/lib/auth"
 import { getSupplierMatches, type SupplierMatchResult } from "@/lib/matchingEngine"
 import {
@@ -14,14 +13,6 @@ import {
   getSmartScoreColour,
 } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
-
-function isMissingRoleColumnError(error: { message?: string } | null): boolean {
-  return Boolean(
-    error?.message?.includes("'role' column") ||
-      error?.message?.includes("schema cache") ||
-      error?.message?.includes("profiles' in the schema")
-  )
-}
 
 function formatDeadline(dateStr: string | null | undefined): string {
   if (!dateStr) return "-"
@@ -59,7 +50,6 @@ function isMissingGreetingProfileColumnError(error: { message?: string } | null)
 }
 
 export default function DashboardPage() {
-  const router = useRouter()
   const [smartScore, setSmartScore] = useState<number | null>(null)
   const [recommendedOpportunities, setRecommendedOpportunities] = useState<SupplierMatchResult[]>([])
   const [opportunitiesLoading, setOpportunitiesLoading] = useState(true)
@@ -75,32 +65,6 @@ export default function DashboardPage() {
   const [smartScoreLoading, setSmartScoreLoading] = useState(true)
   const [smartScoreError, setSmartScoreError] = useState("")
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false)
-
-  useEffect(() => {
-    async function ensureSupplierProfile() {
-      if (!supabase) { router.push("/auth/login"); return }
-      const { data: userData, error: userError } = await supabase.auth.getUser()
-      if (userError || !userData.user) { router.push("/auth/login"); return }
-      const user = userData.user
-      const { data: profile } = await supabase.from("profiles").select("id").eq("id", user.id).maybeSingle()
-      if (profile) return
-      const profilePayload = {
-        id: user.id,
-        business_name: user.user_metadata.business_name,
-        email: user.email,
-        province: user.user_metadata.province,
-        industry: user.user_metadata.industry,
-        phone: user.user_metadata.phone,
-        role: user.user_metadata.role || "supplier",
-        verification_status: "Pending Review",
-      }
-      const { error: profileInsertError } = await supabase.from("profiles").insert([profilePayload])
-      if (!profileInsertError || !isMissingRoleColumnError(profileInsertError)) return
-      const { id, business_name, email, province, industry, phone, verification_status } = profilePayload
-      await supabase.from("profiles").insert([{ id, business_name, email, province, industry, phone, verification_status }])
-    }
-    ensureSupplierProfile()
-  }, [router])
 
   // Load greeting + real stat values
   useEffect(() => {
