@@ -358,6 +358,7 @@ export default function SignupPage() {
   const [resendMessage, setResendMessage] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [isOauthSignup, setIsOauthSignup] = useState(false)
+  const [showOauthRegistrationNotice, setShowOauthRegistrationNotice] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const passwordsDoNotMatch =
@@ -370,15 +371,34 @@ export default function SignupPage() {
     if (params.get("role") === "buyer") {
       setForm((current) => ({ ...current, role: "buyer" }))
     }
-    if (params.get("oauth") === "true") {
+    const isOAuthSource = params.get("source") === "oauth"
+    if (params.get("oauth") === "true" || isOAuthSource) {
       const oauthEmail = params.get("email") ?? ""
       setIsOauthSignup(true)
+      setShowOauthRegistrationNotice(isOAuthSource)
       setForm((current) => ({
         ...current,
         email: oauthEmail,
         password: "",
         confirmPassword: "",
       }))
+
+      if (supabase) {
+        supabase.auth.getUser().then(({ data: { user } }) => {
+          if (!user) return
+
+          setUserId(user.id)
+          setForm((current) => ({
+            ...current,
+            email: current.email || user.email || "",
+            fullName:
+              current.fullName ||
+              user.user_metadata?.full_name ||
+              user.user_metadata?.name ||
+              "",
+          }))
+        })
+      }
     }
   }, [])
 
@@ -750,6 +770,14 @@ export default function SignupPage() {
                   Start with your login details. You&apos;ll add your business information next.
                 </p>
               </div>
+
+              {showOauthRegistrationNotice && (
+                <div className="mb-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4">
+                  <p className="text-sm font-semibold text-emerald-800">
+                    You signed in with Google/Microsoft — please complete your profile to continue.
+                  </p>
+                </div>
+              )}
 
               {errors.submit && (
                 <div className="mb-5 rounded-2xl border border-rose-500/25 bg-rose-500/10 px-5 py-4">
