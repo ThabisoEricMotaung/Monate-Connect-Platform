@@ -27,6 +27,34 @@ const PROVINCES = [
   "Western Cape",
 ]
 
+const INTENT_CHIPS = [
+  {
+    label: "Joining as a supplier",
+    message:
+      "Hi, I represent a supplier business and I'd like to join the AiForm Procure network to access verified RFQs and procurement opportunities.",
+  },
+  {
+    label: "Sourcing as a buyer",
+    message:
+      "Hi, I'm a procurement manager and I'd like to explore AiForm Procure for posting RFQs and sourcing verified suppliers for our organisation.",
+  },
+  {
+    label: "Onboarding a supplier network",
+    message:
+      "Hi, I manage a supplier network or association and I'm interested in onboarding our members onto AiForm Procure as part of a bulk partnership.",
+  },
+  {
+    label: "Partnership or integration",
+    message:
+      "Hi, I'm interested in a partnership or integration opportunity with AiForm Procure and would like to discuss how we can collaborate.",
+  },
+  {
+    label: "Just exploring for now",
+    message:
+      "Hi, I'd like to learn more about AiForm Procure and how it works before deciding whether it's right for my organisation.",
+  },
+]
+
 const initialForm = {
   name: "",
   organisation: "",
@@ -49,9 +77,15 @@ export default function ContactPage() {
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState("")
   const [error, setError] = useState("")
+  const [selectedIntent, setSelectedIntent] = useState("")
 
   function updateField(field: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  function selectIntent(label: string, message: string) {
+    setSelectedIntent(label)
+    updateField("message", message)
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -105,6 +139,7 @@ export default function ContactPage() {
     }
 
     setForm(initialForm)
+    setSelectedIntent("")
     setSuccess("Thank you. AiForm Procure will contact you soon.")
   }
 
@@ -181,6 +216,31 @@ export default function ContactPage() {
                 {PROVINCES.map((province) => <option key={province} value={province}>{province}</option>)}
               </select>
             </label>
+          </div>
+
+          <div className="mt-4">
+            <span className="mb-2 block text-[0.63rem] font-bold uppercase tracking-[0.18em] text-muted">I&apos;m interested in&hellip;</span>
+            <div className="flex flex-wrap gap-2">
+              {INTENT_CHIPS.map((chip) => {
+                const active = selectedIntent === chip.label
+
+                return (
+                  <button
+                    key={chip.label}
+                    type="button"
+                    onClick={() => selectIntent(chip.label, chip.message)}
+                    className={`rounded-[20px] border px-3.5 py-2 text-xs font-semibold transition ${
+                      active
+                        ? "border-[#1a3a2a] bg-[#c8960c] text-[#1a3a2a] shadow-sm"
+                        : "border-panel bg-panel text-secondary hover:border-accent hover:text-heading"
+                    }`}
+                    aria-pressed={active}
+                  >
+                    {chip.label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           <label className="mt-4 block">
