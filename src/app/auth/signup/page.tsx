@@ -187,6 +187,24 @@ function GoogleLogo() {
   )
 }
 
+function MicrosoftLogo() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      width="20"
+      height="20"
+      viewBox="0 0 21 21"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+      <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+      <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+      <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+    </svg>
+  )
+}
+
 function AuthDivider() {
   return (
     <div className="flex items-center gap-3">
@@ -688,6 +706,27 @@ export default function SignupPage() {
       setErrors({ submit: error.message })
     }
   }
+
+  const handleMicrosoftSignIn = async () => {
+    setErrors({})
+
+    if (!supabase) {
+      setErrors({ submit: "Supabase environment variables are not configured." })
+      return
+    }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "azure",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        scopes: "email profile",
+      },
+    })
+
+    if (error) {
+      setErrors({ submit: error.message })
+    }
+  }
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-10">
       <div className="w-full max-w-3xl">
@@ -728,6 +767,17 @@ export default function SignupPage() {
                     >
                       <GoogleLogo />
                       <span>Continue with Google</span>
+                    </button>
+
+                    <div className="h-px bg-panel" />
+
+                    <button
+                      type="button"
+                      onClick={handleMicrosoftSignIn}
+                      className="flex w-full items-center justify-center gap-3 rounded-lg border border-[#dadce0] bg-white px-4 py-2.5 text-[14px] font-medium text-[#3c4043] transition hover:bg-[#f8f9fa]"
+                    >
+                      <MicrosoftLogo />
+                      <span>Continue with Microsoft</span>
                     </button>
 
                     <AuthDivider />

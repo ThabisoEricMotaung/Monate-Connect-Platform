@@ -4,6 +4,15 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createBrowserClient } from "@supabase/ssr"
 
+function getPostOAuthPath(role?: string | null): string | null {
+  const normalizedRole = role?.trim().toLowerCase()
+  if (!normalizedRole) return null
+  if (normalizedRole === "admin") return "/dashboard/admin"
+  if (normalizedRole === "buyer") return "/dashboard/buyer"
+  if (normalizedRole === "supplier") return "/dashboard"
+  return "/dashboard"
+}
+
 export default function PostOAuthPage() {
   const router = useRouter()
 
@@ -32,19 +41,7 @@ export default function PostOAuthPage() {
         )
         return
       }
-      switch (role) {
-        case "admin":
-          router.replace("/dashboard/admin")
-          break
-        case "buyer":
-          router.replace("/dashboard/buyer")
-          break
-        case "supplier":
-          router.replace("/dashboard/supplier")
-          break
-        default:
-          router.replace("/dashboard")
-      }
+      router.replace(getPostOAuthPath(role) ?? "/dashboard")
     }, 800)
   }, [router])
 
