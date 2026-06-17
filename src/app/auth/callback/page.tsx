@@ -1,52 +1,82 @@
 "use client"
 
-import { Suspense, useEffect, useRef } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 function AuthCallbackContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const hasExchangedCode = useRef(false)
 
   useEffect(() => {
-    if (hasExchangedCode.current) return
-    hasExchangedCode.current = true
+    let isMounted = true
+    let authSubscription: { unsubscribe: () => void } | null = null
+    let authStateTimer: ReturnType<typeof setTimeout> | null = null
+    let failureTimer: ReturnType<typeof setTimeout> | null = null
 
-    const code = searchParams.get("code")
-    const callbackError = searchParams.get("error")
-    const callbackErrorDescription = searchParams.get("error_description")
-
-    if (!code) {
-      console.error("OAuth callback missing code", {
-        error: callbackError,
-        errorDescription: callbackErrorDescription,
-      })
-      router.replace("/auth/login?error=no_code")
-      return
+    const redirectToPostOAuth = () => {
+      if (isMounted) router.replace("/auth/post-oauth")
     }
 
     if (!supabase) {
       console.error("OAuth callback failed: Supabase client is not configured")
       router.replace("/auth/login?error=supabase_not_configured")
-      return
+      return () => {
+        isMounted = false
+      }
     }
 
-    supabase.auth.exchangeCodeForSession(code).then(({ error, data }) => {
+    const checkSession = async () => {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession()
+
       if (error) {
-        console.error("OAuth code exchange failed", error)
-        router.replace("/auth/login?error=oauth_failed")
-        return
+        console.error("OAuth callback session lookup failed", error)
       }
 
-      console.log("OAuth code exchange succeeded", {
-        userId: data.session?.user.id,
-        provider: data.session?.user.app_metadata?.provider,
-        providers: data.session?.user.app_metadata?.providers,
-      })
-      router.replace("/auth/post-oauth")
-    })
-  }, [searchParams, router])
+      if (session) {
+        redirectToPostOAuth()
+        return true
+      }
+
+      return false
+    }
+
+    void (async () => {
+      const hasSession = await checkSession()
+      if (hasSession || !isMounted) return
+
+      authStateTimer = setTimeout(async () => {
+        const hasSessionAfterWait = await checkSession()
+        if (hasSessionAfterWait || !isMounted) return
+
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === "SIGNED_IN" && session) {
+            redirectToPostOAuth()
+          }
+        })
+
+        authSubscription = subscription
+      }, 1000)
+
+      failureTimer = setTimeout(async () => {
+        const hasSessionBeforeFailure = await checkSession()
+        if (!hasSessionBeforeFailure && isMounted) {
+          router.replace("/auth/login?error=oauth_failed")
+        }
+      }, 5000)
+    })()
+
+    return () => {
+      isMounted = false
+      if (authStateTimer) clearTimeout(authStateTimer)
+      if (failureTimer) clearTimeout(failureTimer)
+      authSubscription?.unsubscribe()
+    }
+  }, [router])
 
   return (
     <div
