@@ -1981,6 +1981,8 @@ function ProfilePageInner() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState("")
   const [deletePending, setDeletePending] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
+  const [deleteScheduled, setDeleteScheduled] = useState(false)
   const { confirmNavigation } = useUnsavedChangesWarning(hasUnsaved)
 
   useEffect(() => {
@@ -2027,6 +2029,19 @@ function ProfilePageInner() {
     load()
   }, [])
 
+  useEffect(() => {
+    if (!deleteScheduled) return
+
+    const signOutTimer = window.setTimeout(() => {
+      void (async () => {
+        await supabase.auth.signOut()
+        router.replace("/")
+      })()
+    }, 3000)
+
+    return () => window.clearTimeout(signOutTimer)
+  }, [deleteScheduled, router])
+
   async function handleSave(patch: Partial<Profile>) {
     if (!supabase || !userId) {
       return { ok: false, error: "Supabase is not configured or your session has expired." }
@@ -2066,6 +2081,7 @@ function ProfilePageInner() {
     if (!supabase || !userId || deleteConfirmation !== "DELETE") return
 
     setDeletePending(true)
+    setDeleteError("")
     setError("")
 
     const {
@@ -2074,29 +2090,40 @@ function ProfilePageInner() {
     } = await supabase.auth.getSession()
 
     if (sessionError || !session) {
-      setError(sessionError?.message ?? "Your session has expired. Please sign in again.")
+      console.error("Account deletion session lookup failed:", sessionError?.message)
+      setDeleteError("Something went wrong. Please try again or contact support.")
       setDeletePending(false)
       return
     }
 
-    const response = await fetch("/api/admin/delete-user", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ userId }),
-    })
-    const result = (await response.json()) as { success?: boolean; error?: string }
+    try {
+      const response = await fetch("/api/admin/delete-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ userId }),
+      })
+      const result = (await response.json()) as { success?: boolean; error?: string }
 
-    if (!response.ok || !result.success) {
-      setError(result.error ?? "Account deletion failed.")
+      if (!response.ok || !result.success) {
+        console.error("Account deletion failed:", result.error ?? response.statusText)
+        setDeleteError("Something went wrong. Please try again or contact support.")
+        setDeletePending(false)
+        return
+      }
+    } catch (deleteRequestError) {
+      console.error("Account deletion request failed:", deleteRequestError)
+      setDeleteError("Something went wrong. Please try again or contact support.")
       setDeletePending(false)
       return
     }
 
-    await supabase.auth.signOut()
-    router.push("/?accountDeleted=1")
+    setDeleteModalOpen(false)
+    setDeleteConfirmation("")
+    setDeletePending(false)
+    setDeleteScheduled(true)
   }
 
   function requestTabChange(tab: Tab) {
@@ -2121,6 +2148,21 @@ function ProfilePageInner() {
         <div className="mt-4 h-32 animate-pulse rounded-md bg-panel" />
         <div className="mt-4 h-64 animate-pulse rounded-md bg-panel" />
       </div>
+    )
+  }
+
+  if (deleteScheduled) {
+    return (
+      <main className="flex min-h-[70vh] items-center justify-center px-4">
+        <section className="max-w-2xl rounded-md border border-emerald-500/30 bg-emerald-500/10 p-8 text-center shadow-panel">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">Deletion scheduled</p>
+          <h1 className="mt-3 text-2xl font-semibold text-heading">Your account has been scheduled for deletion.</h1>
+          <p className="mt-4 text-sm leading-7 text-secondary">
+            Your details have been anonymised and your account will be permanently deleted within 30 days.
+          </p>
+          <p className="mt-5 text-xs font-semibold text-muted">Signing you out...</p>
+        </section>
+      </main>
     )
   }
 
@@ -2196,6 +2238,7 @@ function ProfilePageInner() {
           type="button"
           onClick={() => {
             setDeleteConfirmation("")
+            setDeleteError("")
             setDeleteModalOpen(true)
           }}
           className="mt-4 rounded-md border border-rose-600 bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700"
@@ -2217,9 +2260,15 @@ function ProfilePageInner() {
               <input
                 value={deleteConfirmation}
                 onChange={(event) => setDeleteConfirmation(event.target.value)}
+                disabled={deletePending}
                 className={`${inputCls} mt-2`}
               />
             </label>
+            {deleteError && (
+              <p className="mt-3 rounded-md border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-sm font-semibold text-rose-700">
+                {deleteError}
+              </p>
+            )}
             <div className="mt-6 flex flex-wrap justify-end gap-3">
               <button
                 type="button"
@@ -2235,7 +2284,7 @@ function ProfilePageInner() {
                 disabled={deleteConfirmation !== "DELETE" || deletePending}
                 className="rounded-md border border-rose-600 bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {deletePending ? "Deleting..." : "Delete account"}
+                {deletePending ? "Deleting…" : "Delete account"}
               </button>
             </div>
           </div>
