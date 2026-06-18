@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import {
@@ -350,6 +351,7 @@ function TrustIcon({ type }: { type: "lock" | "shield" | "clock" }) {
   )
 }
 export default function SignupPage() {
+  const router = useRouter()
   const [step, setStep] = useState(1)
   const [form, setForm] = useState<SignupForm>(initialForm)
   const [errors, setErrors] = useState<SignupErrors>({})
@@ -553,8 +555,7 @@ export default function SignupPage() {
     }
 
     setUserId(data.user.id)
-    setLoading(false)
-    setStep(2)
+    router.replace(`/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}`)
   }
 
   // STEP 2: save business details (non-fatal if RLS blocks before email verify)

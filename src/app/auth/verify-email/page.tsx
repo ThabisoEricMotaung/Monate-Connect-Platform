@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic"
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import BrandMark from "@/components/BrandMark"
 import { supabase } from "@/lib/supabase"
 
 function VerifyEmailLoading() {
@@ -18,31 +19,53 @@ function VerifyEmailLoading() {
 function VerifyEmailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const email = searchParams.get("email") ?? ""
+  const emailFromQuery = searchParams.get("email") ?? ""
 
+  const [email, setEmail] = useState(emailFromQuery)
   const [resending, setResending] = useState(false)
   const [resendMessage, setResendMessage] = useState("")
   const [resendError, setResendError] = useState("")
   const [checking, setChecking] = useState(true)
+  const [cooldownSeconds, setCooldownSeconds] = useState(0)
 
   useEffect(() => {
     async function checkVerified() {
       if (!supabase) { setChecking(false); return }
       const { data: { user } } = await supabase.auth.getUser()
-      if (user?.email_confirmed_at) {
+      const provider = user?.app_metadata?.provider
+      if (user?.email && !emailFromQuery) {
+        setEmail(user.email)
+      }
+      if (user && (provider !== "email" || user.email_confirmed_at)) {
         router.replace("/dashboard")
       } else {
         setChecking(false)
       }
     }
     checkVerified()
-  }, [router])
+  }, [emailFromQuery, router])
+
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return
+
+    const timer = window.setTimeout(() => {
+      setCooldownSeconds((current) => Math.max(current - 1, 0))
+    }, 1000)
+
+    return () => window.clearTimeout(timer)
+  }, [cooldownSeconds])
 
   const handleResend = async () => {
-    if (!supabase || !email) {
+    if (!supabase) {
+      setResendError("Supabase environment variables are not configured.")
+      return
+    }
+
+    if (!email) {
       setResendError("Email address not found. Please return to the registration page.")
       return
     }
+
     setResending(true)
     setResendMessage("")
     setResendError("")
@@ -50,7 +73,8 @@ function VerifyEmailContent() {
     if (error) {
       setResendError(error.message)
     } else {
-      setResendMessage("Verification email sent. Check your inbox and spam folder.")
+      setResendMessage("Verification email sent")
+      setCooldownSeconds(60)
     }
     setResending(false)
   }
@@ -62,34 +86,21 @@ function VerifyEmailContent() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-page px-6 py-10 text-primary">
       <div className="w-full max-w-lg rounded-3xl border border-panel bg-panel p-8 shadow-panel text-center">
-        <Link
-          href="/"
-          className="mb-5 inline-block text-[13px] font-semibold text-[#5DCAA5] no-underline transition hover:underline"
-        >
-          ← Back to home
-        </Link>
-
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-accent bg-surface text-accent">
-          <svg aria-hidden="true" className="h-7 w-7" fill="none" viewBox="0 0 24 24">
-            <path d="M4 4h16v16H4V4Zm0 4 8 5 8-5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
-          </svg>
+        <div className="mx-auto mb-6 flex w-fit items-center justify-center">
+          <BrandMark className="h-16 w-16" imageClassName="h-9 w-auto" />
         </div>
 
         <p className="text-xs uppercase tracking-[0.24em] text-accent">Supplier onboarding</p>
         <h1 className="mt-3 text-4xl font-semibold text-primary">Check your email</h1>
 
         <p className="mx-auto mt-4 max-w-sm text-sm leading-7 text-secondary">
-          We&apos;ve sent a verification email to{" "}
+          We&apos;ve sent a verification link to{" "}
           {email ? (
             <strong className="text-primary">{email}</strong>
           ) : (
             "your email address"
           )}
-          .
-        </p>
-
-        <p className="mt-3 text-xs leading-6 text-muted">
-          Please check your inbox and click the link.
+          . Click the link in that email to activate your account before continuing.
         </p>
 
         {resendMessage && (
@@ -108,17 +119,21 @@ function VerifyEmailContent() {
           <button
             type="button"
             onClick={handleResend}
-            disabled={resending}
+            disabled={resending || cooldownSeconds > 0}
             className="w-full rounded-2xl border border-panel bg-surface py-4 text-sm font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent disabled:opacity-50"
           >
-            {resending ? "Sending…" : "Resend verification email"}
+            {resending
+              ? "Sending..."
+              : cooldownSeconds > 0
+                ? `Resend verification email (${cooldownSeconds}s)`
+                : "Resend verification email"}
           </button>
 
           <Link
             href="/auth/login"
             className="block text-sm font-semibold text-accent transition hover:text-accent-strong"
           >
-            Verified in another tab? Continue →
+            Back to login
           </Link>
         </div>
 

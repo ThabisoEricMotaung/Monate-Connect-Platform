@@ -300,6 +300,18 @@ export default function DashboardLayout({
           return
         }
 
+        const provider = session.user.app_metadata?.provider
+        const isUnverifiedEmailSignup =
+          provider === "email" && !session.user.email_confirmed_at
+
+        if (isUnverifiedEmailSignup) {
+          const emailParam = session.user.email
+            ? `?email=${encodeURIComponent(session.user.email)}`
+            : ""
+          router.replace(`/auth/verify-email${emailParam}`)
+          return
+        }
+
         setProfile((data as AccountMenuProfile | null) ?? null)
         setRole((data as { role?: string | null } | null)?.role ?? "supplier")
         canRenderDashboard = true
