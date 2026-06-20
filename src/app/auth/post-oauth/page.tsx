@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -11,6 +11,10 @@ function getPostOAuthPath(role?: string | null): string | null {
   if (normalizedRole === "buyer") return "/dashboard/buyer"
   if (normalizedRole === "supplier") return "/dashboard"
   return "/dashboard"
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export default function PostOAuthPage() {
@@ -44,16 +48,53 @@ export default function PostOAuthPage() {
         session.user.app_metadata?.provider ??
         session.user.identities?.[0]?.provider ??
         "unknown"
+      const metadataProviders =
+        (session.user.app_metadata?.providers as string[] | undefined) ?? []
+      const identityProviders =
+        session.user.identities?.map((identity) => identity.provider).filter(Boolean) ?? []
+      const providersList = Array.from(
+        new Set([...metadataProviders, ...identityProviders, provider].map((item) => item.toLowerCase()))
+      )
+      const isMicrosoftOAuthProvider =
+        providersList.includes("azure") || providersList.includes("microsoft")
+      const isKnownOAuthProvider = providersList.some((item) =>
+        ["google", "azure", "microsoft"].includes(item)
+      )
 
       console.log("Post OAuth session user", session.user)
       console.log("Post OAuth provider", provider)
+      console.log("Post OAuth providers", providersList, {
+        isKnownOAuthProvider,
+        isMicrosoftOAuthProvider,
+      })
 
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, role")
-        .eq("id", session.user.id)
-        .limit(1)
-        .maybeSingle()
+      await sleep(1000)
+      if (!isMounted) return
+
+      const lookupProfile = () =>
+        supabase
+          .from("profiles")
+          .select("id, role")
+          .eq("id", session.user.id)
+          .limit(1)
+          .maybeSingle()
+
+      let { data: profile, error: profileError } = await lookupProfile()
+
+      if ((profileError || !profile) && isMounted) {
+        if (profileError) {
+          console.error("Post OAuth profile lookup failed, retrying", profileError)
+        } else {
+          console.log("Post OAuth profile missing, retrying once")
+        }
+
+        await sleep(500)
+        if (!isMounted) return
+
+        const retryResult = await lookupProfile()
+        profile = retryResult.data
+        profileError = retryResult.error
+      }
 
       if (profileError) {
         console.error("Post OAuth profile lookup failed", profileError)
@@ -134,7 +175,7 @@ export default function PostOAuthPage() {
         fontSize: "15px",
       }}
     >
-      Completing sign in…
+      Completing sign in...
     </div>
   )
 }

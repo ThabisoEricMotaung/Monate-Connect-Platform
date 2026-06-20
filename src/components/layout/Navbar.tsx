@@ -1,5 +1,6 @@
 ﻿"use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useI18n } from "@/lib/i18n"
 import { usePathname } from "next/navigation"
@@ -33,6 +34,39 @@ export default function Navbar() {
   const { t } = useI18n()
   const router = useRouter()
   const pathname = usePathname() || ""
+  const [isOauthRegistration, setIsOauthRegistration] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    setIsOauthRegistration(pathname === "/register" && params.get("source") === "oauth")
+  }, [pathname])
+
+  if (isOauthRegistration) {
+    return (
+      <header className="masthead sticky top-0 z-50">
+        <div className="masthead__brand">
+          <Link
+            href="/"
+            className="flex cursor-pointer items-center justify-center gap-3 transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            <BrandMark className="h-11 w-11" imageClassName="h-7 w-auto" />
+            <span className="text-base font-semibold text-heading">AiForm Procure</span>
+          </Link>
+        </div>
+
+        <nav className="masthead__nav" aria-label="Registration navigation">
+          <div className="masthead__nav-inner">
+            <div className="masthead__nav-links">
+              <Link href="/" className="masthead__nav-link">
+                Back to home
+              </Link>
+            </div>
+          </div>
+        </nav>
+      </header>
+    )
+  }
 
   // Return null on all public pages, auth routes, and dashboard
   if (
