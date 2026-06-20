@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
+import type { Session } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabase"
 
 function getPostOAuthPath(role?: string | null): string | null {
@@ -22,27 +23,90 @@ export default function PostOAuthPage() {
 
   useEffect(() => {
     let isMounted = true
-    let hasHandledSession = false
-    let authSubscription: { unsubscribe: () => void } | null = null
-    let authStateTimer: ReturnType<typeof setTimeout> | null = null
-    let failureTimer: ReturnType<typeof setTimeout> | null = null
+    let fallbackAuthCleanup: (() => void) | null = null
+
+    if (!supabase) {
+      const redirectTarget = "/auth/login?error=supabase_not_configured"
+      console.error("Post OAuth failed: Supabase client is not configured")
+      console.log("Redirecting to:", redirectTarget)
+      router.replace(redirectTarget)
+      return () => {
+        isMounted = false
+      }
+    }
+
+    async function waitForSession(maxAttempts = 10, delayMs = 500) {
+      if (!supabase) return null
+
+      for (let i = 0; i < maxAttempts; i++) {
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession()
+
+        if (sessionError) {
+          console.error("Post OAuth session lookup failed", sessionError)
+        }
+
+        if (session) return session
+
+        console.log(`Session attempt ${i + 1} of ${maxAttempts} - waiting...`)
+        await sleep(delayMs)
+      }
+
+      return null
+    }
+
+    function waitForSignedInEvent(timeoutMs = 5000) {
+      if (!supabase) return Promise.resolve(null)
+
+      return new Promise<Session | null>((resolve) => {
+        let settled = false
+        let subscription: { unsubscribe: () => void } | null = null
+
+        const finish = (session: Session | null) => {
+          if (settled) return
+          settled = true
+          clearTimeout(timeout)
+          subscription?.unsubscribe()
+          fallbackAuthCleanup = null
+          resolve(session)
+        }
+
+        const timeout = setTimeout(() => {
+          finish(null)
+        }, timeoutMs)
+
+        const {
+          data: { subscription: authSubscription },
+        } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === "SIGNED_IN" && session) {
+            finish(session)
+          }
+        })
+
+        subscription = authSubscription
+        fallbackAuthCleanup = () => finish(null)
+      })
+    }
 
     const completePostOAuth = async () => {
       if (!supabase || !isMounted) return
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession()
 
-      if (sessionError) {
-        console.error("Post OAuth session lookup failed", sessionError)
+      let session = await waitForSession()
+
+      if (!session && isMounted) {
+        console.log("Post OAuth waiting for SIGNED_IN fallback")
+        session = await waitForSignedInEvent()
       }
 
       if (!session || !isMounted) {
+        const redirectTarget = "/auth/login?error=oauth_failed"
+        console.log("Post OAuth missing session after all retries")
+        console.log("Redirecting to:", redirectTarget)
+        router.replace(redirectTarget)
         return
       }
-
-      hasHandledSession = true
 
       const provider =
         session.user.app_metadata?.provider ??
@@ -129,51 +193,11 @@ export default function PostOAuthPage() {
       router.replace(redirectTarget)
     }
 
-    if (!supabase) {
-      const redirectTarget = "/auth/login?error=supabase_not_configured"
-      console.error("Post OAuth failed: Supabase client is not configured")
-      console.log("Redirecting to:", redirectTarget)
-      router.replace(redirectTarget)
-      return () => {
-        isMounted = false
-      }
-    }
-
-    void (async () => {
-      await completePostOAuth()
-      if (!isMounted || hasHandledSession) return
-
-      authStateTimer = setTimeout(() => {
-        const {
-          data: { subscription },
-        } = supabase.auth.onAuthStateChange((event, session) => {
-          if (event === "SIGNED_IN" && session) {
-            void completePostOAuth()
-          }
-        })
-
-        authSubscription = subscription
-      }, 1000)
-
-      failureTimer = setTimeout(async () => {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (!session && isMounted && !hasHandledSession) {
-          const redirectTarget = "/auth/login?error=oauth_failed"
-          console.error("Post OAuth missing session")
-          console.log("Redirecting to:", redirectTarget)
-          router.replace(redirectTarget)
-        }
-      }, 5000)
-    })()
+    void completePostOAuth()
 
     return () => {
       isMounted = false
-      if (authStateTimer) clearTimeout(authStateTimer)
-      if (failureTimer) clearTimeout(failureTimer)
-      authSubscription?.unsubscribe()
+      fallbackAuthCleanup?.()
     }
   }, [router])
 
