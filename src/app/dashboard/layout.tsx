@@ -1,7 +1,24 @@
 "use client"
 
 import Link from "next/link"
-import { IconHelpCircle } from "@tabler/icons-react"
+import {
+  IconHome,
+  IconFileText,
+  IconMessage,
+  IconShoppingCart,
+  IconChartBar,
+  IconContract,
+  IconReceipt,
+  IconCreditCard,
+  IconBuilding,
+  IconShieldCheck,
+  IconBuildingBank,
+  IconSearch,
+  IconBookmark,
+  IconMessageCircle,
+  IconHelpCircle,
+  IconSettings,
+} from "@tabler/icons-react"
 import { usePathname, useRouter } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
 import AccountMenu, { type AccountMenuProfile } from "@/components/AccountMenu"
@@ -114,6 +131,24 @@ const navigation: {
   },
 ]
 
+const navigationIcons: Record<string, ReactNode> = {
+  "/dashboard": <IconHome size={16} />,
+  "/dashboard/rfqs": <IconFileText size={16} />,
+  "/dashboard/quotes": <IconMessage size={16} />,
+  "/dashboard/purchase-orders": <IconShoppingCart size={16} />,
+  "/dashboard/spend-analysis": <IconChartBar size={16} />,
+  "/dashboard/contracts": <IconContract size={16} />,
+  "/dashboard/invoices": <IconReceipt size={16} />,
+  "/dashboard/payments": <IconCreditCard size={16} />,
+  "/dashboard/profile": <IconBuilding size={16} />,
+  "/dashboard/profile?tab=verification": <IconShieldCheck size={16} />,
+  "/dashboard/profile?tab=banking": <IconBuildingBank size={16} />,
+  "/dashboard/suppliers": <IconSearch size={16} />,
+  "/dashboard/saved-rfqs": <IconBookmark size={16} />,
+  "/dashboard/messages": <IconMessageCircle size={16} />,
+  "/dashboard/help": <IconHelpCircle size={16} />,
+  Settings: <IconSettings size={16} />,
+}
 const supplierNavigationSections: { title: "Top" | "Work" | "Profile" | "Discover" | "Pinned"; label: string | null }[] = [
   { title: "Top", label: null },
   { title: "Work", label: "Work" },
@@ -527,6 +562,7 @@ export default function DashboardLayout({
                     const active =
                       pathname === itemPath ||
                       (itemPath !== "/dashboard" && pathname.startsWith(itemPath))
+                    const itemIcon = navigationIcons[item.name] ?? navigationIcons[item.href]
 
                     return (
                       <Link
@@ -539,9 +575,15 @@ export default function DashboardLayout({
                             : "border-transparent text-secondary hover:bg-[#f8f8f6] hover:text-primary"
                         }`}
                       >
-                        <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
-                          {item.name === "Help" && <IconHelpCircle className="mr-2 inline h-4 w-4 align-[-2px]" aria-hidden />}
-                          {supplierNavigationLabel(item.name, t)}
+                        <span className="flex items-center gap-2 overflow-hidden">
+                          {itemIcon && (
+                            <span className="shrink-0 text-secondary">
+                              {itemIcon}
+                            </span>
+                          )}
+                          <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                            {supplierNavigationLabel(item.name, t)}
+                          </span>
                         </span>
                       </Link>
                     )
