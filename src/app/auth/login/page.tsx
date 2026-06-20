@@ -268,7 +268,7 @@ export default function LoginPage() {
       provider: "azure",
       options: {
         redirectTo: `${window.location.origin}/auth/post-oauth`,
-        scopes: "email profile",
+        scopes: "openid email profile User.Read",
       },
     })
 
