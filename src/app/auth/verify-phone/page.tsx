@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import BrandMark from "@/components/BrandMark"
@@ -78,6 +77,7 @@ export default function VerifyPhonePage() {
         .maybeSingle()
 
       if (profile?.phone_verified_at) {
+        sessionStorage.removeItem("phone_skipped")
         router.replace("/dashboard")
         return
       }
@@ -190,6 +190,7 @@ export default function VerifyPhonePage() {
       }
 
       setAttemptsRemaining(null)
+      sessionStorage.removeItem("phone_skipped")
       setVerified(true)
     } catch {
       setError("Could not verify code. Please try again.")
@@ -222,6 +223,11 @@ export default function VerifyPhonePage() {
     if (key === "Backspace" && !digits[index] && index > 0) {
       digitRefs.current[index - 1]?.focus()
     }
+  }
+
+  const handleSkipForNow = () => {
+    sessionStorage.setItem("phone_skipped", "true")
+    router.replace("/dashboard")
   }
 
   if (checking) {
@@ -341,12 +347,13 @@ export default function VerifyPhonePage() {
                 </button>
               )}
 
-              <Link
-                href="/dashboard?phone_skipped=true"
-                className="block text-center text-xs font-semibold text-[#466253] underline-offset-4 transition hover:text-[#1a3a2a] hover:underline"
+              <button
+                type="button"
+                onClick={handleSkipForNow}
+                className="block w-full text-center text-xs font-semibold text-[#466253] underline-offset-4 transition hover:text-[#1a3a2a] hover:underline"
               >
                 Skip for now
-              </Link>
+              </button>
             </form>
           )}
         </div>

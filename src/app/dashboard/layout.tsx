@@ -339,21 +339,37 @@ export default function DashboardLayout({
           return
         }
 
-        const isOAuthUser = provider === "google" || provider === "azure"
+        const providersList = (session.user.app_metadata?.providers as string[]) || []
+        const isOAuthUser =
+          provider === "google" ||
+          provider === "azure" ||
+          providersList.includes("google") ||
+          providersList.includes("azure")
         const phoneVerifiedAt = (data as { phone_verified_at?: string | null }).phone_verified_at
         const createdAt = (data as { created_at?: string | null }).created_at
+        const normalizedRole = (data as { role?: string | null } | null)?.role?.trim().toLowerCase()
+        const isAdminUser = normalizedRole === "admin"
+        const searchParams = new URLSearchParams(window.location.search)
+        const phoneSkipped =
+          searchParams.get("phone_skipped") === "true" ||
+          (typeof window !== "undefined" && sessionStorage.getItem("phone_skipped") === "true")
 
-        if (!isOAuthUser && !phoneVerifiedAt) {
+        if (isAdminUser) {
+          setPhoneGraceExpiresAt(null)
+        } else if (!isOAuthUser && !phoneVerifiedAt) {
           const profileCreatedAt = createdAt ? new Date(createdAt) : new Date()
           const graceExpiresAt = new Date(profileCreatedAt.getTime() + 24 * 60 * 60 * 1000)
 
-          if (Date.now() >= graceExpiresAt.getTime()) {
+          if (Date.now() >= graceExpiresAt.getTime() && !phoneSkipped) {
             router.replace("/auth/verify-phone")
             return
           }
 
           setPhoneGraceExpiresAt(graceExpiresAt.toISOString())
         } else {
+          if (phoneVerifiedAt) {
+            sessionStorage.removeItem("phone_skipped")
+          }
           setPhoneGraceExpiresAt(null)
         }
 
@@ -424,10 +440,10 @@ export default function DashboardLayout({
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-page text-primary md:flex-row">
+    <main className="dashboard-theme flex min-h-screen flex-col bg-page text-primary md:flex-row">
       
       {/* Mobile header bar */}
-      <header className="fixed top-0 left-0 right-0 z-30 flex md:hidden h-16 items-center justify-between gap-4 border-b border-panel bg-panel px-4 py-3">
+      <header className="dashboard-theme fixed top-0 left-0 right-0 z-30 flex md:hidden h-16 items-center justify-between gap-4 border-b border-panel bg-panel px-4 py-3">
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
@@ -456,7 +472,7 @@ export default function DashboardLayout({
       )}
 
       {/* Sidebar - mobile overlay or desktop persistent */}
-      <aside className={`dashboard-sidebar fixed inset-y-0 left-0 z-50 w-[min(20rem,100vw)] transform transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 flex flex-col overflow-y-auto border-r border-panel bg-panel p-5 print:hidden md:w-full md:max-w-[280px] ${
+      <aside className={`dashboard-theme dashboard-sidebar fixed inset-y-0 left-0 z-50 w-[min(20rem,100vw)] transform transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 flex flex-col overflow-y-auto border-r border-panel bg-panel p-5 print:hidden md:w-full md:max-w-[280px] ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       }`}>
         {/* Mobile-only close button */}
@@ -469,7 +485,7 @@ export default function DashboardLayout({
           ×
         </button>
 
-        <div className="mb-4 rounded-2xl border border-panel bg-surface p-4 text-sm">
+        <div className="mb-4 rounded-2xl border border-[#ebebeb] bg-white p-4 text-sm">
           <Link
             href={homeHref}
             onClick={closeSidebar}
@@ -519,8 +535,8 @@ export default function DashboardLayout({
                         onClick={closeSidebar}
                         className={`block rounded-md border px-4 py-3 text-sm font-semibold transition-colors ${
                           active
-                            ? "border-accent bg-surface text-primary shadow-sm"
-                            : "border-transparent text-secondary hover:bg-surface hover:text-primary"
+                            ? "border-[#1a3a2a] bg-[#f8f8f6] text-primary shadow-sm"
+                            : "border-transparent text-secondary hover:bg-[#f8f8f6] hover:text-primary"
                         }`}
                       >
                         <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
@@ -552,8 +568,8 @@ export default function DashboardLayout({
                     onClick={closeSidebar}
                     className={`block rounded-md border px-4 py-3 text-sm font-semibold transition-colors ${
                       active
-                        ? "border-accent bg-surface text-primary shadow-sm"
-                        : "border-transparent text-secondary hover:bg-surface hover:text-primary"
+                        ? "border-[#1a3a2a] bg-[#f8f8f6] text-primary shadow-sm"
+                        : "border-transparent text-secondary hover:bg-[#f8f8f6] hover:text-primary"
                     }`}
                   >
                     <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
@@ -584,8 +600,8 @@ export default function DashboardLayout({
                     onClick={closeSidebar}
                     className={`block rounded-md border px-4 py-3 text-sm font-semibold transition-colors ${
                       active
-                        ? "border-accent bg-surface text-primary shadow-sm"
-                        : "border-transparent text-secondary hover:bg-surface hover:text-primary"
+                        ? "border-[#1a3a2a] bg-[#f8f8f6] text-primary shadow-sm"
+                        : "border-transparent text-secondary hover:bg-[#f8f8f6] hover:text-primary"
                     }`}
                   >
                     <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
@@ -599,7 +615,7 @@ export default function DashboardLayout({
         )}
       </aside>
 
-      <section className="mt-16 w-full min-w-0 flex-1 overflow-x-hidden px-4 py-5 md:mt-0 md:p-6 lg:p-8">
+      <section className="mt-16 w-full min-w-0 flex-1 overflow-x-hidden bg-[#f8f8f6] px-4 py-5 md:mt-0 md:p-6 lg:p-8">
         <div className="print:hidden mb-4 flex items-center justify-between gap-4">
           <Breadcrumbs role={role} />
           <div className="hidden md:block">
@@ -608,7 +624,7 @@ export default function DashboardLayout({
         </div>
         {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}
         {children}
-        <footer className="mt-10 flex flex-col gap-3 border-t border-panel pt-5 text-xs font-semibold text-muted sm:flex-row sm:items-center sm:justify-between">
+        <footer className="mt-10 flex flex-col gap-3 border-t border-[#ebebeb] pt-5 text-xs font-semibold text-muted sm:flex-row sm:items-center sm:justify-between">
           <p>&copy; 2026 AiForm Procure &middot; Procurement Suite</p>
           <button
             type="button"
