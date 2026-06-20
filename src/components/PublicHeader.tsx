@@ -23,6 +23,7 @@ export default function PublicHeader() {
   const [signedOutNotice, setSignedOutNotice] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const registrationStatus = useRegistrationStatus()
+  const isIncompleteRegistration = registrationStatus.state === "incomplete"
   const dashboardHref =
     registrationStatus.state === "complete"
       ? registrationStatus.dashboardHref
@@ -30,7 +31,7 @@ export default function PublicHeader() {
         ? "/register?source=oauth"
         : null
   const dashboardLabel =
-    registrationStatus.state === "incomplete"
+    isIncompleteRegistration
       ? "Complete registration"
       : "Go to Dashboard"
   const homeHref = dashboardHref ?? "/"
@@ -192,22 +193,24 @@ export default function PublicHeader() {
                 >
                   {dashboardLabel}
                 </Link>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  style={{
-                    background: "transparent",
-                    border: "1px solid #1a3a2a",
-                    color: "#1a3a2a",
-                    borderRadius: "6px",
-                    padding: "8px 16px",
-                    fontSize: "13px",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  Log out
-                </button>
+                {!isIncompleteRegistration && (
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    style={{
+                      background: "transparent",
+                      border: "1px solid #1a3a2a",
+                      color: "#1a3a2a",
+                      borderRadius: "6px",
+                      padding: "8px 16px",
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Log out
+                  </button>
+                )}
               </>
             ) : (
               <>
@@ -338,27 +341,29 @@ export default function PublicHeader() {
                     >
                       {dashboardLabel}
                     </Link>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMenuOpen(false)
-                        handleLogout()
-                      }}
-                      style={{
-                        background: "transparent",
-                        border: "1px solid #1a3a2a",
-                        color: "#1a3a2a",
-                        borderRadius: "6px",
-                        padding: "10px 16px",
-                        fontSize: "13px",
-                        cursor: "pointer",
-                        textAlign: "center",
-                        fontFamily: "inherit",
-                        width: "100%",
-                      }}
-                    >
-                      Log out
-                    </button>
+                    {!isIncompleteRegistration && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuOpen(false)
+                          handleLogout()
+                        }}
+                        style={{
+                          background: "transparent",
+                          border: "1px solid #1a3a2a",
+                          color: "#1a3a2a",
+                          borderRadius: "6px",
+                          padding: "10px 16px",
+                          fontSize: "13px",
+                          cursor: "pointer",
+                          textAlign: "center",
+                          fontFamily: "inherit",
+                          width: "100%",
+                        }}
+                      >
+                        Log out
+                      </button>
+                    )}
                   </>
                 ) : (
                   <>
@@ -407,3 +412,4 @@ export default function PublicHeader() {
     </>
   )
 }
+

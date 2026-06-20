@@ -67,6 +67,7 @@ export default function PostOAuthPage() {
         isKnownOAuthProvider,
         isMicrosoftOAuthProvider,
       })
+      console.log("Provider:", provider)
 
       await sleep(1000)
       if (!isMounted) return
@@ -96,14 +97,20 @@ export default function PostOAuthPage() {
         profileError = retryResult.error
       }
 
+      console.log("Profile found:", !!profile)
+
       if (profileError) {
+        const redirectTarget = "/auth/login?error=oauth_failed"
         console.error("Post OAuth profile lookup failed", profileError)
-        router.replace("/auth/login?error=oauth_failed")
+        console.log("Redirecting to:", redirectTarget)
+        router.replace(redirectTarget)
         return
       }
 
       if (!profile) {
-        router.replace("/register?source=oauth")
+        const redirectTarget = "/register?source=oauth"
+        console.log("Redirecting to:", redirectTarget)
+        router.replace(redirectTarget)
         return
       }
 
@@ -111,17 +118,22 @@ export default function PostOAuthPage() {
       console.log("Post OAuth profile role", role ?? null)
 
       if (!role) {
-        router.replace(
-          `/auth/signup?oauth=true&email=${encodeURIComponent(session.user.email ?? "")}`
-        )
+        const redirectTarget = `/auth/signup?oauth=true&email=${encodeURIComponent(session.user.email ?? "")}`
+        console.log("Redirecting to:", redirectTarget)
+        router.replace(redirectTarget)
         return
       }
-      router.replace(getPostOAuthPath(role) ?? "/dashboard")
+
+      const redirectTarget = getPostOAuthPath(role) ?? "/dashboard"
+      console.log("Redirecting to:", redirectTarget)
+      router.replace(redirectTarget)
     }
 
     if (!supabase) {
+      const redirectTarget = "/auth/login?error=supabase_not_configured"
       console.error("Post OAuth failed: Supabase client is not configured")
-      router.replace("/auth/login?error=supabase_not_configured")
+      console.log("Redirecting to:", redirectTarget)
+      router.replace(redirectTarget)
       return () => {
         isMounted = false
       }
@@ -149,8 +161,10 @@ export default function PostOAuthPage() {
         } = await supabase.auth.getSession()
 
         if (!session && isMounted && !hasHandledSession) {
+          const redirectTarget = "/auth/login?error=oauth_failed"
           console.error("Post OAuth missing session")
-          router.replace("/auth/login?error=oauth_failed")
+          console.log("Redirecting to:", redirectTarget)
+          router.replace(redirectTarget)
         }
       }, 5000)
     })()
