@@ -39,6 +39,11 @@ export default function PublicHeader() {
     window.location.assign("/?signedout=1")
   }
 
+  async function handleIncompleteSignOut() {
+    await supabase.auth.signOut()
+    window.location.assign("/")
+  }
+
   return (
     <>
       {/* Trust Bar */}
@@ -162,6 +167,23 @@ export default function PublicHeader() {
                 </Link>
               )
             })}
+            {isIncompleteRegistration && (
+              <button
+                type="button"
+                onClick={handleIncompleteSignOut}
+                className="text-sm hover:underline"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#888888",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  padding: "8px 10px",
+                }}
+              >
+                Sign out
+              </button>
+            )}
           </nav>
 
           {/* Desktop CTA Buttons */}
@@ -313,7 +335,27 @@ export default function PublicHeader() {
                   gap: "8px",
                 }}
               >
-                {isIncompleteRegistration ? null : dashboardHref ? (
+                {isIncompleteRegistration ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      handleIncompleteSignOut()
+                    }}
+                    className="text-sm hover:underline"
+                    style={{
+                      alignSelf: "center",
+                      background: "transparent",
+                      border: "none",
+                      color: "#888888",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      padding: "6px 10px",
+                    }}
+                  >
+                    Sign out
+                  </button>
+                ) : dashboardHref ? (
                   <>
                     <Link
                       href={dashboardHref}
