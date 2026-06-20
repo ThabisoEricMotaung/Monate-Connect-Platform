@@ -17,13 +17,16 @@ import {
   IconBookmark,
   IconMessageCircle,
   IconHelpCircle,
+  IconMenu2,
   IconSettings,
+  IconX,
 } from "@tabler/icons-react"
 import { usePathname, useRouter } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
 import AccountMenu, { type AccountMenuProfile } from "@/components/AccountMenu"
 import BrandMark from "@/components/BrandMark"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
+import NotificationBell from "@/components/NotificationBell"
 import PhoneVerificationBanner from "@/components/PhoneVerificationBanner"
 import ProcurementWire from "@/components/ProcurementWire"
 import { hasAdminOrBuyerAccess } from "@/lib/auth"
@@ -475,116 +478,82 @@ export default function DashboardLayout({
   }
 
   return (
-    <main className="dashboard-theme flex min-h-screen flex-col bg-page text-primary md:flex-row">
-      
-      {/* Mobile header bar */}
-      <header className="dashboard-theme fixed top-0 left-0 right-0 z-30 flex md:hidden h-16 items-center justify-between gap-4 border-b border-panel bg-panel px-4 py-3">
+    <main className="flex min-h-screen bg-[#f8f8f6] text-[#1a3a2a]">
+      {sidebarOpen && (
         <button
           type="button"
-          onClick={() => setSidebarOpen(true)}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-panel bg-surface text-xl font-semibold text-secondary transition hover:text-primary"
-          aria-label="Open navigation menu"
-        >
-          ☰
-        </button>
-        <Link href={homeHref} className="flex cursor-pointer items-center gap-2 rounded-sm transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
-          <BrandMark className="h-10 w-10" imageClassName="h-6 w-auto" />
-          <span className="sr-only">AiForm Procure home</span>
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-secondary">Workspace</p>
-            <h2 className="text-sm font-semibold text-primary leading-none">AiForm Procure</h2>
-          </div>
-        </Link>
-        <AccountMenu profile={profile} />
-      </header>
-
-      {/* Mobile backdrop */}
-      {sidebarOpen && (
-        <div
           className="fixed inset-0 z-40 bg-black/60 md:hidden"
           onClick={closeSidebar}
+          aria-label="Close navigation backdrop"
         />
       )}
 
-      {/* Sidebar - mobile overlay or desktop persistent */}
-      <aside className={`dashboard-theme dashboard-sidebar fixed inset-y-0 left-0 z-50 w-[min(20rem,100vw)] transform transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 flex flex-col overflow-y-auto border-r border-panel bg-panel p-5 print:hidden md:w-full md:max-w-[280px] ${
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      }`}>
-        {/* Mobile-only close button */}
+      <aside
+        className={`dashboard-sidebar fixed inset-y-0 left-0 z-50 flex w-[min(20rem,100vw)] -translate-x-full flex-col overflow-y-auto border-r-[0.5px] border-[#ebebeb] bg-white p-4 transition-transform duration-200 print:hidden md:sticky md:top-0 md:h-screen md:w-56 md:min-w-[14rem] md:translate-x-0 ${sidebarOpen ? "translate-x-0" : ""}`}
+      >
         <button
           type="button"
           onClick={closeSidebar}
-          className="md:hidden mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md border border-panel bg-surface text-xl text-secondary transition hover:text-primary"
+          className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#ebebeb] bg-white text-[#555555] transition hover:text-[#1a3a2a] md:hidden"
           aria-label="Close navigation menu"
         >
-          ×
+          <IconX aria-hidden="true" className="h-5 w-5" stroke={1.8} />
         </button>
 
-        <div className="mb-4 rounded-2xl border border-[#ebebeb] bg-white p-4 text-sm">
-          <Link
-            href={homeHref}
-            onClick={closeSidebar}
-            className="block overflow-hidden text-ellipsis whitespace-nowrap text-accent transition hover:text-accent-strong"
-          >
-            Home dashboard
-          </Link>
-        </div>
+        <Link href={homeHref} onClick={closeSidebar} className="mb-5 flex items-center gap-3">
+          <BrandMark className="h-11 w-11" imageClassName="h-7 w-auto" />
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-[#555555]">
+              Procurement Workspace
+            </p>
+            <h2 className="text-sm font-semibold text-[#1a3a2a] leading-none">
+              AiForm Procure
+            </h2>
+          </div>
+        </Link>
 
-        <div className="mb-6 flex items-center gap-3 border-b border-panel pb-5">
-          <Link href={homeHref} onClick={closeSidebar} className="flex cursor-pointer items-center gap-3 rounded-sm transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
-            <BrandMark className="h-14 w-14" imageClassName="h-8 w-auto" />
-            <span className="sr-only">AiForm Procure home</span>
-            <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-secondary">
-                Supplier Workspace
-              </p>
-              <h2 className="text-xl font-semibold text-primary">
-                AiForm Procure
-              </h2>
-            </div>
-          </Link>
-        </div>
-
-        <nav className="space-y-6 flex-1">
+        <nav className="flex-1 space-y-5">
           {supplierNavigationSections.map((section) => {
             const items = navigation.filter((item) => item.section === section.title)
 
             return (
               <div key={section.title}>
                 {section.label && (
-                  <p className="mb-3 text-xs uppercase tracking-[0.24em] text-secondary">
+                  <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaaaaa]">
                     {section.label}
                   </p>
                 )}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {items.map((item) => {
                     const itemPath = item.href.split("?")[0]
                     const active =
                       pathname === itemPath ||
                       (itemPath !== "/dashboard" && pathname.startsWith(itemPath))
                     const itemIcon = navigationIcons[item.name] ?? navigationIcons[item.href]
+                    const itemLabel = item.href === "/dashboard" ? "Home dashboard" : supplierNavigationLabel(item.name, t)
 
                     return (
                       <Link
                         key={`${section.title}-${item.href}-${item.name}`}
                         href={item.href}
                         onClick={closeSidebar}
-                        className={`block rounded-md border px-4 py-3 text-sm font-semibold transition-colors ${
+                        className={`flex items-center justify-between gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                           active
-                            ? "border-[#1a3a2a] bg-[#f8f8f6] text-primary shadow-sm"
-                            : "border-transparent text-secondary hover:bg-[#f8f8f6] hover:text-primary"
+                            ? "border-[#1a3a2a]/20 bg-[#f0f7f3] text-[#1a3a2a]"
+                            : "border-transparent text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
                         }`}
                       >
-                        <span className="flex items-center gap-2 overflow-hidden">
+                        <span className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
                           {itemIcon && (
-                            <span className="shrink-0 text-secondary">
+                            <span className={`shrink-0 ${active ? "text-[#1a3a2a]" : "text-[#aaaaaa]"}`}>
                               {itemIcon}
                             </span>
                           )}
                           <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                            {supplierNavigationLabel(item.name, t)}
+                            {itemLabel}
                           </span>
                         </span>
+                        {active && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8a060]" />}
                       </Link>
                     )
                   })}
@@ -592,86 +561,115 @@ export default function DashboardLayout({
               </div>
             )
           })}
+
+          {canViewAdminNavigation && (
+            <div className="border-t border-[#ebebeb] pt-5">
+              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaaaaa]">
+                Intelligence
+              </p>
+              <nav className="space-y-1.5">
+                {intelligenceNavigation.map((item) => {
+                  const active = pathname === item.href || pathname.startsWith(item.href)
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={closeSidebar}
+                      className={`flex items-center justify-between gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                        active
+                          ? "border-[#1a3a2a]/20 bg-[#f0f7f3] text-[#1a3a2a]"
+                          : "border-transparent text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
+                      }`}
+                    >
+                      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{item.name}</span>
+                      {active && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8a060]" />}
+                    </Link>
+                  )
+                })}
+              </nav>
+            </div>
+          )}
+
+          {canViewAdminNavigation && (
+            <div className="border-t border-[#ebebeb] pt-5">
+              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaaaaa]">
+                Admin
+              </p>
+
+              <nav className="space-y-1.5">
+                {adminNavigation.map((item) => {
+                  const active = pathname === item.href || pathname.startsWith(item.href)
+                  const itemLabel =
+                    item.name === "Executive Command Centre" || item.name === "Board Pack" || item.name === "System Health" || item.name === "Production Readiness" || item.name === "Demo Mode" || item.name === "Demo Story Pack" || item.name === "Pilot Requests" || item.name === "Pilot Feedback" || item.name === "Audit Trail" || item.name === "Automation Rules" || item.name === "Spend Analysis" || item.name === "Compliance Report" || item.name === "BBBEE Scorecard" || item.name === "Reports" || item.name === "Settings" || item.name === "WhatsApp Network" || item.name === "Contract Renewals" || item.name === "Supplier Reviews" || item.name === "Compliance Risk" || item.name === "Buyer Onboarding" || item.name === "RFQ Templates" || item.name === "Banking Review" || item.name === "Supplier Risk" || item.name === "Decision Board" || item.name === "Workflow Rules" || item.name === "Overrides" || item.name === "Approval Matrix" || item.name === "Delegation Authority"
+                      ? item.name
+                      : t(item.name)
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={closeSidebar}
+                      className={`flex items-center justify-between gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                        active
+                          ? "border-[#1a3a2a]/20 bg-[#f0f7f3] text-[#1a3a2a]"
+                          : "border-transparent text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
+                      }`}
+                    >
+                      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{itemLabel}</span>
+                      {active && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8a060]" />}
+                    </Link>
+                  )
+                })}
+              </nav>
+            </div>
+          )}
         </nav>
-
-        {canViewAdminNavigation && (
-          <div className="mt-8 border-t border-panel pt-5">
-            <p className="mb-3 text-xs uppercase tracking-[0.24em] text-secondary">
-              Intelligence
-            </p>
-            <nav className="space-y-2">
-              {intelligenceNavigation.map((item) => {
-                const active =
-                  pathname === item.href || pathname.startsWith(item.href)
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeSidebar}
-                    className={`block rounded-md border px-4 py-3 text-sm font-semibold transition-colors ${
-                      active
-                        ? "border-[#1a3a2a] bg-[#f8f8f6] text-primary shadow-sm"
-                        : "border-transparent text-secondary hover:bg-[#f8f8f6] hover:text-primary"
-                    }`}
-                  >
-                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
-                      {item.name}
-                    </span>
-                  </Link>
-                )
-              })}
-            </nav>
-          </div>
-        )}
-
-        {canViewAdminNavigation && (
-          <div className="mt-8 border-t border-panel pt-5">
-            <p className="mb-3 text-xs uppercase tracking-[0.24em] text-secondary">
-              Admin
-            </p>
-
-            <nav className="space-y-2">
-              {adminNavigation.map((item) => {
-                const active =
-                  pathname === item.href || pathname.startsWith(item.href)
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeSidebar}
-                    className={`block rounded-md border px-4 py-3 text-sm font-semibold transition-colors ${
-                      active
-                        ? "border-[#1a3a2a] bg-[#f8f8f6] text-primary shadow-sm"
-                        : "border-transparent text-secondary hover:bg-[#f8f8f6] hover:text-primary"
-                    }`}
-                  >
-                    <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
-                      {item.name === "Executive Command Centre" || item.name === "Board Pack" || item.name === "System Health" || item.name === "Production Readiness" || item.name === "Demo Mode" || item.name === "Demo Story Pack" || item.name === "Pilot Requests" || item.name === "Pilot Feedback" || item.name === "Audit Trail" || item.name === "Automation Rules" || item.name === "Spend Analysis" || item.name === "Compliance Report" || item.name === "BBBEE Scorecard" || item.name === "Reports" || item.name === "Settings" || item.name === "WhatsApp Network" || item.name === "Contract Renewals" || item.name === "Supplier Reviews" || item.name === "Compliance Risk" || item.name === "Buyer Onboarding" || item.name === "RFQ Templates" || item.name === "Banking Review" || item.name === "Supplier Risk" || item.name === "Decision Board" || item.name === "Workflow Rules" || item.name === "Overrides" || item.name === "Approval Matrix" || item.name === "Delegation Authority" ? item.name : t(item.name)}
-                    </span>
-                  </Link>
-                )
-              })}
-            </nav>
-          </div>
-        )}
       </aside>
 
-      <section className="mt-16 w-full min-w-0 flex-1 overflow-x-hidden bg-[#f8f8f6] px-4 py-5 md:mt-0 md:p-6 lg:p-8">
-        <div className="print:hidden mb-4 flex items-center justify-between gap-4">
-          <Breadcrumbs role={role} />
-          <div className="hidden md:block">
+      <section className="w-full min-w-0 flex-1 overflow-x-hidden px-4 py-5 pb-24 md:p-8 md:pb-24">
+        <header className="dashboard-chrome print:hidden -mx-4 -mt-5 mb-6 flex items-center justify-between gap-4 border-b-[0.5px] border-[#ebebeb] bg-white px-5 py-4 md:-mx-8 md:-mt-8">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#ebebeb] bg-white text-[#555555] transition hover:text-[#1a3a2a] md:hidden"
+            aria-label="Open navigation menu"
+          >
+            <IconMenu2 aria-hidden="true" className="h-5 w-5" stroke={1.8} />
+          </button>
+          <Link
+            href={homeHref}
+            className="flex min-w-0 cursor-pointer items-center gap-3 rounded-sm transition hover:text-[#1a3a2a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c8a060]"
+          >
+            <BrandMark className="h-11 w-11" imageClassName="h-7 w-auto" />
+            <span className="sr-only">AiForm Procure home</span>
+            <div className="min-w-0">
+              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-[#aaaaaa]">
+                Procurement workspace
+              </p>
+              <p className="mt-1 truncate text-sm font-semibold text-[#1a3a2a]">
+                AiForm Procure
+              </p>
+            </div>
+          </Link>
+
+          <div className="flex items-center gap-3">
+            <NotificationBell />
             <AccountMenu profile={profile} />
           </div>
+        </header>
+
+        <div className="print:hidden mb-6">
+          <Breadcrumbs role={role} />
         </div>
+
         {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}
         {children}
-        <footer className="mt-10 flex flex-col gap-3 border-t border-[#ebebeb] pt-5 text-xs font-semibold text-muted sm:flex-row sm:items-center sm:justify-between">
+        <footer className="mt-10 flex flex-col gap-3 border-t border-[#ebebeb] pt-5 text-xs font-semibold text-[#555555] sm:flex-row sm:items-center sm:justify-between">
           <p>&copy; 2026 AiForm Procure &middot; Procurement Suite</p>
           <button
             type="button"
             onClick={openAccessibility}
-            className="w-fit underline-offset-4 transition hover:text-accent hover:underline"
+            className="w-fit underline-offset-4 transition hover:text-[#1a3a2a] hover:underline"
           >
             Accessibility
           </button>
