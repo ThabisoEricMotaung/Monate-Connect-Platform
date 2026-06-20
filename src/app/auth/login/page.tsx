@@ -329,6 +329,9 @@ export default function LoginPage() {
               <MicrosoftLogo />
               <span>Continue with Microsoft</span>
             </button>
+            <p className="text-center text-xs text-[#888] mt-1">
+              New users: please register with Google or email first
+            </p>
 
             <AuthDivider />
 
