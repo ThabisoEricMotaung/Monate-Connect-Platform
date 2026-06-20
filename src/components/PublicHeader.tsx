@@ -175,13 +175,13 @@ export default function PublicHeader() {
                 style={{
                   background: "transparent",
                   border: "none",
-                  color: "#888888",
+                  color: "#1a3a2a",
                   cursor: "pointer",
                   fontFamily: "inherit",
                   padding: "8px 10px",
                 }}
               >
-                Sign out
+                ← Start over
               </button>
             )}
           </nav>
@@ -347,13 +347,13 @@ export default function PublicHeader() {
                       alignSelf: "center",
                       background: "transparent",
                       border: "none",
-                      color: "#888888",
+                      color: "#1a3a2a",
                       cursor: "pointer",
                       fontFamily: "inherit",
                       padding: "6px 10px",
                     }}
                   >
-                    Sign out
+                    ← Start over
                   </button>
                 ) : dashboardHref ? (
                   <>
