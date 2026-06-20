@@ -24,16 +24,8 @@ export default function PublicHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const registrationStatus = useRegistrationStatus()
   const isIncompleteRegistration = registrationStatus.state === "incomplete"
-  const dashboardHref =
-    registrationStatus.state === "complete"
-      ? registrationStatus.dashboardHref
-      : registrationStatus.state === "incomplete"
-        ? "/register?source=oauth"
-        : null
-  const dashboardLabel =
-    isIncompleteRegistration
-      ? "Complete registration"
-      : "Go to Dashboard"
+  const dashboardHref = registrationStatus.state === "complete" ? registrationStatus.dashboardHref : null
+  const dashboardLabel = "Go to Dashboard"
   const homeHref = dashboardHref ?? "/"
 
   useEffect(() => {
@@ -174,7 +166,7 @@ export default function PublicHeader() {
 
           {/* Desktop CTA Buttons */}
           <div className="hidden md:flex" style={{ gap: "8px", alignItems: "center" }}>
-            {dashboardHref ? (
+            {isIncompleteRegistration ? null : dashboardHref ? (
               <>
                 <Link
                   href={dashboardHref}
@@ -321,7 +313,7 @@ export default function PublicHeader() {
                   gap: "8px",
                 }}
               >
-                {dashboardHref ? (
+                {isIncompleteRegistration ? null : dashboardHref ? (
                   <>
                     <Link
                       href={dashboardHref}
