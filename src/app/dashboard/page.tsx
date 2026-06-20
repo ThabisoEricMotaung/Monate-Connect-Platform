@@ -318,12 +318,21 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="mb-10">
-        <p className="mb-3 text-xs md:text-sm uppercase tracking-[0.3em] text-accent">PROCUREMENT OPERATIONS</p>
-        <h1 className="font-display text-3xl md:text-5xl font-bold text-primary">{greeting()}, {firstName || "there"}</h1>
-        <p className="mt-4 max-w-3xl text-base md:text-lg text-secondary">
-          Manage procurement opportunities, supplier verification, RFQ participation, and quote submissions from your workspace.
-        </p>
+      <div className="relative mb-10 overflow-hidden">
+        <div
+          className="pointer-events-none absolute inset-0 z-0 opacity-[0.15]"
+          style={{
+            background: "url('https://design.canva.ai/GB320ny3MyEuntW') center / cover no-repeat",
+            borderRadius: "inherit",
+          }}
+        />
+        <div className="relative z-[1]">
+          <p className="mb-3 text-xs md:text-sm uppercase tracking-[0.3em] text-accent">PROCUREMENT OPERATIONS</p>
+          <h1 className="font-display text-3xl md:text-5xl font-bold text-primary">{greeting()}, {firstName || "there"}</h1>
+          <p className="mt-4 max-w-3xl text-base md:text-lg text-secondary">
+            Manage procurement opportunities, supplier verification, RFQ participation, and quote submissions from your workspace.
+          </p>
+        </div>
       </div>
 
       {profileLoadError && !statsLoading && (

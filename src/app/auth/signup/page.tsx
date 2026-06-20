@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { calculateSmartScore } from "@/lib/smartScore"
@@ -9,6 +9,9 @@ import {
   NATIONAL_PROVINCE_VALUE,
   SA_PHONE_ERROR,
   displayProvinceList,
+  formatSAPhoneInput,
+  phoneBlurValue,
+  phoneFocusValue,
   isNationalSelection,
   validateCsdNumber,
   validateSAPhone,
@@ -81,6 +84,15 @@ type SignupErrors = Partial<Record<keyof SignupForm | "submit", string>>
 type PasswordRule = {
   label: string
   met: boolean
+}
+
+type MissingComplianceItem = "csdCertificate" | "taxReference" | "vatNumber" | "bbbeeCertificate"
+
+const complianceWarningCopy: Record<MissingComplianceItem, { documentName: string; fieldLabel: string }> = {
+  csdCertificate: { documentName: "CSD Certificate", fieldLabel: "CSD Certificate" },
+  taxReference: { documentName: "Tax Reference Number", fieldLabel: "Tax Reference Number" },
+  vatNumber: { documentName: "VAT Registration Number", fieldLabel: "VAT Registration Number" },
+  bbbeeCertificate: { documentName: "BBBEE Certificate", fieldLabel: "BBBEE level" },
 }
 
 const inputClass =
@@ -363,6 +375,12 @@ export default function SignupPage() {
   const [showOauthRegistrationNotice, setShowOauthRegistrationNotice] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [complianceWarnings, setComplianceWarnings] = useState<MissingComplianceItem[]>([])
+  const [acknowledgedComplianceWarnings, setAcknowledgedComplianceWarnings] = useState(false)
+  const csdUploadRef = useRef<HTMLInputElement>(null)
+  const taxReferenceRef = useRef<HTMLInputElement>(null)
+  const vatNumberRef = useRef<HTMLInputElement>(null)
+  const bbbeeLevelRef = useRef<HTMLSelectElement>(null)
   const passwordsDoNotMatch =
     !isOauthSignup &&
     form.confirmPassword.length > 0 &&
@@ -408,6 +426,28 @@ export default function SignupPage() {
   const updateField = <K extends keyof SignupForm>(field: K, value: SignupForm[K]) => {
     setForm((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: undefined, submit: undefined }))
+    if (field === "csdDocumentFile" || field === "taxReference" || field === "vatNumber" || field === "bbeeLevel") {
+      setAcknowledgedComplianceWarnings(false)
+      setComplianceWarnings((current) => current.filter((item) => {
+        if (field === "csdDocumentFile") return item !== "csdCertificate"
+        if (field === "taxReference") return item !== "taxReference"
+        if (field === "vatNumber") return item !== "vatNumber"
+        if (field === "bbeeLevel") return item !== "bbbeeCertificate"
+        return true
+      }))
+    }
+  }
+
+  const updatePhoneField = (value: string) => {
+    updateField("phone", formatSAPhoneInput(value))
+  }
+
+  const handlePhoneFocus = () => {
+    updateField("phone", phoneFocusValue(form.phone))
+  }
+
+  const handlePhoneBlur = () => {
+    updateField("phone", phoneBlurValue(form.phone))
   }
 
   const toggleProvince = (province: string) => {
@@ -426,6 +466,28 @@ export default function SignupPage() {
     const file = event.target.files?.[0] ?? null
     setForm((current) => ({ ...current, csdDocumentFile: file, csdDocumentPath: file ? "" : current.csdDocumentPath }))
     setErrors((current) => ({ ...current, csdDocumentFile: undefined, submit: undefined }))
+    setAcknowledgedComplianceWarnings(false)
+    if (file) setComplianceWarnings((current) => current.filter((item) => item !== "csdCertificate"))
+  }
+
+  function missingComplianceItems(): MissingComplianceItem[] {
+    const missing: MissingComplianceItem[] = []
+    if (!form.csdDocumentFile && !form.csdDocumentPath) missing.push("csdCertificate")
+    if (!form.taxReference.trim()) missing.push("taxReference")
+    if (!form.vatNumber.trim()) missing.push("vatNumber")
+    missing.push("bbbeeCertificate")
+    return missing
+  }
+
+  function focusComplianceField(item: MissingComplianceItem) {
+    if (item === "csdCertificate") csdUploadRef.current?.focus()
+    if (item === "taxReference") taxReferenceRef.current?.focus()
+    if (item === "vatNumber") vatNumberRef.current?.focus()
+    if (item === "bbbeeCertificate") bbbeeLevelRef.current?.focus()
+  }
+
+  function dismissComplianceWarning(item: MissingComplianceItem) {
+    setComplianceWarnings((current) => current.filter((warning) => warning !== item))
   }
 
   const uploadCsdDocumentIfNeeded = async () => {
@@ -471,8 +533,7 @@ export default function SignupPage() {
     if (targetStep === 3) {
       if (!form.csdNumber.trim()) nextErrors.csdNumber = "CSD supplier number is required."
       else if (!validateCsdNumber(form.csdNumber)) nextErrors.csdNumber = "Enter a valid CSD number in MAAA-XXXXXXXX format."
-      if (!form.taxReference.trim()) nextErrors.taxReference = "Tax reference number is required."
-      else if (!validateTaxNumber(form.taxReference)) nextErrors.taxReference = "Tax number must be exactly 10 digits."
+      if (form.taxReference.trim() && !validateTaxNumber(form.taxReference)) nextErrors.taxReference = "Tax number must be exactly 10 digits."
       if (form.vatNumber.trim() && !validateVatNumber(form.vatNumber)) {
         nextErrors.vatNumber = "VAT number must be exactly 10 digits and start with 4."
       }
@@ -588,8 +649,16 @@ export default function SignupPage() {
   }
 
   // STEP 3: save compliance info (non-fatal)
-  const handleStep3Save = async () => {
+  const handleStep3Save = async ({ skipWarnings = false }: { skipWarnings?: boolean } = {}) => {
     if (!validateStep(3)) return
+    const missing = missingComplianceItems()
+    if (missing.length > 0 && !skipWarnings && !acknowledgedComplianceWarnings) {
+      setComplianceWarnings(missing)
+      return
+    }
+
+    setComplianceWarnings([])
+    setAcknowledgedComplianceWarnings(false)
     setLoading(true)
     setErrors({})
 
@@ -705,7 +774,7 @@ export default function SignupPage() {
     }
 
     setLoading(false)
-    setStep(5)
+    router.replace(`/auth/verify-phone?phone=${encodeURIComponent(form.phone)}`)
   }
 
   const handleGoogleSignIn = async () => {
@@ -947,7 +1016,15 @@ export default function SignupPage() {
               <div className="mt-5 grid gap-5 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-secondary">Phone number</label>
-                  <input type="tel" placeholder="+27821234567" value={form.phone} onChange={(e) => updateField("phone", e.target.value)} className={inputClass} />
+                  <input
+                    type="tel"
+                    placeholder="+27821234567"
+                    value={form.phone}
+                    onChange={(e) => updatePhoneField(e.target.value)}
+                    onFocus={handlePhoneFocus}
+                    onBlur={handlePhoneBlur}
+                    className={inputClass}
+                  />
                   <FieldError message={errors.phone} />
                 </div>
                 <div>
@@ -1010,6 +1087,50 @@ export default function SignupPage() {
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
+                {complianceWarnings.length > 0 && (
+                  <div className="space-y-3 md:col-span-2">
+                    {complianceWarnings.map((item) => {
+                      const warning = complianceWarningCopy[item]
+                      return (
+                        <div key={item} className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-left">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm leading-6 text-amber-900">
+                              You haven&apos;t uploaded your {warning.documentName} — your SmartScore will be lower and verification may take longer. You can upload this later from your profile.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => dismissComplianceWarning(item)}
+                              className="shrink-0 text-sm font-bold text-amber-900 transition hover:text-amber-700"
+                              aria-label={`Dismiss ${warning.documentName} warning`}
+                            >
+                              ×
+                            </button>
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-3">
+                            <button
+                              type="button"
+                              onClick={() => focusComplianceField(item)}
+                              className="text-sm font-semibold text-accent transition hover:text-accent-strong"
+                            >
+                              Upload now
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAcknowledgedComplianceWarnings(true)
+                                void handleStep3Save({ skipWarnings: true })
+                              }}
+                              className="text-sm font-semibold text-secondary transition hover:text-primary"
+                            >
+                              Continue anyway
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-secondary">CSD Number</label>
                   <input type="text" placeholder="MAAA-12345678" value={form.csdNumber} onChange={(e) => updateField("csdNumber", e.target.value)} className={inputClass} />
@@ -1024,6 +1145,7 @@ export default function SignupPage() {
                     </span>
                     <span className="shrink-0 text-xs font-semibold text-accent">Browse</span>
                     <input
+                      ref={csdUploadRef}
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       className="sr-only"
@@ -1038,14 +1160,14 @@ export default function SignupPage() {
               <div className="mt-5 grid gap-5 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-secondary">Tax reference number</label>
-                  <input type="text" placeholder="e.g. 1234567890" value={form.taxReference} onChange={(e) => updateField("taxReference", e.target.value)} className={inputClass} />
+                  <input ref={taxReferenceRef} type="text" placeholder="e.g. 1234567890" value={form.taxReference} onChange={(e) => updateField("taxReference", e.target.value)} className={inputClass} />
                   <FieldError message={errors.taxReference} />
                 </div>
               </div>
 
               <div className="mt-5">
                 <label className="block text-sm font-medium text-secondary">BBBEE level</label>
-                <select value={form.bbeeLevel} onChange={(e) => updateField("bbeeLevel", e.target.value)} className={selectClass}>
+                <select ref={bbbeeLevelRef} value={form.bbeeLevel} onChange={(e) => updateField("bbeeLevel", e.target.value)} className={selectClass}>
                   <option value="">Select BBBEE level</option>
                   {bbeeLevels.map((level) => <option key={level} value={level}>{level}</option>)}
                 </select>
@@ -1056,7 +1178,7 @@ export default function SignupPage() {
                 <label className="block text-sm font-medium text-secondary">
                   VAT registration number <span className="text-muted">(optional)</span>
                 </label>
-                <input type="text" value={form.vatNumber} onChange={(e) => updateField("vatNumber", e.target.value)} className={inputClass} />
+                <input ref={vatNumberRef} type="text" value={form.vatNumber} onChange={(e) => updateField("vatNumber", e.target.value)} className={inputClass} />
                 <FieldError message={errors.vatNumber} />
               </div>
 
@@ -1069,7 +1191,7 @@ export default function SignupPage() {
               </div>
 
               <div className="mt-7 space-y-3">
-                <button type="button" onClick={handleStep3Save} disabled={loading}
+                <button type="button" onClick={() => void handleStep3Save()} disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
                   {loading ? "Saving…" : "Continue?"}
                 </button>

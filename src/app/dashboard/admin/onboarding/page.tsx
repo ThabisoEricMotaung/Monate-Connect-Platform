@@ -51,7 +51,10 @@ import {
   NATIONAL_PROVINCE_VALUE,
   SA_PHONE_ERROR,
   displayProvinceList,
+  formatSAPhoneInput,
   isNationalSelection,
+  phoneBlurValue,
+  phoneFocusValue,
   validateSAPhone,
 } from "@/lib/formValidation"
 import { supabase } from "@/lib/supabase"
@@ -611,7 +614,7 @@ export default function BuyerOnboardingPage() {
     enabled: !loading && !setupComplete,
     onRestore: (draft) => {
       setStep(draft.step)
-      setStep1(draft.step1)
+      setStep1({ ...draft.step1, phone: formatSAPhoneInput(draft.step1.phone) })
       setStep2(draft.step2)
       setStep3(draft.step3)
     },
@@ -663,7 +666,7 @@ export default function BuyerOnboardingPage() {
           sector: String(row.sector ?? ""),
           contact_person: String(row.contact_person ?? ""),
           contact_email: String(row.contact_email ?? ""),
-          phone: String(row.phone ?? ""),
+          phone: formatSAPhoneInput(String(row.phone ?? "")),
         })
         setStep2({
           preferred_categories: Array.isArray(row.preferred_categories) ? row.preferred_categories as string[] : [],
@@ -1086,9 +1089,11 @@ export default function BuyerOnboardingPage() {
                         placeholder="+27821234567"
                         value={step1.phone}
                         onChange={(e) => {
-                          setStep1((p) => ({ ...p, phone: e.target.value }))
+                          setStep1((p) => ({ ...p, phone: formatSAPhoneInput(e.target.value) }))
                           setFieldErrors((p) => ({ ...p, phone: undefined }))
                         }}
+                        onFocus={() => setStep1((p) => ({ ...p, phone: phoneFocusValue(p.phone) }))}
+                        onBlur={() => setStep1((p) => ({ ...p, phone: phoneBlurValue(p.phone) }))}
                         className={inputCls}
                       />
                       <FieldError message={fieldErrors.phone} />

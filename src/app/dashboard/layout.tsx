@@ -1,11 +1,13 @@
 "use client"
 
 import Link from "next/link"
+import { IconHelpCircle } from "@tabler/icons-react"
 import { usePathname, useRouter } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
 import AccountMenu, { type AccountMenuProfile } from "@/components/AccountMenu"
 import BrandMark from "@/components/BrandMark"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
+import PhoneVerificationBanner from "@/components/PhoneVerificationBanner"
 import ProcurementWire from "@/components/ProcurementWire"
 import { hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
@@ -18,9 +20,11 @@ type SupplierNavigationName =
   | "Business profile"
   | "Contracts"
   | "Invoices"
+  | "Help"
   | "Messages"
   | "Payments"
   | "Settings"
+  | "Spend Analysis"
   | "Verification"
 
 const navigation: {
@@ -46,6 +50,11 @@ const navigation: {
   {
     name: "purchaseOrders",
     href: "/dashboard/purchase-orders",
+    section: "Work",
+  },
+  {
+    name: "Spend Analysis",
+    href: "/dashboard/spend-analysis",
     section: "Work",
   },
   {
@@ -94,6 +103,11 @@ const navigation: {
     section: "Pinned",
   },
   {
+    name: "Help",
+    href: "/dashboard/help",
+    section: "Pinned",
+  },
+  {
     name: "Settings",
     href: "/dashboard/profile",
     section: "Pinned",
@@ -132,7 +146,7 @@ const intelligenceNavigation: { name: string; href: string }[] = [
   { name: "Regional Insights", href: "/dashboard/intelligence/regions" },
 ]
 
-const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Board Pack" | "System Health" | "Production Readiness" | "Demo Mode" | "Demo Story Pack" | "Pilot Requests" | "Pilot Feedback" | "Audit Trail" | "Automation Rules" | "Reports" | "Settings" | "WhatsApp Network" | "Contract Renewals" | "Supplier Reviews" | "Compliance Risk" | "Buyer Onboarding" | "RFQ Templates" | "Banking Review" | "Supplier Risk" | "Decision Board" | "Workflow Rules" | "Overrides" | "Approval Matrix" | "Delegation Authority"; href: string }[] = [
+const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Board Pack" | "System Health" | "Production Readiness" | "Demo Mode" | "Demo Story Pack" | "Pilot Requests" | "Pilot Feedback" | "Audit Trail" | "Automation Rules" | "Spend Analysis" | "Compliance Report" | "BBBEE Scorecard" | "Reports" | "Settings" | "WhatsApp Network" | "Contract Renewals" | "Supplier Reviews" | "Compliance Risk" | "Buyer Onboarding" | "RFQ Templates" | "Banking Review" | "Supplier Risk" | "Decision Board" | "Workflow Rules" | "Overrides" | "Approval Matrix" | "Delegation Authority"; href: string }[] = [
   {
     name: "Executive Command Centre",
     href: "/dashboard/executive",
@@ -156,6 +170,18 @@ const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Bo
   {
     name: "Reports",
     href: "/dashboard/admin/reports",
+  },
+  {
+    name: "Spend Analysis",
+    href: "/dashboard/spend-analysis",
+  },
+  {
+    name: "Compliance Report",
+    href: "/dashboard/compliance-report",
+  },
+  {
+    name: "BBBEE Scorecard",
+    href: "/dashboard/bbbee-scorecard",
   },
   // Governance suite hidden until migrations run.
   {
@@ -252,6 +278,7 @@ export default function DashboardLayout({
   const [profile, setProfile] = useState<AccountMenuProfile | null>(null)
   const [roleChecked, setRoleChecked] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [phoneGraceExpiresAt, setPhoneGraceExpiresAt] = useState<string | null>(null)
   const canViewAdminNavigation = role?.trim().toLowerCase() === "admin"
   const homeHref = roleHomeHref(role)
   
@@ -285,7 +312,7 @@ export default function DashboardLayout({
 
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, business_name, email, full_name, preferred_name, role, avatar_url")
+          .select("id, business_name, email, full_name, preferred_name, role, avatar_url, created_at, phone_verified_at")
           .eq("id", session.user.id)
           .maybeSingle()
 
@@ -310,6 +337,24 @@ export default function DashboardLayout({
             : ""
           router.replace(`/auth/verify-email${emailParam}`)
           return
+        }
+
+        const isOAuthUser = provider === "google" || provider === "azure"
+        const phoneVerifiedAt = (data as { phone_verified_at?: string | null }).phone_verified_at
+        const createdAt = (data as { created_at?: string | null }).created_at
+
+        if (!isOAuthUser && !phoneVerifiedAt) {
+          const profileCreatedAt = createdAt ? new Date(createdAt) : new Date()
+          const graceExpiresAt = new Date(profileCreatedAt.getTime() + 24 * 60 * 60 * 1000)
+
+          if (Date.now() >= graceExpiresAt.getTime()) {
+            router.replace("/auth/verify-phone")
+            return
+          }
+
+          setPhoneGraceExpiresAt(graceExpiresAt.toISOString())
+        } else {
+          setPhoneGraceExpiresAt(null)
         }
 
         setProfile((data as AccountMenuProfile | null) ?? null)
@@ -361,6 +406,7 @@ export default function DashboardLayout({
   if (pathname.startsWith("/dashboard/admin")) {
     return (
       <>
+        {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}
         {children}
         <ProcurementWire scope="dashboard" />
       </>
@@ -370,6 +416,7 @@ export default function DashboardLayout({
   if (pathname.startsWith("/dashboard/buyer")) {
     return (
       <>
+        {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}
         {children}
         <ProcurementWire scope="dashboard" />
       </>
@@ -477,6 +524,7 @@ export default function DashboardLayout({
                         }`}
                       >
                         <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
+                          {item.name === "Help" && <IconHelpCircle className="mr-2 inline h-4 w-4 align-[-2px]" aria-hidden />}
                           {supplierNavigationLabel(item.name, t)}
                         </span>
                       </Link>
@@ -541,7 +589,7 @@ export default function DashboardLayout({
                     }`}
                   >
                     <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
-                      {item.name === "Executive Command Centre" || item.name === "Board Pack" || item.name === "System Health" || item.name === "Production Readiness" || item.name === "Demo Mode" || item.name === "Demo Story Pack" || item.name === "Pilot Requests" || item.name === "Pilot Feedback" || item.name === "Audit Trail" || item.name === "Automation Rules" || item.name === "Reports" || item.name === "Settings" || item.name === "WhatsApp Network" || item.name === "Contract Renewals" || item.name === "Supplier Reviews" || item.name === "Compliance Risk" || item.name === "Buyer Onboarding" || item.name === "RFQ Templates" || item.name === "Banking Review" || item.name === "Supplier Risk" || item.name === "Decision Board" || item.name === "Workflow Rules" || item.name === "Overrides" || item.name === "Approval Matrix" || item.name === "Delegation Authority" ? item.name : t(item.name)}
+                      {item.name === "Executive Command Centre" || item.name === "Board Pack" || item.name === "System Health" || item.name === "Production Readiness" || item.name === "Demo Mode" || item.name === "Demo Story Pack" || item.name === "Pilot Requests" || item.name === "Pilot Feedback" || item.name === "Audit Trail" || item.name === "Automation Rules" || item.name === "Spend Analysis" || item.name === "Compliance Report" || item.name === "BBBEE Scorecard" || item.name === "Reports" || item.name === "Settings" || item.name === "WhatsApp Network" || item.name === "Contract Renewals" || item.name === "Supplier Reviews" || item.name === "Compliance Risk" || item.name === "Buyer Onboarding" || item.name === "RFQ Templates" || item.name === "Banking Review" || item.name === "Supplier Risk" || item.name === "Decision Board" || item.name === "Workflow Rules" || item.name === "Overrides" || item.name === "Approval Matrix" || item.name === "Delegation Authority" ? item.name : t(item.name)}
                     </span>
                   </Link>
                 )
@@ -558,6 +606,7 @@ export default function DashboardLayout({
             <AccountMenu profile={profile} />
           </div>
         </div>
+        {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}
         {children}
         <footer className="mt-10 flex flex-col gap-3 border-t border-panel pt-5 text-xs font-semibold text-muted sm:flex-row sm:items-center sm:justify-between">
           <p>&copy; 2026 AiForm Procure &middot; Procurement Suite</p>

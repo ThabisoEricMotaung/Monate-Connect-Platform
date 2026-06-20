@@ -7,6 +7,7 @@ import {
   IconClipboardCheck,
   IconFileText,
   IconHome,
+  IconHelpCircle,
   IconMenu2,
   IconMessageCircle,
   IconSettings,
@@ -287,17 +288,17 @@ export default function AdminDashboardLayout({
         items: [
           {
             name: "Spend analysis",
-            href: "/dashboard/admin/reports/spend",
+            href: "/dashboard/spend-analysis",
             icon: IconChartBar,
           },
           {
             name: "Compliance report",
-            href: "/dashboard/admin/reports/compliance",
+            href: "/dashboard/compliance-report",
             icon: IconClipboardCheck,
           },
           {
             name: "BBBEE scorecard",
-            href: "/dashboard/admin/reports/bbbee",
+            href: "/dashboard/bbbee-scorecard",
             icon: IconAward,
           },
         ],
@@ -373,6 +374,15 @@ export default function AdminDashboardLayout({
 
         <div className="mt-auto border-t border-[#ebebeb] pt-5">
           <div className="space-y-1.5">
+            <NavLink
+              item={{
+                name: "Help",
+                href: "/dashboard/help",
+                icon: IconHelpCircle,
+              }}
+              pathname={pathname}
+              onNavigate={closeSidebar}
+            />
             <NavLink
               item={{
                 name: "Settings",

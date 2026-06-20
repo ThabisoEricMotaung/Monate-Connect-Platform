@@ -4,6 +4,13 @@ import Link from "next/link"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import { FormEvent, useState } from "react"
+import {
+  SA_PHONE_ERROR,
+  formatSAPhoneInput,
+  phoneBlurValue,
+  phoneFocusValue,
+  validateSAPhone,
+} from "@/lib/formValidation"
 import { supabase } from "@/lib/supabase"
 
 const REQUEST_TYPES = [
@@ -83,6 +90,18 @@ export default function ContactPage() {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
+  function updatePhone(value: string) {
+    updateField("phone", formatSAPhoneInput(value))
+  }
+
+  function handlePhoneFocus() {
+    updateField("phone", phoneFocusValue(form.phone))
+  }
+
+  function handlePhoneBlur() {
+    updateField("phone", phoneBlurValue(form.phone))
+  }
+
   function selectIntent(label: string, message: string) {
     setSelectedIntent(label)
     updateField("message", message)
@@ -103,6 +122,10 @@ export default function ContactPage() {
     }
     if (!form.request_type) {
       setError("Please select a request type.")
+      return
+    }
+    if (form.phone.trim() && !validateSAPhone(form.phone)) {
+      setError(SA_PHONE_ERROR)
       return
     }
     if (!form.message.trim()) {
@@ -200,7 +223,14 @@ export default function ContactPage() {
             </label>
             <label className="block">
               <span className="mb-1.5 block text-[0.63rem] font-bold uppercase tracking-[0.18em] text-muted">Phone</span>
-              <input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} className={inputClass} />
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={(event) => updatePhone(event.target.value)}
+                onFocus={handlePhoneFocus}
+                onBlur={handlePhoneBlur}
+                className={inputClass}
+              />
             </label>
             <label className="block">
               <span className="mb-1.5 block text-[0.63rem] font-bold uppercase tracking-[0.18em] text-muted">Request Type</span>

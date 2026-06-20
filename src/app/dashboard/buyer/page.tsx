@@ -74,14 +74,23 @@ export default function BuyerHomePage() {
 
   return (
     <div>
-      <div className="mb-8 border-b border-panel pb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
-          Buyer workspace
-        </p>
-        <h1 className="mt-3 text-2xl font-semibold text-heading">Overview</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-secondary">
-          Manage your procurement activities, track RFQs, and review supplier quotes.
-        </p>
+      <div className="relative mb-8 overflow-hidden border-b border-panel pb-6">
+        <div
+          className="pointer-events-none absolute inset-0 z-0 opacity-[0.15]"
+          style={{
+            background: "url('https://design.canva.ai/GB320ny3MyEuntW') center / cover no-repeat",
+            borderRadius: "inherit",
+          }}
+        />
+        <div className="relative z-[1]">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
+            Buyer workspace
+          </p>
+          <h1 className="mt-3 text-2xl font-semibold text-heading">Overview</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-secondary">
+            Manage your procurement activities, track RFQs, and review supplier quotes.
+          </p>
+        </div>
       </div>
 
       {/* Metrics row */}

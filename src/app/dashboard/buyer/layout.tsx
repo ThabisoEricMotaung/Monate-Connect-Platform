@@ -2,9 +2,11 @@
 
 import {
   IconBuildingStore,
+  IconChartBar,
   IconFileCertificate,
   IconFileText,
   IconHome,
+  IconHelpCircle,
   IconMenu2,
   IconMessageCircle,
   IconPlus,
@@ -103,6 +105,7 @@ const BASE_NAVIGATION: NavGroup[] = [
       { name: "My RFQs", href: "/dashboard/buyer/rfqs", icon: IconFileText },
       { name: "Quotes received", href: "/dashboard/buyer/quotes", icon: IconMessageCircle },
       { name: "Purchase orders", href: "/dashboard/buyer/purchase-orders", icon: IconShoppingCart },
+      { name: "Spend Analysis", href: "/dashboard/spend-analysis", icon: IconChartBar },
       { name: "Contracts", href: "/dashboard/buyer/contracts", icon: IconFileCertificate },
       { name: "Invoices", href: "/dashboard/buyer/invoices", icon: IconReceipt },
     ],
@@ -111,6 +114,11 @@ const BASE_NAVIGATION: NavGroup[] = [
     label: "Suppliers",
     divider: true,
     items: [{ name: "Supplier directory", href: "/suppliers", icon: IconBuildingStore }],
+  },
+  {
+    label: "Support",
+    divider: true,
+    items: [{ name: "Help", href: "/dashboard/help", icon: IconHelpCircle }],
   },
 ]
 

@@ -1,5 +1,5 @@
 export const NATIONAL_PROVINCE_VALUE = "national"
-export const SA_PHONE_ERROR = "Please enter a valid SA number in +27 format"
+export const SA_PHONE_ERROR = "Please enter a valid SA number (+27 followed by 9 digits)"
 
 export function isNationalSelection(values: string[]) {
   return values.includes(NATIONAL_PROVINCE_VALUE)
@@ -15,7 +15,30 @@ export function displayProvinceList(values: string[]) {
 }
 
 export function validateSAPhone(value: string) {
-  return /^\+27\d{9}$/.test(value.trim())
+  return /^\+27\d{9}$/.test(formatSAPhoneInput(value))
+}
+
+export function formatSAPhoneInput(value: string) {
+  const cleaned = value.replace(/[\s\-()]/g, "")
+  if (!cleaned) return ""
+
+  const hasPlus = cleaned.startsWith("+")
+  const digits = cleaned.replace(/\D/g, "")
+
+  if (!digits) return hasPlus ? "+" : ""
+  if (hasPlus && digits.startsWith("27")) return `+${digits}`
+  if (digits.startsWith("0")) return `+27${digits.slice(1)}`
+  if (digits.startsWith("27")) return `+${digits}`
+  return `+27${digits}`
+}
+
+export function phoneFocusValue(value: string) {
+  return value.trim() ? formatSAPhoneInput(value) : "+27"
+}
+
+export function phoneBlurValue(value: string) {
+  const formatted = formatSAPhoneInput(value)
+  return formatted === "+27" ? "" : formatted
 }
 
 function hasFakeDigits(value: string) {

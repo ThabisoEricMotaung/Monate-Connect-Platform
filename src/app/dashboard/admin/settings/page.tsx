@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
@@ -515,7 +516,22 @@ export default function AdminSettingsPage() {
           platform defaults from one governed settings console.
         </p>
       </div>
-
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-md border border-panel bg-card px-5 py-4 shadow-panel">
+        <div>
+          <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">
+            Support & Training
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            Open the Help Centre for end-user and admin guides, FAQs, and troubleshooting.
+          </p>
+        </div>
+        <Link
+          href="/dashboard/help"
+          className="rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition hover:bg-accent-strong"
+        >
+          Help Centre
+        </Link>
+      </div>
       {errorMessage && (
         <div className="mb-6 rounded-md border border-rose-500/25 bg-rose-500/10 px-5 py-4">
           <p className="text-sm font-semibold text-rose-700">Settings alert</p>

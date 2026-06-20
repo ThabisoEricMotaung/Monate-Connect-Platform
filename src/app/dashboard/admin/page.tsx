@@ -480,8 +480,15 @@ export default function AdminOverviewPage() {
 
   return (
     <div>
-      <div className="mb-8 flex flex-wrap items-start justify-between gap-4 border-b border-panel pb-6">
-        <div>
+      <div className="relative mb-8 flex flex-wrap items-start justify-between gap-4 overflow-hidden border-b border-panel pb-6">
+        <div
+          className="pointer-events-none absolute inset-0 z-0 opacity-[0.15]"
+          style={{
+            background: "url('https://design.canva.ai/GB320ny3MyEuntW') center / cover no-repeat",
+            borderRadius: "inherit",
+          }}
+        />
+        <div className="relative z-[1]">
           <p className="text-xs uppercase tracking-[0.28em] text-accent">
             Admin / Procurement Control
           </p>
@@ -494,7 +501,7 @@ export default function AdminOverviewPage() {
         </div>
         <Link
           href="/dashboard/admin/rfqs/new"
-          className="inline-flex rounded-md border border-accent bg-accent px-4 py-2.5 text-sm font-semibold text-button shadow-sm transition hover:bg-accent-strong"
+          className="relative z-[1] inline-flex rounded-md border border-accent bg-accent px-4 py-2.5 text-sm font-semibold text-button shadow-sm transition hover:bg-accent-strong"
         >
           New RFQ
         </Link>
@@ -723,7 +730,7 @@ export default function AdminOverviewPage() {
             <section className="overflow-hidden rounded-md border border-panel bg-card p-5 shadow-panel">
               <div className="mb-4 flex flex-col items-start gap-3 border-b border-panel pb-4 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-lg font-semibold text-heading">YTD spend by category</h2>
-                <Link href="/dashboard/admin/reports/spend" className="text-sm font-semibold text-accent transition hover:text-accent-strong">
+                <Link href="/dashboard/spend-analysis" className="text-sm font-semibold text-accent transition hover:text-accent-strong">
                   Full report
                 </Link>
               </div>

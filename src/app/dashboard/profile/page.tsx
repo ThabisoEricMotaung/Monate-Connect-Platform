@@ -20,7 +20,10 @@ import {
   SA_PHONE_ERROR,
   displayProvinceList,
   displayProvinceValue,
+  formatSAPhoneInput,
   isNationalSelection,
+  phoneBlurValue,
+  phoneFocusValue,
   validateCsdNumber,
   validateSAPhone,
   validateTaxNumber,
@@ -209,6 +212,10 @@ function docLabel(field: DocumentField): string {
 function FieldError({ message }: { message?: string }) {
   if (!message) return null
   return <p className="mt-2 text-xs font-semibold text-rose-700">{message}</p>
+}
+
+function SmartScoreNudge() {
+  return <p className="mt-2 text-xs text-muted">Not uploaded — add this to improve your SmartScore.</p>
 }
 
 function profileProvinceValues(profile: Profile) {
@@ -1019,7 +1026,7 @@ function ProfileTab({
     preferred_name: profile.preferred_name ?? "",
     business_name: profile.business_name ?? "",
     industry: profile.industry ?? "",
-    phone: profile.phone ?? "",
+    phone: formatSAPhoneInput(profile.phone ?? ""),
     email: profile.email ?? "",
     website: profile.website ?? "",
     province: profile.province ?? "",
@@ -1043,9 +1050,18 @@ function ProfileTab({
   })
 
   function handleBizChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-    setBizForm((p) => ({ ...p, [e.target.name]: e.target.value }))
+    const value = e.target.name === "phone" ? formatSAPhoneInput(e.target.value) : e.target.value
+    setBizForm((p) => ({ ...p, [e.target.name]: value }))
     setFieldErrors((p) => ({ ...p, [e.target.name]: undefined }))
     onDirtyChange(true)
+  }
+
+  function handleBizPhoneFocus() {
+    setBizForm((p) => ({ ...p, phone: phoneFocusValue(p.phone) }))
+  }
+
+  function handleBizPhoneBlur() {
+    setBizForm((p) => ({ ...p, phone: phoneBlurValue(p.phone) }))
   }
 
   function handleCompChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -1141,7 +1157,7 @@ function ProfileTab({
       preferred_name: profile.preferred_name ?? "",
       business_name: profile.business_name ?? "",
       industry: profile.industry ?? "",
-      phone: profile.phone ?? "",
+      phone: formatSAPhoneInput(profile.phone ?? ""),
       email: profile.email ?? "",
       website: profile.website ?? "",
       province: profile.province ?? "",
@@ -1219,7 +1235,17 @@ function ProfileTab({
               </div>
               <div>
                 <label htmlFor="phone" className={labelCls}>Phone number</label>
-                <input id="phone" name="phone" type="tel" placeholder="+27821234567" value={bizForm.phone} onChange={handleBizChange} className={inputCls} />
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="+27821234567"
+                  value={bizForm.phone}
+                  onChange={handleBizChange}
+                  onFocus={handleBizPhoneFocus}
+                  onBlur={handleBizPhoneBlur}
+                  className={inputCls}
+                />
                 <FieldError message={fieldErrors.phone} />
               </div>
               <div>
@@ -1345,11 +1371,13 @@ function ProfileTab({
               <div>
                 <label htmlFor="tax_reference" className={labelCls}>Tax reference number</label>
                 <input id="tax_reference" name="tax_reference" type="text" value={compForm.tax_reference} onChange={handleCompChange} className={inputCls} />
+                {!compForm.tax_reference.trim() && <SmartScoreNudge />}
                 <FieldError message={fieldErrors.tax_reference} />
               </div>
               <div>
                 <label htmlFor="vat_number" className={labelCls}>VAT registration number</label>
                 <input id="vat_number" name="vat_number" type="text" placeholder="Optional" value={compForm.vat_number} onChange={handleCompChange} className={inputCls} />
+                {!compForm.vat_number.trim() && <SmartScoreNudge />}
                 <FieldError message={fieldErrors.vat_number} />
               </div>
               <div>
@@ -1385,6 +1413,7 @@ function ProfileTab({
                   <p className={`text-sm font-semibold ${value ? "text-heading" : "text-muted"}`}>{value || "Not added"}</p>
                   {verified && <Badge color="green">Verified</Badge>}
                 </div>
+                {!value && <SmartScoreNudge />}
               </div>
             ))}
           </div>
@@ -1509,7 +1538,12 @@ function VerificationTab({
             <div className="mt-2">
               {docUrls.bbbee_document_url
                 ? <FileRow label="BBBEE Certificate" url={docUrls.bbbee_document_url} status={statusOf("bbbee_document_url") === "verified" ? "Verified" : "Under review"} />
-                : <UploadZone id="bbbee-upload" uploading={uploadingField === "bbbee_document_url"} onChange={(e) => handleUpload(e, "bbbee_document_url", "bbbee-certificate")} />
+                : (
+                  <>
+                    <UploadZone id="bbbee-upload" uploading={uploadingField === "bbbee_document_url"} onChange={(e) => handleUpload(e, "bbbee_document_url", "bbbee-certificate")} />
+                    <SmartScoreNudge />
+                  </>
+                )
               }
             </div>
           }
@@ -1526,7 +1560,12 @@ function VerificationTab({
             <div className="mt-2">
               {docUrls.tax_document_url
                 ? <FileRow label="Tax Clearance" url={docUrls.tax_document_url} status={statusOf("tax_document_url") === "verified" ? "Verified" : "Under review"} />
-                : <UploadZone id="tax-upload" uploading={uploadingField === "tax_document_url"} onChange={(e) => handleUpload(e, "tax_document_url", "tax-clearance-document")} />
+                : (
+                  <>
+                    <UploadZone id="tax-upload" uploading={uploadingField === "tax_document_url"} onChange={(e) => handleUpload(e, "tax_document_url", "tax-clearance-document")} />
+                    <SmartScoreNudge />
+                  </>
+                )
               }
             </div>
           }
@@ -1649,6 +1688,7 @@ function DocumentsTab({
           <select id="doc-category" value={uploadCategory} onChange={(e) => setUploadCategory(e.target.value as DocumentField)} className={inputCls}>
             {ALL_DOC_FIELDS.map((f) => <option key={f} value={f}>{docLabel(f)}</option>)}
           </select>
+          {!docUrls[uploadCategory] && <SmartScoreNudge />}
         </div>
         <UploadZone id="new-doc-upload" uploading={uploading} onChange={handleNewUpload} />
       </div>
