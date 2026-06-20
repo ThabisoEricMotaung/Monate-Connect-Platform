@@ -7,6 +7,7 @@ import {
   getRegionalInsights,
   type RegionalInsightRecord,
 } from "@/lib/intelligence"
+import ProvinceMap from "./province-map"
 
 // ─── SA Province ordering ─────────────────────────────────────────────────────
 
@@ -392,11 +393,14 @@ export default function RegionalInsightsPage() {
         </div>
       )}
 
-      {loading && (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 9 }).map((_, i) => <SkeletonCard key={i} />)}
-        </div>
-      )}
-    </div>
+
+  param($m)
+  $m.Value -replace '    </div>\s*\n  \)\s*
   )
 }
+
+, "      `n      <ProvinceMap />`n    </div>`n  )"
+
+  )
+}
+
