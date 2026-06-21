@@ -7,6 +7,7 @@ import {
   getRegionalInsights,
   type RegionalInsightRecord,
 } from "@/lib/intelligence"
+import ProvinceMap from "./province-map"
 
 // ─── SA Province ordering ─────────────────────────────────────────────────────
 
@@ -262,7 +263,6 @@ export default function RegionalInsightsPage() {
           by region.
         </p>
       </div>
-
       {error && (
         <div className="mb-6 rounded-xl border border-rose-500/25 bg-rose-500/10 px-5 py-4">
           <p className="text-sm font-semibold text-rose-700">Failed to load regional data</p>
@@ -397,6 +397,10 @@ export default function RegionalInsightsPage() {
           {Array.from({ length: 9 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       )}
+
+      <div className="mt-6">
+        <ProvinceMap />
+      </div>
     </div>
   )
 }
