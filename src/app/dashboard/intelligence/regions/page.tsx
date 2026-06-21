@@ -392,11 +392,6 @@ export default function RegionalInsightsPage() {
         </div>
       )}
 
-<<<<<<< HEAD
-
-  param($m)
-  $m.Value -replace '    </div>\s*\n  \)\s*
-=======
       {loading && (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 9 }).map((_, i) => <SkeletonCard key={i} />)}
@@ -407,12 +402,6 @@ export default function RegionalInsightsPage() {
         <ProvinceMap />
       </div>
     </div>
->>>>>>> 2b41a1b66ed052e0b78a3a1e7ce871433db45b2e
-  )
-}
-
-, "      `n      <ProvinceMap />`n    </div>`n  )"
-
   )
 }
 
