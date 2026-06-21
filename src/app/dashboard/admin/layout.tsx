@@ -303,6 +303,18 @@ export default function AdminDashboardLayout({
           },
         ],
       },
+      {
+        label: "Intelligence",
+        divider: true,
+        items: [
+          { name: "Executive Dashboard", href: "/dashboard/intelligence/executive", icon: IconChartBar },
+          { name: "Opportunity Matching", href: "/dashboard/intelligence/matches", icon: IconChartBar },
+          { name: "Supplier Intelligence", href: "/dashboard/intelligence/suppliers", icon: IconBuildingStore },
+          { name: "Supplier Performance", href: "/dashboard/intelligence/supplier-performance", icon: IconAward },
+          { name: "Procurement Analytics", href: "/dashboard/intelligence/procurement", icon: IconClipboardCheck },
+          { name: "Regional Insights", href: "/dashboard/intelligence/regions", icon: IconChartBar },
+        ],
+      },
     ],
     [metrics, profile?.role],
   )
