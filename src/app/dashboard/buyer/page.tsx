@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import ProvinceMap from "../intelligence/regions/province-map"
 
 type RfqRow = {
   id: string
@@ -207,6 +208,10 @@ export default function BuyerHomePage() {
           </div>
         )}
       </section>
+
+      <div className="mt-6">
+        <ProvinceMap />
+      </div>
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { ProfileImage } from "@/components/ProfileImage"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { formatRand, parseMoney } from "@/lib/format"
 import { supabase } from "@/lib/supabase"
+import ProvinceMap from "../intelligence/regions/province-map"
 
 type RfqRow = {
   id: number
@@ -834,6 +835,10 @@ export default function AdminOverviewPage() {
               </div>
             )}
           </section>
+
+          <div className="mt-6">
+            <ProvinceMap />
+          </div>
         </>
       )}
     </div>

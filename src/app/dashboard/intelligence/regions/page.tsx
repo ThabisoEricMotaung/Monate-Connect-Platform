@@ -263,7 +263,6 @@ export default function RegionalInsightsPage() {
           by region.
         </p>
       </div>
-
       {error && (
         <div className="mb-6 rounded-xl border border-rose-500/25 bg-rose-500/10 px-5 py-4">
           <p className="text-sm font-semibold text-rose-700">Failed to load regional data</p>
@@ -393,9 +392,22 @@ export default function RegionalInsightsPage() {
         </div>
       )}
 
+<<<<<<< HEAD
 
   param($m)
   $m.Value -replace '    </div>\s*\n  \)\s*
+=======
+      {loading && (
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 9 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+      )}
+
+      <div className="mt-6">
+        <ProvinceMap />
+      </div>
+    </div>
+>>>>>>> 2b41a1b66ed052e0b78a3a1e7ce871433db45b2e
   )
 }
 
