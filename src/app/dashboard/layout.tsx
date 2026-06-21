@@ -476,26 +476,6 @@ export default function DashboardLayout({
     )
   }
 
-  if (pathname.startsWith("/dashboard/help")) {
-    return (
-      <>
-        {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}
-        {children}
-        <ProcurementWire scope="dashboard" />
-      </>
-    )
-  }
-
-  if (pathname.startsWith("/dashboard/intelligence")) {
-    return (
-      <>
-        {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}
-        {children}
-        <ProcurementWire scope="dashboard" />
-      </>
-    )
-  }
-
   return (
     <main className="flex min-h-screen bg-[#f8f8f6] text-[#1a3a2a]">
       {sidebarOpen && (
