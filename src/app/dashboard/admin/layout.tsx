@@ -3,16 +3,21 @@
 import {
   IconAward,
   IconBuildingStore,
+  IconChartAreaLine,
   IconChartBar,
+  IconChartPie,
   IconClipboardCheck,
   IconFileText,
   IconHome,
   IconHelpCircle,
+  IconMap2,
   IconMenu2,
   IconMessageCircle,
   IconSettings,
   IconShieldCheck,
   IconShoppingCart,
+  IconStars,
+  IconTargetArrow,
   IconX,
   type TablerIcon,
 } from "@tabler/icons-react"
@@ -100,7 +105,7 @@ function NavLink({
       <span className="flex min-w-0 flex-1 items-center gap-2">
         <IconComponent
           aria-hidden="true"
-          className={`h-5 w-5 shrink-0 ${active ? "text-[#1a3a2a]" : "text-[#aaaaaa]"}`}
+          className={`h-5 w-5 shrink-0 ${active ? "text-[#1a3a2a]" : "text-[#5DCAA5]"}`}
           stroke={1.8}
         />
         <span className="min-w-0 flex-1 whitespace-normal break-words leading-tight">{item.name}</span>
@@ -307,12 +312,12 @@ export default function AdminDashboardLayout({
         label: "Intelligence",
         divider: true,
         items: [
-          { name: "Executive Dashboard", href: "/dashboard/intelligence/executive", icon: IconChartBar },
-          { name: "Opportunity Matching", href: "/dashboard/intelligence/matches", icon: IconChartBar },
-          { name: "Supplier Intelligence", href: "/dashboard/intelligence/suppliers", icon: IconBuildingStore },
-          { name: "Supplier Performance", href: "/dashboard/intelligence/supplier-performance", icon: IconAward },
-          { name: "Procurement Analytics", href: "/dashboard/intelligence/procurement", icon: IconClipboardCheck },
-          { name: "Regional Insights", href: "/dashboard/intelligence/regions", icon: IconChartBar },
+          { name: "Executive Dashboard", href: "/dashboard/intelligence/executive", icon: IconChartPie },
+          { name: "Opportunity Matching", href: "/dashboard/intelligence/matches", icon: IconTargetArrow },
+          { name: "Supplier Intelligence", href: "/dashboard/intelligence/suppliers", icon: IconStars },
+          { name: "Supplier Performance", href: "/dashboard/intelligence/supplier-performance", icon: IconChartAreaLine },
+          { name: "Procurement Analytics", href: "/dashboard/intelligence/procurement", icon: IconChartBar },
+          { name: "Regional Insights", href: "/dashboard/intelligence/regions", icon: IconMap2 },
         ],
       },
     ],
