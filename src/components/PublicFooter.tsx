@@ -7,6 +7,7 @@ const footerSections = [
   {
     title: "Platform",
     links: [
+      { label: "About", href: "/about" },
       { label: "Opportunities", href: "/opportunities" },
       { label: "Supplier Marketplace", href: "/suppliers" },
       { label: "Trust Centre", href: "/trust" },

@@ -42,7 +42,7 @@ function NavLink({ item, pathname, onNavigate }: { item: NavItem; pathname: stri
         active ? "bg-[#f0f7f3] text-[#1a3a2a]" : "bg-white text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
       }`}
     >
-      <Icon className={`h-5 w-5 shrink-0 ${active ? "text-[#1a3a2a]" : "text-[#aaaaaa]"}`} stroke={1.8} />
+      <Icon className={`h-5 w-5 shrink-0 ${active ? "text-[#1a3a2a]" : "text-[#c8a060]"}`} stroke={1.8} />
       <span className="flex-1 leading-tight">{item.name}</span>
       {active && <span className="h-1.5 w-1.5 rounded-full bg-[#c8a060]" />}
     </Link>

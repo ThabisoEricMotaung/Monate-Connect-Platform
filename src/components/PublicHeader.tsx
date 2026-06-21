@@ -8,6 +8,7 @@ import { useRegistrationStatus } from "@/hooks/useRegistrationStatus"
 import { supabase } from "@/lib/supabase"
 
 const NAV_LINKS = [
+  { label: "About", href: "/about" },
   { label: "Opportunities", href: "/opportunities" },
   { label: "Suppliers", href: "/suppliers" },
   { label: "Trust Centre", href: "/trust" },

@@ -564,7 +564,7 @@ export default function DashboardLayout({
                       >
                         <span className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
                           {itemIcon && (
-                            <span className={`shrink-0 ${active ? "text-[#1a3a2a]" : "text-[#aaaaaa]"}`}>
+                            <span className={`shrink-0 ${active ? "text-[#1a3a2a]" : "text-[#c8a060]"}`}>
                               {itemIcon}
                             </span>
                           )}

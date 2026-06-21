@@ -105,7 +105,7 @@ function NavLink({
       <span className="flex min-w-0 flex-1 items-center gap-2">
         <IconComponent
           aria-hidden="true"
-          className={`h-5 w-5 shrink-0 ${active ? "text-[#1a3a2a]" : "text-[#5DCAA5]"}`}
+          className={`h-5 w-5 shrink-0 ${active ? "text-[#1a3a2a]" : "text-[#c8a060]"}`}
           stroke={1.8}
         />
         <span className="min-w-0 flex-1 whitespace-normal break-words leading-tight">{item.name}</span>
