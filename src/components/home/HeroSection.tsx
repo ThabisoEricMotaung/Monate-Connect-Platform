@@ -184,7 +184,21 @@ export default function HeroSection() {
       {/* LAYER 2 — hero text */}
       <div className="hero-content">
         {/* Eyebrow */}
-        <p style={{ display: 'inline-block', fontSize: 12, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c8a060', margin: '0 0 14px', fontWeight: 800, opacity: 1, textShadow: '0 0 8px rgba(200,160,96,1), 0 0 20px rgba(200,160,96,0.9), 0 0 40px rgba(200,160,96,0.6)', background: 'transparent', padding: '3px 10px' }}>
+        <p style={{ 
+          display: 'inline-block', 
+          fontSize: 11, 
+          letterSpacing: '0.22em', 
+          textTransform: 'uppercase', 
+          color: '#c8a060', 
+          margin: '0 0 14px', 
+          fontWeight: 800, 
+          padding: '5px 16px',
+          border: '0.5px solid rgba(200,160,96,0.5)',
+          borderRadius: '30px',
+          background: 'rgba(200,160,96,0.06)',
+          boxShadow: '0 0 10px rgba(200,160,96,0.4), 0 0 25px rgba(200,160,96,0.2), inset 0 0 10px rgba(200,160,96,0.05)',
+          textShadow: '0 0 8px rgba(200,160,96,0.8)'
+        }}>
           South Africa&#39;s Verified Procurement Network
         </p>
 
