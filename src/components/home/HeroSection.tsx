@@ -193,7 +193,7 @@ export default function HeroSection() {
           margin: '0 0 14px', 
           fontWeight: 800, 
           padding: '5px 16px',
-          border: '0.5px solid rgba(200,160,96,0.5)',
+          border: '0.5px solid rgba(192,57,43,0.6)',
           borderRadius: '30px',
           background: 'rgba(200,160,96,0.06)',
           boxShadow: '0 0 10px rgba(200,160,96,0.4), 0 0 25px rgba(200,160,96,0.2), inset 0 0 10px rgba(200,160,96,0.05)',
