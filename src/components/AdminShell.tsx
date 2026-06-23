@@ -11,7 +11,6 @@ import {
   IconMenu2,
   IconMessageCircle,
   IconSettings,
-  IconShieldCheck,
   IconShoppingCart,
   IconX,
   type TablerIcon,
