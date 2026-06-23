@@ -84,7 +84,6 @@ export default function DashboardPage() {
 
         const meta = user.user_metadata
         const name: string = meta?.full_name ?? ""
-        setFirstName(displayNameFromProfile(null, name))
 
         const now = new Date()
         const nextWeek = new Date(now)
