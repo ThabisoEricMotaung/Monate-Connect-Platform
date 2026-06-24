@@ -9,11 +9,9 @@ import {
   IconHelpCircle,
   IconMenu2,
   IconMessageCircle,
-  IconMoon,
   IconPlus,
   IconReceipt,
   IconShoppingCart,
-  IconSun,
   IconX,
   type TablerIcon,
 } from "@tabler/icons-react"
@@ -25,7 +23,6 @@ import BrandMark from "@/components/BrandMark"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
 import SuggestionBox from "@/components/SuggestionBox"
-import { useTheme } from "@/components/theme/ThemeProvider"
 import { useRequireRole } from "@/hooks/useRequireRole"
 import { supabase } from "@/lib/supabase"
 
@@ -132,7 +129,6 @@ export default function BuyerDashboardLayout({
   children: ReactNode
 }) {
   const pathname = usePathname() || ""
-  const { resolvedTheme, toggleTheme } = useTheme()
   const { loading } = useRequireRole(["buyer", "admin"])
   const [profile, setProfile] = useState<BuyerProfile | null>(null)
   const [activeRfqs, setActiveRfqs] = useState(0)
@@ -289,18 +285,6 @@ export default function BuyerDashboardLayout({
           </Link>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={toggleTheme}
-              aria-label={resolvedTheme === "light" ? "Switch to dark mode" : "Switch to light mode"}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#ebebeb] bg-white text-[#555555] transition hover:text-[#1a3a2a]"
-            >
-              {resolvedTheme === "light" ? (
-                <IconMoon className="h-4 w-4" stroke={1.8} />
-              ) : (
-                <IconSun className="h-4 w-4" stroke={1.8} />
-              )}
-            </button>
             <NotificationBell />
             <AccountMenu profile={profile} />
           </div>

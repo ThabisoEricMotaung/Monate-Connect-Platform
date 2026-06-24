@@ -701,10 +701,6 @@ a.bg-accent:hover,
   border-color: #A8893B;
 }
 
-.mc-theme-toggle {
-  display: none !important;
-}
-
 .thuso-launcher {
   position: fixed;
   right: 24px;

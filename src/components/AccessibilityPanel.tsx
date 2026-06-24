@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useTheme } from "@/components/theme/ThemeProvider"
 
 type FontSize = "normal" | "large" | "xlarge"
 
@@ -24,12 +23,6 @@ const fontSizeOptions: Array<{ value: FontSize; label: string }> = [
   { value: "large", label: "Large" },
   { value: "xlarge", label: "Extra Large" },
 ]
-
-const displayModeOptions = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-  { value: "auto", label: "Auto" },
-] as const
 
 function isFontSize(value: unknown): value is FontSize {
   return value === "normal" || value === "large" || value === "xlarge"
@@ -100,20 +93,12 @@ function ToggleRow({
 }
 
 export default function AccessibilityPanel() {
-  const { theme, toggleTheme, setThemeMode } = useTheme()
   const [open, setOpen] = useState(false)
   const [preferences, setPreferences] = useState<AccessibilityPreferences>(
     () => readStoredPreferences()
   )
   const drawerRef = useRef<HTMLDivElement | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
-
-  const resolvedTheme =
-    theme === "auto"
-      ? typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light"
-      : theme
 
   useEffect(() => {
     applyPreferences(preferences)
@@ -163,24 +148,6 @@ export default function AccessibilityPanel() {
 
   return (
     <>
-      <button
-        type="button"
-        className="mc-theme-toggle"
-        aria-label={resolvedTheme === "light" ? "Switch to dark theme" : "Switch to light theme"}
-        onClick={toggleTheme}
-      >
-        {resolvedTheme === "light" ? (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="#A8893B" />
-          </svg>
-        ) : (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <circle cx="12" cy="12" r="4" stroke="#C9A84C" strokeWidth="1.5" />
-            <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        )}
-      </button>
-
       {open ? (
         <div className="accessibility-panel" role="presentation">
           <button
@@ -226,26 +193,6 @@ export default function AccessibilityPanel() {
                       onClick={() =>
                         setPreferences((current) => ({ ...current, fontSize: option.value }))
                       }
-                      className={`accessibility-panel__font-option ${selected ? "accessibility-panel__font-option--active" : ""}`}
-                    >
-                      {option.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div className="accessibility-panel__section">
-              <p className="accessibility-panel__section-label">Display mode</p>
-              <div className="accessibility-panel__font-grid">
-                {displayModeOptions.map((option) => {
-                  const selected = option.value === theme
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() => setThemeMode(option.value)}
                       className={`accessibility-panel__font-option ${selected ? "accessibility-panel__font-option--active" : ""}`}
                     >
                       {option.label}

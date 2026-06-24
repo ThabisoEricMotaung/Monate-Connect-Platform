@@ -5,7 +5,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
   type ReactNode,
 } from "react"
 
@@ -22,97 +21,27 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
 const STORAGE_KEY = "mc-theme"
 
-const getSystemTheme = (): "dark" | "light" =>
-  window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-
-const getTimeOfDayDefault = (): "light" | "dark" => {
-  const h = new Date().getHours()
-  return h >= 6 && h <= 17 ? "light" : "dark"
-}
-
-const getPreferredTheme = (): ThemeMode => {
-  if (typeof window === "undefined") return "dark"
-
-  const stored = window.localStorage.getItem(STORAGE_KEY)
-  if (stored === "dark" || stored === "light" || stored === "auto") return stored
-
-  // Migrate old keys
-  for (const oldKey of ["monate-theme", "mc-pricing-theme"]) {
-    const old = window.localStorage.getItem(oldKey)
-    if (old === "dark" || old === "light") {
-      window.localStorage.setItem(STORAGE_KEY, old)
-      window.localStorage.removeItem(oldKey)
-      return old as ThemeMode
-    }
-  }
-
-  return getTimeOfDayDefault()
-}
-
-const applyTheme = (mode: ThemeMode) => {
+const applyLightTheme = () => {
   const root = document.documentElement
-  const effectiveTheme = mode === "auto" ? getSystemTheme() : mode
   root.classList.remove("theme-light", "theme-dark")
-  root.classList.add(`theme-${effectiveTheme}`)
-  root.setAttribute("data-theme", effectiveTheme)
-}
-
-const setStoredTheme = (mode: ThemeMode) => {
-  window.localStorage.setItem(STORAGE_KEY, mode)
-}
-
-const resolveTheme = (mode: ThemeMode): "dark" | "light" => {
-  if (mode === "auto") {
-    return typeof window === "undefined" ? getTimeOfDayDefault() : getSystemTheme()
-  }
-
-  return mode
+  root.classList.add("theme-light")
+  root.setAttribute("data-theme", "light")
+  window.localStorage.setItem(STORAGE_KEY, "light")
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<ThemeMode>("dark")
-  const [mounted, setMounted] = useState(false)
-
   useEffect(() => {
-    const initial = getPreferredTheme()
-    setTheme(initial)
-    setMounted(true)
+    applyLightTheme()
   }, [])
-
-  useEffect(() => {
-    if (!mounted) {
-      return
-    }
-
-    applyTheme(theme)
-    setStoredTheme(theme)
-  }, [theme, mounted])
-
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)")
-    const handleSystemChange = () => {
-      if (theme === "auto") {
-        applyTheme("auto")
-      }
-    }
-
-    media.addEventListener("change", handleSystemChange)
-    return () => media.removeEventListener("change", handleSystemChange)
-  }, [theme])
-
-  const resolvedTheme = resolveTheme(theme)
 
   const value = useMemo(
     () => ({
-      theme,
-      resolvedTheme,
-      setThemeMode: (nextTheme: ThemeMode) => setTheme(nextTheme),
-      toggleTheme: () => {
-        const nextTheme = resolvedTheme === "dark" ? "light" : "dark"
-        setTheme(nextTheme)
-      },
+      theme: "light" as ThemeMode,
+      resolvedTheme: "light" as const,
+      setThemeMode: () => applyLightTheme(),
+      toggleTheme: () => applyLightTheme(),
     }),
-    [resolvedTheme, theme],
+    [],
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
