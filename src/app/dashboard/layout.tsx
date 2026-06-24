@@ -28,6 +28,7 @@ import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
 import PhoneVerificationBanner from "@/components/PhoneVerificationBanner"
 import ProcurementWire from "@/components/ProcurementWire"
+import SuggestionBox from "@/components/SuggestionBox"
 import { hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
 import { roleHomeHref } from "@/lib/navigation"
@@ -694,6 +695,7 @@ export default function DashboardLayout({
       </section>
 
       <ProcurementWire scope="dashboard" />
+      <SuggestionBox />
     </main>
   )
 }

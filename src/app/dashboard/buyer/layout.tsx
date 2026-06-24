@@ -22,6 +22,7 @@ import AccountMenu from "@/components/AccountMenu"
 import BrandMark from "@/components/BrandMark"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
+import SuggestionBox from "@/components/SuggestionBox"
 import { useRequireRole } from "@/hooks/useRequireRole"
 import { supabase } from "@/lib/supabase"
 
@@ -295,6 +296,7 @@ export default function BuyerDashboardLayout({
 
         {children}
       </section>
+      <SuggestionBox />
     </main>
   )
 }

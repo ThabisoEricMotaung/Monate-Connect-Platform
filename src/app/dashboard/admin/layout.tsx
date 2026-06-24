@@ -28,6 +28,7 @@ import AccountMenu from "@/components/AccountMenu"
 import BrandMark from "@/components/BrandMark"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
+import SuggestionBox from "@/components/SuggestionBox"
 import { getCurrentProfile } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 
@@ -451,6 +452,7 @@ export default function AdminDashboardLayout({
 
         {children}
       </section>
+      <SuggestionBox />
     </main>
   )
 }
