@@ -56,7 +56,7 @@ export default function SuggestionBox() {
   return (
     <>
       {open && (
-        <div className="fixed bottom-20 right-5 z-50 w-[300px] rounded-xl border border-[#ebebeb] bg-white shadow-lg">
+        <div className="fixed bottom-24 right-5 z-[200] w-[300px] rounded-xl border border-[#ebebeb] bg-white shadow-lg">
           <div className="p-4">
             <div className="mb-1 flex items-start justify-between">
               <div>
@@ -136,7 +136,7 @@ export default function SuggestionBox() {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={`fixed bottom-5 right-5 z-50 flex h-11 w-11 items-center justify-center rounded-full shadow-md transition-colors ${
+        className={`fixed bottom-5 right-20 z-[200] flex h-11 w-11 items-center justify-center rounded-full shadow-md transition-colors ${
           open ? "bg-[#c8a060]" : "bg-[#1a3a2a]"
         }`}
         aria-label={open ? "Close suggestion box" : "Open suggestion box"}
