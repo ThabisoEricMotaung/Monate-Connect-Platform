@@ -253,6 +253,11 @@ export default function AdminDashboardLayout({
                   href: "/dashboard/admin/verifications",
                   icon: IconShieldCheck,
                 },
+                {
+                  name: "Suggestions",
+                  href: "/dashboard/admin/suggestions",
+                  icon: IconMessageCircle,
+                },
               ],
             },
           ]
