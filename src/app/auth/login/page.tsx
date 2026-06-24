@@ -278,8 +278,9 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center px-6 py-10">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+      <div className="flex flex-col justify-center bg-[#f8f4ec] px-8 py-12">
+        <div className="mx-auto w-full max-w-md">
         <div className="rounded-3xl border border-panel bg-panel p-8 shadow-panel">
           <Link
             href="/"
@@ -410,7 +411,67 @@ export default function LoginPage() {
           </svg>
           <span>Secured by AiForm Procure</span>
         </div>
+        </div>
       </div>
-    </main>
+
+      <div className="hidden lg:flex flex-col justify-center bg-[#1a3a2a] px-10 py-12 relative overflow-hidden">
+        {/* Decorative circles */}
+        <div className="absolute bottom-[-40px] right-[-40px] w-64 h-64 rounded-full border-[50px] border-[#c8a060]/5" />
+        <div className="absolute top-[-30px] right-[60px] w-40 h-40 rounded-full border-[30px] border-[#c8a060]/4" />
+
+        {/* Badge */}
+        <span className="inline-block w-fit mb-5 text-[10px] font-semibold tracking-[0.12em] uppercase text-[#c8a060] bg-[#c8a060]/10 border border-[#c8a060]/30 rounded-full px-3 py-1">
+          South Africa&apos;s Verified Procurement Network
+        </span>
+
+        {/* Headline */}
+        <h2 className="font-display text-3xl font-semibold text-white leading-snug mb-3">
+          Where SA Suppliers Meet<br/>
+          <em className="text-[#c8a060] not-italic">Real Procurement.</em>
+        </h2>
+
+        {/* Subtext */}
+        <p className="text-sm text-white/60 leading-relaxed mb-8 max-w-sm">
+          The only platform built specifically for South African compliance - B-BBEE, CSD, CIPC, and SARS verification built in from the ground up.
+        </p>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          {[
+            { num: "9", label: "SA provinces\nmapped" },
+            { num: "23", label: "Secured database\ntables" },
+            { num: "3", label: "Languages\nsupported" },
+          ].map((stat) => (
+            <div key={stat.num} className="border border-[#c8a060]/20 rounded-lg p-3 text-center">
+              <div className="text-2xl font-semibold text-[#c8a060] mb-1">{stat.num}</div>
+              <div className="text-[10px] text-white/50 leading-tight whitespace-pre-line">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Feature bullets */}
+        <div className="space-y-3 mb-8">
+          {[
+            "Verified supplier profiles visible to government and corporate buyers",
+            "SmartScore - know your procurement readiness instantly",
+            "Regional Insights - see where procurement activity is happening across SA",
+            "Free during the pilot period until October 2026",
+          ].map((feature) => (
+            <div key={feature} className="flex items-start gap-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#c8a060] mt-1.5 shrink-0" />
+              <p className="text-sm text-white/70 leading-relaxed">{feature}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Founder quote */}
+        <div className="border-l-2 border-[#c8a060]/40 pl-4 mt-auto">
+          <p className="text-xs text-white/50 italic leading-relaxed mb-2">
+            &quot;Built because South African suppliers were losing procurement opportunities not because of poor capability, but because of compliance gaps and lack of visibility.&quot;
+          </p>
+          <p className="text-[10px] text-[#c8a060] font-semibold">Thabiso Motaung - Founder, AiForm Studio</p>
+        </div>
+      </div>
+    </div>
   )
 }
