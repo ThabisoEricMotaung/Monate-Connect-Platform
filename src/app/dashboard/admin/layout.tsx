@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  IconActivityHeartbeat,
   IconAward,
   IconBuildingStore,
   IconChartAreaLine,
@@ -29,6 +30,7 @@ import BrandMark from "@/components/BrandMark"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
 import SuggestionBox from "@/components/SuggestionBox"
+import { usePageTracking } from "@/hooks/useSessionTracking"
 import { getCurrentProfile } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 
@@ -134,6 +136,7 @@ export default function AdminDashboardLayout({
 }) {
   const router = useRouter()
   const pathname = usePathname() || ""
+  usePageTracking()
   const [profile, setProfile] = useState<BuyerProfile | null>(null)
   const [authorized, setAuthorized] = useState(false)
   const [checkingAccess, setCheckingAccess] = useState(true)
@@ -253,6 +256,11 @@ export default function AdminDashboardLayout({
                   name: "Suggestions",
                   href: "/dashboard/admin/suggestions",
                   icon: IconMessageCircle,
+                },
+                {
+                  name: "Session monitor",
+                  href: "/dashboard/admin/session",
+                  icon: IconActivityHeartbeat,
                 },
               ],
             },

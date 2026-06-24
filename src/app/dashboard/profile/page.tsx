@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import SignedDocumentLink from "@/components/SignedDocumentLink"
+import { logEvent } from "@/hooks/useSessionTracking"
 import { logActivity } from "@/lib/activity"
 import {
   calculateSmartScore,
@@ -2100,6 +2101,7 @@ function ProfilePageInner() {
     })
     setHasUnsaved(false)
     setError("")
+    void logEvent("profile_saved")
     return { ok: true }
   }
 
@@ -2110,6 +2112,7 @@ function ProfilePageInner() {
       syncSmartScore(userId, updated, bank)
       return updated
     })
+    void logEvent("document_uploaded", { document_type: field, path: url })
   }
 
   function handleBankSaved(record: BankRecord) {

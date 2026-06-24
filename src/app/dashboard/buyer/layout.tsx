@@ -24,6 +24,7 @@ import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
 import SuggestionBox from "@/components/SuggestionBox"
 import { useRequireRole } from "@/hooks/useRequireRole"
+import { usePageTracking } from "@/hooks/useSessionTracking"
 import { supabase } from "@/lib/supabase"
 
 type BuyerProfile = {
@@ -129,6 +130,7 @@ export default function BuyerDashboardLayout({
   children: ReactNode
 }) {
   const pathname = usePathname() || ""
+  usePageTracking()
   const { loading } = useRequireRole(["buyer", "admin"])
   const [profile, setProfile] = useState<BuyerProfile | null>(null)
   const [activeRfqs, setActiveRfqs] = useState(0)

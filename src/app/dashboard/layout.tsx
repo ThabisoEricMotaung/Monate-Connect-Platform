@@ -29,6 +29,7 @@ import NotificationBell from "@/components/NotificationBell"
 import PhoneVerificationBanner from "@/components/PhoneVerificationBanner"
 import ProcurementWire from "@/components/ProcurementWire"
 import SuggestionBox from "@/components/SuggestionBox"
+import { usePageTracking } from "@/hooks/useSessionTracking"
 import { hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
 import { roleHomeHref } from "@/lib/navigation"
@@ -312,6 +313,7 @@ export default function DashboardLayout({
   const { t } = useI18n()
   const router = useRouter()
   const pathname = usePathname() || ""
+  usePageTracking()
   const [role, setRole] = useState<string | null>(null)
   const [profile, setProfile] = useState<AccountMenuProfile | null>(null)
   const [roleChecked, setRoleChecked] = useState(false)
