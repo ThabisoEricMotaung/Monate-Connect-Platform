@@ -10,8 +10,10 @@ import {
   IconHelpCircle,
   IconMenu2,
   IconMessageCircle,
+  IconMoon,
   IconSettings,
   IconShoppingCart,
+  IconSun,
   IconX,
   type TablerIcon,
 } from "@tabler/icons-react"
@@ -23,6 +25,7 @@ import BrandMark from "@/components/BrandMark"
 import NotificationBell from "@/components/NotificationBell"
 import ProcurementWire from "@/components/ProcurementWire"
 import SuggestionBox from "@/components/SuggestionBox"
+import { useTheme } from "@/components/theme/ThemeProvider"
 
 type NavItem = { name: string; href: string; icon: TablerIcon }
 type NavGroup = { label?: string; items: NavItem[]; divider?: boolean }
@@ -80,6 +83,7 @@ const NAV: NavGroup[] = [
 
 export default function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() || ""
+  const { resolvedTheme, toggleTheme } = useTheme()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
@@ -122,6 +126,18 @@ export default function AdminShell({ children }: { children: ReactNode }) {
             </div>
           </Link>
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={resolvedTheme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#ebebeb] bg-white text-[#555555] transition hover:text-[#1a3a2a]"
+            >
+              {resolvedTheme === "light" ? (
+                <IconMoon className="h-4 w-4" stroke={1.8} />
+              ) : (
+                <IconSun className="h-4 w-4" stroke={1.8} />
+              )}
+            </button>
             <NotificationBell />
             <AccountMenu profile={null} />
           </div>

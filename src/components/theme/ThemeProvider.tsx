@@ -13,6 +13,7 @@ type ThemeMode = "dark" | "light" | "auto"
 
 type ThemeContextValue = {
   theme: ThemeMode
+  resolvedTheme: "dark" | "light"
   setThemeMode: (theme: ThemeMode) => void
   toggleTheme: () => void
 }
@@ -60,6 +61,14 @@ const setStoredTheme = (mode: ThemeMode) => {
   window.localStorage.setItem(STORAGE_KEY, mode)
 }
 
+const resolveTheme = (mode: ThemeMode): "dark" | "light" => {
+  if (mode === "auto") {
+    return typeof window === "undefined" ? getTimeOfDayDefault() : getSystemTheme()
+  }
+
+  return mode
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<ThemeMode>("dark")
   const [mounted, setMounted] = useState(false)
@@ -91,16 +100,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => media.removeEventListener("change", handleSystemChange)
   }, [theme])
 
+  const resolvedTheme = resolveTheme(theme)
+
   const value = useMemo(
     () => ({
       theme,
+      resolvedTheme,
       setThemeMode: (nextTheme: ThemeMode) => setTheme(nextTheme),
       toggleTheme: () => {
-        const nextTheme = theme === "dark" ? "light" : "dark"
+        const nextTheme = resolvedTheme === "dark" ? "light" : "dark"
         setTheme(nextTheme)
       },
     }),
-    [theme],
+    [resolvedTheme, theme],
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

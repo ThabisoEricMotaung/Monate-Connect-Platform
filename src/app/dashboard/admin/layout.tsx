@@ -13,10 +13,12 @@ import {
   IconMap2,
   IconMenu2,
   IconMessageCircle,
+  IconMoon,
   IconSettings,
   IconShieldCheck,
   IconShoppingCart,
   IconStars,
+  IconSun,
   IconTargetArrow,
   IconX,
   type TablerIcon,
@@ -29,6 +31,7 @@ import BrandMark from "@/components/BrandMark"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
 import SuggestionBox from "@/components/SuggestionBox"
+import { useTheme } from "@/components/theme/ThemeProvider"
 import { getCurrentProfile } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 
@@ -134,6 +137,7 @@ export default function AdminDashboardLayout({
 }) {
   const router = useRouter()
   const pathname = usePathname() || ""
+  const { resolvedTheme, toggleTheme } = useTheme()
   const [profile, setProfile] = useState<BuyerProfile | null>(null)
   const [authorized, setAuthorized] = useState(false)
   const [checkingAccess, setCheckingAccess] = useState(true)
@@ -441,6 +445,18 @@ export default function AdminDashboardLayout({
           </Link>
 
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={resolvedTheme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#ebebeb] bg-white text-[#555555] transition hover:text-[#1a3a2a]"
+            >
+              {resolvedTheme === "light" ? (
+                <IconMoon className="h-4 w-4" stroke={1.8} />
+              ) : (
+                <IconSun className="h-4 w-4" stroke={1.8} />
+              )}
+            </button>
             <NotificationBell />
             <AccountMenu profile={profile} />
           </div>
