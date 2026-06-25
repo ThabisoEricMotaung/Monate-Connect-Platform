@@ -37,12 +37,14 @@ const comparisons = [
     value: "R245-R500/hour",
     source:
       "ERI Economic Research Institute, Average SA Procurement Consultant hourly rate, 2025",
+    sourceUrl: "https://www.erieri.com/salary/job/procurement-consultant/south-africa",
   },
   {
     icon: IconCertificate,
     label: "B-BBEE verification EME annual",
     value: "R3,000-R8,000/year",
     source: "Law Guide SA, B-BBEE Requirements Guide, 2024",
+    sourceUrl: "https://www.thedti.gov.za/economic_empowerment/bee.jsp",
   },
   {
     icon: IconUsers,
@@ -50,12 +52,14 @@ const comparisons = [
     value: "R35,000-R51,000/month",
     source:
       "CIPS Procurement & Supply Salary Guide 2024, average SA procurement salary R614,777/year",
+    sourceUrl: "https://www.payscale.com/research/ZA/Job=Procurement_Officer/Salary",
   },
   {
     icon: IconBuildingBank,
     label: "Value of winning one government RFQ",
     value: "R50,000-R5,000,000+",
     source: "Based on typical SA government RFQ values",
+    sourceUrl: "https://ocpo.treasury.gov.za",
   },
 ]
 
@@ -218,6 +222,14 @@ export default function PricingPage() {
                       <p className="mt-3 text-xs leading-5 text-[#63766b]">
                         Source: {item.source}
                       </p>
+                      <a
+                        href={item.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex text-xs font-medium text-[#5DCAA5] hover:underline"
+                      >
+                        Verify source →
+                      </a>
                     </div>
                   </div>
                 </article>
