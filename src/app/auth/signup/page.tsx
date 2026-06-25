@@ -819,15 +819,14 @@ export default function SignupPage() {
   }
   return (
     <div className="relative min-h-screen bg-[#f8f4ec]">
-      <div className="relative z-10 flex items-center justify-between px-8 py-6 border-b border-[#ebebeb]/50">
-        <Link href="/" className="text-sm font-medium text-[#1a3a2a] hover:text-[#c8a060] transition-colors">
+      <div className="relative z-10 px-8 py-6">
+        <Link href="/" className="absolute left-6 top-1/2 -translate-y-1/2 text-sm font-medium text-[#1a3a2a] hover:text-[#c8a060] transition-colors">
           ← Back to home
         </Link>
         <div className="text-center">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#888]">Procurement Suite</p>
           <p className="font-display text-xl font-semibold text-[#1a3a2a]">AiForm Procure</p>
         </div>
-        <div className="w-24" />{/* spacer to center the brand */}
       </div>
 
       {/* Rock art background */}
@@ -1369,14 +1368,6 @@ export default function SignupPage() {
         </form>
         </div>
 
-        <div className="mt-5 flex items-center justify-center gap-2 text-xs font-semibold text-muted">
-          <svg width="12" height="16" viewBox="0 0 12 16" fill="none" aria-hidden>
-            <path d="M6 1L1 4v4c0 3.3 2.1 6.4 5 7.4 2.9-1 5-4.1 5-7.4V4L6 1z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-            <path d="M4 8l1.5 1.5L8 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span>Secured by AiForm Procure</span>
-        </div>
-
       </div>
     </main>
       </div>
@@ -1403,11 +1394,11 @@ export default function SignupPage() {
         </p>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-8">
+        <div className="grid grid-cols-3 gap-3 mb-2">
           {[
             { num: "9", label: "SA provinces\nmapped" },
             { num: "23", label: "Secured database\ntables" },
-            { num: "11", label: "Official SA\nlanguages" },
+            { num: "11", label: "SA languages\n(roadmap)" },
           ].map((stat) => (
             <div key={stat.num} className="border border-[#ebebeb] rounded-lg p-3 text-center">
               <div className="text-2xl font-semibold text-[#1a3a2a] mb-1">{stat.num}</div>
@@ -1415,6 +1406,7 @@ export default function SignupPage() {
             </div>
           ))}
         </div>
+        <p className="text-[10px] text-[#aaa] mt-1 mb-8">EN & ZU live · 9 more on the roadmap</p>
 
         {/* Feature bullets */}
         <div className="space-y-3 mb-8">
