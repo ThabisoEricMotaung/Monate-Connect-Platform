@@ -819,6 +819,17 @@ export default function SignupPage() {
   }
   return (
     <div className="relative min-h-screen bg-[#f8f4ec]">
+      <div className="relative z-10 flex items-center justify-between px-8 py-6 border-b border-[#ebebeb]/50">
+        <Link href="/" className="text-sm font-medium text-[#1a3a2a] hover:text-[#c8a060] transition-colors">
+          ← Back to home
+        </Link>
+        <div className="text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#888]">Procurement Suite</p>
+          <p className="font-display text-xl font-semibold text-[#1a3a2a]">AiForm Procure</p>
+        </div>
+        <div className="w-24" />{/* spacer to center the brand */}
+      </div>
+
       {/* Rock art background */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
         {/* Decorative circles */}
@@ -872,16 +883,11 @@ export default function SignupPage() {
         </svg>
       </div>
 
-    <main className="relative z-10 flex flex-1 items-center justify-center bg-white px-6 py-10">
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 min-h-[calc(100vh-120px)]">
+      <div className="flex flex-col justify-center bg-white px-8 py-12">
+    <main className="mx-auto w-full max-w-3xl">
       <div className="w-full max-w-3xl">
-        <div className="rounded-3xl border border-panel bg-white p-8 shadow-panel">
-        <Link
-          href="/"
-          className="mb-5 inline-block text-[13px] font-semibold text-[#1a3a2a] no-underline transition hover:underline"
-        >
-          ← Back to home
-        </Link>
-
+        <div className="rounded-2xl border border-[#ebebeb] bg-white p-8">
         <Stepper currentStep={step} onStepClick={setStep} />
 
         <form onSubmit={handleSignup} className="space-y-6">
@@ -1373,6 +1379,67 @@ export default function SignupPage() {
 
       </div>
     </main>
+      </div>
+
+      <div className="hidden lg:flex flex-col justify-center bg-white px-10 py-12 relative overflow-hidden">
+        {/* Decorative circles */}
+        <div className="absolute bottom-[-40px] right-[-40px] w-64 h-64 rounded-full border-[50px] border-[#1a3a2a]/5" />
+        <div className="absolute top-[-30px] right-[60px] w-40 h-40 rounded-full border-[30px] border-[#1a3a2a]/4" />
+
+        {/* Badge */}
+        <span className="inline-block w-fit mb-5 text-[10px] font-semibold tracking-[0.12em] uppercase text-[#c8a060] bg-[#c8a060]/10 border border-[#c8a060]/30 rounded-full px-3 py-1">
+          South Africa&apos;s Verified Procurement Network
+        </span>
+
+        {/* Headline */}
+        <h2 className="font-display text-3xl font-semibold text-[#1a3a2a] leading-snug mb-3">
+          Where SA Suppliers Meet<br/>
+          <em className="text-[#c8a060] not-italic">Real Procurement.</em>
+        </h2>
+
+        {/* Subtext */}
+        <p className="text-sm text-[#555555] leading-relaxed mb-8 max-w-sm">
+          The only platform built specifically for South African compliance - B-BBEE, CSD, CIPC, and SARS verification built in from the ground up.
+        </p>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          {[
+            { num: "9", label: "SA provinces\nmapped" },
+            { num: "23", label: "Secured database\ntables" },
+            { num: "11", label: "Official SA\nlanguages" },
+          ].map((stat) => (
+            <div key={stat.num} className="border border-[#ebebeb] rounded-lg p-3 text-center">
+              <div className="text-2xl font-semibold text-[#1a3a2a] mb-1">{stat.num}</div>
+              <div className="text-[10px] text-[#888888] leading-tight whitespace-pre-line">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Feature bullets */}
+        <div className="space-y-3 mb-8">
+          {[
+            "Verified supplier profiles visible to government and corporate buyers",
+            "SmartScore - know your procurement readiness instantly",
+            "Regional Insights - see where procurement activity is happening across SA",
+            "Free during the pilot period until October 2026",
+          ].map((feature) => (
+            <div key={feature} className="flex items-start gap-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#5DCAA5] mt-1.5 shrink-0" />
+              <p className="text-sm text-[#555555] leading-relaxed">{feature}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Founder quote */}
+        <div className="border-l-2 border-[#c8a060]/40 pl-4 mt-auto">
+          <p className="text-xs text-[#888888] italic leading-relaxed mb-2">
+            &quot;Built because South African suppliers were losing procurement opportunities not because of poor capability, but because of compliance gaps and lack of visibility.&quot;
+          </p>
+          <p className="text-[10px] text-[#c8a060] font-semibold">Thabiso Motaung - Founder, AiForm Studio</p>
+        </div>
+      </div>
+      </div>
     </div>
   )
 }

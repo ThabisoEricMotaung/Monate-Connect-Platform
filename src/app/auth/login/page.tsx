@@ -279,13 +279,15 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen bg-[#f8f4ec]">
-      <div className="relative z-10 mx-auto max-w-7xl px-8 pt-4">
-        <Link
-          href="/"
-          className="text-sm font-semibold text-[#c8a060] no-underline transition hover:underline"
-        >
+      <div className="relative z-10 flex items-center justify-between px-8 py-6 border-b border-[#ebebeb]/50">
+        <Link href="/" className="text-sm font-medium text-[#1a3a2a] hover:text-[#c8a060] transition-colors">
           ← Back to home
         </Link>
+        <div className="text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#888]">Procurement Suite</p>
+          <p className="font-display text-xl font-semibold text-[#1a3a2a]">AiForm Procure</p>
+        </div>
+        <div className="w-24" />{/* spacer to center the brand */}
       </div>
 
       {/* Rock art background */}
