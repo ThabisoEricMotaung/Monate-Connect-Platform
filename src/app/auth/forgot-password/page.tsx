@@ -166,7 +166,6 @@ export default function ForgotPasswordPage() {
     <SplitAuthShell>
       <section className="w-full rounded-2xl border border-[#ebebeb] bg-white p-8">
         <div className="mb-8 text-center">
-          <p className="text-xs uppercase tracking-[0.24em] text-accent">AiForm Procure</p>
           <h1 className="mt-3 font-display text-4xl font-semibold text-primary">Password Recovery</h1>
           <p className="mt-3 text-sm leading-6 text-secondary">
             Enter the email address linked to your enterprise account. We will send a secure password reset link to that inbox.
