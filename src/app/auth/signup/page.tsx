@@ -872,7 +872,7 @@ export default function SignupPage() {
         </svg>
       </div>
 
-    <main className="relative z-10 flex flex-1 items-center justify-center px-6 py-10">
+    <main className="relative z-10 flex flex-1 items-center justify-center bg-white px-6 py-10">
       <div className="w-full max-w-3xl">
         <div className="rounded-3xl border border-panel bg-panel p-8 shadow-panel">
         <Link
