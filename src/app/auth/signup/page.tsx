@@ -874,10 +874,10 @@ export default function SignupPage() {
 
     <main className="relative z-10 flex flex-1 items-center justify-center bg-white px-6 py-10">
       <div className="w-full max-w-3xl">
-        <div className="rounded-3xl border border-panel bg-panel p-8 shadow-panel">
+        <div className="rounded-3xl border border-panel bg-white p-8 shadow-panel">
         <Link
           href="/"
-          className="mb-5 inline-block text-[13px] font-semibold text-[#c8a060] no-underline transition hover:underline"
+          className="mb-5 inline-block text-[13px] font-semibold text-[#1a3a2a] no-underline transition hover:underline"
         >
           ← Back to home
         </Link>
