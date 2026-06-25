@@ -254,7 +254,7 @@ export default function ResetPasswordPage() {
             </p>
           </div>
           <div className="mt-8 space-y-3 border-t border-panel pt-6">
-            <Link href="/forgot-password" className="block w-full rounded-2xl bg-accent py-4 text-center font-semibold text-button transition hover:bg-accent-strong">
+            <Link href="/auth/forgot-password" className="block w-full rounded-2xl bg-accent py-4 text-center font-semibold text-button transition hover:bg-accent-strong">
               Request a new link
             </Link>
             <Link href="/auth/login" className="block w-full rounded-2xl border border-panel py-4 text-center text-sm font-semibold text-secondary transition hover:bg-surface">
