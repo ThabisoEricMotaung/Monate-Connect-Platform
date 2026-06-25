@@ -142,7 +142,7 @@ export default function ForgotPasswordPage() {
     setLoading(true)
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo: "http://localhost:3000/reset-password",
+      redirectTo: "http://localhost:3000/auth/reset-password",
     })
 
     setLoading(false)

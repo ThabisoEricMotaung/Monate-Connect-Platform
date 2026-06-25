@@ -408,7 +408,7 @@ export default function ThusoAssistant() {
   if (
     pathname?.startsWith("/auth/") ||
     pathname === "/forgot-password" ||
-    pathname === "/reset-password"
+    pathname === "/auth/reset-password"
   ) {
     return null
   }
