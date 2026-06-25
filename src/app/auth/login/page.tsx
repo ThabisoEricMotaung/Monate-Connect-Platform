@@ -278,17 +278,70 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f4ec]">
-      <div className="mx-auto max-w-7xl px-8 pt-4">
+    <div className="relative min-h-screen bg-[#f8f4ec]">
+      <div className="relative z-10 mx-auto max-w-7xl px-8 pt-4">
         <Link
           href="/"
-          className="text-sm font-semibold text-[#5DCAA5] no-underline transition hover:underline"
+          className="text-sm font-semibold text-[#c8a060] no-underline transition hover:underline"
         >
           ← Back to home
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[calc(100vh-120px)]">
+      {/* Rock art background */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+        {/* Decorative circles */}
+        <div className="absolute bottom-[-60px] right-[-60px] h-72 w-72 rounded-full border-[60px] border-[#1a3a2a]/5" />
+        <div className="absolute top-[-40px] right-[80px] h-40 w-40 rounded-full border-[35px] border-[#1a3a2a]/4" />
+        <div className="absolute bottom-[40px] left-[-40px] h-32 w-32 rounded-full border-[25px] border-[#c8a060]/5" />
+        {/* San rock art silhouettes */}
+        <svg viewBox="0 0 800 300" className="absolute bottom-0 h-[55%] w-full opacity-[0.04]" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+          {/* Cattle */}
+          <ellipse cx="100" cy="200" rx="30" ry="18" fill="#3a2a1a"/>
+          <ellipse cx="160" cy="190" rx="35" ry="20" fill="#3a2a1a"/>
+          <ellipse cx="230" cy="195" rx="28" ry="16" fill="#3a2a1a"/>
+          <line x1="100" y1="218" x2="95" y2="250" stroke="#3a2a1a" strokeWidth="4"/>
+          <line x1="107" y1="218" x2="112" y2="248" stroke="#3a2a1a" strokeWidth="4"/>
+          <line x1="160" y1="210" x2="155" y2="245" stroke="#3a2a1a" strokeWidth="4"/>
+          <line x1="167" y1="210" x2="172" y2="244" stroke="#3a2a1a" strokeWidth="4"/>
+          <line x1="230" y1="211" x2="225" y2="242" stroke="#3a2a1a" strokeWidth="4"/>
+          <line x1="237" y1="211" x2="242" y2="242" stroke="#3a2a1a" strokeWidth="4"/>
+          {/* Human figures */}
+          <circle cx="320" cy="170" r="10" fill="#3a2a1a"/>
+          <line x1="320" y1="180" x2="320" y2="220" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="320" y1="195" x2="300" y2="210" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="320" y1="195" x2="340" y2="208" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="320" y1="220" x2="308" y2="245" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="320" y1="220" x2="332" y2="245" stroke="#3a2a1a" strokeWidth="3"/>
+          <circle cx="380" cy="175" r="9" fill="#3a2a1a"/>
+          <line x1="380" y1="184" x2="380" y2="222" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="380" y1="198" x2="362" y2="212" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="380" y1="198" x2="398" y2="210" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="380" y1="222" x2="370" y2="248" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="380" y1="222" x2="390" y2="248" stroke="#3a2a1a" strokeWidth="3"/>
+          <circle cx="430" cy="168" r="10" fill="#3a2a1a"/>
+          <line x1="430" y1="178" x2="430" y2="218" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="430" y1="193" x2="412" y2="205" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="430" y1="193" x2="448" y2="205" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="430" y1="218" x2="420" y2="244" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="430" y1="218" x2="440" y2="244" stroke="#3a2a1a" strokeWidth="3"/>
+          {/* More cattle */}
+          <ellipse cx="500" cy="195" rx="32" ry="17" fill="#3a2a1a"/>
+          <ellipse cx="575" cy="188" rx="36" ry="19" fill="#3a2a1a"/>
+          <ellipse cx="650" cy="200" rx="28" ry="15" fill="#3a2a1a"/>
+          <ellipse cx="720" cy="192" rx="30" ry="17" fill="#3a2a1a"/>
+          <line x1="490" y1="212" x2="485" y2="240" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="510" y1="212" x2="515" y2="240" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="562" y1="207" x2="557" y2="238" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="582" y1="207" x2="587" y2="238" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="640" y1="215" x2="635" y2="242" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="658" y1="215" x2="663" y2="242" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="710" y1="209" x2="705" y2="238" stroke="#3a2a1a" strokeWidth="3"/>
+          <line x1="728" y1="209" x2="733" y2="238" stroke="#3a2a1a" strokeWidth="3"/>
+        </svg>
+      </div>
+
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 min-h-[calc(100vh-120px)]">
       <div className="flex flex-col justify-center bg-white px-8 py-12">
         <div className="mx-auto w-full max-w-md">
         <div className="rounded-2xl border border-[#ebebeb] p-8">
