@@ -142,12 +142,18 @@ export default function ForgotPasswordPage() {
     setLoading(true)
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo: "http://localhost:3000/auth/reset-password",
+      redirectTo: `${window.location.origin}/auth/reset-password`,
     })
 
     setLoading(false)
 
-    if (resetError) {
+    const resetMessage = resetError?.message.toLowerCase() ?? ""
+    const isUnregisteredEmail =
+      resetMessage.includes("user not found") ||
+      resetMessage.includes("not found") ||
+      resetMessage.includes("not registered")
+
+    if (resetError && !isUnregisteredEmail) {
       setError(resetError.message)
       return
     }
@@ -198,7 +204,13 @@ export default function ForgotPasswordPage() {
             <div className="rounded-2xl border border-success bg-success-soft px-5 py-4">
               <p className="text-sm font-semibold text-success">Reset link sent</p>
               <p className="mt-1 text-sm leading-5 text-secondary">
-                Check {email} for password reset instructions. If it does not arrive shortly, check junk mail or request another link.
+                If that email is registered, you&apos;ll receive a link shortly. Check your spam folder if it doesn&apos;t arrive within a few minutes.
+              </p>
+              <p className="mt-3 text-xs leading-5 text-muted">
+                No email? You may not have an account yet. {" "}
+                <Link href="/auth/signup" className="font-semibold text-accent transition hover:text-accent-strong">
+                  Register free {"\u2192"}
+                </Link>
               </p>
             </div>
           )}
