@@ -278,19 +278,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
-      <div className="flex flex-col justify-center bg-[#f8f4ec] px-8 py-12">
-        <div className="mx-auto w-full max-w-md">
-        <div className="rounded-3xl border border-panel bg-panel p-8 shadow-panel">
-          <Link
-            href="/"
-            className="mb-5 inline-block text-[13px] font-semibold text-[#5DCAA5] no-underline transition hover:underline"
-          >
-            ← Back to home
-          </Link>
+    <div className="min-h-screen bg-[#f8f4ec]">
+      <div className="mx-auto max-w-7xl px-8 pt-4">
+        <Link
+          href="/"
+          className="text-sm font-semibold text-[#5DCAA5] no-underline transition hover:underline"
+        >
+          ← Back to home
+        </Link>
+      </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[calc(100vh-120px)]">
+      <div className="flex flex-col justify-center bg-white px-8 py-12">
+        <div className="mx-auto w-full max-w-md">
+        <div className="rounded-2xl border border-[#ebebeb] p-8">
           <div className="mb-7 text-center">
-            <h1 className="text-3xl font-semibold text-heading">Log in to AiForm Procure</h1>
+            <h1 className="font-display text-3xl font-semibold text-heading">Log in to AiForm Procure</h1>
             <p className="mt-3 text-sm leading-6 text-secondary">Sign in to your account.</p>
           </div>
 
@@ -471,6 +474,7 @@ export default function LoginPage() {
           </p>
           <p className="text-[10px] text-[#c8a060] font-semibold">Thabiso Motaung - Founder, AiForm Studio</p>
         </div>
+      </div>
       </div>
     </div>
   )
