@@ -14,11 +14,11 @@ import {
 import { supabase } from "@/lib/supabase"
 
 const REQUEST_TYPES = [
-  "Supplier Onboarding",
-  "Buyer / Procurement Pilot",
-  "Municipality Pilot",
-  "Mining / Enterprise Pilot",
-  "Investor / Partnership",
+  "Joining as a supplier",
+  "Sourcing as a buyer",
+  "Municipality / Government",
+  "Enterprise / Mining",
+  "Partnership or investment",
   "General Enquiry",
 ]
 
@@ -159,6 +159,21 @@ export default function ContactPage() {
       console.error("Pilot request insert error:", insertError)
       setError(insertError.message)
       return
+    }
+
+    try {
+      await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: payload.name,
+          email: payload.email,
+          request_type: payload.request_type,
+          organisation: payload.organisation,
+        }),
+      })
+    } catch {
+      // Non-blocking - email failure should not prevent success message.
     }
 
     setForm(initialForm)
