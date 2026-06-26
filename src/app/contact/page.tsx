@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import BackLink from "@/components/BackLink"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import { FormEvent, useState } from "react"
@@ -72,6 +73,10 @@ const initialForm = {
   message: "",
 }
 
+type ContactForm = typeof initialForm
+
+const STORAGE_KEY = "contact_form_draft"
+
 const inputClass =
   "w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30"
 
@@ -80,14 +85,35 @@ function isValidEmail(email: string): boolean {
 }
 
 export default function ContactPage() {
-  const [form, setForm] = useState(initialForm)
+  const [form, setForm] = useState<ContactForm>(() => {
+    if (typeof window === "undefined") return initialForm
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY)
+      return saved ? { ...initialForm, ...JSON.parse(saved) } : initialForm
+    } catch {
+      return initialForm
+    }
+  })
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState("")
   const [error, setError] = useState("")
-  const [selectedIntent, setSelectedIntent] = useState("")
+  const [selectedIntent, setSelectedIntent] = useState(() => {
+    if (typeof window === "undefined") return ""
+    try {
+      return sessionStorage.getItem(STORAGE_KEY + "_intent") ?? ""
+    } catch {
+      return ""
+    }
+  })
 
   function updateField(field: keyof typeof form, value: string) {
-    setForm((current) => ({ ...current, [field]: value }))
+    setForm((current) => {
+      const updated = { ...current, [field]: value }
+      try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+      } catch {}
+      return updated
+    })
   }
 
   function updatePhone(value: string) {
@@ -105,6 +131,9 @@ export default function ContactPage() {
   function selectIntent(label: string, message: string) {
     setSelectedIntent(label)
     updateField("message", message)
+    try {
+      sessionStorage.setItem(STORAGE_KEY + "_intent", label)
+    } catch {}
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -178,6 +207,10 @@ export default function ContactPage() {
 
     setForm(initialForm)
     setSelectedIntent("")
+    try {
+      sessionStorage.removeItem(STORAGE_KEY)
+      sessionStorage.removeItem(STORAGE_KEY + "_intent")
+    } catch {}
     setSuccess("Thank you. AiForm Procure will contact you soon.")
   }
 
@@ -187,6 +220,9 @@ export default function ContactPage() {
       <main className="min-h-screen bg-white text-primary">
       <section className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[0.9fr_1.1fr] lg:py-20">
         <div className="border-b border-t border-heading py-10">
+          <div className="mb-4">
+            <BackLink />
+          </div>
           <p className="newspaper-kicker">Contact &middot; Pilot Requests</p>
           <h1 className="newspaper-headline mt-5">Start an AiForm Procure conversation</h1>
           <p className="newspaper-body mt-6 max-w-3xl">

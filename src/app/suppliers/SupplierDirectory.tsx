@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
+import BackLink from "@/components/BackLink"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import { supabase } from "@/lib/supabase"
 
@@ -369,6 +370,9 @@ export default function SupplierDirectory({ suppliers }: { suppliers: PublicSupp
 
       <section className="px-4 py-12 sm:px-6 lg:px-8" style={{ backgroundColor: FOREST }}>
         <div className="mx-auto max-w-7xl">
+          <div className="mb-4">
+            <BackLink />
+          </div>
           <p className="text-xs font-semibold uppercase tracking-[0.28em]" style={{ color: GOLD }}>AiForm Procure</p>
           <h1 className="mt-3 font-display text-4xl font-semibold leading-tight text-[#f8f4ec] md:text-6xl">
             Verified Supplier Directory

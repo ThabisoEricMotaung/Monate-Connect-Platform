@@ -8,6 +8,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react"
 import Link from "next/link"
+import BackLink from "@/components/BackLink"
 
 const supplierFeatures = [
   "Verified supplier profile",
@@ -106,6 +107,9 @@ export default function PricingPage() {
     <main className="min-h-screen bg-[#f0ebe0] text-[#1a3a2a]">
       <section className="bg-[#1a3a2a] px-6 py-20 text-white sm:py-24">
         <div className="mx-auto max-w-7xl text-center">
+          <div className="mb-4 text-left">
+            <BackLink />
+          </div>
           <span className="inline-flex rounded-full border border-[#c8a060]/45 bg-[#c8a060]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#c8a060]">
             Transparent pricing
           </span>

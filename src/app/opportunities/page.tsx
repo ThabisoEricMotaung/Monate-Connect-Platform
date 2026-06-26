@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import BackLink from "@/components/BackLink"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import { useEffect, useMemo, useState } from "react"
@@ -827,6 +828,9 @@ export default function OpportunitiesPage() {
         {/* Hero strip */}
         <section className="border-b border-panel bg-white py-10">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-4">
+              <BackLink />
+            </div>
             <p className="newspaper-kicker mb-2">Live procurement &middot; South Africa</p>
             <h1 className="newspaper-headline mb-4">
               Find tenders and RFQs across South Africa
