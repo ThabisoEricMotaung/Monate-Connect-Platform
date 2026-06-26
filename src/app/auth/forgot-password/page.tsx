@@ -68,7 +68,7 @@ function PasswordTrustPanel() {
         <em className="text-[#c8a060] not-italic">trusted safeguards.</em>
       </h2>
       <p className="text-sm text-[#555555] leading-relaxed mb-8 max-w-sm">
-        Reset emails are sent through Supabase Auth so only the owner of the email inbox can start the password recovery flow.
+        Reset emails are sent securely through AiForm Procure so only the owner of the email inbox can start the password recovery flow.
       </p>
       <div className="space-y-3 mb-8">
         {[
@@ -217,7 +217,7 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-2xl bg-[#c8a060] py-4 font-semibold text-white transition hover:bg-[#b08840] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Sending..." : "Send Reset Link"}
           </button>
