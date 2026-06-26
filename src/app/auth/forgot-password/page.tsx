@@ -83,12 +83,6 @@ function PasswordTrustPanel() {
           </div>
         ))}
       </div>
-      <div className="border-l-2 border-[#c8a060]/40 pl-4 mt-auto">
-        <p className="text-xs text-[#888888] italic leading-relaxed mb-2">
-          Recovery should be calm, clear, and secure, especially when procurement access is on the line.
-        </p>
-        <p className="text-[10px] text-[#c8a060] font-semibold">AiForm Procure Security</p>
-      </div>
     </div>
   )
 }

@@ -80,7 +80,7 @@ function PasswordTrustPanel() {
         <em className="text-[#c8a060] not-italic">confidence.</em>
       </h2>
       <p className="text-sm text-[#555555] leading-relaxed mb-8 max-w-sm">
-        Password recovery is handled through Supabase Auth with short-lived reset links, protected sessions, and secure redirect handling.
+        Password recovery is handled through AiForm Procure with short-lived reset links, protected sessions, and secure redirect handling.
       </p>
       <div className="space-y-3 mb-8">
         {[
@@ -94,12 +94,6 @@ function PasswordTrustPanel() {
             <p className="text-sm text-[#555555] leading-relaxed">{feature}</p>
           </div>
         ))}
-      </div>
-      <div className="border-l-2 border-[#c8a060]/40 pl-4 mt-auto">
-        <p className="text-xs text-[#888888] italic leading-relaxed mb-2">
-          Security-first recovery keeps legitimate users moving while protecting procurement profiles and compliance records.
-        </p>
-        <p className="text-[10px] text-[#c8a060] font-semibold">AiForm Procure Security</p>
       </div>
     </div>
   )
@@ -224,7 +218,6 @@ export default function ResetPasswordPage() {
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
             </svg>
           </div>
-          <p className="text-xs uppercase tracking-[0.24em] text-accent">Procurement portal</p>
           <h1 className="mt-3 text-2xl font-semibold text-primary">Verifying reset link</h1>
           <p className="mt-3 text-sm leading-6 text-secondary">
             Validating your password reset token. Please wait a moment.
@@ -247,7 +240,6 @@ export default function ResetPasswordPage() {
             </div>
           </div>
           <div className="text-center">
-            <p className="text-xs uppercase tracking-[0.24em] text-accent">Procurement portal</p>
             <h1 className="mt-3 text-3xl font-semibold text-primary">Link invalid or expired</h1>
             <p className="mt-3 text-sm leading-7 text-secondary">
               This password reset link is no longer valid. Reset links expire after a short period for security reasons.
@@ -278,7 +270,6 @@ export default function ResetPasswordPage() {
             </div>
           </div>
           <div className="text-center">
-            <p className="text-xs uppercase tracking-[0.24em] text-accent">Procurement portal</p>
             <h1 className="mt-3 text-3xl font-semibold text-primary">Password updated</h1>
             <p className="mt-3 text-sm leading-7 text-secondary">
               Your password has been changed successfully. You will be redirected to the login page in a few seconds.
@@ -299,7 +290,6 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md rounded-2xl border border-[#ebebeb] bg-white p-8">
         <BackHomeLink />
         <div className="mb-8 text-center">
-          <p className="text-xs uppercase tracking-[0.24em] text-accent">Procurement portal</p>
           <h1 className="mt-3 text-4xl font-semibold text-primary">New password</h1>
           <p className="mt-3 text-sm leading-6 text-secondary">
             Choose a strong password for your supplier account. Minimum 8 characters required.
