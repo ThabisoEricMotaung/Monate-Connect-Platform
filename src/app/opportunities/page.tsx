@@ -391,7 +391,7 @@ function FilterBody({
                 key={ind}
                 label={ind}
                 count={countByIndustry(ind)}
-                checked={industryFilters.length === 0 || industryFilters.includes(ind)}
+                checked={industryFilters.includes(ind)}
                 onChange={() => setIndustryFilters(toggleItem(industryFilters, ind))}
               />
             ))}
@@ -418,7 +418,7 @@ function FilterBody({
               key={p}
               label={p}
               count={countByProvince(p)}
-              checked={provinceFilters.length === 0 || provinceFilters.includes(p)}
+              checked={provinceFilters.includes(p)}
               onChange={() => setProvinceFilters(toggleItem(provinceFilters, p))}
             />
           ))}
@@ -444,7 +444,7 @@ function FilterBody({
               key={key}
               label={label}
               count={countByDeadline(key)}
-              checked={deadlineFilters.length === 0 || deadlineFilters.includes(key)}
+              checked={deadlineFilters.includes(key)}
               onChange={() =>
                 setDeadlineFilters(toggleItem(deadlineFilters, key) as DeadlineFilter[])
               }
@@ -464,7 +464,7 @@ function FilterBody({
               key={key}
               label={label}
               count={countByBBBEE(key)}
-              checked={bbeeFilters.length === 0 || bbeeFilters.includes(key)}
+              checked={bbeeFilters.includes(key)}
               onChange={() =>
                 setBbeeFilters(toggleItem(bbeeFilters, key) as BBBEEFilter[])
               }
@@ -809,9 +809,9 @@ export default function OpportunitiesPage() {
   return (
     <>
       <PublicHeader />
-      <main className="min-h-screen bg-page text-primary">
+      <main className="min-h-screen bg-white text-primary">
         {/* Hero strip */}
-        <section className="border-b border-panel bg-card py-10">
+        <section className="border-b border-panel bg-white py-10">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <p className="newspaper-kicker mb-2">Live procurement &middot; South Africa</p>
             <h1 className="newspaper-headline mb-4">
@@ -847,24 +847,30 @@ export default function OpportunitiesPage() {
 
             {/* Stat chips */}
             {!loading && (
-              <div className="flex flex-wrap gap-3">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success-soft px-4 py-1.5 text-sm font-semibold text-success">
-                  <span className="h-2 w-2 rounded-full bg-success" />
-                  {totalOpen} active {totalOpen === 1 ? "tender" : "tenders"}
-                </span>
-                {closingSoonCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-warning bg-warning-soft px-4 py-1.5 text-sm font-semibold text-warning">
-                    <CalendarIcon />
-                    {closingSoonCount} closing this week
+              <>
+                <div className="flex flex-wrap gap-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success-soft px-4 py-1.5 text-sm font-semibold text-success">
+                    <span className="h-2 w-2 rounded-full bg-success" />
+                    {totalOpen} active {totalOpen === 1 ? "tender" : "tenders"}
                   </span>
-                )}
-                {newRecentCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-4 py-1.5 text-sm font-semibold text-sky-700">
-                    <span className="h-2 w-2 rounded-full bg-sky-500" />
-                    {newRecentCount} new in last 48h
-                  </span>
-                )}
-              </div>
+                  {closingSoonCount > 0 && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-warning bg-warning-soft px-4 py-1.5 text-sm font-semibold text-warning">
+                      <CalendarIcon />
+                      {closingSoonCount} closing this week
+                    </span>
+                  )}
+                  {newRecentCount > 0 && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-4 py-1.5 text-sm font-semibold text-sky-700">
+                      <span className="h-2 w-2 rounded-full bg-sky-500" />
+                      {newRecentCount} new in last 48h
+                    </span>
+                  )}
+                </div>
+                <p className="mt-3 text-xs text-muted">
+                  Opportunities are sourced from public procurement notices and verified
+                  buyer organisations. Data is updated regularly during the pilot period.
+                </p>
+              </>
             )}
           </div>
         </section>
