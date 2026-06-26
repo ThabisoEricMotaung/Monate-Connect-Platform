@@ -2,9 +2,6 @@ import Link from "next/link"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 
-const draftNotice =
-  "This document is a draft for review purposes only and does not constitute legal advice or a binding agreement. Final version pending legal review."
-
 const privacySections = [
   {
     title: "Who we are",
@@ -53,21 +50,16 @@ export default function PrivacyPolicyPage() {
     <>
       <PublicHeader />
       <main className="min-h-screen bg-page text-primary">
-        <section className="mx-auto max-w-7xl px-6 py-8">
-          <div className="rounded-md border border-warning bg-warning-soft px-5 py-4 text-sm font-semibold leading-6 text-warning shadow-panel">
-            {draftNotice}
-          </div>
-        </section>
 
         <section className="mx-auto grid max-w-7xl gap-8 px-6 pb-16 lg:grid-cols-[1.1fr_0.9fr] lg:pb-20">
           <div className="border-b border-t border-heading py-10">
             <p className="newspaper-kicker">Legal Desk &middot; Privacy Policy</p>
             <h1 className="newspaper-headline mt-5">Privacy Policy</h1>
             <p className="mt-5 font-display text-xl text-heading">
-              Effective date: Draft — not yet in effect
+              Effective date: 26 June 2026
             </p>
             <p className="newspaper-body mt-6 max-w-3xl">
-              This draft explains how AiForm Procure expects to collect, use, store, and protect
+              This policy explains how AiForm Procure expects to collect, use, store, and protect
               information submitted by suppliers, buyers, and platform users.
             </p>
           </div>

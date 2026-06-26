@@ -2,14 +2,11 @@ import Link from "next/link"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 
-const draftNotice =
-  "This document is a draft for review purposes only and does not constitute legal advice or a binding agreement. Final version pending legal review."
-
 const termsSections = [
   {
     title: "Acceptance of terms",
     body:
-      "By accessing or using AiForm Procure, users agree to follow these draft terms and any platform rules made available during onboarding or use.",
+      "By accessing or using AiForm Procure, users agree to follow these terms and any platform rules made available during onboarding or use.",
   },
   {
     title: "Who may use the platform",
@@ -49,7 +46,12 @@ const termsSections = [
   {
     title: "Governing law",
     body:
-      "These draft terms are intended to be governed by the laws of the Republic of South Africa.",
+      "These terms are governed by the laws of the Republic of South Africa.",
+  },
+  {
+    title: "Subscriptions, Refunds and Cancellations",
+    body:
+      "AiForm Procure operates on a subscription basis during the pilot period. The platform is currently free for all registered users until October 2026.\n\nCancellation: Users may cancel their account at any time by contacting support or through their account settings. Cancellation takes effect immediately.\n\nRefunds: As the platform is currently free during the pilot period, no payments are collected and no refunds are applicable. When paid subscriptions are introduced, refund terms will be clearly communicated in advance and updated in these terms.\n\nDelivery: AiForm Procure is a digital platform. No physical goods are sold or delivered through the platform. All services are delivered electronically.\n\nDisputes: Any billing disputes should be directed to hello@aiformprocure.co.za within 30 days of the charge.",
   },
   {
     title: "Contact",
@@ -63,21 +65,16 @@ export default function TermsOfServicePage() {
     <>
       <PublicHeader />
       <main className="min-h-screen bg-page text-primary">
-        <section className="mx-auto max-w-7xl px-6 py-8">
-          <div className="rounded-md border border-warning bg-warning-soft px-5 py-4 text-sm font-semibold leading-6 text-warning shadow-panel">
-            {draftNotice}
-          </div>
-        </section>
 
         <section className="mx-auto grid max-w-7xl gap-8 px-6 pb-16 lg:grid-cols-[1.1fr_0.9fr] lg:pb-20">
           <div className="border-b border-t border-heading py-10">
             <p className="newspaper-kicker">Legal Desk &middot; Terms of Service</p>
             <h1 className="newspaper-headline mt-5">Terms of Service</h1>
             <p className="mt-5 font-display text-xl text-heading">
-              Effective date: Draft — not yet in effect
+              Effective date: 26 June 2026
             </p>
             <p className="newspaper-body mt-6 max-w-3xl">
-              These draft terms describe the expected rules for using AiForm Procure as a supplier,
+              These terms describe the expected rules for using AiForm Procure as a supplier,
               buyer, or authorised platform user.
             </p>
           </div>
@@ -103,7 +100,7 @@ export default function TermsOfServicePage() {
           {termsSections.map((section) => (
             <article key={section.title} className="rounded-md border border-panel bg-card p-6 shadow-panel">
               <h2 className="font-display text-2xl font-semibold text-heading">{section.title}</h2>
-              <p className="mt-4 text-sm leading-7 text-secondary">{section.body}</p>
+              <p className="mt-4 whitespace-pre-line text-sm leading-7 text-secondary">{section.body}</p>
             </article>
           ))}
         </section>
