@@ -239,8 +239,8 @@ export default function InfoCards() {
           </ul>
 
           <div>
-            <Link href="/auth/login?role=admin" style={{ color: '#c8a060', textDecoration: 'underline', fontSize: 12, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-              Request Access →
+            <Link href="/contact" style={{ color: '#c8a060', textDecoration: 'underline', fontSize: 12, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              Get in touch {"\u2192"}
             </Link>
             <div>
               <div style={{ fontSize: 11, color: '#6a7a6a' }}>For verified organisations. Municipalities welcome.</div>
