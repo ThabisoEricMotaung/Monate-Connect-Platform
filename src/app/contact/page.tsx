@@ -184,7 +184,7 @@ export default function ContactPage() {
   return (
     <>
       <PublicHeader />
-      <main className="min-h-screen bg-page text-primary">
+      <main className="min-h-screen bg-white text-primary">
       <section className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[0.9fr_1.1fr] lg:py-20">
         <div className="border-b border-t border-heading py-10">
           <p className="newspaper-kicker">Contact &middot; Pilot Requests</p>

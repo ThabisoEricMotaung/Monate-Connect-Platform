@@ -136,7 +136,7 @@ function getPublishedDate(rfq: PublicRFQ): string | null {
 }
 
 function getBuyerName(rfq: PublicRFQ): string {
-  return rfq.buyer_org || rfq.buyer_name || rfq.buyer || rfq.organization_name || "Government / Public entity"
+  return rfq.buyer_org || rfq.buyer_name || rfq.buyer || rfq.organization_name || "Verified buyer"
 }
 
 function getRFQProvince(rfq: PublicRFQ): string {
@@ -354,7 +354,14 @@ function FilterBody({
     bbeeFilters.length > 0
 
   function countByProvince(p: string) {
-    return all.filter((r) => normalize(getRFQProvince(r)).includes(normalize(p))).length
+    const norm = normalize(p)
+    return all.filter((r) => {
+      const provinces = normalizeArray(r.provinces)
+      if (provinces.length > 0) {
+        return provinces.some((prov) => normalize(prov).includes(norm))
+      }
+      return normalize(r.province ?? "").includes(norm)
+    }).length
   }
   function countByIndustry(ind: string) {
     return all.filter((r) => normalize(getRFQIndustry(r)) === normalize(ind)).length
@@ -743,9 +750,16 @@ export default function OpportunitiesPage() {
     }
 
     if (provinceFilters.length > 0) {
-      result = result.filter((r) =>
-        provinceFilters.some((p) => normalize(getRFQProvince(r)).includes(normalize(p)))
-      )
+      result = result.filter((r) => {
+        const provinces = normalizeArray(r.provinces)
+        return provinceFilters.some((p) => {
+          const norm = normalize(p)
+          if (provinces.length > 0) {
+            return provinces.some((prov) => normalize(prov).includes(norm))
+          }
+          return normalize(r.province ?? "").includes(norm)
+        })
+      })
     }
 
     if (deadlineFilters.length > 0) {
