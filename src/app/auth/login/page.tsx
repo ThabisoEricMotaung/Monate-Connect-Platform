@@ -247,7 +247,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/post-oauth`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     })
 
@@ -267,7 +267,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "azure",
       options: {
-        redirectTo: `${window.location.origin}/auth/post-oauth`,
+        redirectTo: `${window.location.origin}/auth/callback`,
         scopes: "openid email profile User.Read",
       },
     })
@@ -378,21 +378,14 @@ export default function LoginPage() {
             </button>
 
             <div className="h-px bg-panel" />
-            <div className="group relative">
-              <button
-                type="button"
-                disabled
-                aria-disabled="true"
-                className="flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-lg border border-[#dadce0] bg-[#f8f9fa] px-4 py-2.5 text-[14px] font-medium text-[#aaa] opacity-60"
-              >
-                <MicrosoftLogo />
-                <span>Microsoft</span>
-                <span className="rounded-full border border-[#d8d8d8] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#999]">Soon</span>
-              </button>
-              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max max-w-[260px] -translate-x-1/2 rounded-md bg-[#1a3a2a] px-3 py-2 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
-                Microsoft SSO coming soon — use Google or email for now
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={handleMicrosoftSignIn}
+              className="flex w-full items-center justify-center gap-3 rounded-lg border border-[#dadce0] bg-white px-4 py-2.5 text-[14px] font-medium text-[#3c4043] transition hover:bg-[#f8f9fa]"
+            >
+              <MicrosoftLogo />
+              <span>Continue with Microsoft</span>
+            </button>
 
             <AuthDivider />
 
