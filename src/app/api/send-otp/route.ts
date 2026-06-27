@@ -1,4 +1,4 @@
-import AfricasTalking from "africastalking"
+import { Resend } from "resend"
 import { NextResponse } from "next/server"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
@@ -23,11 +23,10 @@ export async function POST(request: Request) {
     )
   }
 
-  const apiKey = process.env.AT_API_KEY
-  const username = process.env.AT_USERNAME
-  if (!apiKey || !username) {
+  const resendApiKey = process.env.RESEND_API_KEY
+  if (!resendApiKey) {
     return NextResponse.json(
-      { success: false, error: "Africa's Talking SMS is not configured." },
+      { success: false, error: "Email service is not configured." },
       { status: 500 }
     )
   }
@@ -110,17 +109,28 @@ export async function POST(request: Request) {
   }
 
   try {
-    const client = AfricasTalking({ apiKey, username })
-    await client.SMS.send({
-      to: [phone],
-      message: `Your AiForm Procure verification code is: ${otp}. Valid for 10 minutes. Do not share this code.`,
-      ...(process.env.AT_SENDER_ID ? { senderId: process.env.AT_SENDER_ID } : {}),
+    const resend = new Resend(resendApiKey)
+    await resend.emails.send({
+      from: "AiForm Procure <noreply@aiformprocure.co.za>",
+      to: user.email!,
+      subject: "Your AiForm Procure verification code",
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
+          <img src="https://www.aiformprocure.co.za/logo.png" alt="AiForm Procure" style="height:36px;margin-bottom:24px;" />
+          <h2 style="font-size:20px;font-weight:600;color:#1a3a2a;margin-bottom:8px;">Phone verification code</h2>
+          <p style="color:#444;font-size:14px;margin-bottom:24px;">Use the code below to verify your phone number. It expires in 10 minutes.</p>
+          <div style="background:#f4f0e8;border-radius:8px;padding:20px 24px;text-align:center;margin-bottom:24px;">
+            <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#1a3a2a;">${otp}</span>
+          </div>
+          <p style="color:#888;font-size:12px;">Do not share this code with anyone. If you did not request this, you can ignore this email.</p>
+        </div>
+      `,
     })
   } catch (error) {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Could not send verification SMS.",
+        error: error instanceof Error ? error.message : "Could not send verification email.",
       },
       { status: 502 }
     )
