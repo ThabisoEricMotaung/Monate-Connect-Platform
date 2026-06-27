@@ -36,7 +36,7 @@ export default function PhoneVerificationBanner({ graceExpiresAt }: { graceExpir
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm font-semibold">
           {label
-            ? `Verify your phone number to maintain access. Your grace period expires in ${label}.`
+            ? `Verify your phone number to maintain access. A code will be sent to your email. Grace period expires in ${label}.`
             : "Grace period has expired — please verify now."}
         </p>
         <Link

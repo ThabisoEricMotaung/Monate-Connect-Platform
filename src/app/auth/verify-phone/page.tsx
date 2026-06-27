@@ -167,7 +167,7 @@ export default function VerifyPhonePage() {
     }
 
     if (otp.length !== OTP_LENGTH) {
-      setError("Enter the 6-digit code sent to your phone.")
+      setError("Enter the 6-digit code sent to your email.")
       return
     }
 
@@ -253,7 +253,7 @@ export default function VerifyPhonePage() {
               Verify your phone number
             </h1>
             <p className="mt-3 max-w-md text-sm leading-6 text-[#466253]">
-              Enter your South African mobile number to receive a verification code.
+              Enter your South African mobile number below. Your verification code will be sent to your email address.
             </p>
           </div>
 
