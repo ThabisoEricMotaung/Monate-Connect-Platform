@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 import {
@@ -122,11 +122,6 @@ export async function POST(request: Request) {
 
   if (updateError) {
     return NextResponse.json({ success: false, error: updateError.message }, { status: 500 })
-  }
-
-  const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(user.id, { phone })
-  if (authUpdateError) {
-    return NextResponse.json({ success: false, error: authUpdateError.message }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })
