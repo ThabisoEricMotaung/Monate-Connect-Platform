@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useState, type MouseEvent } from "react"
 import Link from "next/link"
@@ -493,7 +493,7 @@ export default function LoginPage() {
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-[#aaa] mt-1 mb-8">EN & ZU live · 9 more on the roadmap</p>
+        <p className="text-[10px] text-[#aaa] mt-1 mb-8">11 SA languages · UI & help guide translated</p>
 
         {/* Feature bullets */}
         <div className="space-y-3 mb-8">
