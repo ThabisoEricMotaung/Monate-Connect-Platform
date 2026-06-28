@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import Link from "next/link"
@@ -167,10 +167,10 @@ function PasswordStrengthMeter({ password }: { password: string }) {
         ))}
       </div>
       {metCount === 4 ? (
-        <p className="mt-2 text-xs font-semibold text-emerald-700">Strong password ✓</p>
+        <p className="mt-2 text-xs font-semibold text-emerald-700">Strong password ?</p>
       ) : (
         <p className="mt-2 text-xs leading-5 text-muted">
-          {unmetRules.map((rule) => rule.label).join(" · ")}
+          {unmetRules.map((rule) => rule.label).join(" � ")}
         </p>
       )}
     </div>
@@ -320,7 +320,7 @@ function Stepper({
                         : "border-panel bg-surface text-muted"
                   }`}
                 >
-                  {isCompleted ? "✓" : stepNumber}
+                  {isCompleted ? "?" : stepNumber}
                 </span>
                 {index < steps.length - 1 && (
                   <span className={`ml-2 h-px flex-1 ${stepNumber < currentStep ? "bg-accent" : "bg-panel"}`} />
@@ -492,7 +492,7 @@ export default function SignupPage() {
 
   const uploadCsdDocumentIfNeeded = async () => {
     if (!form.csdDocumentFile || form.csdDocumentPath) return form.csdDocumentPath || null
-    if (!supabase || !userId) throw new Error("Session expired — please reload and start over.")
+    if (!supabase || !userId) throw new Error("Session expired � please reload and start over.")
 
     const path = `${userId}/csd-certificate/${Date.now()}-${cleanFileName(form.csdDocumentFile.name)}`
     const { error } = await supabase.storage
@@ -610,7 +610,7 @@ export default function SignupPage() {
     }
 
     if (!data.user) {
-      setErrors({ submit: "Account creation failed — no user record was returned." })
+      setErrors({ submit: "Account creation failed � no user record was returned." })
       setLoading(false)
       return
     }
@@ -722,7 +722,7 @@ export default function SignupPage() {
     setErrors({})
 
     if (!supabase || !userId) {
-      setErrors({ submit: "Session expired — please reload and start over." })
+      setErrors({ submit: "Session expired � please reload and start over." })
       setLoading(false)
       return
     }
@@ -821,7 +821,7 @@ export default function SignupPage() {
     <div className="relative min-h-screen bg-[#f8f4ec]">
       <div className="relative z-10 px-8 py-6">
         <Link href="/" className="absolute left-6 top-1/2 -translate-y-1/2 text-sm font-medium text-[#1a3a2a] hover:text-[#c8a060] transition-colors">
-          ← Back to home
+          ? Back to home
         </Link>
         <div className="text-center">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#888]">Procurement Suite</p>
@@ -903,7 +903,7 @@ export default function SignupPage() {
               {showOauthRegistrationNotice && (
                 <div className="mb-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4">
                   <p className="text-sm font-semibold text-emerald-800">
-                    You signed in with Google/Microsoft — please complete your profile to continue.
+                    You signed in with Google/Microsoft � please complete your profile to continue.
                   </p>
                 </div>
               )}
@@ -957,7 +957,7 @@ export default function SignupPage() {
                       }`}
                     >
                       <span className={`text-sm font-bold ${form.role === r ? "text-accent" : "text-primary"}`}>
-                        {r === "supplier" ? "I’m a Supplier" : "I’m a Buyer"}
+                        {r === "supplier" ? "I�m a Supplier" : "I�m a Buyer"}
                       </span>
                       <span className="mt-1 text-xs text-secondary">
                         {r === "supplier" ? "Sell to government & corporates" : "Post RFQs & procure"}
@@ -976,7 +976,7 @@ export default function SignupPage() {
                 <div>
                   <label className="block text-sm font-medium text-secondary">Work email address <span className="font-semibold text-accent">*</span></label>
                   <input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} className={inputClass} />
-                  <p className="mt-2 text-xs leading-5 text-muted">Use your business email — it helps with verification.</p>
+                  <p className="mt-2 text-xs leading-5 text-muted">Use your business email � it helps with verification.</p>
                   <FieldError message={errors.email} />
                 </div>
                 {!isOauthSignup && (
@@ -1026,7 +1026,7 @@ export default function SignupPage() {
                   disabled={loading || passwordsDoNotMatch}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50"
                 >
-                  {loading ? "Creating account…" : "Continue?"}
+                  {loading ? "Creating account�" : "Continue?"}
                 </button>
 
                 <div className="grid gap-2 text-xs font-semibold text-secondary sm:grid-cols-3">
@@ -1060,12 +1060,12 @@ export default function SignupPage() {
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-secondary">Registered business name</label>
+                  <label className="block text-sm font-medium text-secondary">Registered business name <span className="text-rose-500">*</span></label>
                   <input type="text" placeholder="As registered with CIPC" value={form.businessName} onChange={(e) => updateField("businessName", e.target.value)} className={inputClass} />
                   <FieldError message={errors.businessName} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary">Company registration number</label>
+                  <label className="block text-sm font-medium text-secondary">Company registration number <span className="text-rose-500">*</span></label>
                   <input type="text" placeholder="e.g. 2019/123456/07" value={form.registrationNumber} onChange={(e) => updateField("registrationNumber", e.target.value)} className={inputClass} />
                   <FieldError message={errors.registrationNumber} />
                 </div>
@@ -1073,7 +1073,7 @@ export default function SignupPage() {
 
               <div className="mt-5 grid gap-5 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-secondary">Phone number</label>
+                  <label className="block text-sm font-medium text-secondary">Phone number <span className="text-rose-500">*</span></label>
                   <input
                     type="tel"
                     placeholder="+27821234567"
@@ -1086,7 +1086,7 @@ export default function SignupPage() {
                   <FieldError message={errors.phone} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary">Industry</label>
+                  <label className="block text-sm font-medium text-secondary">Industry <span className="text-rose-500">*</span></label>
                   <select value={form.industry} onChange={(e) => updateField("industry", e.target.value)} className={selectClass}>
                     <option value="">Select industry</option>
                     {industryOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
@@ -1096,7 +1096,7 @@ export default function SignupPage() {
               </div>
 
               <div className="mt-5">
-                <label className="block text-sm font-medium text-secondary">Province(s) you operate in</label>
+                <label className="block text-sm font-medium text-secondary">Province(s) you operate in <span className="text-rose-500">*</span></label>
                 <p className="mt-2 text-xs leading-5 text-muted">Select all provinces where you can fulfil contracts.</p>
                 <label className="mt-3 flex items-center gap-3 rounded-2xl border border-panel bg-surface px-4 py-3 text-sm font-semibold text-secondary">
                   <input
@@ -1126,10 +1126,10 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="button" onClick={handleStep2Save} disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Saving…" : "Continue?"}
+                  {loading ? "Saving�" : "Continue?"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
-                  ← Back
+                  ? Back
                 </button>
               </div>
             </section>
@@ -1153,7 +1153,7 @@ export default function SignupPage() {
                         <div key={item} className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-left">
                           <div className="flex items-start justify-between gap-3">
                             <p className="text-sm leading-6 text-amber-900">
-                              You haven&apos;t uploaded your {warning.documentName} — your SmartScore will be lower and verification may take longer. You can upload this later from your profile.
+                              You haven&apos;t uploaded your {warning.documentName} � your SmartScore will be lower and verification may take longer. You can upload this later from your profile.
                             </p>
                             <button
                               type="button"
@@ -1161,7 +1161,7 @@ export default function SignupPage() {
                               className="shrink-0 text-sm font-bold text-amber-900 transition hover:text-amber-700"
                               aria-label={`Dismiss ${warning.documentName} warning`}
                             >
-                              ×
+                              �
                             </button>
                           </div>
                           <div className="mt-3 flex flex-wrap gap-3">
@@ -1190,7 +1190,7 @@ export default function SignupPage() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-secondary">CSD Number</label>
+                  <label className="block text-sm font-medium text-secondary">CSD Number <span className="text-rose-500">*</span></label>
                   <input type="text" placeholder="MAAA-12345678" value={form.csdNumber} onChange={(e) => updateField("csdNumber", e.target.value)} className={inputClass} />
                   <p className="mt-2 text-xs leading-5 text-muted">Central Supplier Database</p>
                   <FieldError message={errors.csdNumber} />
@@ -1217,14 +1217,14 @@ export default function SignupPage() {
 
               <div className="mt-5 grid gap-5 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-secondary">Tax reference number</label>
+                  <label className="block text-sm font-medium text-secondary">Tax reference number <span className="text-rose-500">*</span></label>
                   <input ref={taxReferenceRef} type="text" placeholder="e.g. 1234567890" value={form.taxReference} onChange={(e) => updateField("taxReference", e.target.value)} className={inputClass} />
                   <FieldError message={errors.taxReference} />
                 </div>
               </div>
 
               <div className="mt-5">
-                <label className="block text-sm font-medium text-secondary">BBBEE level</label>
+                <label className="block text-sm font-medium text-secondary">BBBEE level <span className="text-rose-500">*</span></label>
                 <select ref={bbbeeLevelRef} value={form.bbeeLevel} onChange={(e) => updateField("bbeeLevel", e.target.value)} className={selectClass}>
                   <option value="">Select BBBEE level</option>
                   {bbeeLevels.map((level) => <option key={level} value={level}>{level}</option>)}
@@ -1251,10 +1251,10 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="button" onClick={() => void handleStep3Save()} disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Saving…" : "Continue?"}
+                  {loading ? "Saving�" : "Continue?"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
-                  ← Back
+                  ? Back
                 </button>
               </div>
             </section>
@@ -1273,12 +1273,12 @@ export default function SignupPage() {
                   { title: "Account", detail: form.email, editStep: 1 },
                   {
                     title: "Business details",
-                    detail: `${form.businessName} · ${form.industry} · ${displayProvinceList(form.provinces)}`,
+                    detail: `${form.businessName} � ${form.industry} � ${displayProvinceList(form.provinces)}`,
                     editStep: 2,
                   },
                   {
                     title: "Compliance",
-                    detail: `${form.csdNumber} · ${form.bbeeLevel}${form.vatNumber ? ` · VAT ${form.vatNumber}` : ""}`,
+                    detail: `${form.csdNumber} � ${form.bbeeLevel}${form.vatNumber ? ` � VAT ${form.vatNumber}` : ""}`,
                     editStep: 3,
                   },
                 ].map((row) => (
@@ -1317,10 +1317,10 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="submit" disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Submitting registration…" : "Submit registration"}
+                  {loading ? "Submitting registration�" : "Submit registration"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
-                  ← Back
+                  ? Back
                 </button>
               </div>
             </section>
@@ -1353,13 +1353,13 @@ export default function SignupPage() {
                   disabled={resending}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50"
                 >
-                  {resending ? "Resending…" : "Resend verification email"}
+                  {resending ? "Resending�" : "Resend verification email"}
                 </button>
                 <Link
                   href="/auth/login"
                   className="block text-center text-sm font-semibold text-accent transition hover:text-accent-strong"
                 >
-                  Verified in another tab? Continue →
+                  Verified in another tab? Continue ?
                 </Link>
               </div>
             </section>
@@ -1405,7 +1405,7 @@ export default function SignupPage() {
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-[#aaa] mt-1 mb-8">EN & ZU live · 9 more on the roadmap</p>
+        <p className="text-[10px] text-[#aaa] mt-1 mb-8">EN & ZU live � 9 more on the roadmap</p>
 
         {/* Feature bullets */}
         <div className="space-y-3 mb-8">
@@ -1434,3 +1434,4 @@ export default function SignupPage() {
     </div>
   )
 }
+

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState, type MouseEvent } from "react"
 import Link from "next/link"
@@ -395,7 +395,7 @@ export default function LoginPage() {
 
             <div>
               <label className="block text-sm font-medium text-secondary">
-                Email address <span className="font-semibold text-accent">*</span>
+                Email address <span className="text-rose-500">*</span>
               </label>
               <input
                 type="email"
@@ -407,8 +407,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-secondary">
-                Password <span className="font-semibold text-accent">*</span>
+              <label className="block text-sm font-medium text-secondary">Password <span className="text-rose-500">*</span>
               </label>
               <input
                 type="password"
@@ -523,3 +522,4 @@ export default function LoginPage() {
     </div>
   )
 }
+

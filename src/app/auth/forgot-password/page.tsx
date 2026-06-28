@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, type FormEvent, type ReactNode } from "react"
 import Link from "next/link"
@@ -169,7 +169,7 @@ export default function ForgotPasswordPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-secondary">
-              Email address
+              Email address <span className="text-rose-500">*</span>
             </label>
             <input
               id="email"
@@ -226,3 +226,4 @@ export default function ForgotPasswordPage() {
     </SplitAuthShell>
   )
 }
+

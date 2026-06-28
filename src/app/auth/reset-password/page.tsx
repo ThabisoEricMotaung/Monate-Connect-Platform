@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
@@ -104,7 +104,7 @@ function SplitAuthShell({ children }: { children: ReactNode }) {
     <div className="relative min-h-screen bg-[#f8f4ec] text-primary">
       <div className="relative z-10 px-8 py-6">
         <Link href="/" className="absolute left-6 top-1/2 -translate-y-1/2 text-sm font-medium text-[#1a3a2a] hover:text-[#c8a060] transition-colors">
-          ← Back to home
+          ? Back to home
         </Link>
         <div className="text-center">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#888]">Procurement Suite</p>
@@ -155,10 +155,10 @@ function PasswordStrengthMeter({ password }: { password: string }) {
         ))}
       </div>
       {metCount === 4 ? (
-        <p className="mt-2 text-xs font-semibold text-emerald-700">Strong password ✓</p>
+        <p className="mt-2 text-xs font-semibold text-emerald-700">Strong password ?</p>
       ) : (
         <p className="mt-2 text-xs leading-5 text-muted">
-          {unmetRules.map((rule) => rule.label).join(" · ")}
+          {unmetRules.map((rule) => rule.label).join(" � ")}
         </p>
       )}
     </div>
@@ -298,7 +298,7 @@ export default function ResetPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-secondary">New password</label>
+            <label className="block text-sm font-medium text-secondary">New password <span className="text-rose-500">*</span></label>
             <input
               type="password"
               placeholder="Minimum 8 characters"
@@ -311,7 +311,7 @@ export default function ResetPasswordPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-secondary">Confirm password</label>
+            <label className="block text-sm font-medium text-secondary">Confirm password <span className="text-rose-500">*</span></label>
             <input
               type="password"
               placeholder="Repeat new password"
@@ -352,3 +352,4 @@ export default function ResetPasswordPage() {
     </SplitAuthShell>
   )
 }
+
