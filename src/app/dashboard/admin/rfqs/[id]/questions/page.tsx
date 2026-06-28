@@ -116,15 +116,11 @@ export default function AdminRFQQuestionsPage() {
       }))
       if (updatedQuestion.supplier_id) {
         await createNotification({
-          recipientId: updatedQuestion.supplier_id,
+          userId: updatedQuestion.supplier_id,
           type: "Clarification Response",
           title: "Clarification response published",
           message: `A buyer response was published for RFQ-${updatedQuestion.rfq_id}.`,
           link: `/dashboard/rfqs/${updatedQuestion.rfq_id}#rfq-clarifications`,
-          metadata: {
-            question_id: updatedQuestion.id,
-            rfq_id: updatedQuestion.rfq_id,
-          },
         })
       }
       setSuccessMessage("Question answered successfully.")
@@ -280,3 +276,5 @@ export default function AdminRFQQuestionsPage() {
     </div>
   )
 }
+
+

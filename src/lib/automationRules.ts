@@ -229,7 +229,7 @@ async function createSupplierNotification({
   if (!supplierId) return
 
   await createNotification({
-    recipientId: supplierId,
+    userId: supplierId,
     type,
     title,
     message,
@@ -634,3 +634,4 @@ export async function runContractExpiryCheck(): Promise<AutomationRunResult> {
 
   return { processed: contracts.length, errors }
 }
+

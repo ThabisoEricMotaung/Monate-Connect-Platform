@@ -328,7 +328,7 @@ export async function createContract(
 
   if (purchaseOrder.supplier_id) {
     await createNotification({
-      recipientId: purchaseOrder.supplier_id,
+      userId: purchaseOrder.supplier_id,
       type: "Purchase Order Issued",
       title: "Contract created",
       message: `${data.contract_number} has been created for ${purchaseOrder.title || "your purchase order"}.`,
@@ -640,3 +640,4 @@ export async function terminateContract({
 
   return data as Contract
 }
+

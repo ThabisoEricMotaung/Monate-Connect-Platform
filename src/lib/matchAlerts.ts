@@ -87,7 +87,7 @@ export async function createMatchAlertDrafts(
     })
 
     const notification = await createNotification({
-      recipientId: input.supplier.id,
+      userId: input.supplier.id,
       type: "RFQ Match",
       title: "New RFQ match",
       message,
@@ -147,3 +147,4 @@ export async function createMatchAlertDrafts(
 
   return result
 }
+
