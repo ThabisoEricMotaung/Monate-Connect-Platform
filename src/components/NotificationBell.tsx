@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -60,7 +60,7 @@ export default function NotificationBell() {
             event: "*",
             schema: "public",
             table: "notifications",
-            filter: `recipient_id=eq.${user.id}`,
+            filter: `user_id=eq.${user.id}`,
           },
           async () => {
             setNotifications(await getNotifications(20))
@@ -110,3 +110,4 @@ export default function NotificationBell() {
     </button>
   )
 }
+
