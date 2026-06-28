@@ -377,6 +377,14 @@ export default function SupplierDirectory({ suppliers }: { suppliers: PublicSupp
           <h1 className="mt-3 font-display text-4xl font-semibold leading-tight text-[#f8f4ec] md:text-6xl">
             Verified Supplier Directory
           </h1>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/auth/signup" className="rounded-md bg-[#c8a060] px-5 py-2.5 text-sm font-semibold text-[#1a3a2a] transition hover:bg-[#b8902e]">
+              Register as a supplier
+            </Link>
+            <Link href="/contact" className="rounded-md border border-[#c8a060]/50 px-5 py-2.5 text-sm font-semibold text-[#f8f4ec] transition hover:border-[#c8a060] hover:text-[#c8a060]">
+              Get in touch
+            </Link>
+          </div>
           <div className="mt-8 max-w-4xl">
             <label htmlFor="supplier-search" className="sr-only">Search suppliers</label>
             <input

@@ -568,6 +568,9 @@ function CTABanner() {
           <Link href="/auth/login" className="text-sm font-medium text-accent hover:underline">
             Already registered? Sign in
           </Link>
+          <Link href="/contact" className="text-sm font-medium text-secondary hover:underline">
+            Get in touch →
+          </Link>
         </div>
       </div>
     </div>
@@ -912,6 +915,12 @@ export default function OpportunitiesPage() {
                   className="rounded-md border border-panel bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-secondary transition hover:text-accent"
                 >
                   Log in
+                </Link>
+                <Link
+                  href="/contact"
+                  className="rounded-md border border-panel bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-secondary transition hover:text-accent"
+                >
+                  Get in touch
                 </Link>
               </div>
             </div>
