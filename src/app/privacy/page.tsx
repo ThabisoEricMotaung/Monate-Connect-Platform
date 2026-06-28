@@ -41,7 +41,7 @@ const privacySections = [
   {
     title: "How to contact us",
     body:
-      "For privacy questions, data access requests, or POPIA-related queries, contact us at hello@aiformprocure.co.za.",
+      "For privacy questions, data access requests, or POPIA-related queries, contact us at aiformstudio@gmail.com.",
   },
 ]
 
