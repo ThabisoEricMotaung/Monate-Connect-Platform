@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Link from "next/link"
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -320,9 +320,9 @@ function buildThreads({
 function buildPlatformThreads(notifications: Notification[], archivedIds: Set<string>): Thread[] {
   return notifications.slice(0, 8).map((notification) => {
     const id = `platform:${notification.id}`
-    const metadata = notification.metadata ?? {}
-    const metadataRfqId = Number(metadata.rfq_id)
-    const rfqId = Number.isSafeInteger(metadataRfqId) ? metadataRfqId : null
+    const linkParts = notification.link?.split("/") ?? []
+    const parsedRfqId = Number(linkParts.at(-1))
+    const rfqId = Number.isSafeInteger(parsedRfqId) && parsedRfqId > 0 ? parsedRfqId : null
 
     return {
       id,
@@ -349,7 +349,7 @@ function buildPlatformThreads(notifications: Notification[], archivedIds: Set<st
         {
           id: -notification.id,
           sender_id: "platform",
-          receiver_id: notification.recipient_id,
+          receiver_id: notification.user_id,
           subject: notification.title,
           message: notification.message,
           rfq_id: rfqId,
@@ -1331,3 +1331,4 @@ function NotificationsPanel({
     </>
   )
 }
+

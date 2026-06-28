@@ -31,6 +31,7 @@ export type CreateNotificationInput = {
   title: string
   message: string
   link?: string | null
+  metadata?: Record<string, unknown>
 }
 
 export async function createNotification({
