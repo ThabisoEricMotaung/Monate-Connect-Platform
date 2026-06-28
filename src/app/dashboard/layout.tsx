@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Link from "next/link"
 import {
@@ -398,12 +398,7 @@ export default function DashboardLayout({
           setPhoneGraceExpiresAt(null)
         } else if (!isOAuthUser && !phoneVerifiedAt) {
           const profileCreatedAt = createdAt ? new Date(createdAt) : new Date()
-          const graceExpiresAt = new Date(profileCreatedAt.getTime() + 24 * 60 * 60 * 1000)
-
-          if (Date.now() >= graceExpiresAt.getTime() && !phoneSkipped) {
-            router.replace("/auth/verify-phone")
-            return
-          }
+          const graceExpiresAt = new Date(profileCreatedAt.getTime() + 30 * 24 * 60 * 60 * 1000)
 
           setPhoneGraceExpiresAt(graceExpiresAt.toISOString())
         } else {
