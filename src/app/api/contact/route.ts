@@ -122,9 +122,38 @@ We've received your enquiry and will be in touch within 2 business days.
 AiForm Procure Team`,
 }
 
+const contactRateLimit = new Map<string, number>()
+
 export async function POST(request: Request) {
-  const body = await request.json()
-  const { name, email, request_type, organisation } = body
+  // Rate limiting — one submission per IP per 20 minutes
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+  const now = Date.now()
+  const lastSubmit = contactRateLimit.get(ip) ?? 0
+  if (now - lastSubmit < 20 * 60 * 1000) {
+    return NextResponse.json({ ok: false, error: "Too many requests." }, { status: 429 })
+  }
+  contactRateLimit.set(ip, now)
+
+  // Input validation
+  let body: { name?: unknown; email?: unknown; request_type?: unknown; organisation?: unknown }
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ ok: false, error: "Invalid request body." }, { status: 400 })
+  }
+
+  const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : ""
+  const email = typeof body.email === "string" ? body.email.trim().toLowerCase().slice(0, 200) : ""
+  const request_type = typeof body.request_type === "string" ? body.request_type.trim().slice(0, 100) : ""
+  const organisation = typeof body.organisation === "string" ? body.organisation.trim().slice(0, 200) : ""
+
+  if (!name || !email || !request_type) {
+    return NextResponse.json({ ok: false, error: "Missing required fields." }, { status: 400 })
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ ok: false, error: "Invalid email address." }, { status: 400 })
+  }
 
   const template = AUTO_REPLY_TEMPLATES[request_type] ?? DEFAULT_TEMPLATE
 
@@ -133,23 +162,14 @@ export async function POST(request: Request) {
       from: "AiForm Procure <noreply@aiformprocure.co.za>",
       to: email,
       subject: template.subject,
-      text: `Hi ${name},
-
-${template.body}`,
+      text: `Hi ${name},\n\n${template.body}`,
     })
 
     await resend.emails.send({
       from: "AiForm Procure <noreply@aiformprocure.co.za>",
       to: "aiformstudio@gmail.com",
       subject: `New pilot request: ${request_type} - ${organisation || name}`,
-      text: `New contact form submission:
-
-Name: ${name}
-Organisation: ${organisation || "-"}
-Email: ${email}
-Request type: ${request_type}
-
-Full details are in the pilot_requests table in Supabase.`,
+      text: `New contact form submission:\n\nName: ${name}\nOrganisation: ${organisation || "-"}\nEmail: ${email}\nRequest type: ${request_type}\n\nFull details are in the pilot_requests table in Supabase.`,
     })
 
     return NextResponse.json({ ok: true })

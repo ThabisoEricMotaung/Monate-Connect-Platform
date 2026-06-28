@@ -261,7 +261,7 @@ export default function ContactPage() {
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-[0.63rem] font-bold uppercase tracking-[0.18em] text-muted">Name</span>
+              <span className="mb-1.5 block text-[0.63rem] font-bold uppercase tracking-[0.18em] text-muted">Name <span className="text-rose-500">*</span></span>
               <input value={form.name} onChange={(event) => updateField("name", event.target.value)} className={inputClass} />
             </label>
             <label className="block">
@@ -269,7 +269,7 @@ export default function ContactPage() {
               <input value={form.organisation} onChange={(event) => updateField("organisation", event.target.value)} className={inputClass} />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[0.63rem] font-bold uppercase tracking-[0.18em] text-muted">Email</span>
+              <span className="mb-1.5 block text-[0.63rem] font-bold uppercase tracking-[0.18em] text-muted">Email <span className="text-rose-500">*</span></span>
               <input type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} className={inputClass} />
             </label>
             <label className="block">
@@ -284,7 +284,7 @@ export default function ContactPage() {
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[0.63rem] font-bold uppercase tracking-[0.18em] text-muted">Request Type</span>
+              <span className="mb-1.5 block text-[0.63rem] font-bold uppercase tracking-[0.18em] text-muted">Request Type <span className="text-rose-500">*</span></span>
               <select value={form.request_type} onChange={(event) => updateField("request_type", event.target.value)} className={inputClass}>
                 <option value="">Select request type</option>
                 {REQUEST_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
@@ -349,3 +349,4 @@ export default function ContactPage() {
     </>
   )
 }
+

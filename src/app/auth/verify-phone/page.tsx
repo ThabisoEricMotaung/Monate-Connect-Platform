@@ -269,7 +269,7 @@ export default function VerifyPhonePage() {
             <form onSubmit={handleVerifyCode} className="space-y-5">
               <div>
                 <label className="block text-sm font-semibold text-[#1a3a2a]" htmlFor="phone">
-                  Mobile number
+                  Mobile number <span className="text-rose-500">*</span>
                 </label>
                 <input
                   id="phone"
@@ -361,3 +361,4 @@ export default function VerifyPhonePage() {
     </main>
   )
 }
+
