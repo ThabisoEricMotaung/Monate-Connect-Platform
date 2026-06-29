@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { label: "Suppliers", href: "/suppliers" },
   { label: "Trust Centre", href: "/trust" },
   { label: "Pricing", href: "/pricing" },
+  { label: "Contact", href: "/contact" },
 ]
 
 function isActiveLink(pathname: string, href: string) {
