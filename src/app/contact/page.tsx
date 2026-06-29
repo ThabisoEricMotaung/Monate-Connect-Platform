@@ -163,7 +163,7 @@ export default function ContactPage() {
   return (
     <>
       <PublicHeader />
-      <main className="min-h-screen bg-page text-primary">
+      <main className="min-h-screen bg-[#f8f4ec] text-primary">
         <section className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-2 lg:py-20">
 
           {/* Left panel */}
@@ -192,9 +192,9 @@ export default function ContactPage() {
               </div>
 
               <div className="mt-10 flex flex-wrap gap-3">
-                <Link href="/auth/signup" className="masthead__btn-primary">Register as Supplier</Link>
-                <Link href="/opportunities" className="masthead__btn-secondary">View Opportunities</Link>
-                <Link href="/suppliers" className="masthead__btn-secondary">Browse Suppliers</Link>
+                <Link href="/auth/signup" className="inline-flex items-center gap-2 rounded-md border border-[#1a3a2a] bg-[#1a3a2a] px-4 py-2.5 text-sm font-semibold text-[#f8f4ec] transition hover:bg-[#123020]">Register as Supplier</Link>
+                <Link href="/opportunities" className="inline-flex items-center gap-2 rounded-md border border-[#1a3a2a] px-4 py-2.5 text-sm font-semibold text-[#1a3a2a] transition hover:bg-[#1a3a2a]/5">View Opportunities</Link>
+                <Link href="/suppliers" className="inline-flex items-center gap-2 rounded-md border border-[#1a3a2a] px-4 py-2.5 text-sm font-semibold text-[#1a3a2a] transition hover:bg-[#1a3a2a]/5">Browse Suppliers</Link>
               </div>
             </div>
 
@@ -211,7 +211,7 @@ export default function ContactPage() {
           </div>
 
           {/* Right panel — form */}
-          <form onSubmit={handleSubmit} className="rounded-md border border-panel bg-card p-6 shadow-panel">
+          <form onSubmit={handleSubmit} className="rounded-md border border-panel bg-white p-6 shadow-xl">
             <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-accent">Pilot Request Form</p>
             <h2 className="mt-3 text-2xl font-semibold text-heading">Tell us what you want to explore</h2>
 
