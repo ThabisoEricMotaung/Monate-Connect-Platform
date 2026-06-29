@@ -315,6 +315,16 @@ function FilterCheckbox({
   )
 }
 
+function FilterSectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-2 border-b border-panel pb-2">
+      <p className="text-[0.65rem] font-bold uppercase tracking-[0.24em] text-heading">
+        {children}
+      </p>
+    </div>
+  )
+}
+
 // --- Filter sidebar body ------------------------------------------------------
 
 function FilterBody({
@@ -390,9 +400,7 @@ function FilterBody({
       {/* Industry */}
       {industries.length > 0 && (
         <div>
-          <p className="mb-2 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-muted">
-            Industry
-          </p>
+          <FilterSectionTitle>Industry</FilterSectionTitle>
           <div className="space-y-0.5">
             {visibleIndustries.map((ind) => (
               <FilterCheckbox
@@ -417,9 +425,7 @@ function FilterBody({
 
       {/* Province */}
       <div>
-        <p className="mb-2 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-muted">
-          Province
-        </p>
+        <FilterSectionTitle>Province</FilterSectionTitle>
         <div className="space-y-0.5">
           {visibleProvinces.map((p) => (
             <FilterCheckbox
@@ -443,9 +449,7 @@ function FilterBody({
 
       {/* Closing date */}
       <div>
-        <p className="mb-2 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-muted">
-          Closing date
-        </p>
+        <FilterSectionTitle>Closing date</FilterSectionTitle>
         <div className="space-y-0.5">
           {DEADLINE_OPTIONS.map(({ key, label }) => (
             <FilterCheckbox
@@ -463,9 +467,7 @@ function FilterBody({
 
       {/* BBBEE requirement */}
       <div>
-        <p className="mb-2 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-muted">
-          BBBEE requirement
-        </p>
+        <FilterSectionTitle>BBBEE requirement</FilterSectionTitle>
         <div className="space-y-0.5">
           {BBBEE_OPTIONS.map(({ key, label }) => (
             <FilterCheckbox
@@ -547,7 +549,7 @@ function PreviewModal({ rfq, onClose }: { rfq: PublicRFQ | null; onClose: () => 
 
 function CTABanner() {
   return (
-    <div className="rounded-xl border border-accent/20 bg-gradient-to-r from-accent/10 to-accent/5 p-6">
+    <div className="rounded-md border border-accent/20 bg-accent/10 p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-accent">
@@ -568,8 +570,8 @@ function CTABanner() {
           <Link href="/auth/login" className="text-sm font-medium text-accent hover:underline">
             Already registered? Sign in
           </Link>
-          <Link href="/contact" className="text-sm font-medium text-secondary hover:underline">
-            Get in touch →
+          <Link href="/auth/login?role=buyer" className="text-sm font-medium text-secondary hover:underline">
+            I&apos;m a Buyer
           </Link>
         </div>
       </div>
@@ -606,33 +608,36 @@ function RFQCard({
   return (
     <article
       className={
-        "rounded-md border border-panel bg-card p-5 shadow-panel transition hover:shadow-md " +
+        "rounded-md border border-panel bg-card p-5 shadow-panel transition hover:border-accent/30 hover:shadow-md " +
         borderAccent
       }
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          {(isNew || isClosingSoon) && (
-            <div className="mb-1.5 flex flex-wrap items-center gap-2">
-              {isNew && (
-                <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-sky-700">
-                  New
-                </span>
-              )}
-              {isClosingSoon && (
-                <span className="rounded-full border border-warning bg-warning-soft px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-warning">
-                  Closing soon
-                </span>
-              )}
-            </div>
-          )}
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-success/30 bg-success-soft px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-success">
+              Verified buyer
+            </span>
+            {isNew && (
+              <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-sky-700">
+                New
+              </span>
+            )}
+            {isClosingSoon && (
+              <span className="rounded-full border border-warning bg-warning-soft px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-warning">
+                Closing soon
+              </span>
+            )}
+          </div>
           <h3 className="font-bold text-heading line-clamp-2">
             {rfq.title ?? "Untitled opportunity"}
           </h3>
           <p className="mt-0.5 text-sm text-secondary">{getBuyerName(rfq)}</p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-sm font-bold text-heading">{formatDaysLeft(daysLeft)}</p>
+          <p className="rounded-full border border-panel bg-surface px-3 py-1 text-xs font-bold text-heading">
+            {formatDaysLeft(daysLeft)}
+          </p>
           <p className="mt-0.5 text-xs text-muted">{formatValueRange(rfq)}</p>
         </div>
       </div>
@@ -917,10 +922,10 @@ export default function OpportunitiesPage() {
                   Log in
                 </Link>
                 <Link
-                  href="/contact"
-                  className="rounded-md border border-panel bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-secondary transition hover:text-accent"
+                  href="/auth/login?role=buyer"
+                  className="rounded-md border border-[#1a3a2a] bg-[#1a3a2a] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#c8a060] transition hover:bg-[#123020]"
                 >
-                  Get in touch
+                  I&apos;m a Buyer
                 </Link>
               </div>
             </div>
@@ -1023,6 +1028,54 @@ export default function OpportunitiesPage() {
             </div>
           </div>
         </div>
+
+        {!isAuth && !loading && (
+          <section className="border-t border-panel bg-[#1a3a2a] px-6 py-10">
+            <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#5DCAA5]/20 text-[#5DCAA5]">
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.8}
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0z"
+                    />
+                  </svg>
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-[#f8f4ec]">
+                    Respond to tenders and win more contracts
+                  </p>
+                  <p className="mt-1 text-xs text-[#f8f4ec]/60">
+                    Join thousands of verified South African suppliers, submit quotes, get matched
+                    to opportunities, and grow your business.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/auth/signup"
+                  className="rounded-md bg-[#c8a060] px-5 py-2.5 text-sm font-semibold text-[#1a3a2a] transition hover:bg-[#b8902e]"
+                >
+                  Register as Supplier
+                </Link>
+                <Link
+                  href="/auth/login?role=buyer"
+                  className="rounded-md border border-[#f8f4ec]/20 px-5 py-2.5 text-sm font-semibold text-[#f8f4ec] transition hover:border-[#f8f4ec]/40"
+                >
+                  I&apos;m a Buyer
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Mobile filter drawer */}
