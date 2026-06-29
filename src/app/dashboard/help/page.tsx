@@ -4,6 +4,7 @@ import {
   IconAlertCircle,
   IconArticle,
   IconBolt,
+  IconBook,
   IconBuildingStore,
   IconChartBar,
   IconChevronDown,
