@@ -115,7 +115,7 @@ export default function HeroSection() {
       <div className="hero-content">
         {/* Left — text */}
         <div>
-          <p style={{ display: "inline-block", fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#c8a060", margin: "0 0 14px", fontWeight: 800, padding: "5px 16px", border: "0.5px solid rgba(200,160,96,0.6)", borderRadius: "30px", background: "rgba(200,160,96,0.06)" }}>
+          <p style={{ display: "inline-block", fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#1a3a2a", margin: "0 0 14px", fontWeight: 800, padding: "5px 16px", border: "1.5px solid #c8a060", borderRadius: "30px", background: "rgba(200,160,96,0.15)", boxShadow: "none" }}>
             South Africa&#39;s Verified Procurement Network
           </p>
           <h1 className="hero-h1 font-display">Where SA Suppliers</h1>
