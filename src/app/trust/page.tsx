@@ -287,7 +287,7 @@ export default function TrustCentrePage() {
           <div className="mx-auto max-w-7xl">
             <div className="rounded-md border border-panel bg-[#1a3a2a] p-10 text-center shadow-panel">
               <h2 className="font-display text-3xl font-semibold text-[#f8f4ec]">
-                Ready to join South Africa's verified procurement network?
+                Ready to join South Africa&apos;s verified procurement network?
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-[#f8f4ec]/70">
                 Register as a supplier or request a buyer account. Verification takes less than 48 hours.
@@ -313,8 +313,8 @@ export default function TrustCentrePage() {
               <h2 className="mt-3 font-display text-3xl font-semibold text-heading">Who builds AiForm Procure</h2>
               <div className="mt-5 space-y-5 text-sm leading-7 text-secondary">
                 <p>AiForm Procure is designed and built by AiForm Studio, a South African product studio based in Pretoria.</p>
-                <p>The AiForm mark has an unusual origin. While working at the University of Pretoria, our founder noticed a small tan moth resting on a wall — Hypena proboscidalis, commonly called the A-Moth, named for the distinctive 'A' shape its wings form at rest. In that moment the studio's identity was already there: the A of AiForm, the natural geometry of the moth, and the faceted form of something engineered. Noticed, not invented.</p>
-                <p>That philosophy carries into everything we build. AiForm Procure wasn't invented from nothing either — it was noticed: thousands of capable South African suppliers and serious buyers, separated by paperwork, spreadsheets, and missed connections. We build the structure that lets them find each other.</p>
+                <p>The AiForm mark has an unusual origin. While working at the University of Pretoria, our founder noticed a small tan moth resting on a wall — Hypena proboscidalis, commonly called the A-Moth, named for the distinctive &apos;A&apos; shape its wings form at rest. In that moment the studio&apos;s identity was already there: the A of AiForm, the natural geometry of the moth, and the faceted form of something engineered. Noticed, not invented.</p>
+                <p>That philosophy carries into everything we build. AiForm Procure wasn&apos;t invented from nothing either — it was noticed: thousands of capable South African suppliers and serious buyers, separated by paperwork, spreadsheets, and missed connections. We build the structure that lets them find each other.</p>
               </div>
               <p className="mt-6 text-sm italic text-muted">Shaping intelligence. Designing impact.</p>
             </div>
@@ -327,3 +327,4 @@ export default function TrustCentrePage() {
     </>
   )
 }
+
