@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import Link from "next/link"
@@ -170,7 +170,7 @@ function PasswordStrengthMeter({ password }: { password: string }) {
         <p className="mt-2 text-xs font-semibold text-emerald-700">Strong password ?</p>
       ) : (
         <p className="mt-2 text-xs leading-5 text-muted">
-          {unmetRules.map((rule) => rule.label).join(" ï¿½ ")}
+          {unmetRules.map((rule) => rule.label).join(" Ã¯Â¿Â½ ")}
         </p>
       )}
     </div>
@@ -492,7 +492,7 @@ export default function SignupPage() {
 
   const uploadCsdDocumentIfNeeded = async () => {
     if (!form.csdDocumentFile || form.csdDocumentPath) return form.csdDocumentPath || null
-    if (!supabase || !userId) throw new Error("Session expired ï¿½ please reload and start over.")
+    if (!supabase || !userId) throw new Error("Session expired Ã¯Â¿Â½ please reload and start over.")
 
     const path = `${userId}/csd-certificate/${Date.now()}-${cleanFileName(form.csdDocumentFile.name)}`
     const { error } = await supabase.storage
@@ -610,7 +610,7 @@ export default function SignupPage() {
     }
 
     if (!data.user) {
-      setErrors({ submit: "Account creation failed ï¿½ no user record was returned." })
+      setErrors({ submit: "Account creation failed Ã¯Â¿Â½ no user record was returned." })
       setLoading(false)
       return
     }
@@ -722,7 +722,7 @@ export default function SignupPage() {
     setErrors({})
 
     if (!supabase || !userId) {
-      setErrors({ submit: "Session expired ï¿½ please reload and start over." })
+      setErrors({ submit: "Session expired Ã¯Â¿Â½ please reload and start over." })
       setLoading(false)
       return
     }
@@ -903,7 +903,7 @@ export default function SignupPage() {
               {showOauthRegistrationNotice && (
                 <div className="mb-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4">
                   <p className="text-sm font-semibold text-emerald-800">
-                    You signed in with Google/Microsoft ï¿½ please complete your profile to continue.
+                    You signed in with Google/Microsoft Ã¯Â¿Â½ please complete your profile to continue.
                   </p>
                 </div>
               )}
@@ -957,7 +957,7 @@ export default function SignupPage() {
                       }`}
                     >
                       <span className={`text-sm font-bold ${form.role === r ? "text-accent" : "text-primary"}`}>
-                        {r === "supplier" ? "Iï¿½m a Supplier" : "Iï¿½m a Buyer"}
+                        {r === "supplier" ? "IÃ¯Â¿Â½m a Supplier" : "IÃ¯Â¿Â½m a Buyer"}
                       </span>
                       <span className="mt-1 text-xs text-secondary">
                         {r === "supplier" ? "Sell to government & corporates" : "Post RFQs & procure"}
@@ -976,7 +976,7 @@ export default function SignupPage() {
                 <div>
                   <label className="block text-sm font-medium text-secondary">Work email address <span className="font-semibold text-accent">*</span></label>
                   <input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} className={inputClass} />
-                  <p className="mt-2 text-xs leading-5 text-muted">Use your business email ï¿½ it helps with verification.</p>
+                  <p className="mt-2 text-xs leading-5 text-muted">Use your business email Ã¯Â¿Â½ it helps with verification.</p>
                   <FieldError message={errors.email} />
                 </div>
                 {!isOauthSignup && (
@@ -1026,7 +1026,7 @@ export default function SignupPage() {
                   disabled={loading || passwordsDoNotMatch}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50"
                 >
-                  {loading ? "Creating accountï¿½" : "Continue?"}
+                  {loading ? "Creating accountÃ¯Â¿Â½" : "Continue?"}
                 </button>
 
                 <div className="grid gap-2 text-xs font-semibold text-secondary sm:grid-cols-3">
@@ -1126,7 +1126,7 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="button" onClick={handleStep2Save} disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Savingï¿½" : "Continue?"}
+                  {loading ? "SavingÃ¯Â¿Â½" : "Continue?"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
                   ? Back
@@ -1153,7 +1153,7 @@ export default function SignupPage() {
                         <div key={item} className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-left">
                           <div className="flex items-start justify-between gap-3">
                             <p className="text-sm leading-6 text-amber-900">
-                              You haven&apos;t uploaded your {warning.documentName} ï¿½ your SmartScore will be lower and verification may take longer. You can upload this later from your profile.
+                              You haven&apos;t uploaded your {warning.documentName} Ã¯Â¿Â½ your SmartScore will be lower and verification may take longer. You can upload this later from your profile.
                             </p>
                             <button
                               type="button"
@@ -1161,7 +1161,7 @@ export default function SignupPage() {
                               className="shrink-0 text-sm font-bold text-amber-900 transition hover:text-amber-700"
                               aria-label={`Dismiss ${warning.documentName} warning`}
                             >
-                              ï¿½
+                              Ã¯Â¿Â½
                             </button>
                           </div>
                           <div className="mt-3 flex flex-wrap gap-3">
@@ -1251,7 +1251,7 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="button" onClick={() => void handleStep3Save()} disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Savingï¿½" : "Continue?"}
+                  {loading ? "SavingÃ¯Â¿Â½" : "Continue?"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
                   ? Back
@@ -1273,12 +1273,12 @@ export default function SignupPage() {
                   { title: "Account", detail: form.email, editStep: 1 },
                   {
                     title: "Business details",
-                    detail: `${form.businessName} ï¿½ ${form.industry} ï¿½ ${displayProvinceList(form.provinces)}`,
+                    detail: `${form.businessName} Ã¯Â¿Â½ ${form.industry} Ã¯Â¿Â½ ${displayProvinceList(form.provinces)}`,
                     editStep: 2,
                   },
                   {
                     title: "Compliance",
-                    detail: `${form.csdNumber} ï¿½ ${form.bbeeLevel}${form.vatNumber ? ` ï¿½ VAT ${form.vatNumber}` : ""}`,
+                    detail: `${form.csdNumber} Ã¯Â¿Â½ ${form.bbeeLevel}${form.vatNumber ? ` Ã¯Â¿Â½ VAT ${form.vatNumber}` : ""}`,
                     editStep: 3,
                   },
                 ].map((row) => (
@@ -1317,7 +1317,7 @@ export default function SignupPage() {
               <div className="mt-7 space-y-3">
                 <button type="submit" disabled={loading}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
-                  {loading ? "Submitting registrationï¿½" : "Submit registration"}
+                  {loading ? "Submitting registrationÃ¯Â¿Â½" : "Submit registration"}
                 </button>
                 <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
                   ? Back
@@ -1353,7 +1353,7 @@ export default function SignupPage() {
                   disabled={resending}
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50"
                 >
-                  {resending ? "Resendingï¿½" : "Resend verification email"}
+                  {resending ? "ResendingÃ¯Â¿Â½" : "Resend verification email"}
                 </button>
                 <Link
                   href="/auth/login"
@@ -1405,7 +1405,7 @@ export default function SignupPage() {
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-[#aaa] mt-1 mb-8">11 SA languages · UI & help guide translated</p>
+        <p className="text-[10px] text-[#aaa] mt-1 mb-8">11 SA languages Â· UI & help guide translated</p>
 
         {/* Feature bullets */}
         <div className="space-y-3 mb-8">
@@ -1427,7 +1427,7 @@ export default function SignupPage() {
           <p className="text-xs text-[#888888] italic leading-relaxed mb-2">
             &quot;Built because South African suppliers were losing procurement opportunities not because of poor capability, but because of compliance gaps and lack of visibility.&quot;
           </p>
-          <p className="text-[10px] text-[#c8a060] font-semibold">Thabiso Motaung - Founder, AiForm Studio</p>
+          <p className="text-[10px] text-[#c8a060] font-semibold">Founder, AiForm Studio</p>
         </div>
       </div>
       </div>
