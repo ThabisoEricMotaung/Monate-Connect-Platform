@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
@@ -18,7 +18,7 @@ import ComplianceBanner from "@/components/compliance/ComplianceBanner"
 import { checkApprovedOverride } from "@/lib/procurementOverrides"
 import { checkAndLogApprovalRequirement } from "@/lib/approvalMatrix"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type QuoteStatus =
   | "Pending"
@@ -61,16 +61,16 @@ type PurchaseOrder = {
 }
 
 type EvaluationDraft = {
-  price_score: number       // 0–20
-  compliance_score: number  // 0–20
-  delivery_score: number    // 0–20
-  experience_score: number  // 0–20
-  locality_score: number    // 0–20
+  price_score: number       // 0â€“20
+  compliance_score: number  // 0â€“20
+  delivery_score: number    // 0â€“20
+  experience_score: number  // 0â€“20
+  locality_score: number    // 0â€“20
   evaluation_notes: string
   db_id?: number
 }
 
-// ─── Evaluation criteria config ───────────────────────────────────────────────
+// â”€â”€â”€ Evaluation criteria config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type CriterionField = keyof Omit<EvaluationDraft, "evaluation_notes" | "db_id">
 
@@ -87,7 +87,7 @@ const CRITERIA: Array<{
   {
     field: "compliance_score",
     label: "Compliance & Documentation",
-    hint: "CSD registration, B-BBEE, tax clearance, CIPC — complete and valid",
+    hint: "CSD registration, B-BBEE, tax clearance, CIPC â€” complete and valid",
   },
   {
     field: "delivery_score",
@@ -106,7 +106,7 @@ const CRITERIA: Array<{
   },
 ]
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const REVIEW_STATUSES: QuoteStatus[] = ["Under Review", "Shortlisted", "Rejected"]
 
@@ -125,7 +125,7 @@ const statusStyles: Record<string, string> = {
 const filterClass =
   "w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition focus:border-accent focus:ring-1 focus:ring-accent/30"
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function statusBadgeClass(status: string | null): string {
   return statusStyles[status || ""] ?? "border-panel bg-panel text-secondary"
@@ -189,7 +189,7 @@ function rankBadgeClass(rank: number): string {
   return "border-panel bg-surface text-muted"
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ScoreRing({ score, size = 72 }: { score: number; size?: number }) {
   const r = size * 0.38
@@ -296,7 +296,7 @@ function CriterionSlider({
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function AdminRFQQuotesPage() {
   const params = useParams<{ id: string }>()
@@ -324,7 +324,7 @@ export default function AdminRFQQuotesPage() {
   const [showEvalMatrix, setShowEvalMatrix] = useState(false)
   const [recommendedId, setRecommendedId] = useState<number | null>(null)
 
-  // ─── Load ──────────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Load â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   useEffect(() => {
     async function loadComparisonData() {
@@ -353,10 +353,16 @@ export default function AdminRFQQuotesPage() {
         .from("rfqs")
         .select("id, title, province, category, budget, deadline, status")
         .eq("id", rfqId)
-        .single()
+        .maybeSingle()
 
       if (rfqError) {
         setErrorMessage(rfqError.message)
+        setLoading(false)
+        return
+      }
+
+      if (!rfqData) {
+        setErrorMessage("RFQ not found or access denied.")
         setLoading(false)
         return
       }
@@ -460,7 +466,7 @@ export default function AdminRFQQuotesPage() {
     loadComparisonData()
   }, [rfqId, router])
 
-  // ─── Derived ───────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Derived â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const sortedQuotes = useMemo(() => {
     return [...quotes].sort((a, b) => {
@@ -526,7 +532,7 @@ export default function AdminRFQQuotesPage() {
     return checkRFQCompliance(rfq)
   }, [rfq])
 
-  // ─── Handlers: existing quote workflow ─────────────────────────────────────
+  // â”€â”€â”€ Handlers: existing quote workflow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async function updateQuoteStatus(quoteId: number, status: QuoteStatus) {
     if (!supabase) { setErrorMessage("Supabase environment variables are not configured."); return }
@@ -568,7 +574,7 @@ export default function AdminRFQQuotesPage() {
   async function awardQuote(selectedQuoteId: number) {
     if (!supabase) { setErrorMessage("Supabase environment variables are not configured."); return }
     if (!rfq) { setErrorMessage("RFQ details are not available."); return }
-    // ── Workflow rule evaluation before award ───────────────────────────────
+    // â”€â”€ Workflow rule evaluation before award â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const quoteToAward = quotes.find((q) => q.id === selectedQuoteId)
     if (quoteToAward) {
       const ruleResult = await evaluateWorkflowRules("quote", {
@@ -686,7 +692,7 @@ export default function AdminRFQQuotesPage() {
     }
   }
 
-  // ─── Handlers: evaluation ──────────────────────────────────────────────────
+  // â”€â”€â”€ Handlers: evaluation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function handleEvalChange(quoteId: number, field: CriterionField | "evaluation_notes", value: number | string) {
     setEvaluations((prev) => {
@@ -799,7 +805,7 @@ export default function AdminRFQQuotesPage() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   return (
     <div>
@@ -848,7 +854,7 @@ export default function AdminRFQQuotesPage() {
 
       {!loading && rfq && rfqDisplayStatus && (
         <>
-          {/* ── RFQ Summary ── */}
+          {/* â”€â”€ RFQ Summary â”€â”€ */}
           <section className="rounded-md border border-panel bg-card p-6 shadow-panel">
             <div className="flex flex-col gap-4 border-b border-panel pb-5 lg:flex-row lg:items-start lg:justify-between">
               <div>
@@ -888,7 +894,7 @@ export default function AdminRFQQuotesPage() {
             </div>
           )}
 
-          {/* ── Policy Compliance Panel ── */}
+          {/* â”€â”€ Policy Compliance Panel â”€â”€ */}
           {rfqCompliance && (
             <ComplianceBanner
               result={rfqCompliance}
@@ -899,7 +905,7 @@ export default function AdminRFQQuotesPage() {
             />
           )}
 
-          {/* ── Quote Controls ── */}
+          {/* â”€â”€ Quote Controls â”€â”€ */}
           <section className="mt-6 rounded-md border border-panel bg-card p-5 shadow-panel">
             <div className="grid gap-4 md:grid-cols-[1fr_auto_auto_auto_auto_260px] md:items-end">
               <div>
@@ -960,7 +966,7 @@ export default function AdminRFQQuotesPage() {
             </div>
           </section>
 
-          {/* ── Quote Table ── */}
+          {/* â”€â”€ Quote Table â”€â”€ */}
           {quotes.length === 0 ? (
             <div className="mt-6 rounded-md border border-panel bg-card p-16 text-center shadow-panel">
               <p className="text-sm font-semibold text-heading">No quotes submitted for this RFQ yet.</p>
@@ -1013,7 +1019,7 @@ export default function AdminRFQQuotesPage() {
                                 )}
                               </div>
                             ) : (
-                              <span className="text-xs text-muted">—</span>
+                              <span className="text-xs text-muted">â€”</span>
                             )}
                           </td>
 
@@ -1033,7 +1039,7 @@ export default function AdminRFQQuotesPage() {
                                   {quote.supplier_name || "-"}
                                   {isRecommended && (
                                     <span className="ml-2 inline-flex rounded-full border border-success/40 bg-success/10 px-2 py-0.5 text-[0.58rem] font-bold uppercase tracking-wider text-success">
-                                      ★ Recommended
+                                      â˜… Recommended
                                     </span>
                                   )}
                                 </p>
@@ -1141,7 +1147,7 @@ export default function AdminRFQQuotesPage() {
             </section>
           )}
 
-          {/* ── Evaluation Matrix ── */}
+          {/* â”€â”€ Evaluation Matrix â”€â”€ */}
           {quotes.length > 0 && (
             <section className="mt-8">
               <div className="mb-4 flex items-center justify-between gap-4">
@@ -1218,7 +1224,7 @@ export default function AdminRFQQuotesPage() {
                   {/* Criteria legend */}
                   <div className="rounded-md border border-panel bg-panel px-5 py-3">
                     <p className="mb-2 text-[0.63rem] font-bold uppercase tracking-[0.2em] text-secondary">
-                      Scoring Guide — each criterion scored 0–20, total 100 points
+                      Scoring Guide â€” each criterion scored 0â€“20, total 100 points
                     </p>
                     <div className="grid gap-1.5 sm:grid-cols-5">
                       {CRITERIA.map((c) => (
@@ -1273,14 +1279,14 @@ export default function AdminRFQQuotesPage() {
                                 </p>
                                 {isTop && evaluations[quote.id] && (
                                   <span className="inline-flex rounded-full border border-success/40 bg-success/10 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider text-success">
-                                    ★ Highest Score
+                                    â˜… Highest Score
                                   </span>
                                 )}
                               </div>
                               <p className="mt-0.5 text-xs text-muted">
-                                Q-{quote.id} ·{" "}
+                                Q-{quote.id} Â·{" "}
                                 {formatAmount(quote.amount)}{" "}
-                                {quote.timeline ? `· ${quote.timeline}` : ""}
+                                {quote.timeline ? `Â· ${quote.timeline}` : ""}
                               </p>
                               <p className="mt-1 text-xs font-semibold text-heading">
                                 {currentTotal}/100{" "}
@@ -1290,11 +1296,11 @@ export default function AdminRFQQuotesPage() {
                                       : currentTotal >= 40 ? "text-warning"
                                         : "text-muted"
                                 }`}>
-                                  {currentTotal >= 80 ? "— Excellent"
-                                    : currentTotal >= 60 ? "— Good"
-                                      : currentTotal >= 40 ? "— Acceptable"
-                                        : currentTotal > 0 ? "— Needs evaluation"
-                                          : "— Not yet scored"}
+                                  {currentTotal >= 80 ? "â€” Excellent"
+                                    : currentTotal >= 60 ? "â€” Good"
+                                      : currentTotal >= 40 ? "â€” Acceptable"
+                                        : currentTotal > 0 ? "â€” Needs evaluation"
+                                          : "â€” Not yet scored"}
                                 </span>
                               </p>
                             </div>
@@ -1342,7 +1348,7 @@ export default function AdminRFQQuotesPage() {
                               value={draft.evaluation_notes}
                               onChange={(e) => handleEvalChange(quote.id, "evaluation_notes", e.target.value)}
                               disabled={isSaving}
-                              placeholder="Add evaluation notes, observations, or justification…"
+                              placeholder="Add evaluation notes, observations, or justificationâ€¦"
                               className="w-full resize-none rounded-md border border-panel bg-panel px-3 py-2 text-xs text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-60"
                             />
                           </div>
@@ -1361,7 +1367,7 @@ export default function AdminRFQQuotesPage() {
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                                   </svg>
-                                  Saving…
+                                  Savingâ€¦
                                 </>
                               ) : (
                                 <>
@@ -1392,7 +1398,7 @@ export default function AdminRFQQuotesPage() {
 
                             {draft.db_id && (
                               <span className="ml-1 text-[0.63rem] text-success">
-                                ✓ Evaluation saved
+                                âœ“ Evaluation saved
                               </span>
                             )}
                           </div>
@@ -1434,7 +1440,7 @@ export default function AdminRFQQuotesPage() {
                                   <p className="text-sm font-semibold text-heading">
                                     {quote.supplier_name || `Q-${quote.id}`}
                                     {isTop && (
-                                      <span className="ml-2 text-[0.6rem] font-bold text-success">★ Recommended</span>
+                                      <span className="ml-2 text-[0.6rem] font-bold text-success">â˜… Recommended</span>
                                     )}
                                   </p>
                                   <p className="text-xs text-muted">{formatAmount(quote.amount)}</p>
@@ -1453,7 +1459,7 @@ export default function AdminRFQQuotesPage() {
                           })}
                       </div>
                       <p className="mt-3 text-xs text-muted">
-                        Advisory only — evaluation scores inform but do not determine the final award decision.
+                        Advisory only â€” evaluation scores inform but do not determine the final award decision.
                       </p>
                     </div>
                   )}
