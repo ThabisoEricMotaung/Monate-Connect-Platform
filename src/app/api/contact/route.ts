@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import { Resend } from "resend"
+import { createClient } from "@supabase/supabase-js"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -122,17 +123,31 @@ We've received your enquiry and will be in touch within 2 business days.
 AiForm Procure Team`,
 }
 
-const contactRateLimit = new Map<string, number>()
 
 export async function POST(request: Request) {
-  // Rate limiting — one submission per IP per 20 minutes
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
-  const now = Date.now()
-  const lastSubmit = contactRateLimit.get(ip) ?? 0
-  if (now - lastSubmit < 20 * 60 * 1000) {
-    return NextResponse.json({ ok: false, error: "Too many requests." }, { status: 429 })
+  // Database-backed rate limiting
+  const rateLimitClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  let emailForRateLimit: string | null = null
+  try {
+    const raw = await request.clone().json()
+    emailForRateLimit = typeof raw.email === "string" ? raw.email.trim().toLowerCase() : null
+  } catch { /* ignore */ }
+
+  if (emailForRateLimit) {
+    const cutoff = new Date(Date.now() - 20 * 60 * 1000).toISOString()
+    const { count } = await rateLimitClient
+      .from("pilot_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("email", emailForRateLimit)
+      .gte("created_at", cutoff)
+
+    if ((count ?? 0) > 0) {
+      return NextResponse.json({ ok: false, error: "Too many requests. Please wait before submitting again." }, { status: 429 })
+    }
   }
-  contactRateLimit.set(ip, now)
 
   // Input validation
   let body: { name?: unknown; email?: unknown; request_type?: unknown; organisation?: unknown }
