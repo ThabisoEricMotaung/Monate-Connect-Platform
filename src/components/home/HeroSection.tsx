@@ -37,9 +37,9 @@ export default function HeroSection() {
             <stop offset="0%" stopColor="#c8a060" stopOpacity="0.12" />
             <stop offset="40%" stopColor="#c8a060" stopOpacity="0" />
           </linearGradient>
-          <filter id="blur1"><feGaussianBlur stdDeviation="3" /></filter>
-          <filter id="blur2"><feGaussianBlur stdDeviation="6" /></filter>
-          <filter id="blur3"><feGaussianBlur stdDeviation="1.5" /></filter>
+          <filter id="blur1"><feGaussianBlur stdDeviation="0.6" /></filter>
+          <filter id="blur2"><feGaussianBlur stdDeviation="1.2" /></filter>
+          <filter id="blur3"><feGaussianBlur stdDeviation="0.4" /></filter>
         </defs>
 
         {/* Layer 1 — very distant, extremely faded (3-4% opacity) */}
