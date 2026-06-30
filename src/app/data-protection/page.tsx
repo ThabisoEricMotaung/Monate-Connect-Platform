@@ -53,8 +53,8 @@ export default function DataProtectionPage() {
       <main className="min-h-screen bg-page text-primary">
       <section className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
         <div className="border-b border-t border-heading py-10">
-          <BackLink />
-          <p className="mt-4 newspaper-kicker">Legal Desk &middot; Data Protection</p>
+          <div className="mb-4"><BackLink /></div>
+          <p className="newspaper-kicker">Legal Desk &middot; Data Protection</p>
           <h1 className="newspaper-headline mt-5">Data Protection</h1>
           <p className="newspaper-body mt-6 max-w-3xl">
             This page sets out POPIA-aware placeholder principles for protecting supplier,

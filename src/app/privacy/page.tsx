@@ -101,8 +101,8 @@ export default function PrivacyPolicyPage() {
 
         <section className="border-b border-panel bg-[#1a3a2a] px-6 py-16">
           <div className="mx-auto max-w-7xl">
-            <BackLink className="text-[#f8f4ec]/70 hover:text-[#f8f4ec]" />
-            <p className="mt-4 text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#c8a060]">Legal Desk · Privacy Policy</p>
+            <div className="mb-4"><BackLink className="text-[#f8f4ec]/70 hover:text-[#f8f4ec]" /></div>
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#c8a060]">Legal Desk · Privacy Policy</p>
             <h1 className="mt-4 font-display text-5xl font-semibold leading-tight text-[#f8f4ec] md:text-6xl">Privacy Policy</h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-[#f8f4ec]/70">
               This policy explains how AiForm Procure expects to collect, use, store, and protect
