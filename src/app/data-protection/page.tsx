@@ -51,20 +51,21 @@ export default function DataProtectionPage() {
     <>
       <PublicHeader />
       <main className="min-h-screen bg-page text-primary">
-      <section className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
-        <div className="border-b border-t border-heading py-10">
-          <div className="mb-4"><BackLink /></div>
-          <p className="newspaper-kicker">Legal Desk &middot; Data Protection</p>
-          <h1 className="newspaper-headline mt-5">Data Protection</h1>
-          <p className="newspaper-body mt-6 max-w-3xl">
+      <section className="bg-[#1a3a2a] px-6 py-16">
+        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <div className="mb-4"><BackLink className="text-[#f8f4ec]/70 hover:text-[#f8f4ec]" /></div>
+          <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#c8a060]">Legal Desk &middot; Data Protection</p>
+          <h1 className="mt-4 font-display text-5xl font-semibold leading-tight text-[#f8f4ec] md:text-6xl">Data Protection</h1>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-[#f8f4ec]/70">
             This page sets out POPIA-aware placeholder principles for protecting supplier,
             buyer, compliance and procurement workflow data inside AiForm Procure.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/contact" className="masthead__btn-primary">
+            <Link href="/contact" className="inline-flex items-center rounded-md bg-[#c8a060] px-5 py-2.5 text-sm font-semibold text-[#1a3a2a] transition hover:bg-[#d7b373]">
               Contact for Data Queries
             </Link>
-            <Link href="/privacy" className="masthead__btn-secondary">
+            <Link href="/privacy" className="inline-flex items-center rounded-md border border-[#f8f4ec]/20 bg-[#f8f4ec]/10 px-5 py-2.5 text-sm font-semibold text-[#f8f4ec] transition hover:border-[#f8f4ec]/40 hover:bg-[#f8f4ec]/15">
               Privacy Policy
             </Link>
           </div>
@@ -85,6 +86,7 @@ export default function DataProtectionPage() {
             Last updated: 4 June 2026
           </p>
         </aside>
+        </div>
       </section>
 
       <section className="mx-auto grid max-w-7xl gap-5 px-6 pb-20 md:grid-cols-2">

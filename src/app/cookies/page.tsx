@@ -40,15 +40,16 @@ export default function CookiePolicyPage() {
           </div>
         </section>
 
-        <section className="mx-auto grid max-w-7xl gap-8 px-6 pb-16 lg:grid-cols-[1.1fr_0.9fr] lg:pb-20">
-          <div className="border-b border-t border-heading py-10">
-            <div className="mb-4"><BackLink /></div>
-            <p className="newspaper-kicker">Legal Desk &middot; Cookie Policy</p>
-            <h1 className="newspaper-headline mt-5">Cookie Policy</h1>
-            <p className="mt-5 font-display text-xl text-heading">
+        <section className="bg-[#1a3a2a] px-6 py-16">
+          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <div className="mb-4"><BackLink className="text-[#f8f4ec]/70 hover:text-[#f8f4ec]" /></div>
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#c8a060]">Legal Desk &middot; Cookie Policy</p>
+            <h1 className="mt-4 font-display text-5xl font-semibold leading-tight text-[#f8f4ec] md:text-6xl">Cookie Policy</h1>
+            <p className="mt-5 font-display text-xl text-[#f8f4ec]">
               Effective date: Draft — not yet in effect
             </p>
-            <p className="newspaper-body mt-6 max-w-3xl">
+            <p className="mt-6 max-w-3xl text-sm leading-7 text-[#f8f4ec]/70">
               This draft explains how AiForm Procure uses cookies and browser storage to keep the
               platform secure, usable, and consistent.
             </p>
@@ -69,6 +70,7 @@ export default function CookiePolicyPage() {
               Read Privacy Policy
             </Link>
           </aside>
+          </div>
         </section>
 
         <section className="mx-auto grid max-w-7xl gap-5 px-6 pb-20 md:grid-cols-2">
