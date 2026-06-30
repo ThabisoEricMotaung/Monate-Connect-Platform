@@ -1,4 +1,5 @@
 import Link from "next/link"
+import BackLink from "@/components/BackLink"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 
@@ -41,7 +42,8 @@ export default function CookiePolicyPage() {
 
         <section className="mx-auto grid max-w-7xl gap-8 px-6 pb-16 lg:grid-cols-[1.1fr_0.9fr] lg:pb-20">
           <div className="border-b border-t border-heading py-10">
-            <p className="newspaper-kicker">Legal Desk &middot; Cookie Policy</p>
+            <BackLink />
+            <p className="mt-4 newspaper-kicker">Legal Desk &middot; Cookie Policy</p>
             <h1 className="newspaper-headline mt-5">Cookie Policy</h1>
             <p className="mt-5 font-display text-xl text-heading">
               Effective date: Draft — not yet in effect

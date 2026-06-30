@@ -3,6 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useState } from "react"
+import BackLink from "@/components/BackLink"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 
@@ -91,7 +92,8 @@ export default function TrustCentrePage() {
         {/* Hero */}
         <section className="bg-[#1a3a2a] px-6 py-16">
           <div className="mx-auto max-w-7xl">
-            <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+            <BackLink className="text-[#f8f4ec]/70 hover:text-[#f8f4ec]" />
+            <div className="mt-6 grid gap-12 lg:grid-cols-2 lg:items-center">
               <div>
                 <span className="inline-flex rounded-full border border-[#5DCAA5]/30 bg-[#5DCAA5]/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-[#5DCAA5]">
                   Built for South African procurement

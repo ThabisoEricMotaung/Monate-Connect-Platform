@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import Link from "next/link"
+import BackLink from "@/components/BackLink"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import { FormEvent, useState } from "react"
@@ -169,7 +170,8 @@ export default function ContactPage() {
           {/* Left panel */}
           <div className="flex flex-col justify-between gap-10">
             <div>
-              <p className="newspaper-kicker">Contact · Pilot Requests</p>
+              <BackLink />
+              <p className="mt-4 newspaper-kicker">Contact · Pilot Requests</p>
               <h1 className="newspaper-headline mt-5">Start an AiForm Procure conversation</h1>
               <p className="newspaper-body mt-6 max-w-lg">
                 Request a pilot demo, partnership discussion, supplier onboarding session, or buyer/procurement team setup.
