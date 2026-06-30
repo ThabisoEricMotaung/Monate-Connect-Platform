@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import BackLink from "@/components/BackLink"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import { useMemo, useState } from "react"
@@ -213,11 +214,13 @@ export default function HelpCentrePage() {
     <>
       <PublicHeader />
       <main className="min-h-screen bg-page text-primary">
-      <section className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
-        <div className="border-b border-t border-heading py-10">
-          <p className="newspaper-kicker">Help Centre &middot; Public FAQ</p>
-          <h1 className="newspaper-headline mt-5">Common questions about AiForm Procure</h1>
-          <p className="newspaper-body mt-6 max-w-3xl">
+      <section className="bg-[#1a3a2a] px-6 py-16">
+        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <div className="mb-4"><BackLink className="text-[#f8f4ec]/70 hover:text-[#f8f4ec]" /></div>
+          <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#c8a060]">Help Centre &middot; Public FAQ</p>
+          <h1 className="mt-4 font-display text-5xl font-semibold leading-tight text-[#f8f4ec] md:text-6xl">Common questions about AiForm Procure</h1>
+          <p className="mt-6 max-w-3xl text-sm leading-7 text-[#f8f4ec]/70">
             Find answers about supplier registration, verification, SmartScore trust signals,
             RFQs, purchase orders, contracts, invoices, payments, WhatsApp alerts and pilot
             partnerships.
@@ -227,7 +230,11 @@ export default function HelpCentrePage() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={link.primary ? "masthead__btn-primary" : "masthead__btn-secondary"}
+                className={
+                  link.primary
+                    ? "inline-flex items-center rounded-md bg-[#c8a060] px-5 py-2.5 text-sm font-semibold text-[#1a3a2a] transition hover:bg-[#d7b373]"
+                    : "inline-flex items-center rounded-md border border-[#f8f4ec]/30 px-5 py-2.5 text-sm font-semibold text-[#f8f4ec] transition hover:border-[#f8f4ec]/50 hover:bg-[#f8f4ec]/10"
+                }
               >
                 {link.label}
               </Link>
@@ -257,6 +264,7 @@ export default function HelpCentrePage() {
             questions.
           </p>
         </aside>
+        </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-6 pb-8">
