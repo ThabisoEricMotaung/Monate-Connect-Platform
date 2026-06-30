@@ -43,7 +43,7 @@ export default function HeroSection() {
         </defs>
 
         {/* Layer 1 — very distant, extremely faded (3-4% opacity) */}
-        <g ref={layer1Ref} opacity="0.035" filter="url(#blur2)" fill="#5a6a50">
+        <g ref={layer1Ref} opacity="0.16" filter="url(#blur2)" fill="#5a6a50">
           {/* Distant CBD mass */}
           <rect x="100" y="280" width="20" height="140" />
           <rect x="118" y="260" width="28" height="160" />
@@ -76,7 +76,7 @@ export default function HeroSection() {
         </g>
 
         {/* Layer 2 — office towers, government buildings (5-6% opacity) */}
-        <g opacity="0.052" filter="url(#blur1)" fill="#4a6040">
+        <g opacity="0.22" filter="url(#blur1)" fill="#4a6040">
           {/* The Leonardo */}
           <rect x="420" y="140" width="42" height="300" />
           <rect x="424" y="140" width="34" height="280" fill="#4a6040" />
@@ -106,7 +106,7 @@ export default function HeroSection() {
         </g>
 
         {/* Layer 3 — logistics infrastructure (5% opacity) */}
-        <g opacity="0.048" filter="url(#blur3)" fill="#3a5535">
+        <g opacity="0.20" filter="url(#blur3)" fill="#3a5535">
           {/* Harbour cranes — Durban */}
           <rect x="800" y="300" width="8" height="140" />
           <rect x="790" y="300" width="28" height="6" />
@@ -153,7 +153,7 @@ export default function HeroSection() {
         </g>
 
         {/* Layer 4 — foreground terrain */}
-        <g opacity="0.06" fill="#6a7a5a">
+        <g opacity="0.14" fill="#6a7a5a">
           <ellipse cx="200" cy="460" rx="200" ry="50" />
           <ellipse cx="700" cy="470" rx="300" ry="40" />
           <ellipse cx="1200" cy="465" rx="250" ry="45" />
