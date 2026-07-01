@@ -268,13 +268,13 @@ export default function HelpCentrePage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 pb-8">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {["All", ...faqSections.map((section) => section.title)].map((section) => (
             <button
               key={section}
               type="button"
               onClick={() => setActiveSection(section)}
-              className={`rounded-md border px-3 py-2 text-xs font-semibold transition ${
+              className={`rounded-md border px-4 py-2 text-xs font-semibold transition ${
                 activeSection === section
                   ? "border-accent bg-accent text-button"
                   : "border-panel bg-card text-secondary hover:border-accent hover:text-accent"

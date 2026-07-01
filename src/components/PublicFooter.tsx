@@ -485,13 +485,13 @@ export default function PublicFooter() {
           font-size: 0.72rem;
           font-weight: 900;
           letter-spacing: 0.08em;
-          box-shadow: 0 14px 32px rgba(18, 60, 43, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+          box-shadow: 0 6px 14px rgba(18, 60, 43, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.12);
           transition: transform 240ms ease, box-shadow 240ms ease;
         }
 
         .footer-wire-pill:hover {
           transform: translateY(-2px);
-          box-shadow: 0 18px 38px rgba(18, 60, 43, 0.22), 0 0 0 4px rgba(201, 161, 59, 0.08);
+          box-shadow: 0 8px 18px rgba(18, 60, 43, 0.14), 0 0 0 4px rgba(201, 161, 59, 0.08);
         }
 
         .footer-social-button {
