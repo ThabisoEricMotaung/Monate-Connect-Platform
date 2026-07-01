@@ -170,8 +170,10 @@ export default function ContactPage() {
           {/* Left panel */}
           <div className="flex flex-col justify-between gap-10">
             <div>
-              <BackLink />
-              <p className="mt-4 newspaper-kicker">Contact · Pilot Requests</p>
+              <div className="mb-6">
+                <BackLink />
+              </div>
+              <p className="newspaper-kicker">Contact · Pilot Requests</p>
               <h1 className="newspaper-headline mt-5">Start an AiForm Procure conversation</h1>
               <p className="newspaper-body mt-6 max-w-lg">
                 Request a pilot demo, partnership discussion, supplier onboarding session, or buyer/procurement team setup.

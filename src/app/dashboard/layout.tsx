@@ -579,31 +579,33 @@ export default function DashboardLayout({
             )
           })}
 
-          <div className="border-t border-[#ebebeb] pt-5">
-            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaaaaa]">
-              Intelligence
-            </p>
-            <nav className="space-y-1.5">
-              {intelligenceNavigation.map((item) => {
-                const active = pathname === item.href || pathname.startsWith(item.href)
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeSidebar}
-                    className={`flex items-center justify-between gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                      active
-                        ? "border-[#1a3a2a]/20 bg-[#f0f7f3] text-[#1a3a2a]"
-                        : "border-transparent text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
-                    }`}
-                  >
-                    <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{item.name}</span>
-                    {active && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8a060]" />}
-                  </Link>
-                )
-              })}
-            </nav>
-          </div>
+          {canViewAdminNavigation && (
+            <div className="border-t border-[#ebebeb] pt-5">
+              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaaaaa]">
+                Intelligence
+              </p>
+              <nav className="space-y-1.5">
+                {intelligenceNavigation.map((item) => {
+                  const active = pathname === item.href || pathname.startsWith(item.href)
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={closeSidebar}
+                      className={`flex items-center justify-between gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                        active
+                          ? "border-[#1a3a2a]/20 bg-[#f0f7f3] text-[#1a3a2a]"
+                          : "border-transparent text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
+                      }`}
+                    >
+                      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{item.name}</span>
+                      {active && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8a060]" />}
+                    </Link>
+                  )
+                })}
+              </nav>
+            </div>
+          )}
 
           {canViewAdminNavigation && (
             <div className="border-t border-[#ebebeb] pt-5">

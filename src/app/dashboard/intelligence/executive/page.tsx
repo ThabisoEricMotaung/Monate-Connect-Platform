@@ -193,7 +193,7 @@ export default function ExecutiveDashboardPage() {
   useEffect(() => {
     async function load() {
       const profile = await getCurrentProfile()
-      if (profile?.role !== "admin" && profile?.role !== "buyer") {
+      if (profile?.role?.trim().toLowerCase() !== "admin") {
         router.replace("/dashboard")
         return
       }

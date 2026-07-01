@@ -147,9 +147,9 @@ export default function Home() {
               {audienceCards.map((card) => (
                 <article
                   key={card.title}
-                  className="rounded-md border border-panel bg-card p-6 shadow-panel transition hover:border-accent"
+                  className="rounded-xl border border-[#e8e0cc] bg-white p-6 shadow-md transition hover:border-accent"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-md border border-panel bg-panel text-accent">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#e8e0cc] bg-white text-accent shadow-sm">
                     <EntryIcon icon={card.icon} />
                   </div>
                   <h3 className="mt-5 font-display text-2xl font-semibold text-heading">{card.title}</h3>
@@ -175,10 +175,10 @@ export default function Home() {
                 <Link
                   key={tile.href}
                   href={tile.href}
-                  className="rounded-md bg-panel p-5 text-primary transition hover:bg-muted"
+                  className="rounded-xl border border-[#e8e0cc] bg-white p-5 text-primary shadow-md transition hover:bg-muted"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-md bg-surface text-accent">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#e8e0cc] bg-white text-accent shadow-sm">
                       <EntryIcon icon={tile.icon} />
                     </span>
                     <span className="text-base font-bold text-heading">{tile.title}</span>

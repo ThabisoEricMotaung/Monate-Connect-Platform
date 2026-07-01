@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import SmartScoreCircle from "@/components/SmartScoreCircle"
-import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
+import { getCurrentProfile } from "@/lib/auth"
 import {
   getSupplierScores,
   type SupplierIntelligenceRecord,
@@ -65,7 +65,7 @@ export default function SupplierPerformancePage() {
     async function load() {
       const profile = await getCurrentProfile()
 
-      if (!hasAdminOrBuyerAccess(profile)) {
+      if (profile?.role?.trim().toLowerCase() !== "admin") {
         router.replace("/dashboard")
         return
       }

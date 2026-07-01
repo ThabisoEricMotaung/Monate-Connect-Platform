@@ -78,7 +78,7 @@ export default function CookiePolicyPage() {
           </div>
         </section>
 
-        <section className="mx-auto grid max-w-7xl gap-5 px-6 pb-20 md:grid-cols-2">
+        <section className="mx-auto mt-8 grid max-w-7xl gap-5 px-6 pb-20 md:grid-cols-2">
           {cookieSections.map((section) => (
             <article key={section.title} className="rounded-md border border-panel bg-card p-6 shadow-panel">
               <h2 className="font-display text-2xl font-semibold text-heading">{section.title}</h2>

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
+import { getCurrentProfile } from "@/lib/auth"
 import { createMatchAlertDrafts, type MatchAlertResult } from "@/lib/matchAlerts"
 import {
   calculateRFQMatches,
@@ -38,7 +38,7 @@ export default function SupplierMatchesPage() {
   useEffect(() => {
     async function load() {
       const profile = await getCurrentProfile()
-      if (!hasAdminOrBuyerAccess(profile)) {
+      if (profile?.role?.trim().toLowerCase() !== "admin") {
         router.replace("/dashboard")
         return
       }
