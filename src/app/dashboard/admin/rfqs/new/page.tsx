@@ -408,6 +408,7 @@ export default function NewRFQPage() {
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
+  const [warningMessage, setWarningMessage] = useState("")
   const [draftId, setDraftId] = useState(() => crypto.randomUUID())
   const [pendingDraft, setPendingDraft] = useState<StoredDraft | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -487,6 +488,8 @@ export default function NewRFQPage() {
     const completeLineItems = form.lineItems.filter(
       (item) => item.description.trim() && Number(item.qty) > 0,
     )
+    const minValue = cleanAmountInput(form.valueMin)
+    const maxValue = cleanAmountInput(form.valueMax)
 
     return {
       title: Boolean(form.title.trim()),
@@ -501,7 +504,8 @@ export default function NewRFQPage() {
       provinces: form.provinces.length > 0,
       bbbeeRequirement: Boolean(form.bbbeeRequirement),
       lineItems: completeLineItems.length > 0,
-      valueRange: Boolean(cleanAmountInput(form.valueMin) || cleanAmountInput(form.valueMax)),
+      valueRange: Boolean(minValue || maxValue),
+      valueOrder: !minValue || !maxValue || Number(minValue) <= Number(maxValue),
       documents: documents.length > 0,
     }
   }, [documents.length, form])
@@ -638,6 +642,9 @@ export default function NewRFQPage() {
       if (!validation.lineItems) {
         nextErrors.lineItems = "Add at least one complete line item with description and quantity."
       }
+      if (!validation.valueOrder) {
+        nextErrors.valueMin = "Minimum value cannot exceed maximum value"
+      }
     }
 
     setErrors(nextErrors)
@@ -698,8 +705,13 @@ export default function NewRFQPage() {
   async function createRFQ(status: "Draft" | "Open") {
     setErrorMessage("")
     setSuccessMessage("")
+    setWarningMessage("")
 
-    if (status === "Open" && !canPublish) {
+    if (status === "Draft" && !form.title.trim()) {
+      setWarningMessage("Draft saved without a title. Add a title before publishing.")
+    }
+
+    if (status === "Open" && (!canPublish || !validation.valueOrder)) {
       validateStep(1)
       validateStep(2)
       validateStep(3)
@@ -832,6 +844,11 @@ export default function NewRFQPage() {
   }
 
   function saveLocalDraft() {
+    setWarningMessage("")
+    if (!form.title.trim()) {
+      setWarningMessage("Draft saved without a title. Add a title before publishing.")
+    }
+
     const draft = {
       draftId,
       savedAt: new Date().toISOString(),
@@ -940,6 +957,12 @@ export default function NewRFQPage() {
         <div className="mb-6 rounded-md border border-rose-500/25 bg-rose-500/10 px-5 py-4">
           <p className="text-sm font-semibold text-rose-700">RFQ creation failed</p>
           <p className="mt-1 text-xs text-rose-700">{errorMessage}</p>
+        </div>
+      )}
+
+      {warningMessage && (
+        <div className="mb-6 rounded-md border border-warning bg-warning-soft px-5 py-4">
+          <p className="text-sm font-semibold text-warning">{warningMessage}</p>
         </div>
       )}
 
@@ -1356,6 +1379,7 @@ export default function NewRFQPage() {
                         onChange={(event) => updateField("valueMin", cleanAmountInput(event.target.value))}
                         className={inputClass}
                       />
+                      <ErrorText field="valueMin" />
                     </div>
                     <div>
                       <label htmlFor="valueMax" className={labelClass}>Estimated value range - Max (R)</label>

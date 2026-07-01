@@ -412,6 +412,29 @@ export default function SubmitQuotePage() {
       return
     }
 
+    const rfqId = Number(params.id)
+    if (Number.isNaN(rfqId)) {
+      setErrorMessage("Invalid RFQ reference.")
+      return
+    }
+
+    const cleanQuotedAmount = cleanAmountInput(quotedAmount)
+    if (!cleanQuotedAmount || Number(cleanQuotedAmount) === 0) {
+      setErrorMessage("Please enter your quoted amount")
+      return
+    }
+
+    const cleanDeliveryTimeline = cleanNumberInput(deliveryTimeline)
+    if (!cleanDeliveryTimeline) {
+      setErrorMessage("Please enter a delivery timeline in working days")
+      return
+    }
+
+    if (scope.trim().length < 30) {
+      setErrorMessage("Please describe your scope of work (minimum 30 characters)")
+      return
+    }
+
     const user = await getCurrentUser()
     if (!user) {
       setErrorMessage("You must be signed in as a supplier before submitting a quote.")
@@ -436,26 +459,36 @@ export default function SubmitQuotePage() {
       user.email ||
       "Supplier"
 
-    const { data: quoteData, error } = await supabase
-      .from("quotes")
-      .insert([
-        {
-          rfq_id: Number(params.id),
-          supplier_id: user.id,
-          supplier_name: supplierName,
-          amount: cleanAmountInput(quotedAmount),
-          timeline: `${cleanNumberInput(deliveryTimeline)} working days`,
-          scope,
-          supporting_notes: supportingNotes,
-          status: "Pending",
-        },
-      ])
-      .select("id")
-      .single()
+    let quoteData: { id: number } | null = null
 
-    if (error) {
-      console.error(error)
-      setErrorMessage(error.message)
+    try {
+      const { data, error } = await supabase
+        .from("quotes")
+        .insert([
+          {
+            rfq_id: rfqId,
+            supplier_id: user.id,
+            supplier_name: supplierName,
+            amount: cleanQuotedAmount,
+            timeline: `${cleanDeliveryTimeline} working days`,
+            scope,
+            supporting_notes: supportingNotes,
+            status: "Pending",
+          },
+        ])
+        .select("id")
+        .single()
+
+      if (error) {
+        console.error(error)
+        setErrorMessage(error.message)
+        return
+      }
+
+      quoteData = data
+    } catch (err) {
+      console.error("Quote submission error:", err)
+      setErrorMessage("An unexpected error occurred. Please try again.")
       return
     }
 
@@ -466,17 +499,17 @@ export default function SubmitQuotePage() {
         entity_id: quoteData?.id ?? null,
         old_values: null,
         new_values: {
-          rfq_id: Number(params.id),
+          rfq_id: rfqId,
           supplier_id: user.id,
           supplier_name: supplierName,
-          amount: cleanAmountInput(quotedAmount),
-          timeline: `${cleanNumberInput(deliveryTimeline)} working days`,
+          amount: cleanQuotedAmount,
+          timeline: `${cleanDeliveryTimeline} working days`,
           scope,
           supporting_notes: supportingNotes,
           status: "Pending",
         },
         metadata: {
-          rfq_id: Number(params.id),
+          rfq_id: rfqId,
           supplier_id: user.id,
         },
       })
@@ -485,27 +518,31 @@ export default function SubmitQuotePage() {
         entity_type: "quote",
         entity_id: quoteData?.id ?? null,
         metadata: {
-          rfq_id: Number(params.id),
+          rfq_id: rfqId,
           supplier_id: user.id,
           supplier_name: supplierName,
-          amount: cleanAmountInput(quotedAmount),
-          timeline: `${cleanNumberInput(deliveryTimeline)} working days`,
+          amount: cleanQuotedAmount,
+          timeline: `${cleanDeliveryTimeline} working days`,
         },
       })
     } catch (activityError) {
       console.warn("Quote submission audit/activity logging failed:", activityError)
     }
 
-    await createNotificationsForRoles(["admin", "buyer"], {
-      type: "Quote Submitted",
-      title: "New quote submitted",
-      message: `A supplier submitted a quote for ${rfq?.title || `RFQ-${params.id}`}.`,
-      link: `/dashboard/admin/rfqs/${params.id}/quotes`,
-      metadata: {
-        quote_id: quoteData?.id ?? null,
-        rfq_id: Number(params.id),
-      },
-    })
+    try {
+      await createNotificationsForRoles(["admin", "buyer"], {
+        type: "Quote Submitted",
+        title: "New quote submitted",
+        message: `A supplier submitted a quote for ${rfq?.title || `RFQ-${params.id}`}.`,
+        link: `/dashboard/admin/rfqs/${params.id}/quotes`,
+        metadata: {
+          quote_id: quoteData?.id ?? null,
+          rfq_id: rfqId,
+        },
+      })
+    } catch (notificationError) {
+      console.warn("Quote submission notification failed:", notificationError)
+    }
 
     setSubmitted(true)
     autosave.clearDraft()
