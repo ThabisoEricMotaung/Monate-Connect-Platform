@@ -473,17 +473,6 @@ export default function DashboardLayout({
       </>
     )
   }
-
-  if (pathname.startsWith("/dashboard/help")) {
-    return (
-      <>
-        {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}
-        {children}
-        <ProcurementWire scope="dashboard" />
-      </>
-    )
-  }
-
   if (pathname.startsWith("/dashboard/intelligence") && canViewAdminNavigation) {
     return (
       <>
@@ -698,4 +687,5 @@ export default function DashboardLayout({
     </main>
   )
 }
+
 
