@@ -257,18 +257,6 @@ export default function PublicFooter() {
               <span>A product of AiForm Studio</span>
             </div>
           </div>
-
-          <div className="footer-wire-wrap">
-            <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#c8a060]/40" />
-            <Link href="/opportunities" className="footer-wire-pill">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3v3m0 12v3m9-9h-3M6 12H3m14.25-5.25l-2.12 2.12M8.87 15.13l-2.12 2.12m10.5 0l-2.12-2.12M8.87 8.87L6.75 6.75M9.75 12a2.25 2.25 0 104.5 0 2.25 2.25 0 00-4.5 0z" />
-              </svg>
-              <span>AIFORMS PROCUREMENT WIRE</span>
-            </Link>
-            <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#c8a060]/40" />
-          </div>
-
           <div className="relative flex items-center gap-2 lg:justify-end">
             {socialNotice && (
               <span className="absolute -top-8 right-0 whitespace-nowrap rounded-full border border-[#123c2b]/12 bg-white/80 px-3 py-1 text-xs font-bold text-[#123c2b] shadow-sm">
@@ -474,43 +462,6 @@ export default function PublicFooter() {
           color: rgba(18, 60, 43, 0.055);
           pointer-events: none;
         }
-
-        .footer-wire-wrap {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.75rem;
-          min-width: 0;
-        }
-
-        .footer-wire-pill {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          white-space: nowrap;
-          border: 1px solid rgba(201, 161, 59, 0.35);
-          border-radius: 999px;
-          background: var(--procure-green);
-          padding: 0.72rem 1rem;
-          color: var(--procure-gold);
-          font-size: 0.72rem;
-          font-weight: 900;
-          letter-spacing: 0.08em;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-          transition: transform 240ms ease, box-shadow 240ms ease;
-        }
-
-        .footer-wire-pill::before,
-        .footer-wire-pill::after {
-          content: none;
-        }
-
-        .footer-wire-pill:hover {
-          transform: translateY(-2px);
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 0 4px rgba(201, 161, 59, 0.08);
-        }
-
         .footer-social-button {
           display: inline-flex;
           min-width: 2.5rem;
@@ -553,14 +504,6 @@ export default function PublicFooter() {
           .footer-skyline {
             opacity: 0.45;
           }
-
-          .footer-wire-wrap {
-            justify-content: flex-start;
-          }
-
-          .footer-wire-wrap > span {
-            display: none;
-          }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -568,7 +511,6 @@ export default function PublicFooter() {
           .footer-nav-card,
           .footer-nav-link,
           .footer-link-arrow,
-          .footer-wire-pill,
           .footer-social-button {
             animation: none;
             transition: none;
@@ -576,7 +518,6 @@ export default function PublicFooter() {
 
           .footer-nav-card:hover,
           .footer-nav-link:hover,
-          .footer-wire-pill:hover,
           .footer-social-button:hover {
             transform: none;
           }
@@ -585,3 +526,4 @@ export default function PublicFooter() {
     </footer>
   )
 }
+
