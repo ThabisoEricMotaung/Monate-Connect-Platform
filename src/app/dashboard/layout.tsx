@@ -41,6 +41,7 @@ type SupplierNavigationName =
   | "Business profile"
   | "Contracts"
   | "Invoices"
+  | "Have Your Say"
   | "Help"
   | "Messages"
   | "Payments"
@@ -124,6 +125,11 @@ const navigation: {
     section: "Pinned",
   },
   {
+    name: "Have Your Say",
+    href: "/dashboard/suggestions",
+    section: "Pinned",
+  },
+  {
     name: "Help",
     href: "/dashboard/help",
     section: "Pinned",
@@ -151,6 +157,7 @@ const navigationIcons: Record<string, ReactNode> = {
   "/dashboard/saved-rfqs": <IconBookmark size={16} />,
   "/dashboard/messages": <IconMessageCircle size={16} />,
   "/dashboard/help": <IconHelpCircle size={16} />,
+  "/dashboard/suggestions": <IconMessageCircle size={16} />,
   Settings: <IconSettings size={16} />,
 }
 const supplierNavigationSections: { title: "Top" | "Work" | "Profile" | "Discover" | "Pinned"; label: string | null }[] = [
@@ -687,5 +694,8 @@ export default function DashboardLayout({
     </main>
   )
 }
+
+
+
 
 

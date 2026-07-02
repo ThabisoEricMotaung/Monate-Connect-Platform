@@ -120,7 +120,10 @@ const BASE_NAVIGATION: NavGroup[] = [
   {
     label: "Support",
     divider: true,
-    items: [{ name: "Help", href: "/dashboard/help", icon: IconHelpCircle }],
+    items: [
+      { name: "Have Your Say", href: "/dashboard/suggestions", icon: IconMessageCircle },
+      { name: "Help", href: "/dashboard/help", icon: IconHelpCircle },
+    ],
   },
 ]
 
@@ -302,3 +305,4 @@ export default function BuyerDashboardLayout({
     </main>
   )
 }
+
