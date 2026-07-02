@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * ─── procurement_overrides SQL migration ──────────────────────────────────────
+ * --- procurement_overrides SQL migration --------------------------------------
  *
  * create table if not exists procurement_overrides (
  *   id bigint generated always as identity primary key,
@@ -34,7 +34,7 @@ import {
 } from "@/lib/procurementOverrides"
 import { canUserApprove } from "@/lib/delegationAuthority"
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ----------------------------------------------------------------
 
 const MIGRATION_SQL = `create table if not exists procurement_overrides (
   id bigint generated always as identity primary key,
@@ -65,7 +65,7 @@ const ENTITY_TYPE_LABELS: Record<string, string> = {
   supplier:       "Supplier",
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function statusBadge(status: string | null): string {
   switch (status) {
@@ -97,7 +97,7 @@ function entityLabel(t: string | null): string {
   return ENTITY_TYPE_LABELS[t ?? ""] ?? (t ?? "—")
 }
 
-// ─── SQL block ────────────────────────────────────────────────────────────────
+// --- SQL block ----------------------------------------------------------------
 
 function SQLBlock({ sql }: { sql: string }) {
   const [open, setOpen] = useState(false)
@@ -135,7 +135,7 @@ function SQLBlock({ sql }: { sql: string }) {
   )
 }
 
-// ─── Override card ────────────────────────────────────────────────────────────
+// --- Override card ------------------------------------------------------------
 
 function OverrideCard({
   override,
@@ -317,7 +317,7 @@ function OverrideCard({
   )
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// --- Skeleton -----------------------------------------------------------------
 
 function SkeletonCard() {
   return (
@@ -334,7 +334,7 @@ function SkeletonCard() {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function OverridesPage() {
   const router = useRouter()

@@ -9,7 +9,7 @@ import {
   type SupplierIntelligenceRecord,
 } from "@/lib/intelligence"
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function riskColor(level: "Low" | "Medium" | "High") {
   if (level === "Low") return "text-success border-success/30 bg-success/10"
@@ -31,7 +31,7 @@ function smartScoreTextColor(tone: SupplierIntelligenceRecord["smartScore"]["ton
   return "text-rose-700"
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// --- Sub-components -----------------------------------------------------------
 
 function RateBar({
   label,
@@ -206,7 +206,7 @@ function SkeletonRow() {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function SupplierIntelligencePage() {
   const router = useRouter()

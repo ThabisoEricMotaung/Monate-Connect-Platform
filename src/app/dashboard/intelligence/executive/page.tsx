@@ -8,7 +8,7 @@ import {
   type ExecutiveMetrics,
 } from "@/lib/intelligence"
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function formatZAR(value: number): string {
   if (value >= 1_000_000_000)
@@ -20,7 +20,7 @@ function formatZAR(value: number): string {
   return `R${value.toLocaleString("en-ZA", { maximumFractionDigits: 0 })}`
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// --- Sub-components -----------------------------------------------------------
 
 function MetricCard({
   label,
@@ -182,7 +182,7 @@ function SkeletonCard() {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function ExecutiveDashboardPage() {
   const router = useRouter()
@@ -246,21 +246,21 @@ export default function ExecutiveDashboardPage() {
               value={metrics.totalProcurementValue}
               format="currency"
               tone="blue"
-              icon="💰"
+              icon="ðŸ’°"
               description="Aggregate contracted value across all active and completed contracts"
             />
             <MetricCard
               label="Active Suppliers"
               value={metrics.activeSuppliers}
               tone="green"
-              icon="🏭"
+              icon="ðŸ­"
               description="Suppliers with at least one quote submission in the network"
             />
             <MetricCard
               label="Active RFQs"
               value={metrics.activeRFQs}
               tone="blue"
-              icon="📋"
+              icon="ðŸ“‹"
               description="Open procurement requests currently accepting supplier quotes"
             />
             <MetricCard
@@ -290,7 +290,7 @@ export default function ExecutiveDashboardPage() {
               value={metrics.averageRFQValue}
               format="currency"
               tone="purple"
-              icon="📊"
+              icon="ðŸ“Š"
               description="Mean budget value across all RFQs with declared budgets"
             />
             <MetricCard
@@ -304,7 +304,7 @@ export default function ExecutiveDashboardPage() {
                     ? "amber"
                     : "default"
               }
-              icon="🎯"
+              icon="ðŸŽ¯"
               description="Composite procurement effectiveness indicator"
             />
           </section>

@@ -241,7 +241,7 @@ export default function PaymentDetailPage() {
         </div>
       )}
 
-      {/* ── Payment Policy Compliance ── */}
+      {/* -- Payment Policy Compliance -- */}
       {paymentCompliance && (
         <ComplianceBanner
           result={paymentCompliance}

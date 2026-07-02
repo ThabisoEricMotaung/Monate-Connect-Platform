@@ -8,7 +8,7 @@ import { getComplianceStatus } from "@/lib/complianceStatus"
 import { calculateSupplierScore, type SupplierScore } from "@/lib/supplierScore"
 import { supabase } from "@/lib/supabase"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 type RiskLevel = "Critical" | "High Risk" | "Medium Risk" | "Low Risk"
 
@@ -51,7 +51,7 @@ type AssessedSupplier = {
   readiness: SupplierScore
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ----------------------------------------------------------------
 
 const RISK_ORDER: RiskLevel[] = ["Critical", "High Risk", "Medium Risk", "Low Risk"]
 
@@ -103,7 +103,7 @@ const VERIFICATION_BADGE: Record<string, string> = {
 const filterClass =
   "w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition focus:border-accent focus:ring-1 focus:ring-accent/30"
 
-// ─── Risk calculation ─────────────────────────────────────────────────────────
+// --- Risk calculation ---------------------------------------------------------
 //
 // Scoring:
 //   Critical data fields missing  +2 each  (CSD, BBBEE, Tax Status)
@@ -199,7 +199,7 @@ function assessRisk(profile: SupplierProfile): RiskAssessment {
   return { level, score, missingFields, missingDocs, expiredDocs, expiringDocs }
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// --- Sub-components -----------------------------------------------------------
 
 function SummaryCard({
   level,
@@ -481,7 +481,7 @@ function SkeletonCard() {
   )
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// --- Main page ----------------------------------------------------------------
 
 export default function ComplianceRiskPage() {
   const router = useRouter()
@@ -605,7 +605,7 @@ export default function ComplianceRiskPage() {
 
   return (
     <div>
-      {/* ── Page header ── */}
+      {/* -- Page header -- */}
       <div className="mb-8 border-b border-panel pb-6">
         <p className="text-xs uppercase tracking-[0.28em] text-accent">
           Procurement Intelligence
@@ -620,7 +620,7 @@ export default function ComplianceRiskPage() {
         </p>
       </div>
 
-      {/* ── Error ── */}
+      {/* -- Error -- */}
       {error && (
         <div className="mb-6 rounded-md border border-rose-500/25 bg-rose-500/10 px-5 py-4">
           <p className="text-sm font-semibold text-rose-700">
@@ -630,7 +630,7 @@ export default function ComplianceRiskPage() {
         </div>
       )}
 
-      {/* ── Loading ── */}
+      {/* -- Loading -- */}
       {loading && (
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -649,7 +649,7 @@ export default function ComplianceRiskPage() {
         </div>
       )}
 
-      {/* ── Dashboard ── */}
+      {/* -- Dashboard -- */}
       {!loading && !error && (
         <div className="space-y-6">
           {/* Summary cards */}

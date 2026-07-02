@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * ─── invoice_approvals SQL migration ──────────────────────────────────────────
+ * --- invoice_approvals SQL migration ------------------------------------------
  *
  * create table if not exists invoice_approvals (
  *   id bigint generated always as identity primary key,
@@ -39,7 +39,7 @@ import { checkApprovedOverride, type ProcurementOverride } from "@/lib/procureme
 import { supabase } from "@/lib/supabase"
 import { canUserApprove } from "@/lib/delegationAuthority"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 type ApprovalStatus = "Pending" | "Approved" | "Rejected" | "Correction Required"
 
@@ -53,7 +53,7 @@ type InvoiceApproval = {
   created_at: string | null
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ----------------------------------------------------------------
 
 const statusStyles: Record<string, string> = {
   Draft: "border-sky-500/30 bg-sky-500/10 text-sky-700",
@@ -85,7 +85,7 @@ create policy "Read invoice approvals" on invoice_approvals for select using (tr
 create policy "Insert invoice approvals" on invoice_approvals for insert with check (true);
 create policy "Update invoice approvals" on invoice_approvals for update using (true);`
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function normalizeInvoiceStatus(status: string | null): InvoiceStatus {
   return INVOICE_STATUSES.includes(status as InvoiceStatus)
@@ -111,7 +111,7 @@ function displayValue(value: string | number | null): string | null {
   return value == null ? null : String(value)
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// --- Sub-components -----------------------------------------------------------
 
 function DetailField({ label, value }: { label: string; value: string | null }) {
   return (
@@ -159,7 +159,7 @@ function SQLBlock({ sql }: { sql: string }) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function InvoiceDetailPage() {
   const params = useParams<{ id: string }>()
@@ -212,7 +212,7 @@ export default function InvoiceDetailPage() {
     )
   }, [invoice])
 
-  // ─── Load ──────────────────────────────────────────────────────────────────
+  // --- Load ------------------------------------------------------------------
 
   useEffect(() => {
     async function loadInvoice() {
@@ -274,7 +274,7 @@ export default function InvoiceDetailPage() {
     }))
   }, [currentStatus])
 
-  // ─── Existing handlers ─────────────────────────────────────────────────────
+  // --- Existing handlers -----------------------------------------------------
 
   async function updateStatus(status: InvoiceStatus) {
     if (!invoice) return
@@ -328,7 +328,7 @@ export default function InvoiceDetailPage() {
     }
   }
 
-  // ─── Approval handlers ─────────────────────────────────────────────────────
+  // --- Approval handlers -----------------------------------------------------
 
   async function submitApproval(approvalStatus: ApprovalStatus, targetInvoiceStatus: InvoiceStatus) {
     if (!invoice || !supabase) {
@@ -336,7 +336,7 @@ export default function InvoiceDetailPage() {
       return
     }
 
-    // ── Delegation Authority Check ──────────────────────────────────────────
+    // -- Delegation Authority Check ------------------------------------------
     const invoiceAmount = invoice.total ? Number(String(invoice.total).replace(/[^\d.]/g, "")) : (invoice.amount ? Number(String(invoice.amount).replace(/[^\d.]/g, "")) : 0)
     const hasDelegationAuthority = await canUserApprove(approverId, "invoices", invoiceAmount)
 
@@ -347,7 +347,7 @@ export default function InvoiceDetailPage() {
     }
 
 
-    // ── Workflow rule check for approvals ───────────────────────────────────
+    // -- Workflow rule check for approvals -----------------------------------
     if (approvalStatus === "Approved") {
       const ruleResult = await evaluateWorkflowRules("invoice", {
         amount: invoice.amount ? Number(String(invoice.amount).replace(/[^\d.]/g, "")) : 0,
@@ -437,7 +437,7 @@ export default function InvoiceDetailPage() {
     }
   }
 
-  // ─── Guards ────────────────────────────────────────────────────────────────
+  // --- Guards ----------------------------------------------------------------
 
   if (loading) {
     return <div className="h-96 animate-pulse rounded-md border border-panel bg-card shadow-panel" />
@@ -468,11 +468,11 @@ export default function InvoiceDetailPage() {
   const isAlreadyApproved =
     currentStatus === "Approved" || latestApproval?.approval_status === "Approved"
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  // --- Render ----------------------------------------------------------------
 
   return (
     <div>
-      {/* ── Header ── */}
+      {/* -- Header -- */}
       <div className="mb-8 flex flex-col gap-4 border-b border-panel pb-6 lg:flex-row lg:items-start lg:justify-between print:hidden">
         <div>
           <p className="text-xs uppercase tracking-[0.28em] text-accent">Procurement / Invoice</p>
@@ -534,7 +534,7 @@ export default function InvoiceDetailPage() {
 
       <div className="print-document space-y-6">
 
-        {/* ── Invoice Summary ── */}
+        {/* -- Invoice Summary -- */}
         <section className="rounded-md border border-panel bg-card p-6 shadow-panel">
           <div className="flex flex-col gap-4 border-b border-panel pb-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -562,7 +562,7 @@ export default function InvoiceDetailPage() {
           </div>
         </section>
 
-        {/* ── Supplier / Contract / PO ── */}
+        {/* -- Supplier / Contract / PO -- */}
         <section className="grid gap-6 xl:grid-cols-3">
           <div className="rounded-md border border-panel bg-card p-6 shadow-panel">
             <div className="border-b border-panel pb-5">
@@ -627,7 +627,7 @@ export default function InvoiceDetailPage() {
           </div>
         </section>
 
-        {/* ── Lifecycle ── */}
+        {/* -- Lifecycle -- */}
         <section className="rounded-md border border-panel bg-card p-6 shadow-panel">
           <p className="text-[0.65rem] uppercase tracking-[0.22em] text-secondary">Invoice Lifecycle</p>
           <div className="mt-6 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
@@ -645,7 +645,7 @@ export default function InvoiceDetailPage() {
           </div>
         </section>
 
-        {/* ── Invoice Policy Compliance ── */}
+        {/* -- Invoice Policy Compliance -- */}
         {invoiceCompliance && (
           <ComplianceBanner
             result={invoiceCompliance}
@@ -659,7 +659,7 @@ export default function InvoiceDetailPage() {
           />
         )}
 
-        {/* ── Approval Workflow Panel ── */}
+        {/* -- Approval Workflow Panel -- */}
         <section className="rounded-md border border-panel bg-card p-6 shadow-panel print:hidden">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-panel pb-4">
             <div>
@@ -842,7 +842,7 @@ export default function InvoiceDetailPage() {
           )}
         </section>
 
-        {/* ── Status Actions ── */}
+        {/* -- Status Actions -- */}
         <section className="rounded-md border border-panel bg-card p-6 shadow-panel print:hidden">
           <p className="text-[0.65rem] uppercase tracking-[0.22em] text-secondary">Status Actions</p>
           <div className="mt-4 flex flex-wrap gap-3">

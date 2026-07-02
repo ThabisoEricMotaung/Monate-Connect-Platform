@@ -7,7 +7,7 @@ import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
 import { getInvoiceById, type Invoice } from "@/lib/invoices"
 import { supabase } from "@/lib/supabase"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 type InvoiceApproval = {
   id: number
@@ -28,7 +28,7 @@ type BankDetails = {
   verification_notes: string | null
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function fmtDate(d: string | null, opts?: Intl.DateTimeFormatOptions): string {
   if (!d) return "—"
@@ -44,7 +44,7 @@ function refNum(invoiceId: number): string {
   return `PR-${invoiceId}-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// --- Sub-components -----------------------------------------------------------
 
 function PackRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
@@ -88,7 +88,7 @@ function ApprovalStatusBadge({ status }: { status: string | null }) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function PaymentRequestPage() {
   const params = useParams<{ id: string }>()
@@ -177,7 +177,7 @@ export default function PaymentRequestPage() {
   return (
     <div className="mx-auto max-w-4xl print:max-w-none">
 
-      {/* ── Screen header ── */}
+      {/* -- Screen header -- */}
       <div className="mb-6 flex flex-col gap-4 border-b border-panel pb-6 sm:flex-row sm:items-end sm:justify-between print:hidden">
         <div>
           <div className="mb-2 flex items-center gap-2">
@@ -208,7 +208,7 @@ export default function PaymentRequestPage() {
         </div>
       </div>
 
-      {/* ── Print masthead ── */}
+      {/* -- Print masthead -- */}
       <div className="hidden print:block print:mb-8 print:border-b print:border-gray-300 print:pb-6">
         <div className="print:flex print:items-start print:justify-between">
           <div>
@@ -263,7 +263,7 @@ export default function PaymentRequestPage() {
 
       <div className="space-y-4">
 
-        {/* ── Section 1: Pack Reference ── */}
+        {/* -- Section 1: Pack Reference -- */}
         <PackSection n="1" title="Payment Request Reference">
           <PackRow label="Pack Reference" value={packRef} mono />
           <PackRow label="Invoice Number" value={invoice.invoice_number || `INV-${invoiceId}`} mono />
@@ -277,7 +277,7 @@ export default function PaymentRequestPage() {
           )}
         </PackSection>
 
-        {/* ── Section 2: Invoice Details ── */}
+        {/* -- Section 2: Invoice Details -- */}
         <PackSection n="2" title="Invoice Details">
           <PackRow label="Invoice Number" value={invoice.invoice_number || `INV-${invoiceId}`} mono />
           <PackRow label="Invoice Status" value={invoice.status ?? "—"} />
@@ -288,7 +288,7 @@ export default function PaymentRequestPage() {
           )}
         </PackSection>
 
-        {/* ── Section 3: Supplier Details ── */}
+        {/* -- Section 3: Supplier Details -- */}
         <PackSection n="3" title="Supplier / Beneficiary Details">
           <PackRow label="Business Name" value={invoice.supplier?.business_name || invoice.supplier_name || "—"} />
           <PackRow label="Supplier ID" value={invoice.supplier_id || "—"} mono />
@@ -299,7 +299,7 @@ export default function PaymentRequestPage() {
           <PackRow label="Verification Status" value={invoice.supplier?.verification_status || "—"} />
         </PackSection>
 
-        {/* ── Section 4: Contract & PO Reference ── */}
+        {/* -- Section 4: Contract & PO Reference -- */}
         <PackSection n="4" title="Contract & Purchase Order Reference">
           <PackRow
             label="Contract Number"
@@ -325,7 +325,7 @@ export default function PaymentRequestPage() {
           />
         </PackSection>
 
-        {/* ── Section 5: Financial Summary ── */}
+        {/* -- Section 5: Financial Summary -- */}
         <PackSection n="5" title="Financial Summary">
           <PackRow label="Amount (excl. VAT)" value={displayVal(invoice.amount)} />
           <PackRow label="VAT Amount" value={invoice.vat ?? "—"} />
@@ -341,7 +341,7 @@ export default function PaymentRequestPage() {
           </div>
         </PackSection>
 
-        {/* ── Section 6: Approval Record ── */}
+        {/* -- Section 6: Approval Record -- */}
         <PackSection n="6" title="Approval Record">
           <PackRow
             label="Approval Status"
@@ -365,7 +365,7 @@ export default function PaymentRequestPage() {
           )}
         </PackSection>
 
-        {/* ── Section 7: Payment Instructions ── */}
+        {/* -- Section 7: Payment Instructions -- */}
         <PackSection n="7" title="Banking Details & Payment Instructions">
           {/* Banking verification status banner */}
           {bankDetails ? (
@@ -453,7 +453,7 @@ export default function PaymentRequestPage() {
           </div>
         </PackSection>
 
-        {/* ── Section 8: Declaration ── */}
+        {/* -- Section 8: Declaration -- */}
         <PackSection n="8" title="Declaration & Authorisation">
           <div className="py-2 text-sm leading-7 text-secondary print:text-gray-700">
             <p>
@@ -486,7 +486,7 @@ export default function PaymentRequestPage() {
         </PackSection>
       </div>
 
-      {/* ── Footer actions ── */}
+      {/* -- Footer actions -- */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel print:hidden">
         <p className="text-xs text-muted">
           This pack is for internal finance use. Do not share with the supplier.

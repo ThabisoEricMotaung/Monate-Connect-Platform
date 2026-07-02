@@ -13,7 +13,7 @@ import {
   type SupplierMatchResult,
 } from "@/lib/supplierMatching"
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 const LABEL_ORDER: MatchLabel[] = [
   "Excellent Match",
@@ -75,7 +75,7 @@ function BreakdownPip({
   )
 }
 
-// ─── SupplierCard ─────────────────────────────────────────────────────────────
+// --- SupplierCard -------------------------------------------------------------
 
 function SupplierCard({
   result,
@@ -380,7 +380,7 @@ function SupplierCard({
   )
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// --- Skeleton -----------------------------------------------------------------
 
 function SkeletonCard() {
   return (
@@ -408,7 +408,7 @@ function SkeletonCard() {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 type FilterTab = "All" | MatchLabel
 

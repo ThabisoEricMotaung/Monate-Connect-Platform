@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * ─── delegation_authority SQL migration ───────────────────────────────────────
+ * --- delegation_authority SQL migration ---------------------------------------
  *
  * create table if not exists delegation_authority (
  *   id bigint generated always as identity primary key,
@@ -40,7 +40,7 @@ import {
 } from "@/lib/delegationAuthority"
 import { supabase } from "@/lib/supabase"
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ----------------------------------------------------------------
 
 const MIGRATION_SQL = `create table if not exists delegation_authority (
   id bigint generated always as identity primary key,
@@ -64,7 +64,7 @@ create policy "Read delegation authority" on delegation_authority for select usi
 create policy "Insert delegation authority" on delegation_authority for insert with check (true);
 create policy "Update delegation authority" on delegation_authority for update using (true);`
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function fmtAmount(v: number | null): string {
   if (v === null || v === undefined) return "Any"
@@ -97,7 +97,7 @@ const inputCls =
 const labelCls =
   "mb-1.5 block text-[0.68rem] font-bold uppercase tracking-[0.22em] text-secondary"
 
-// ─── SQL block ────────────────────────────────────────────────────────────────
+// --- SQL block ----------------------------------------------------------------
 
 function SQLBlock({ sql }: { sql: string }) {
   const [open, setOpen] = useState(false)
@@ -135,7 +135,7 @@ function SQLBlock({ sql }: { sql: string }) {
   )
 }
 
-// ─── Delegation form ──────────────────────────────────────────────────────────
+// --- Delegation form ----------------------------------------------------------
 
 const EMPTY_FORM: CreateDelegationAuthorityInput = {
   user_id: null,
@@ -368,7 +368,7 @@ function DelegationForm({
   )
 }
 
-// ─── Record row ────────────────────────────────────────────────────────────────
+// --- Record row ----------------------------------------------------------------
 
 function DelegationRow({
   record,
@@ -467,7 +467,7 @@ function DelegationRow({
   )
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// --- Skeleton -----------------------------------------------------------------
 
 function SkeletonRow() {
   return (
@@ -481,7 +481,7 @@ function SkeletonRow() {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function DelegationAuthorityPage() {
   const router = useRouter()

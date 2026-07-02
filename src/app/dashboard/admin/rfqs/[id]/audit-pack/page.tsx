@@ -7,7 +7,7 @@ import { requireAdminOrBuyer } from "@/lib/auth"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { supabase } from "@/lib/supabase"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 type ComplianceStatus = "Compliant" | "Exceptions Noted" | "Non-Compliant"
 
@@ -25,7 +25,7 @@ type Override = { id: number; entity_type: string | null; entity_id: string | nu
 type SupplierProfile = { id: string; business_name: string | null; verification_status: string | null; bbbee_level: string | null; csd_number: string | null }
 type BankDetails = { supplier_id: string | null; verification_status: string | null }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function fmtDate(d: string | null, long = false): string {
   if (!d) return "—"
@@ -50,7 +50,7 @@ function certRef(rfqId: number): string {
   return `COMP-${rfqId}-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`
 }
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
+// --- Status badge -------------------------------------------------------------
 
 function StatusBadge({ status, size = "md" }: { status: string | null; size?: "sm" | "md" }) {
   const cls: Record<string, string> = {
@@ -73,7 +73,7 @@ function StatusBadge({ status, size = "md" }: { status: string | null; size?: "s
   )
 }
 
-// ─── Section wrapper ──────────────────────────────────────────────────────────
+// --- Section wrapper ----------------------------------------------------------
 
 function AuditSection({ n, title, eyebrow, children, compliance }: {
   n: number; title: string; eyebrow: string; children: React.ReactNode; compliance?: "pass" | "warn" | "fail" | "na"
@@ -105,7 +105,7 @@ function MetaRow({ label, value, mono = false }: { label: string; value: string;
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function AuditPackPage() {
   const params = useParams<{ id: string }>()
@@ -204,7 +204,7 @@ export default function AuditPackPage() {
         setBanking(bmap)
       }
 
-      // ── Compute compliance status ─────────────────────────────────────────
+      // -- Compute compliance status -----------------------------------------
       const findings: string[] = []
       let status: ComplianceStatus = "Compliant"
 
@@ -334,7 +334,7 @@ export default function AuditPackPage() {
     .filter((x) => x.eval)
     .sort((a, b) => (b.eval?.total_score ?? 0) - (a.eval?.total_score ?? 0))
 
-  // ─── Render ──────────────────────────────────────────────────────────────────
+  // --- Render ------------------------------------------------------------------
 
   if (loading) {
     return (
@@ -362,7 +362,7 @@ export default function AuditPackPage() {
   return (
     <div ref={printRef} className="mx-auto max-w-5xl print:max-w-none">
 
-      {/* ── Screen header ── */}
+      {/* -- Screen header -- */}
       <div className="mb-6 flex flex-col gap-4 border-b border-panel pb-6 sm:flex-row sm:items-end sm:justify-between print:hidden">
         <div>
           <div className="mb-2 flex items-center gap-2">
@@ -395,7 +395,7 @@ export default function AuditPackPage() {
         </div>
       </div>
 
-      {/* ── Print masthead ── */}
+      {/* -- Print masthead -- */}
       <div className="hidden print:block print:mb-8 print:border-b print:border-gray-300 print:pb-5">
         <div className="print:flex print:items-start print:justify-between">
           <div>
@@ -415,7 +415,7 @@ export default function AuditPackPage() {
         </div>
       </div>
 
-      {/* ── Compliance certificate (toggleable) ── */}
+      {/* -- Compliance certificate (toggleable) -- */}
       {showCertificate && (
         <div className="mb-6 rounded-md border border-accent bg-accent/5 p-6 shadow-panel print:border-gray-300 print:bg-white">
           <div className="flex items-start justify-between gap-4">
@@ -474,7 +474,7 @@ export default function AuditPackPage() {
 
       <div className="space-y-5">
 
-        {/* ── S1: Procurement Reference ── */}
+        {/* -- S1: Procurement Reference -- */}
         <AuditSection n={1} title="Procurement Reference" eyebrow="RFQ Details" compliance="na">
           <div className="divide-y divide-panel print:divide-gray-100">
             <MetaRow label="RFQ Number" value={`RFQ-${rfqId}`} mono />
@@ -489,7 +489,7 @@ export default function AuditPackPage() {
           </div>
         </AuditSection>
 
-        {/* ── S2: Supplier Participation ── */}
+        {/* -- S2: Supplier Participation -- */}
         <AuditSection n={2} title="Supplier Participation" eyebrow="Quote Submissions"
           compliance={quotes.length > 0 ? "pass" : "warn"}>
           {quotes.length === 0 ? (
@@ -526,7 +526,7 @@ export default function AuditPackPage() {
           </p>
         </AuditSection>
 
-        {/* ── S3: Quote Evaluation Matrix ── */}
+        {/* -- S3: Quote Evaluation Matrix -- */}
         <AuditSection n={3} title="Evaluation & Scoring Matrix" eyebrow="Structured Assessment"
           compliance={evaluations.length > 0 ? "pass" : quotes.length > 0 ? "warn" : "na"}>
           {evaluations.length === 0 ? (
@@ -564,7 +564,7 @@ export default function AuditPackPage() {
           <p className="mt-2 text-xs text-muted print:text-gray-500">Each criterion: 0–20 · Total maximum: 100</p>
         </AuditSection>
 
-        {/* ── S4: Award Recommendation ── */}
+        {/* -- S4: Award Recommendation -- */}
         <AuditSection n={4} title="Award Recommendation" eyebrow="Procurement Decision"
           compliance={awardRec?.status === "Approved" ? "pass" : awardRec ? "warn" : "fail"}>
           {!awardRec ? (
@@ -592,7 +592,7 @@ export default function AuditPackPage() {
           )}
         </AuditSection>
 
-        {/* ── S5: Approval History ── */}
+        {/* -- S5: Approval History -- */}
         <AuditSection n={5} title="Approval History" eyebrow="Decision Board Items"
           compliance={boardItems.length > 0 ? "pass" : "na"}>
           {boardItems.length === 0 ? (
@@ -616,7 +616,7 @@ export default function AuditPackPage() {
           )}
         </AuditSection>
 
-        {/* ── S6: Override History ── */}
+        {/* -- S6: Override History -- */}
         <AuditSection n={6} title="Override History" eyebrow="Compliance Exceptions"
           compliance={overrides.length === 0 ? "pass" : overrides.some((o) => o.status === "Approved") ? "warn" : "na"}>
           {overrides.length === 0 ? (
@@ -645,7 +645,7 @@ export default function AuditPackPage() {
           )}
         </AuditSection>
 
-        {/* ── S7: Delegation Authority ── */}
+        {/* -- S7: Delegation Authority -- */}
         <AuditSection n={7} title="Delegation Authority Check" eyebrow="Approver Authority"
           compliance={quotes.some((q) => q.status === "Awarded") ? "pass" : "na"}>
           {(() => {
@@ -671,7 +671,7 @@ export default function AuditPackPage() {
           })()}
         </AuditSection>
 
-        {/* ── S8: PO / Contract / Invoice / Payment Trail ── */}
+        {/* -- S8: PO / Contract / Invoice / Payment Trail -- */}
         <AuditSection n={8} title="Procurement Lifecycle Trail" eyebrow="PO / Contract / Invoice / Payment"
           compliance={pos.length > 0 ? contracts.length > 0 ? "pass" : "warn" : "na"}>
           <div className="space-y-4">
@@ -749,7 +749,7 @@ export default function AuditPackPage() {
           </div>
         </AuditSection>
 
-        {/* ── S9: Audit Log Timeline ── */}
+        {/* -- S9: Audit Log Timeline -- */}
         <AuditSection n={9} title="Audit Log Timeline" eyebrow="System Activity" compliance="na">
           {auditLogs.length === 0 ? (
             <p className="text-sm text-muted italic">No audit log entries found for this RFQ.</p>
@@ -778,7 +778,7 @@ export default function AuditPackPage() {
           )}
         </AuditSection>
 
-        {/* ── S10: Compliance Conclusion ── */}
+        {/* -- S10: Compliance Conclusion -- */}
         <AuditSection n={10} title="Compliance Conclusion" eyebrow="Audit Summary"
           compliance={complianceStatus === "Compliant" ? "pass" : complianceStatus === "Exceptions Noted" ? "warn" : "fail"}>
           <div className="space-y-5">

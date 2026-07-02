@@ -12,7 +12,7 @@ import { useParams } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
 import ComplianceChecklist from "@/components/compliance/ComplianceChecklist"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 type RFQSubmissionState = {
   id: number
@@ -49,7 +49,7 @@ type TenderResponseOutput = {
   warnings: string[]
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ----------------------------------------------------------------
 
 const SUPPORTING_NOTE_TERMS = [
   "vat",
@@ -67,7 +67,7 @@ const SUBMISSION_CHECKLIST = [
   "All required compliance documents are ready for submission",
 ]
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function cleanAmountInput(value: string): string {
   return value.replace(/[^\d]/g, "")
@@ -86,7 +86,7 @@ function formatDeadline(dateStr: string | null): string {
   })
 }
 
-// ─── AI Quote Assistant logic (existing) ──────────────────────────────────────
+// --- AI Quote Assistant logic (existing) --------------------------------------
 
 function reviewQuoteDraft(draft: QuoteDraft): QuoteAssistantResult {
   const suggestions: string[] = []
@@ -132,7 +132,7 @@ function improveScopeText(scope: string): string {
   return `Our organisation will provide ${normalizedScope}. This includes the required planning, supply, delivery coordination, quality control, and procurement documentation needed to meet the RFQ requirements. Work will be completed in line with the agreed timeline, applicable compliance obligations, and buyer review expectations.`
 }
 
-// ─── Tender Response Builder logic ────────────────────────────────────────────
+// --- Tender Response Builder logic --------------------------------------------
 
 function buildTenderResponse(
   roughNotes: string,
@@ -253,7 +253,7 @@ function buildTenderResponse(
   }
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function SubmitQuotePage() {
   const { t } = useI18n()
@@ -332,7 +332,7 @@ export default function SubmitQuotePage() {
     loadRfq()
   }, [params.id])
 
-  // ─── Handlers: AI Quote Assistant ──────────────────────────────────────────
+  // --- Handlers: AI Quote Assistant ------------------------------------------
 
   function handleCheckQuote() {
     setAssistantResult(reviewQuoteDraft(quoteDraft))
@@ -349,7 +349,7 @@ export default function SubmitQuotePage() {
     setImprovedScope("")
   }
 
-  // ─── Handlers: Tender Response Builder ─────────────────────────────────────
+  // --- Handlers: Tender Response Builder -------------------------------------
 
   function handleBuildResponse() {
     const { response, warnings } = buildTenderResponse(roughNotes, rfq?.title ?? null)
@@ -392,7 +392,7 @@ export default function SubmitQuotePage() {
     )
   }
 
-  // ─── Submit ─────────────────────────────────────────────────────────────────
+  // --- Submit -----------------------------------------------------------------
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -558,7 +558,7 @@ export default function SubmitQuotePage() {
     setResponseBuilt(false)
   }
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
+  // --- Render -----------------------------------------------------------------
 
   const RESPONSE_SECTIONS: Array<{
     key: keyof BuiltResponse
@@ -729,9 +729,9 @@ export default function SubmitQuotePage() {
             </button>
           </div>
 
-          {/* ──────────────────────────────────────────────────────────────────
+          {/* ------------------------------------------------------------------
               TENDER RESPONSE BUILDER
-          ─────────────────────────────────────────────────────────────────── */}
+          ------------------------------------------------------------------- */}
           <section className="mb-6 rounded-md border border-panel bg-card p-5 shadow-panel">
             {/* Header */}
             <div className="flex flex-col gap-3 border-b border-panel pb-5 lg:flex-row lg:items-start lg:justify-between">
@@ -982,9 +982,9 @@ export default function SubmitQuotePage() {
             )}
           </section>
 
-          {/* ──────────────────────────────────────────────────────────────────
+          {/* ------------------------------------------------------------------
               AI QUOTE ASSISTANT (existing)
-          ─────────────────────────────────────────────────────────────────── */}
+          ------------------------------------------------------------------- */}
           <section className="mb-6 rounded-md border border-panel bg-card p-5 shadow-panel">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
@@ -1072,9 +1072,9 @@ export default function SubmitQuotePage() {
             )}
           </section>
 
-          {/* ──────────────────────────────────────────────────────────────────
+          {/* ------------------------------------------------------------------
               FORM FIELDS (existing)
-          ─────────────────────────────────────────────────────────────────── */}
+          ------------------------------------------------------------------- */}
           <div className="enterprise-grid enterprise-grid-2">
             <div className="enterprise-field">
               <label>{t("amount")} (ZAR)</label>

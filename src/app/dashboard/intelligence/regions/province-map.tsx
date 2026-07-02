@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type Metric = 'rfq_value' | 'suppliers' | 'pos_issued' | 'avg_score'
 
@@ -22,7 +22,7 @@ interface TooltipState {
   province: ProvinceData | null
 }
 
-// â”€â”€â”€ Province SVG paths (viewBox 0 0 500 420) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Province SVG paths (viewBox 0 0 500 420) ────────────────────────────────
 // Real paths decoded from datamaps ZAF TopoJSON
 
 const PROVINCE_PATHS: Record<string, { id: string; path: string; labelX: number; labelY: number }> = {
@@ -73,7 +73,7 @@ const PROVINCE_PATHS: Record<string, { id: string; path: string; labelX: number;
   },
 }
 
-// â”€â”€â”€ Metric config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Metric config ────────────────────────────────────────────────────────────
 
 const METRIC_CONFIG: Record<Metric, { label: string; unit: string; format: (v: number) => string }> = {
   rfq_value:  { label: 'RFQ value',   unit: 'R',  format: (v) => `R ${(v/1000).toFixed(0)}K` },
@@ -82,7 +82,7 @@ const METRIC_CONFIG: Record<Metric, { label: string; unit: string; format: (v: n
   avg_score:  { label: 'Avg score',   unit: '',   format: (v) => `${v.toFixed(0)}` },
 }
 
-// â”€â”€â”€ Colour ramp (teal) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Colour ramp (teal) ───────────────────────────────────────────────────────
 
 function tealColor(value: number, max: number): string {
   const t = max > 0 ? value / max : 0
@@ -92,7 +92,7 @@ function tealColor(value: number, max: number): string {
   return `rgb(${r},${g},${b})`
 }
 
-// â”€â”€â”€ Static seed data (replace with Supabase queries when data exists) â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Static seed data (replace with Supabase queries when data exists) ────────
 
 const SEED_DATA: ProvinceData[] = [
   { id: 'NC',  name: 'Northern Cape',   rfq_value: 140000,  suppliers: 18,  pos_issued: 6,  avg_score: 62 },
@@ -106,7 +106,7 @@ const SEED_DATA: ProvinceData[] = [
   { id: 'EC',  name: 'Eastern Cape',    rfq_value: 170000,  suppliers: 24,  pos_issued: 8,  avg_score: 61 },
 ]
 
-// â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ProvinceMap() {
   const [activeMetric, setActiveMetric] = useState<Metric>('rfq_value')

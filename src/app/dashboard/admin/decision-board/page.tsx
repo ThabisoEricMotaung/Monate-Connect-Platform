@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * ─── decision_board_items SQL migration ───────────────────────────────────────
+ * --- decision_board_items SQL migration ---------------------------------------
  *
  * create table if not exists decision_board_items (
  *   id bigint generated always as identity primary key,
@@ -37,7 +37,7 @@ import {
 } from "@/lib/decisionBoard"
 import { canUserApprove } from "@/lib/delegationAuthority"
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ----------------------------------------------------------------
 
 const MIGRATION_SQL = `create table if not exists decision_board_items (
   id bigint generated always as identity primary key,
@@ -81,7 +81,7 @@ const PRIORITY_META: Record<string, { color: string }> = {
   Critical: { color: "border-rose-600/40 bg-rose-600/10 text-rose-700" },
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function fmtDate(d: string | null): string {
   if (!d) return "—"
@@ -101,7 +101,7 @@ function typeLabel(t: string | null): string {
 }
 
 function typeIcon(t: string | null): string {
-  return ITEM_TYPE_META[t ?? ""]?.icon ?? "📋"
+  return ITEM_TYPE_META[t ?? ""]?.icon ?? "ðŸ“‹"
 }
 
 function typeBadge(t: string | null): string {
@@ -134,7 +134,7 @@ function approvalTypeForDecision(itemType: string | null): string {
 const inputCls =
   "rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30"
 
-// ─── SQL block ────────────────────────────────────────────────────────────────
+// --- SQL block ----------------------------------------------------------------
 
 function SQLBlock({ sql }: { sql: string }) {
   const [open, setOpen] = useState(false)
@@ -171,7 +171,7 @@ function SQLBlock({ sql }: { sql: string }) {
   )
 }
 
-// ─── Summary card ─────────────────────────────────────────────────────────────
+// --- Summary card -------------------------------------------------------------
 
 function SummaryCard({
   label, count, color, active, onClick,
@@ -194,7 +194,7 @@ function SummaryCard({
   )
 }
 
-// ─── Decision item card ───────────────────────────────────────────────────────
+// --- Decision item card -------------------------------------------------------
 
 function DecisionCard({
   item,
@@ -233,7 +233,7 @@ function DecisionCard({
         isCriticalPriority && actionable ? "border-rose-500/25" : "border-panel",
       ].join(" ")}
     >
-      {/* ── Header ── */}
+      {/* -- Header -- */}
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -283,7 +283,7 @@ function DecisionCard({
         </div>
       </button>
 
-      {/* ── Expanded detail ── */}
+      {/* -- Expanded detail -- */}
       {expanded && (
         <div className="border-t border-panel px-5 pb-5 pt-4">
           <div className="grid gap-5 lg:grid-cols-2">
@@ -411,7 +411,7 @@ function DecisionCard({
   )
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// --- Skeleton -----------------------------------------------------------------
 
 function SkeletonCard() {
   return (
@@ -431,7 +431,7 @@ function SkeletonCard() {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function DecisionBoardPage() {
   const router = useRouter()

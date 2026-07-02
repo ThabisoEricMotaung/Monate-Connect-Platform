@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * ─── workflow_rules SQL migration ─────────────────────────────────────────────
+ * --- workflow_rules SQL migration ---------------------------------------------
  *
  * create table if not exists workflow_rules (
  *   id bigint generated always as identity primary key,
@@ -38,7 +38,7 @@ import {
   type CreateWorkflowRuleInput,
 } from "@/lib/workflowRules"
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ----------------------------------------------------------------
 
 const MIGRATION_SQL = `create table if not exists workflow_rules (
   id bigint generated always as identity primary key,
@@ -58,7 +58,7 @@ create policy "Read workflow rules" on workflow_rules for select using (true);
 create policy "Insert workflow rules" on workflow_rules for insert with check (true);
 create policy "Update workflow rules" on workflow_rules for update using (true);`
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function fmtDate(d: string | null): string {
   if (!d) return "—"
@@ -94,11 +94,11 @@ function actionBadge(type: string | null): string {
 
 function actionIcon(type: string | null): string {
   switch (type) {
-    case "block":            return "🚫"
-    case "require_approval": return "📋"
+    case "block":            return "ðŸš«"
+    case "require_approval": return "ðŸ“‹"
     case "flag_risk":        return "⚠️"
-    case "create_alert":     return "🔔"
-    default:                 return "📌"
+    case "create_alert":     return "ðŸ””"
+    default:                 return "ðŸ“Œ"
   }
 }
 
@@ -108,7 +108,7 @@ const inputCls =
 const labelCls =
   "mb-1.5 block text-[0.68rem] font-bold uppercase tracking-[0.22em] text-secondary"
 
-// ─── SQL block ────────────────────────────────────────────────────────────────
+// --- SQL block ----------------------------------------------------------------
 
 function SQLBlock({ sql }: { sql: string }) {
   const [open, setOpen] = useState(false)
@@ -146,7 +146,7 @@ function SQLBlock({ sql }: { sql: string }) {
   )
 }
 
-// ─── Rule logic preview ───────────────────────────────────────────────────────
+// --- Rule logic preview -------------------------------------------------------
 
 function RulePreview({ form }: { form: Partial<CreateWorkflowRuleInput> }) {
   if (!form.entity_type || !form.condition_key || !form.condition_operator) return null
@@ -177,7 +177,7 @@ function RulePreview({ form }: { form: Partial<CreateWorkflowRuleInput> }) {
   )
 }
 
-// ─── Rule form ────────────────────────────────────────────────────────────────
+// --- Rule form ----------------------------------------------------------------
 
 const EMPTY_FORM: CreateWorkflowRuleInput = {
   rule_name: "",
@@ -354,7 +354,7 @@ function RuleForm({
   )
 }
 
-// ─── Rule table row ───────────────────────────────────────────────────────────
+// --- Rule table row -----------------------------------------------------------
 
 function RuleRow({
   rule,
@@ -450,7 +450,7 @@ function RuleRow({
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function WorkflowRulesPage() {
   const router = useRouter()

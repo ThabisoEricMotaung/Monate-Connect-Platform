@@ -108,7 +108,7 @@ export default function PricingPage() {
       <section className="bg-[#1a3a2a] px-6 py-20 text-white sm:py-24">
         <div className="mx-auto max-w-7xl text-center">
           <div className="mb-4 text-left">
-            <BackLink />
+            <BackLink className="text-[#f8f4ec]/70 hover:text-[#f8f4ec]" />
           </div>
           <span className="inline-flex rounded-full border border-[#c8a060]/45 bg-[#c8a060]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#c8a060]">
             Transparent pricing
@@ -126,7 +126,7 @@ export default function PricingPage() {
 
       <section className="mx-auto max-w-7xl px-6 py-14 sm:py-20">
         <div className="grid gap-6 lg:grid-cols-2">
-          <article className="flex flex-col rounded-md border border-[#d8cbb8] bg-white p-6 shadow-sm sm:p-8">
+          <article className="flex flex-col rounded-md border border-l-4 border-[#d8cbb8] border-l-[#5DCAA5] bg-white p-6 shadow-[0_0_20px_rgba(93,202,165,0.15)] sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <span className="inline-flex rounded-full bg-[#5DCAA5]/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#168567]">
@@ -154,7 +154,7 @@ export default function PricingPage() {
             </Link>
           </article>
 
-          <article className="flex flex-col rounded-md border-2 border-[#1a3a2a] bg-white p-6 shadow-[0_18px_45px_rgba(26,58,42,0.13)] sm:p-8">
+          <article className="flex flex-col rounded-md border-2 border-l-4 border-[#1a3a2a] border-l-[#c8a060] bg-white p-6 shadow-[0_0_20px_rgba(200,160,96,0.15)] sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <span className="inline-flex rounded-full bg-[#1a3a2a] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#c8a060]">

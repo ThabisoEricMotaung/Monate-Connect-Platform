@@ -7,7 +7,7 @@ import { logActivity } from "@/lib/activity"
 import { logAuditAction } from "@/lib/audit"
 import { supabase } from "@/lib/supabase"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 type BankRecord = {
   id: number
@@ -30,7 +30,7 @@ type BankRecord = {
 const VERIFICATION_STATUSES = ["Unverified", "Under Review", "Verified", "Rejected"] as const
 type VerificationStatus = (typeof VERIFICATION_STATUSES)[number]
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function statusBadge(status: string | null): string {
   switch (status) {
@@ -52,7 +52,7 @@ function maskAccount(n: string | null): string {
   return "•".repeat(n.length - 4) + n.slice(-4)
 }
 
-// ─── Verification panel ───────────────────────────────────────────────────────
+// --- Verification panel -------------------------------------------------------
 
 function VerificationPanel({
   record,
@@ -187,7 +187,7 @@ function VerificationPanel({
   )
 }
 
-// ─── Bank record card ─────────────────────────────────────────────────────────
+// --- Bank record card ---------------------------------------------------------
 
 function BankCard({
   record,
@@ -254,7 +254,7 @@ function BankCard({
   )
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// --- Skeleton -----------------------------------------------------------------
 
 function SkeletonCard() {
   return (
@@ -271,7 +271,7 @@ function SkeletonCard() {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function AdminBankingPage() {
   const router = useRouter()

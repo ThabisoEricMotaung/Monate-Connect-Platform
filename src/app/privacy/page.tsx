@@ -1,4 +1,4 @@
-﻿import Link from "next/link"
+import Link from "next/link"
 import BackLink from "@/components/BackLink"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"

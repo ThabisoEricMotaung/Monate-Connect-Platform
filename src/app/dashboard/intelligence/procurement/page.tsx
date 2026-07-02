@@ -13,7 +13,7 @@ import {
   type ProcurementAnalyticsData,
 } from "@/lib/intelligence"
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ----------------------------------------------------------------
 
 const PALETTE = [
   "#315A78", "#2F8C67", "#8A6A32", "#5B6470",
@@ -23,7 +23,7 @@ const PALETTE = [
 
 const TICK = "#94a3b8"
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function formatZAR(value: number): string {
   if (value >= 1_000_000_000) return `R${(value / 1_000_000_000).toFixed(1)}B`
@@ -32,7 +32,7 @@ function formatZAR(value: number): string {
   return `R${value.toLocaleString("en-ZA", { maximumFractionDigits: 0 })}`
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// --- Sub-components -----------------------------------------------------------
 
 function ChartCard({
   title,
@@ -100,7 +100,7 @@ function SkeletonChart() {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function ProcurementAnalyticsPage() {
   const router = useRouter()
@@ -179,17 +179,17 @@ export default function ProcurementAnalyticsPage() {
               {
                 label: "Total RFQs (12 months)",
                 value: totalRFQs.toLocaleString("en-ZA"),
-                icon: "📋",
+                icon: "ðŸ“‹",
               },
               {
                 label: "Contracted Value (12 months)",
                 value: formatZAR(totalValue),
-                icon: "💰",
+                icon: "ðŸ’°",
               },
               {
                 label: "Top Category",
                 value: topCategory,
-                icon: "🏷️",
+                icon: "ðŸ·️",
               },
             ].map((item) => (
               <div key={item.label} className="enterprise-card flex items-center gap-4">

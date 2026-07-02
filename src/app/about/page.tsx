@@ -176,7 +176,7 @@ export default function AboutPage() {
         <blockquote className="rounded-md border border-[#c8a060]/35 bg-white p-7 shadow-sm sm:p-10">
           <IconSparkles className="h-8 w-8 text-[#c8a060]" aria-hidden />
           <p className="mt-5 font-display text-2xl leading-10 text-[#1a3a2a]">
-            &quot;AiForm Procure was built because I could see that South African suppliers â€” especially small and emerging businesses â€” were losing procurement opportunities not because of poor capability, but because of compliance gaps and lack of visibility. This platform is designed to close that gap.&quot;
+            &quot;AiForm Procure was built because I could see that South African suppliers — especially small and emerging businesses — were losing procurement opportunities not because of poor capability, but because of compliance gaps and lack of visibility. This platform is designed to close that gap.&quot;
           </p>
           <footer className="mt-6 text-sm font-bold uppercase tracking-[0.14em] text-[#53665c]">
             Thabiso Motaung, Founder, AiForm Studio

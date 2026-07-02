@@ -31,7 +31,7 @@ const DEFAULT_EVALUATION = `• Price / cost competitiveness (40%)
 • Relevant experience and verifiable reference projects (10%)
 • Delivery timeline and operational readiness (5%)`
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 export type RFQTemplate = {
   id: number
@@ -69,7 +69,7 @@ const EMPTY_FORM: TemplateFormData = {
   default_deadline_days: 14,
 }
 
-// ─── Shared styles ────────────────────────────────────────────────────────────
+// --- Shared styles ------------------------------------------------------------
 
 const inputCls =
   "w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30"
@@ -77,7 +77,7 @@ const inputCls =
 const labelCls =
   "mb-1.5 block text-[0.68rem] font-bold uppercase tracking-[0.24em] text-secondary"
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// --- Helpers -----------------------------------------------------------------
 
 function formatDate(iso: string | null): string {
   if (!iso) return ""
@@ -100,7 +100,7 @@ function categoryColor(cat: string | null): string {
   return map[cat ?? ""] ?? "border-panel bg-surface text-secondary"
 }
 
-// ─── Template card ────────────────────────────────────────────────────────────
+// --- Template card ------------------------------------------------------------
 
 function TemplateCard({
   template,
@@ -219,7 +219,7 @@ function TemplateCard({
   )
 }
 
-// ─── Create form ──────────────────────────────────────────────────────────────
+// --- Create form --------------------------------------------------------------
 
 function CreateTemplateForm({
   onCreated,
@@ -470,7 +470,7 @@ function CreateTemplateForm({
   )
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// --- Skeleton -----------------------------------------------------------------
 
 function SkeletonCard() {
   return (
@@ -487,7 +487,7 @@ function SkeletonCard() {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function RFQTemplatesPage() {
   const router = useRouter()

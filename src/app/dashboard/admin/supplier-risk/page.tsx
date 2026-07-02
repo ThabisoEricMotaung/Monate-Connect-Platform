@@ -15,7 +15,7 @@ import {
 import { saveSupplier } from "@/lib/savedSuppliers"
 import { createDecisionItem } from "@/lib/decisionBoard"
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ----------------------------------------------------------------
 
 const SA_PROVINCES = [
   "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal",
@@ -24,7 +24,7 @@ const SA_PROVINCES = [
 
 const VERIFICATION_STATUSES = ["Verified", "Under Review", "Pending Review", "Unverified"]
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function riskLevelColor(level: RiskLevel): string {
   switch (level) {
@@ -71,10 +71,10 @@ function severityBadge(severity: RiskFactor["severity"]): string {
 
 function categoryIcon(cat: RiskFactor["category"]): string {
   switch (cat) {
-    case "compliance":   return "📋"
+    case "compliance":   return "ðŸ“‹"
     case "finance":      return "💳"
-    case "verification": return "🔒"
-    case "performance":  return "📊"
+    case "verification": return "ðŸ”’"
+    case "performance":  return "ðŸ“Š"
     case "activity":     return "⏱"
   }
 }
@@ -93,7 +93,7 @@ function fmtDate(d: string | null): string {
   return new Date(d).toLocaleDateString("en-ZA", { year: "numeric", month: "short", day: "numeric" })
 }
 
-// ─── Summary card ─────────────────────────────────────────────────────────────
+// --- Summary card -------------------------------------------------------------
 
 function SummaryCard({
   level,
@@ -130,7 +130,7 @@ function SummaryCard({
   )
 }
 
-// ─── Risk factor pill ─────────────────────────────────────────────────────────
+// --- Risk factor pill ---------------------------------------------------------
 
 function RiskFactorPill({ factor }: { factor: RiskFactor }) {
   return (
@@ -144,7 +144,7 @@ function RiskFactorPill({ factor }: { factor: RiskFactor }) {
   )
 }
 
-// ─── Supplier risk card ───────────────────────────────────────────────────────
+// --- Supplier risk card -------------------------------------------------------
 
 function RiskCard({
   record,
@@ -204,7 +204,7 @@ function RiskCard({
         expanded ? "shadow-md" : "",
       ].join(" ")}
     >
-      {/* ── Card header ── */}
+      {/* -- Card header -- */}
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -295,7 +295,7 @@ function RiskCard({
         </svg>
       </button>
 
-      {/* ── Expanded detail ── */}
+      {/* -- Expanded detail -- */}
       {expanded && (
         <div className="border-t border-panel px-5 pb-5 pt-4">
           <div className="grid gap-5 lg:grid-cols-2">
@@ -430,7 +430,7 @@ function RiskCard({
   )
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// --- Skeleton -----------------------------------------------------------------
 
 function SkeletonCard() {
   return (
@@ -451,7 +451,7 @@ function SkeletonCard() {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function SupplierRiskPage() {
   const router = useRouter()
@@ -511,7 +511,7 @@ export default function SupplierRiskPage() {
 
   return (
     <div>
-      {/* ── Header ── */}
+      {/* -- Header -- */}
       <div className="mb-8 border-b border-panel pb-6">
         <p className="text-xs uppercase tracking-[0.28em] text-accent">Admin / Risk Management</p>
         <h1 className="mt-3 text-2xl font-semibold text-heading">Supplier Risk & Early Warning</h1>
@@ -527,7 +527,7 @@ export default function SupplierRiskPage() {
         </div>
       )}
 
-      {/* ── Summary cards ── */}
+      {/* -- Summary cards -- */}
       {!loading && (
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
           <SummaryCard
@@ -563,7 +563,7 @@ export default function SupplierRiskPage() {
         </div>
       )}
 
-      {/* ── Risk factor legend ── */}
+      {/* -- Risk factor legend -- */}
       {!loading && records.length > 0 && (
         <details className="mb-5 rounded-md border border-panel bg-card p-4 shadow-panel">
           <summary className="cursor-pointer text-[0.68rem] font-bold uppercase tracking-[0.2em] text-secondary">
@@ -584,7 +584,7 @@ export default function SupplierRiskPage() {
         </details>
       )}
 
-      {/* ── Filters ── */}
+      {/* -- Filters -- */}
       {!loading && records.length > 0 && (
         <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           <div className="relative xl:col-span-2">
@@ -617,7 +617,7 @@ export default function SupplierRiskPage() {
         </div>
       )}
 
-      {/* ── Risk level filter tabs ── */}
+      {/* -- Risk level filter tabs -- */}
       {!loading && records.length > 0 && (
         <div className="mb-5 flex flex-wrap gap-2">
           {(["All", "Critical", "High", "Medium", "Low"] as const).map((level) => (
@@ -643,14 +643,14 @@ export default function SupplierRiskPage() {
         </div>
       )}
 
-      {/* ── Loading ── */}
+      {/* -- Loading -- */}
       {loading && (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       )}
 
-      {/* ── Empty states ── */}
+      {/* -- Empty states -- */}
       {!loading && records.length === 0 && !error && (
         <div className="flex min-h-[240px] flex-col items-center justify-center rounded-md border border-dashed border-panel bg-card shadow-panel">
           <svg className="h-12 w-12 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -669,7 +669,7 @@ export default function SupplierRiskPage() {
         </div>
       )}
 
-      {/* ── Risk card list ── */}
+      {/* -- Risk card list -- */}
       {!loading && filtered.length > 0 && (
         <div className="space-y-3">
           {filtered.map((record, idx) => (
@@ -678,7 +678,7 @@ export default function SupplierRiskPage() {
         </div>
       )}
 
-      {/* ── Footer ── */}
+      {/* -- Footer -- */}
       {!loading && records.length > 0 && (
         <div className="mt-5 flex items-center justify-between gap-3 rounded-md border border-panel bg-card px-5 py-3 shadow-panel">
           <p className="text-xs text-muted">

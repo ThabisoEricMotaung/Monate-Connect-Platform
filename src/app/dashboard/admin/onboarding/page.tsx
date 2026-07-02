@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * ─── buyer_profiles SQL migration ─────────────────────────────────────────────
+ * --- buyer_profiles SQL migration ---------------------------------------------
  *
  * Run this in your Supabase SQL Editor before using this page.
  *
@@ -59,7 +59,7 @@ import {
 } from "@/lib/formValidation"
 import { supabase } from "@/lib/supabase"
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ----------------------------------------------------------------
 
 const SA_PROVINCES = [
   "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal",
@@ -175,7 +175,7 @@ CREATE TRIGGER buyer_profiles_updated_at
   BEFORE UPDATE ON public.buyer_profiles
   FOR EACH ROW EXECUTE FUNCTION public.handle_buyer_profile_updated_at();`
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 type Step1Data = {
   organisation_name: string
@@ -207,7 +207,7 @@ type WizardDraft = {
   step3: Step3Data
 }
 
-// ─── Initial state ────────────────────────────────────────────────────────────
+// --- Initial state ------------------------------------------------------------
 
 const EMPTY_STEP1: Step1Data = {
   organisation_name: "",
@@ -232,7 +232,7 @@ const EMPTY_STEP3: Step3Data = {
   default_deadline_window_days: 14,
 }
 
-// ─── Shared styles ────────────────────────────────────────────────────────────
+// --- Shared styles ------------------------------------------------------------
 
 const inputCls =
   "w-full rounded-md border border-panel bg-panel px-4 py-3 text-sm text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30"
@@ -245,7 +245,7 @@ function FieldError({ message }: { message?: string }) {
   return <p className="mt-2 text-xs font-semibold text-rose-700">{message}</p>
 }
 
-// ─── Wizard constants ─────────────────────────────────────────────────────────
+// --- Wizard constants ---------------------------------------------------------
 
 const STEPS = [
   { n: 1, label: "Organisation" },
@@ -254,7 +254,7 @@ const STEPS = [
   { n: 4, label: "Review" },
 ]
 
-// ─── Step indicator ───────────────────────────────────────────────────────────
+// --- Step indicator -----------------------------------------------------------
 
 function StepIndicator({ current, completed }: { current: number; completed: Set<number> }) {
   return (
@@ -308,7 +308,7 @@ function StepIndicator({ current, completed }: { current: number; completed: Set
   )
 }
 
-// ─── Multi-select checkbox grid ───────────────────────────────────────────────
+// --- Multi-select checkbox grid -----------------------------------------------
 
 function CheckGrid({
   options,
@@ -376,7 +376,7 @@ function CheckGrid({
   )
 }
 
-// ─── Editable list ────────────────────────────────────────────────────────────
+// --- Editable list ------------------------------------------------------------
 
 function EditableList({
   items,
@@ -464,7 +464,7 @@ function EditableList({
   )
 }
 
-// ─── SQL display ──────────────────────────────────────────────────────────────
+// --- SQL display --------------------------------------------------------------
 
 function SQLBlock({ sql }: { sql: string }) {
   const [copied, setCopied] = useState(false)
@@ -538,7 +538,7 @@ function SQLBlock({ sql }: { sql: string }) {
   )
 }
 
-// ─── Review summary card ──────────────────────────────────────────────────────
+// --- Review summary card ------------------------------------------------------
 
 function SummaryCard({
   title,
@@ -581,7 +581,7 @@ function SummaryCard({
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function BuyerOnboardingPage() {
   const router = useRouter()
@@ -620,7 +620,7 @@ export default function BuyerOnboardingPage() {
     },
   })
 
-  // ─── Load profile ───────────────────────────────────────────────────────────
+  // --- Load profile -----------------------------------------------------------
 
   useEffect(() => {
     async function load() {
@@ -703,7 +703,7 @@ export default function BuyerOnboardingPage() {
     load()
   }, [])
 
-  // ─── Supabase upsert helper ─────────────────────────────────────────────────
+  // --- Supabase upsert helper -------------------------------------------------
 
   async function upsert(patch: Record<string, unknown>) {
     if (!supabase || !userId) return false
@@ -724,7 +724,7 @@ export default function BuyerOnboardingPage() {
     return true
   }
 
-  // ─── Step handlers ──────────────────────────────────────────────────────────
+  // --- Step handlers ----------------------------------------------------------
 
   function advance() {
     setStepSuccess("")
@@ -834,7 +834,7 @@ export default function BuyerOnboardingPage() {
     setSetupComplete(true)
   }
 
-  // ─── Guard states ────────────────────────────────────────────────────────────
+  // --- Guard states ------------------------------------------------------------
 
   if (loading) {
     return (
@@ -865,7 +865,7 @@ export default function BuyerOnboardingPage() {
     )
   }
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
+  // --- Render -----------------------------------------------------------------
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -909,7 +909,7 @@ export default function BuyerOnboardingPage() {
         </div>
       )}
 
-      {/* ── Setup complete ─────────────────────────────────────────────────── */}
+      {/* -- Setup complete --------------------------------------------------- */}
       {setupComplete && (
         <div className="rounded-md border border-success bg-success-soft p-8 text-center shadow-panel">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-success text-button">
@@ -989,10 +989,10 @@ export default function BuyerOnboardingPage() {
             </button>
           </div>
 
-          {/* ── Step card ───────────────────────────────────────────────────── */}
+          {/* -- Step card ----------------------------------------------------- */}
           <div ref={formRef} className="rounded-md border border-panel bg-card shadow-panel">
 
-            {/* ── Step 1: Organisation Details ─────────────────────────────── */}
+            {/* -- Step 1: Organisation Details ------------------------------- */}
             {step === 1 && (
               <div>
                 <div className="border-b border-panel px-6 py-5">
@@ -1103,7 +1103,7 @@ export default function BuyerOnboardingPage() {
               </div>
             )}
 
-            {/* ── Step 2: Procurement Preferences ─────────────────────────── */}
+            {/* -- Step 2: Procurement Preferences --------------------------- */}
             {step === 2 && (
               <div>
                 <div className="border-b border-panel px-6 py-5">
@@ -1244,7 +1244,7 @@ export default function BuyerOnboardingPage() {
               </div>
             )}
 
-            {/* ── Step 3: RFQ Templates ─────────────────────────────────────── */}
+            {/* -- Step 3: RFQ Templates --------------------------------------- */}
             {step === 3 && (
               <div>
                 <div className="border-b border-panel px-6 py-5">
@@ -1330,7 +1330,7 @@ export default function BuyerOnboardingPage() {
               </div>
             )}
 
-            {/* ── Step 4: Review Setup ──────────────────────────────────────── */}
+            {/* -- Step 4: Review Setup ---------------------------------------- */}
             {step === 4 && (
               <div>
                 <div className="border-b border-panel px-6 py-5">
@@ -1438,7 +1438,7 @@ export default function BuyerOnboardingPage() {
               </div>
             )}
 
-            {/* ── Action bar ────────────────────────────────────────────────── */}
+            {/* -- Action bar -------------------------------------------------- */}
             <div className="flex items-center justify-between gap-4 border-t border-panel px-6 py-4">
               <button
                 type="button"

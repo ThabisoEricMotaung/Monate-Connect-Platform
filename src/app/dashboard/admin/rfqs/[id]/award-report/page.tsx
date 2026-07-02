@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * ─── award_recommendations SQL migration ──────────────────────────────────────
+ * --- award_recommendations SQL migration --------------------------------------
  *
  * create table if not exists award_recommendations (
  *   id bigint generated always as identity primary key,
@@ -32,7 +32,7 @@ import { checkAndLogApprovalRequirement } from "@/lib/approvalMatrix"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { supabase } from "@/lib/supabase"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 type RFQ = {
   id: number
@@ -99,7 +99,7 @@ type ReportForm = {
   selected_quote_id: number | null
 }
 
-// ─── SQL migration string ─────────────────────────────────────────────────────
+// --- SQL migration string -----------------------------------------------------
 
 const MIGRATION_SQL = `create table if not exists award_recommendations (
   id bigint generated always as identity primary key,
@@ -124,7 +124,7 @@ create policy "Insert award recommendations"
 create policy "Update award recommendations"
   on award_recommendations for update using (true);`
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function fmtAmount(amount: string | null): string {
   if (!amount) return "—"
@@ -164,7 +164,7 @@ const inputCls =
 const labelCls =
   "mb-1.5 block text-[0.68rem] font-bold uppercase tracking-[0.22em] text-secondary print:text-gray-600"
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// --- Sub-components -----------------------------------------------------------
 
 function SectionHeader({ n, title, eyebrow }: { n: number; title: string; eyebrow: string }) {
   return (
@@ -228,7 +228,7 @@ function SQLBlock({ sql }: { sql: string }) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function AwardReportPage() {
   const params = useParams<{ id: string }>()
@@ -261,7 +261,7 @@ export default function AwardReportPage() {
     selected_quote_id: null,
   })
 
-  // ─── Load ──────────────────────────────────────────────────────────────────
+  // --- Load ------------------------------------------------------------------
 
   useEffect(() => {
     async function load() {
@@ -322,7 +322,7 @@ export default function AwardReportPage() {
     load()
   }, [rfqId, router])
 
-  // ─── Derived ───────────────────────────────────────────────────────────────
+  // --- Derived ---------------------------------------------------------------
 
   const evalByQuoteId = new Map(evaluations.map(e => [e.quote_id, e]))
 
@@ -343,7 +343,7 @@ export default function AwardReportPage() {
   const isApproved = existingRec?.status === "Approved"
   const reportDate = existingRec?.created_at ? fmtDate(existingRec.created_at) : fmtDate(new Date().toISOString())
 
-  // ─── Save ──────────────────────────────────────────────────────────────────
+  // --- Save ------------------------------------------------------------------
 
   async function handleSave() {
     if (!supabase) { setError("Supabase is not configured."); return }
@@ -467,7 +467,7 @@ export default function AwardReportPage() {
     window.print()
   }
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  // --- Render ----------------------------------------------------------------
 
   if (loading) {
     return (
@@ -491,7 +491,7 @@ export default function AwardReportPage() {
   return (
     <div className="mx-auto max-w-5xl print:max-w-none" ref={printRef}>
 
-      {/* ── Screen header ── */}
+      {/* -- Screen header -- */}
       <div className="mb-6 flex flex-col gap-4 border-b border-panel pb-6 sm:flex-row sm:items-end sm:justify-between print:hidden">
         <div>
           <div className="mb-2 flex items-center gap-2">
@@ -517,7 +517,7 @@ export default function AwardReportPage() {
         </div>
       </div>
 
-      {/* ── Print masthead ── */}
+      {/* -- Print masthead -- */}
       <div className="hidden print:block print:mb-8 print:border-b print:border-gray-300 print:pb-5">
         <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-gray-500">
           AiForm Procure · Procurement Services · Confidential
@@ -567,7 +567,7 @@ export default function AwardReportPage() {
 
       <div className="space-y-5">
 
-        {/* ── Section 1: Procurement Reference ── */}
+        {/* -- Section 1: Procurement Reference -- */}
         <section className="rounded-md border border-panel bg-card p-6 shadow-panel print:border-gray-200 print:shadow-none">
           <SectionHeader n={1} title="Procurement Reference" eyebrow="RFQ Details" />
           <div className="space-y-2.5">
@@ -584,7 +584,7 @@ export default function AwardReportPage() {
           </div>
         </section>
 
-        {/* ── Section 2: Submission Overview ── */}
+        {/* -- Section 2: Submission Overview -- */}
         <section className="rounded-md border border-panel bg-card p-6 shadow-panel print:border-gray-200 print:shadow-none">
           <SectionHeader n={2} title="Submission Overview" eyebrow="All Quotes Received" />
           {quotes.length === 0 ? (
@@ -627,7 +627,7 @@ export default function AwardReportPage() {
           )}
         </section>
 
-        {/* ── Section 3: Evaluation & Scoring Matrix ── */}
+        {/* -- Section 3: Evaluation & Scoring Matrix -- */}
         <section className="rounded-md border border-panel bg-card p-6 shadow-panel print:border-gray-200 print:shadow-none">
           <SectionHeader n={3} title="Evaluation & Scoring Matrix" eyebrow="Structured Assessment" />
           {evaluations.length === 0 ? (
@@ -694,7 +694,7 @@ export default function AwardReportPage() {
           </div>
         </section>
 
-        {/* ── Section 4: Recommended Supplier ── */}
+        {/* -- Section 4: Recommended Supplier -- */}
         <section className="rounded-md border border-panel bg-card p-6 shadow-panel print:border-gray-200 print:shadow-none">
           <SectionHeader n={4} title="Recommended Supplier" eyebrow="Procurement Recommendation" />
 
@@ -799,7 +799,7 @@ export default function AwardReportPage() {
           )}
         </section>
 
-        {/* ── Section 5: Formal Recommendation ── */}
+        {/* -- Section 5: Formal Recommendation -- */}
         <section className="rounded-md border border-panel bg-card p-6 shadow-panel print:border-gray-200 print:shadow-none">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-panel pb-4 print:border-gray-200">
             <div className="flex items-center gap-3">
@@ -909,7 +909,7 @@ export default function AwardReportPage() {
           </div>
         </section>
 
-        {/* ── Section 6: Declaration ── */}
+        {/* -- Section 6: Declaration -- */}
         <section className="rounded-md border border-panel bg-card p-6 shadow-panel print:border-gray-200 print:shadow-none">
           <SectionHeader n={6} title="Advisory Declaration" eyebrow="Compliance Notice" />
           <div className="space-y-3 text-sm leading-7 text-secondary print:text-gray-700">
@@ -950,7 +950,7 @@ export default function AwardReportPage() {
           </div>
         </section>
 
-        {/* ── Action bar ── */}
+        {/* -- Action bar -- */}
         {!isApproved && (
           <div className="sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-4 rounded-md border border-panel bg-card px-5 py-4 shadow-panel print:hidden">
             <div>
@@ -1015,7 +1015,7 @@ export default function AwardReportPage() {
           </div>
         )}
 
-        {/* ── Approve confirmation modal ── */}
+        {/* -- Approve confirmation modal -- */}
         {showApproveConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 print:hidden" role="dialog" aria-modal="true" aria-labelledby="approve-dialog-title">
             <div className="w-full max-w-md rounded-xl border border-panel bg-card p-6 shadow-panel">

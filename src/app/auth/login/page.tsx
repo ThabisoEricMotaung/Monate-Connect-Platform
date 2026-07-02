@@ -515,7 +515,7 @@ export default function LoginPage() {
           <p className="text-xs text-[#888888] italic leading-relaxed mb-2">
             &quot;Built because South African suppliers were losing procurement opportunities not because of poor capability, but because of compliance gaps and lack of visibility.&quot;
           </p>
-          <p className="text-[10px] text-[#c8a060] font-semibold">Thabiso Motaung - Founder, AiForm Studio</p>
+          <p className="text-[10px] text-[#c8a060] font-semibold">Founder, AiForm Studio</p>
         </div>
       </div>
       </div>

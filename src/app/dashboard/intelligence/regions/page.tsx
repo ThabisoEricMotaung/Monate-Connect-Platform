@@ -9,7 +9,7 @@ import {
 } from "@/lib/intelligence"
 import ProvinceMap from "./province-map"
 
-// ─── SA Province ordering ─────────────────────────────────────────────────────
+// --- SA Province ordering -----------------------------------------------------
 
 const PROVINCE_ORDER = [
   "Gauteng",
@@ -35,7 +35,7 @@ const PROVINCE_ABBR: Record<string, string> = {
   "Northern Cape": "NC",
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function formatZAR(value: number): string {
   if (value >= 1_000_000_000) return `R${(value / 1_000_000_000).toFixed(1)}B`
@@ -58,7 +58,7 @@ function activityClass(level: "High" | "Medium" | "Low") {
   return "text-muted border-panel bg-surface"
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// --- Sub-components -----------------------------------------------------------
 
 function BarSegment({
   value,
@@ -200,7 +200,7 @@ function SkeletonCard() {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function RegionalInsightsPage() {
   const router = useRouter()
@@ -280,11 +280,11 @@ export default function RegionalInsightsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
               {[
-                { label: "Provinces Active", value: totals.provinces.toLocaleString("en-ZA"), icon: "🗺️" },
-                { label: "Total RFQs", value: totals.rfqs.toLocaleString("en-ZA"), icon: "📋" },
-                { label: "Total Suppliers", value: totals.suppliers.toLocaleString("en-ZA"), icon: "🏭" },
+                { label: "Provinces Active", value: totals.provinces.toLocaleString("en-ZA"), icon: "ðŸ—º️" },
+                { label: "Total RFQs", value: totals.rfqs.toLocaleString("en-ZA"), icon: "ðŸ“‹" },
+                { label: "Total Suppliers", value: totals.suppliers.toLocaleString("en-ZA"), icon: "ðŸ­" },
                 { label: "Active Contracts", value: totals.contracts.toLocaleString("en-ZA"), icon: "✅" },
-                { label: "Estimated Value", value: formatZAR(totals.value), icon: "💰" },
+                { label: "Estimated Value", value: formatZAR(totals.value), icon: "ðŸ’°" },
               ].map((item) => (
                 <div key={item.label} className="flex flex-col items-center gap-1.5 rounded-xl border border-panel bg-surface p-3 text-center">
                   <span className="text-xl">{item.icon}</span>

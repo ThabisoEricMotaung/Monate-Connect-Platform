@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Link from "next/link"
 import {
@@ -484,7 +484,7 @@ export default function DashboardLayout({
     )
   }
 
-  if (pathname.startsWith("/dashboard/intelligence")) {
+  if (pathname.startsWith("/dashboard/intelligence") && canViewAdminNavigation) {
     return (
       <>
         {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}

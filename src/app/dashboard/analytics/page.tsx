@@ -19,7 +19,7 @@ import { getCurrentProfile } from "@/lib/auth"
 import { getComplianceStatus } from "@/lib/complianceStatus"
 import { supabase } from "@/lib/supabase"
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// --- Types -------------------------------------------------------------------
 
 type DateRange = "7d" | "30d" | "90d" | "all"
 
@@ -56,7 +56,7 @@ type PurchaseOrder = {
 type DistItem = { label: string; count: number }
 type TrendPoint = { period: string; Quotes: number }
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// --- Constants ---------------------------------------------------------------
 
 const DATE_RANGES: Array<{ value: DateRange; label: string }> = [
   { value: "7d", label: "7 days" },
@@ -94,7 +94,7 @@ const STATUS_COLOR: Record<string, string> = {
 
 const TICK = "#94a3b8"
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// --- Helpers -----------------------------------------------------------------
 
 function cutoffFor(range: DateRange): Date | null {
   if (range === "all") return null
@@ -202,7 +202,7 @@ function doExport(params: {
     "══════════════════════════════════════════════════════",
     `  Generated:  ${new Date().toLocaleString("en-ZA")}`,
     `  Range:      ${params.rangeLabel}`,
-    "──────────────────────────────────────────────────────",
+    "------------------------------------------------------",
     "",
     "KEY PERFORMANCE INDICATORS",
     `  ${p("Total RFQs")}${params.kpis.totalRFQs}`,
@@ -231,7 +231,7 @@ function doExport(params: {
     `  ${p("Valid")}${params.compliance.valid}`,
     `  ${p("Not configured")}${params.compliance.unknown}`,
     "",
-    "──────────────────────────────────────────────────────",
+    "------------------------------------------------------",
     "  AiForm Procure  |  Enterprise Procurement Platform",
     "══════════════════════════════════════════════════════",
   ].join("\n")
@@ -247,7 +247,7 @@ function doExport(params: {
   URL.revokeObjectURL(url)
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// --- Sub-components -----------------------------------------------------------
 
 function KpiCard({
   label,
@@ -383,7 +383,7 @@ function SkeletonChart() {
   )
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// --- Main page ----------------------------------------------------------------
 
 export default function AnalyticsDashboardPage() {
   const router = useRouter()
@@ -560,7 +560,7 @@ export default function AnalyticsDashboardPage() {
 
   return (
     <div>
-      {/* ── Page header ── */}
+      {/* -- Page header -- */}
       <div className="mb-8 border-b border-panel pb-6">
         <p className="text-xs uppercase tracking-[0.28em] text-accent">
           Procurement Intelligence
@@ -599,7 +599,7 @@ export default function AnalyticsDashboardPage() {
         </div>
       </div>
 
-      {/* ── Date range filter ── */}
+      {/* -- Date range filter -- */}
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <span className="text-[0.67rem] uppercase tracking-[0.24em] text-secondary">
           Range:
@@ -621,7 +621,7 @@ export default function AnalyticsDashboardPage() {
         ))}
       </div>
 
-      {/* ── Error ── */}
+      {/* -- Error -- */}
       {error && (
         <div className="mb-6 rounded-md border border-rose-500/25 bg-rose-500/10 px-5 py-4">
           <p className="text-sm font-semibold text-rose-700">
@@ -631,7 +631,7 @@ export default function AnalyticsDashboardPage() {
         </div>
       )}
 
-      {/* ── Loading skeleton ── */}
+      {/* -- Loading skeleton -- */}
       {loading && (
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -647,7 +647,7 @@ export default function AnalyticsDashboardPage() {
         </div>
       )}
 
-      {/* ── Dashboard ── */}
+      {/* -- Dashboard -- */}
       {!loading && !error && (
         <div className="space-y-6">
           {/* KPI cards */}

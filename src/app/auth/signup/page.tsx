@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import Link from "next/link"
@@ -1405,7 +1405,7 @@ export default function SignupPage() {
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-[#aaa] mt-1 mb-8">11 SA languages Â· UI & help guide translated</p>
+        <p className="text-[10px] text-[#aaa] mt-1 mb-8">11 SA languages · UI & help guide translated</p>
 
         {/* Feature bullets */}
         <div className="space-y-3 mb-8">
