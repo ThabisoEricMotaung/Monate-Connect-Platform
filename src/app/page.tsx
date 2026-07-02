@@ -17,6 +17,7 @@ const audienceCards = [
     description: "List your business, respond to RFQs, and get verified to increase visibility.",
     cta: "Register free →",
     href: "/auth/signup",
+    className: "bg-[#f5f0e8]",
   },
   {
     icon: "briefcase",
@@ -24,6 +25,7 @@ const audienceCards = [
     description: "Source verified suppliers, post RFQs, and manage quotes in one place.",
     cta: "Request a pilot →",
     href: "/contact",
+    className: "bg-[#f0f5f0]",
   },
   {
     icon: "shield",
@@ -31,6 +33,7 @@ const audienceCards = [
     description: "Access BBBEE intelligence and CSD-compliant supplier records.",
     cta: "Learn more →",
     href: "/trust",
+    className: "bg-[#f0f0f5]",
   },
 ]
 
@@ -147,16 +150,17 @@ export default function Home() {
               {audienceCards.map((card) => (
                 <article
                   key={card.title}
-                  className="rounded-xl border border-[#e8e0cc] bg-white p-6 shadow-md transition hover:border-accent"
+                  className={`relative overflow-hidden rounded-xl border border-[#e8e0cc] ${card.className} p-6 shadow-md transition hover:border-accent`}
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#e8e0cc] bg-white text-accent shadow-sm">
+                  <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#e8dcc8]/60 to-transparent" />
+                  <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl border border-[#e8e0cc] bg-white text-accent shadow-sm">
                     <EntryIcon icon={card.icon} />
                   </div>
-                  <h3 className="mt-5 font-display text-2xl font-semibold text-heading">{card.title}</h3>
-                  <p className="mt-3 font-serif text-sm leading-7 text-secondary">{card.description}</p>
+                  <h3 className="relative z-10 mt-5 font-display text-2xl font-semibold text-heading">{card.title}</h3>
+                  <p className="relative z-10 mt-3 font-serif text-sm leading-7 text-secondary">{card.description}</p>
                   <Link
                     href={card.href}
-                    className="mt-5 inline-flex text-sm font-bold text-accent transition hover:text-accent-strong"
+                    className="relative z-10 mt-5 inline-flex text-sm font-bold text-accent transition hover:text-accent-strong"
                   >
                     {card.cta}
                   </Link>
@@ -175,15 +179,16 @@ export default function Home() {
                 <Link
                   key={tile.href}
                   href={tile.href}
-                  className="rounded-xl border border-[#e8e0cc] bg-white p-5 text-primary shadow-md transition hover:bg-muted"
+                  className="relative overflow-hidden rounded-xl border border-[#e8e0cc] bg-[#faf7f2] p-5 text-primary shadow-md transition hover:bg-muted"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#e8dcc8]/60 to-transparent" />
+                  <div className="relative z-10 flex items-center gap-3">
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#e8e0cc] bg-white text-accent shadow-sm">
                       <EntryIcon icon={tile.icon} />
                     </span>
                     <span className="text-base font-bold text-heading">{tile.title}</span>
                   </div>
-                  <p className="mt-3 font-serif text-sm leading-6 text-secondary">{tile.description}</p>
+                  <p className="relative z-10 mt-3 font-serif text-sm leading-6 text-secondary">{tile.description}</p>
                 </Link>
               ))}
             </div>

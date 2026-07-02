@@ -6,7 +6,6 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { I18nProvider } from "@/lib/i18n";
 import AccessibilityPanel from "@/components/AccessibilityPanel";
 import Navbar from "@/components/layout/Navbar";
-import ProcurementWire from "@/components/ProcurementWire";
 import ThusoAssistant from "@/components/ThusoAssistant";
 
 const playfair = Playfair_Display({
@@ -99,7 +98,6 @@ export default function RootLayout({
           <I18nProvider>
             <Navbar />
             {children}
-            <ProcurementWire scope="public" />
             <AccessibilityPanel />
             <ThusoAssistant />
           </I18nProvider>
