@@ -1,8 +1,14 @@
 "use client"
 
-import { useEffect, useMemo, useState, type DragEvent, type FormEvent } from "react"
+import { useEffect, useMemo, useState, type ClipboardEvent, type DragEvent, type FormEvent } from "react"
 import { IconPaperclip, IconSend, IconUpload, IconX } from "@tabler/icons-react"
 import Link from "next/link"
+import {
+  cleanSuggestionAttachmentFileName,
+  formatSuggestionAttachmentFileSize,
+  imageFileFromClipboardItems,
+  validateSuggestionAttachment,
+} from "@/lib/suggestionAttachments"
 import { supabase } from "@/lib/supabase"
 
 type Category = "Feature idea" | "Bug report" | "General"
@@ -35,18 +41,6 @@ type ProfileRow = {
 }
 
 const categories: Category[] = ["Feature idea", "Bug report", "General"]
-const maxFileSize = 10 * 1024 * 1024
-const allowedTypes = ["application/pdf", "image/png", "image/jpeg", "image/webp", "image/gif"]
-
-function cleanFileName(name: string) {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "-").replace(/-+/g, "-").toLowerCase()
-}
-
-function formatFileSize(size: number | null) {
-  if (!size) return ""
-  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`
-}
 
 function displayNameFrom(profile: ProfileRow | null, fallbackEmail?: string | null) {
   return (
@@ -57,12 +51,6 @@ function displayNameFrom(profile: ProfileRow | null, fallbackEmail?: string | nu
     fallbackEmail?.trim() ||
     "Signed-in user"
   )
-}
-
-function validateFile(file: File) {
-  if (!allowedTypes.includes(file.type)) return "Attach an image or PDF only."
-  if (file.size > maxFileSize) return "Attachments must be 10MB or smaller."
-  return ""
 }
 
 export default function HaveYourSayPanel({ showMySuggestions = true }: { showMySuggestions?: boolean }) {
@@ -149,7 +137,7 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
       return
     }
 
-    const validation = validateFile(nextFile)
+    const validation = validateSuggestionAttachment(nextFile)
     if (validation) {
       setError(validation)
       setFile(null)
@@ -165,10 +153,19 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
     chooseFile(event.dataTransfer.files?.[0] ?? null)
   }
 
+  function handlePaste(event: ClipboardEvent<HTMLElement>) {
+    const pastedImage = imageFileFromClipboardItems(event.clipboardData?.items)
+    if (!pastedImage) return
+
+    event.preventDefault()
+    event.stopPropagation()
+    chooseFile(pastedImage)
+  }
+
   async function uploadAttachment(currentUserId: string) {
     if (!file || !supabase) return null
 
-    const path = `${currentUserId}/${Date.now()}-${cleanFileName(file.name)}`
+    const path = `${currentUserId}/${Date.now()}-${cleanSuggestionAttachmentFileName(file.name)}`
     const { error: uploadError } = await supabase.storage
       .from("suggestion-attachments")
       .upload(path, file, { contentType: file.type, upsert: false })
@@ -249,7 +246,7 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
         )}
       </section>
 
-      <form onSubmit={handleSubmit} className="rounded-xl border border-[#1a3a2a]/10 bg-white/60 p-6 shadow-md backdrop-blur">
+      <form onSubmit={handleSubmit} onPaste={handlePaste} className="rounded-xl border border-[#1a3a2a]/10 bg-white/60 p-6 shadow-md backdrop-blur">
         <div className="grid gap-4 sm:grid-cols-3">
           {categories.map((item) => (
             <button
@@ -292,6 +289,9 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
           }}
           onDragLeave={() => setDragging(false)}
           onDrop={handleDrop}
+          onPaste={handlePaste}
+          tabIndex={0}
+          aria-label="Suggestion attachment"
           className={`mt-5 flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed p-5 text-center transition ${
             dragging ? "border-[#5DCAA5] bg-[#e8f7f2]" : "border-[#1a3a2a]/20 bg-[#f8f4ec] hover:border-[#c8a060]"
           }`}
@@ -313,7 +313,7 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
             <span className="flex min-w-0 items-center gap-2">
               <IconPaperclip className="h-4 w-4 shrink-0 text-[#c8a060]" aria-hidden />
               <span className="truncate font-semibold">{file.name}</span>
-              <span className="shrink-0 text-xs text-[#53665c]">{formatFileSize(file.size)}</span>
+              <span className="shrink-0 text-xs text-[#53665c]">{formatSuggestionAttachmentFileSize(file.size)}</span>
             </span>
             <button type="button" onClick={() => setFile(null)} className="text-[#53665c] hover:text-[#1a3a2a]" aria-label="Remove attachment">
               <IconX className="h-4 w-4" aria-hidden />
@@ -364,7 +364,7 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
                   {suggestion.attachment_name && (
                     <p className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-[#53665c]">
                       <IconPaperclip className="h-4 w-4 text-[#c8a060]" aria-hidden />
-                      {suggestion.attachment_name} {formatFileSize(suggestion.attachment_size)}
+                      {suggestion.attachment_name} {formatSuggestionAttachmentFileSize(suggestion.attachment_size)}
                     </p>
                   )}
                   {(suggestion.admin_response || suggestion.admin_reaction || suggestion.admin_rating) && (

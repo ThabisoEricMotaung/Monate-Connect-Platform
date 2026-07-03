@@ -43,7 +43,7 @@ const categoryEmoji: Record<string, string> = {
   General: "Note",
 }
 
-const reactions = ["", "??", "?", "?", "??", "??"]
+const reactions = ["", "👍", "👎", "❤️", "💡", "🎉", "🤔"]
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
