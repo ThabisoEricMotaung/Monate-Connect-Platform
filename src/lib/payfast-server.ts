@@ -1,8 +1,16 @@
 import crypto from "node:crypto"
+import dns from "node:dns/promises"
 import { payfastPlans, type PayFastPlan, type PayFastTier } from "@/lib/payfast-plans"
 
 export const PAYFAST_PROCESS_URL = "https://www.payfast.co.za/eng/process"
 export const PAYFAST_VALIDATE_URL = "https://www.payfast.co.za/eng/query/validate"
+
+const PAYFAST_HOSTS = [
+  "www.payfast.co.za",
+  "sandbox.payfast.co.za",
+  "w1w.payfast.co.za",
+  "w2w.payfast.co.za",
+]
 
 const DEFAULT_PAYFAST_IP_RANGES = [
   "197.97.145.144/28",
@@ -14,14 +22,61 @@ const DEFAULT_PAYFAST_IP_RANGES = [
 
 export type PayFastFields = Record<string, string>
 
+const PAYFAST_SIGNATURE_FIELD_ORDER = [
+  "merchant_id",
+  "merchant_key",
+  "return_url",
+  "cancel_url",
+  "notify_url",
+  "name_first",
+  "name_last",
+  "email_address",
+  "cell_number",
+  "m_payment_id",
+  "amount",
+  "item_name",
+  "item_description",
+  "custom_int1",
+  "custom_int2",
+  "custom_int3",
+  "custom_int4",
+  "custom_int5",
+  "custom_str1",
+  "custom_str2",
+  "custom_str3",
+  "custom_str4",
+  "custom_str5",
+  "email_confirmation",
+  "confirmation_address",
+  "payment_method",
+  "subscription_type",
+  "billing_date",
+  "recurring_amount",
+  "frequency",
+  "cycles",
+  "token",
+  "payment_status",
+  "pf_payment_id",
+  "amount_gross",
+  "amount_fee",
+  "amount_net",
+  "type",
+  "next_run",
+] as const
+
 function encodePayFastValue(value: string): string {
   return encodeURIComponent(value.trim()).replace(/%20/g, "+")
 }
 
 export function toPayFastParamString(fields: PayFastFields, includeSignature = false): string {
-  return Object.entries(fields)
-    .filter(([key, value]) => value !== "" && (includeSignature || key !== "signature"))
-    .map(([key, value]) => `${key}=${encodePayFastValue(value)}`)
+  const orderedKeys = [
+    ...PAYFAST_SIGNATURE_FIELD_ORDER.filter((key) => key in fields),
+    ...Object.keys(fields).filter((key) => !PAYFAST_SIGNATURE_FIELD_ORDER.includes(key as (typeof PAYFAST_SIGNATURE_FIELD_ORDER)[number])),
+  ]
+
+  return orderedKeys
+    .filter((key) => fields[key] !== "" && (includeSignature || key !== "signature"))
+    .map((key) => `${key}=${encodePayFastValue(fields[key])}`)
     .join("&")
 }
 
@@ -169,9 +224,29 @@ export function getAllowedPayFastIpRanges(): string[] {
   return configuredRanges?.length ? configuredRanges : DEFAULT_PAYFAST_IP_RANGES
 }
 
-export function isAllowedPayFastIp(ip: string, ranges = getAllowedPayFastIpRanges()): boolean {
+export async function isAllowedPayFastIp(ip: string, ranges = getAllowedPayFastIpRanges()): Promise<boolean> {
   if (!ip) return false
-  return ranges.some((range) => matchesCidr(ip, range))
+
+  const ipSet = new Set(ranges)
+
+  try {
+    const hostResults = await Promise.all(
+      PAYFAST_HOSTS.map(async (host) => {
+        try {
+          const addresses = await dns.lookup(host, { all: true })
+          return addresses.map((entry) => entry.address)
+        } catch {
+          return [] as string[]
+        }
+      })
+    )
+
+    hostResults.flat().forEach((hostIp) => ipSet.add(hostIp))
+  } catch {
+    // Fall back to the configured ranges when DNS lookup is unavailable.
+  }
+
+  return [...ipSet].some((range) => matchesCidr(ip, range))
 }
 
 export async function validatePayFastServerConfirmation(paramString: string): Promise<boolean> {

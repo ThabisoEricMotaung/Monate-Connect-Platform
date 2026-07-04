@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       errors.push("Invalid PayFast signature")
     }
 
-    if (!isAllowedPayFastIp(requestIp)) {
+    if (!(await isAllowedPayFastIp(requestIp))) {
       errors.push(`Invalid PayFast source IP: ${requestIp || "unknown"}`)
     }
 
