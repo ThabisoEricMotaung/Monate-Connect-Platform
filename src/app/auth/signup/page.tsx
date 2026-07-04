@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { IconArrowLeft } from "@tabler/icons-react"
 import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import {
@@ -820,8 +821,9 @@ export default function SignupPage() {
   return (
     <div className="relative min-h-screen bg-[#f8f4ec]">
       <div className="relative z-10 px-8 py-6">
-        <Link href="/" className="absolute left-6 top-1/2 -translate-y-1/2 text-sm font-medium text-[#1a3a2a] hover:text-[#c8a060] transition-colors">
-          ? Back to home
+        <Link href="/" className="absolute left-6 top-1/2 inline-flex -translate-y-1/2 items-center gap-1.5 text-sm font-medium text-[#1a3a2a] transition-colors hover:text-[#c8a060]">
+          <IconArrowLeft className="h-4 w-4" stroke={2} aria-hidden />
+          <span>Back to home</span>
         </Link>
         <div className="text-center">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#888]">Procurement Suite</p>
@@ -1128,8 +1130,9 @@ export default function SignupPage() {
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
                   {loading ? "Saving—" : "Continue?"}
                 </button>
-                <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
-                  ? Back
+                <button type="button" onClick={goBack} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
+                  <IconArrowLeft className="h-4 w-4" stroke={2} aria-hidden />
+                  <span>Back</span>
                 </button>
               </div>
             </section>
@@ -1253,8 +1256,9 @@ export default function SignupPage() {
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
                   {loading ? "Saving—" : "Continue?"}
                 </button>
-                <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
-                  ? Back
+                <button type="button" onClick={goBack} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
+                  <IconArrowLeft className="h-4 w-4" stroke={2} aria-hidden />
+                  <span>Back</span>
                 </button>
               </div>
             </section>
@@ -1319,8 +1323,9 @@ export default function SignupPage() {
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
                   {loading ? "Submitting registration—" : "Submit registration"}
                 </button>
-                <button type="button" onClick={goBack} className="w-full rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
-                  ? Back
+                <button type="button" onClick={goBack} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
+                  <IconArrowLeft className="h-4 w-4" stroke={2} aria-hidden />
+                  <span>Back</span>
                 </button>
               </div>
             </section>
