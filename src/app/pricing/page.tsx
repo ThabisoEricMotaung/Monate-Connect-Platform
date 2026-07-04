@@ -2,13 +2,13 @@ import {
   IconBuildingBank,
   IconCertificate,
   IconChecklist,
-  IconChevronRight,
   IconHeadset,
   IconSparkles,
   IconUsers,
 } from "@tabler/icons-react"
 import Link from "next/link"
 import BackLink from "@/components/BackLink"
+import PayFastCheckoutButton from "@/components/PayFastCheckoutButton"
 
 const supplierFeatures = [
   "Verified supplier profile",
@@ -25,6 +25,10 @@ const buyerFeatures = [
   "Verified supplier directory",
   "Filter by province, BBBEE, and industry",
   "Quote comparison and PO issuance",
+]
+
+const buyerProfessionalFeatures = [
+  ...buyerFeatures,
   "Regional Insights SA province map",
   "Supplier Intelligence dashboard",
   "BBBEE spend tracking and compliance reporting",
@@ -125,7 +129,7 @@ export default function PricingPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-14 sm:py-20">
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-3">
           <article className="flex flex-col rounded-md border border-l-4 border-[#d8cbb8] border-l-[#5DCAA5] bg-white p-6 shadow-[0_0_20px_rgba(93,202,165,0.15)] sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -145,13 +149,12 @@ export default function PricingPage() {
               Free until October 2026 during the pilot.
             </p>
             <FeatureList features={supplierFeatures} />
-            <Link
-              href="/auth/register"
+            <PayFastCheckoutButton
+              tier="supplier"
               className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#1a3a2a] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#10251b]"
             >
-              Register as supplier
-              <IconChevronRight className="h-4 w-4" stroke={2.4} aria-hidden />
-            </Link>
+              Subscribe as supplier
+            </PayFastCheckoutButton>
           </article>
 
           <article className="flex flex-col rounded-md border-2 border-l-4 border-[#1a3a2a] border-l-[#c8a060] bg-white p-6 shadow-[0_0_20px_rgba(200,160,96,0.15)] sm:p-8">
@@ -161,13 +164,11 @@ export default function PricingPage() {
                   For Buyers
                 </span>
                 <h2 className="mt-5 font-display text-3xl font-semibold text-[#1a3a2a]">
-                  Buyer Access
+                  Buyer Starter
                 </h2>
               </div>
               <div className="text-left sm:text-right">
-                <p className="font-display text-4xl font-semibold text-[#1a3a2a]">
-                  R990-R2,490
-                </p>
+                <p className="font-display text-4xl font-semibold text-[#1a3a2a]">R990</p>
                 <p className="text-sm font-semibold text-[#63766b]">/month</p>
               </div>
             </div>
@@ -175,13 +176,39 @@ export default function PricingPage() {
               Free until October 2026 during the pilot.
             </p>
             <FeatureList features={buyerFeatures} />
-            <Link
-              href="/auth/register"
+            <PayFastCheckoutButton
+              tier="buyer_starter"
               className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#c8a060] px-5 py-3 text-sm font-bold text-[#1a3a2a] transition hover:bg-[#d8b36f]"
             >
-              Register as buyer
-              <IconChevronRight className="h-4 w-4" stroke={2.4} aria-hidden />
-            </Link>
+              Subscribe to Starter
+            </PayFastCheckoutButton>
+          </article>
+
+          <article className="flex flex-col rounded-md border-2 border-l-4 border-[#1a3a2a] border-l-[#c8a060] bg-white p-6 shadow-[0_0_20px_rgba(200,160,96,0.15)] sm:p-8">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <span className="inline-flex rounded-full bg-[#1a3a2a] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#c8a060]">
+                  For Buyers
+                </span>
+                <h2 className="mt-5 font-display text-3xl font-semibold text-[#1a3a2a]">
+                  Buyer Professional
+                </h2>
+              </div>
+              <div className="text-left sm:text-right">
+                <p className="font-display text-4xl font-semibold text-[#1a3a2a]">R2,490</p>
+                <p className="text-sm font-semibold text-[#63766b]">/month</p>
+              </div>
+            </div>
+            <p className="mt-4 rounded-md bg-[#c8a060]/15 px-4 py-3 text-sm font-semibold text-[#1a3a2a]">
+              Free until October 2026 during the pilot.
+            </p>
+            <FeatureList features={buyerProfessionalFeatures} />
+            <PayFastCheckoutButton
+              tier="buyer_professional"
+              className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#c8a060] px-5 py-3 text-sm font-bold text-[#1a3a2a] transition hover:bg-[#d8b36f]"
+            >
+              Subscribe to Professional
+            </PayFastCheckoutButton>
           </article>
         </div>
       </section>
