@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     payload = parsePayFastBody(await request.text())
     await logItn({ status: "received", errors: [], payload, requestIp })
 
-    const expectedSignature = generatePayFastSignature(payload, passphrase)
+    const expectedSignature = generatePayFastSignature(payload, passphrase, true)
     if (!payload.signature || payload.signature !== expectedSignature) {
       errors.push("Invalid PayFast signature")
     }

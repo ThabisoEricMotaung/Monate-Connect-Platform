@@ -22,7 +22,7 @@ const DEFAULT_PAYFAST_IP_RANGES = [
 
 export type PayFastFields = Record<string, string>
 
-const PAYFAST_SIGNATURE_FIELD_ORDER = [
+const PAYFAST_CHECKOUT_SIGNATURE_FIELD_ORDER = [
   "merchant_id",
   "merchant_key",
   "return_url",
@@ -64,24 +64,74 @@ const PAYFAST_SIGNATURE_FIELD_ORDER = [
   "next_run",
 ] as const
 
+const PAYFAST_ITN_SIGNATURE_FIELD_ORDER = [
+  "m_payment_id",
+  "pf_payment_id",
+  "payment_status",
+  "item_name",
+  "item_description",
+  "amount_gross",
+  "amount_fee",
+  "amount_net",
+  "custom_str1",
+  "custom_str2",
+  "custom_str3",
+  "custom_str4",
+  "custom_str5",
+  "custom_int1",
+  "custom_int2",
+  "custom_int3",
+  "custom_int4",
+  "custom_int5",
+  "name_first",
+  "name_last",
+  "email_address",
+  "merchant_id",
+  "token",
+  "billing_date",
+  "type",
+  "next_run",
+] as const
+
 function encodePayFastValue(value: string): string {
-  return encodeURIComponent(value.trim()).replace(/%20/g, "+")
+  return encodeURIComponent(value.trim()).replace(/%20/g, "+").replace(/%([0-9a-f]{2})/g, (_match, hex) => `%${hex.toUpperCase()}`)
 }
 
-export function toPayFastParamString(fields: PayFastFields, includeSignature = false): string {
-  const orderedKeys = [
-    ...PAYFAST_SIGNATURE_FIELD_ORDER.filter((key) => key in fields),
-    ...Object.keys(fields).filter((key) => !PAYFAST_SIGNATURE_FIELD_ORDER.includes(key as (typeof PAYFAST_SIGNATURE_FIELD_ORDER)[number])),
-  ]
+export function toPayFastParamString(
+  fields: PayFastFields,
+  includeSignature = false,
+  orderedKeys?: readonly string[],
+  includeEmptyValues = false
+): string {
+  const explicitOrder = orderedKeys?.filter((key) => key in fields)
+  const entries = explicitOrder
+    ? [
+        ...explicitOrder.map((key) => [key, fields[key]] as const),
+        ...Object.entries(fields).filter(([key]) => !explicitOrder.includes(key)),
+      ]
+    : Object.entries(fields)
 
-  return orderedKeys
-    .filter((key) => fields[key] !== "" && (includeSignature || key !== "signature"))
-    .map((key) => `${key}=${encodePayFastValue(fields[key])}`)
+  return entries
+    .filter(([key, value]) => (includeEmptyValues || value !== "") && (includeSignature || key !== "signature"))
+    .map(([key, value]) => `${key}=${encodePayFastValue(value)}`)
     .join("&")
 }
 
-export function generatePayFastSignature(fields: PayFastFields, passphrase: string): string {
-  const paramString = toPayFastParamString(fields)
+function getPayFastSignatureFieldOrder(fields: PayFastFields): readonly string[] {
+  const hasItnFields = ["m_payment_id", "pf_payment_id", "payment_status", "amount_gross", "amount_fee", "amount_net"].some(
+    (key) => key in fields
+  )
+
+  if (hasItnFields) {
+    return PAYFAST_ITN_SIGNATURE_FIELD_ORDER.filter((key) => key in fields)
+  }
+
+  return PAYFAST_CHECKOUT_SIGNATURE_FIELD_ORDER.filter((key) => key in fields)
+}
+
+export function generatePayFastSignature(fields: PayFastFields, passphrase: string, includeEmptyValues = false): string {
+  const orderedKeys = getPayFastSignatureFieldOrder(fields)
+  const paramString = toPayFastParamString(fields, false, orderedKeys, includeEmptyValues)
   const signedString = passphrase
     ? `${paramString}&passphrase=${encodePayFastValue(passphrase)}`
     : paramString
