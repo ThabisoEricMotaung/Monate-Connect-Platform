@@ -4,9 +4,8 @@ import { Libre_Franklin, Playfair_Display, Source_Serif_4 } from "next/font/goog
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { I18nProvider } from "@/lib/i18n";
-import AccessibilityPanel from "@/components/AccessibilityPanel";
 import Navbar from "@/components/layout/Navbar";
-import ThusoAssistant from "@/components/ThusoAssistant";
+import UnifiedSupportCenter from "@/components/UnifiedSupportCenter";
 
 const playfair = Playfair_Display({
   variable: "--font-display",
@@ -98,8 +97,7 @@ export default function RootLayout({
           <I18nProvider>
             <Navbar />
             {children}
-            <AccessibilityPanel />
-            <ThusoAssistant />
+            <UnifiedSupportCenter />
           </I18nProvider>
         </ThemeProvider>
       </body>

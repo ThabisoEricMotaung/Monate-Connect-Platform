@@ -22,7 +22,6 @@ import AccountMenu from "@/components/AccountMenu"
 import BrandMark from "@/components/BrandMark"
 import NotificationBell from "@/components/NotificationBell"
 import ProcurementWire from "@/components/ProcurementWire"
-import SuggestionBox from "@/components/SuggestionBox"
 
 type NavItem = { name: string; href: string; icon: TablerIcon }
 type NavGroup = { label?: string; items: NavItem[]; divider?: boolean }
@@ -129,7 +128,6 @@ export default function AdminShell({ children }: { children: ReactNode }) {
         {children}
       </section>
       <ProcurementWire scope="dashboard" />
-      <SuggestionBox />
     </main>
   )
 }

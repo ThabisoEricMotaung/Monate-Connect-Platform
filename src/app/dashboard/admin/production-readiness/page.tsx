@@ -332,7 +332,7 @@ async function runReadinessChecks(): Promise<ReadinessCheck[]> {
   }
 
   checks.push(check("UX", "Language switcher active", "Passed", "LanguageSwitcher is mounted in the global navigation."))
-  checks.push(check("UX", "Accessibility panel active", "Passed", "AccessibilityPanel is mounted in the root layout with comfort controls."))
+  checks.push(check("UX", "Support centre active", "Passed", "UnifiedSupportCenter is mounted in the root layout with assistant, feedback, and accessibility controls."))
   checks.push(check("UX", "Theme toggle active", "Passed", "AppearanceCore and ThemeProvider are mounted in the root layout."))
   checks.push(check("UX", "News ticker active", "Passed", "NewsTicker is mounted in the root layout."))
   checks.push(check("UX", "Mobile navigation usable", "Warning", "Responsive CSS exists; verify touch navigation on mobile before production sign-off."))
