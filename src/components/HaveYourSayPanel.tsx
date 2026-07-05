@@ -134,6 +134,7 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
 
   function handleDrop(event: DragEvent<HTMLLabelElement>) {
     event.preventDefault()
+    event.stopPropagation()
     setDragging(false)
     chooseFile(event.dataTransfer.files?.[0] ?? null)
   }
@@ -238,9 +239,14 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
           htmlFor="suggestion-file"
           onDragOver={(event) => {
             event.preventDefault()
+            event.stopPropagation()
             setDragging(true)
           }}
-          onDragLeave={() => setDragging(false)}
+          onDragLeave={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            setDragging(false)
+          }}
           onDrop={handleDrop}
           onPaste={handlePaste}
           tabIndex={0}

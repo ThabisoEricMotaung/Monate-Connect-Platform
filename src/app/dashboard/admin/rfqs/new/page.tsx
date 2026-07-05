@@ -1405,9 +1405,13 @@ export default function NewRFQPage() {
 
                   <label
                     htmlFor="documents"
-                    onDragOver={(event) => event.preventDefault()}
+                    onDragOver={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                    }}
                     onDrop={(event) => {
                       event.preventDefault()
+                      event.stopPropagation()
                       handleFiles(event.dataTransfer.files)
                     }}
                     className="mt-6 block cursor-pointer rounded-md border border-dashed border-panel bg-panel p-8 text-center transition hover:border-accent"

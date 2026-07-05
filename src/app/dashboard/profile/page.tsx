@@ -1512,8 +1512,7 @@ function VerificationTab({
   const [uploadingField, setUploadingField] = useState<DocumentField | null>(null)
   const [uploadError, setUploadError] = useState("")
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>, field: DocumentField, type: string) {
-    const file = e.target.files?.[0]
+  async function handleUpload(file: File | null, field: DocumentField, type: string) {
     if (!file || !supabase || !userId) return
     setUploadError("")
     setUploadingField(field)
@@ -1523,7 +1522,6 @@ function VerificationTab({
     await supabase.from("profiles").update({ [field]: path }).eq("id", userId)
     onDocUploaded(field, path)
     setUploadingField(null)
-    e.target.value = ""
   }
 
   function statusOf(doc: DocumentField): "verified" | "pending" | "missing" {
@@ -1567,7 +1565,7 @@ function VerificationTab({
                 ? <FileRow label="BBBEE Certificate" url={docUrls.bbbee_document_url} status={statusOf("bbbee_document_url") === "verified" ? "Verified" : "Under review"} />
                 : (
                   <>
-                    <UploadZone id="bbbee-upload" uploading={uploadingField === "bbbee_document_url"} onChange={(e) => handleUpload(e, "bbbee_document_url", "bbbee-certificate")} />
+                    <UploadZone id="bbbee-upload" uploading={uploadingField === "bbbee_document_url"} onFile={(file) => handleUpload(file, "bbbee_document_url", "bbbee-certificate")} />
                     <SmartScoreNudge />
                   </>
                 )
@@ -1589,7 +1587,7 @@ function VerificationTab({
                 ? <FileRow label="Tax Clearance" url={docUrls.tax_document_url} status={statusOf("tax_document_url") === "verified" ? "Verified" : "Under review"} />
                 : (
                   <>
-                    <UploadZone id="tax-upload" uploading={uploadingField === "tax_document_url"} onChange={(e) => handleUpload(e, "tax_document_url", "tax-clearance-document")} />
+                    <UploadZone id="tax-upload" uploading={uploadingField === "tax_document_url"} onFile={(file) => handleUpload(file, "tax_document_url", "tax-clearance-document")} />
                     <SmartScoreNudge />
                   </>
                 )
@@ -1652,8 +1650,7 @@ function DocumentsTab({
 
   const existing = ALL_DOC_FIELDS.filter((f) => docUrls[f])
 
-  async function handleNewUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+  async function handleNewUpload(file: File | null) {
     if (!file || !supabase || !userId) return
     setUploadError("")
     setUploadSuccess("")
@@ -1666,7 +1663,6 @@ function DocumentsTab({
     onDocUploaded(uploadCategory, path)
     setUploading(false)
     setUploadSuccess(`${docLabel(uploadCategory)} uploaded.`)
-    e.target.value = ""
   }
 
   const statusOfDoc = (): "Verified" | "Under review" =>
@@ -1717,7 +1713,7 @@ function DocumentsTab({
           </select>
           {!docUrls[uploadCategory] && <SmartScoreNudge />}
         </div>
-        <UploadZone id="new-doc-upload" uploading={uploading} onChange={handleNewUpload} />
+        <UploadZone id="new-doc-upload" uploading={uploading} onFile={handleNewUpload} />
       </div>
     </div>
   )
