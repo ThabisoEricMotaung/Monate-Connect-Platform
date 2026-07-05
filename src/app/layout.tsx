@@ -4,8 +4,7 @@ import { Libre_Franklin, Playfair_Display, Source_Serif_4 } from "next/font/goog
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { I18nProvider } from "@/lib/i18n";
-import Navbar from "@/components/layout/Navbar";
-import UnifiedSupportCenter from "@/components/UnifiedSupportCenter";
+import AppChrome from "@/components/layout/AppChrome";
 
 const playfair = Playfair_Display({
   variable: "--font-display",
@@ -95,9 +94,7 @@ export default function RootLayout({
       <body className="min-h-full bg-page text-primary font-sans">
         <ThemeProvider>
           <I18nProvider>
-            <Navbar />
-            {children}
-            <UnifiedSupportCenter />
+            <AppChrome>{children}</AppChrome>
           </I18nProvider>
         </ThemeProvider>
       </body>
