@@ -231,14 +231,24 @@ export default function HeroSection() {
           box-shadow: 0 6px 24px rgba(200,160,96,0.35);
           background-position: right center;
         }
+        .hero-content-grid {
+          gap: 48px;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+        }
         @media (prefers-reduced-motion: reduce) {
           .hero-glass-panel, .hero-glass-card { animation: none; }
           .hero-gold-btn { transition: none; }
         }
+        @media (max-width: 900px) {
+          .hero-content-grid {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 32px;
+          }
+        }
       `}</style>
 
       {/* ── Main content grid ── */}
-      <div style={{ position: "relative", zIndex: 10, maxWidth: 1200, margin: "0 auto", width: "100%", padding: "56px 24px 64px", display: "grid", gridTemplateColumns: "1fr 360px", gap: 48, alignItems: "center" }}>
+      <div className="hero-content-grid" style={{ position: "relative", zIndex: 10, maxWidth: 1200, margin: "0 auto", width: "100%", padding: "56px 24px 64px", display: "grid", alignItems: "center" }}>
 
         {/* Left — headline */}
         <div>
@@ -328,13 +338,6 @@ export default function HeroSection() {
           </Link>
         </div>
       </div>
-
-      {/* Responsive collapse */}
-      <style>{`
-        @media (max-width: 900px) {
-          .hero-glass-panel { display: none !important; }
-        }
-      `}</style>
     </div>
   )
 }
