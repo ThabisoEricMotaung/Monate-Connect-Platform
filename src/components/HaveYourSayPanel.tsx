@@ -4,32 +4,17 @@ import { useEffect, useMemo, useState, type ClipboardEvent, type DragEvent, type
 import { IconPaperclip, IconSend, IconUpload, IconX } from "@tabler/icons-react"
 import Link from "next/link"
 import {
-  cleanSuggestionAttachmentFileName,
   formatSuggestionAttachmentFileSize,
   imageFileFromClipboardItems,
   validateSuggestionAttachment,
 } from "@/lib/suggestionAttachments"
+import {
+  suggestionSelect,
+  submitSuggestion as submitSuggestionRecord,
+  type SuggestionCategory,
+  type SuggestionRecord,
+} from "@/lib/suggestions"
 import { supabase } from "@/lib/supabase"
-
-type Category = "Feature idea" | "Bug report" | "General"
-
-type SuggestionRecord = {
-  id: number
-  user_id: string | null
-  display_name: string | null
-  category: string | null
-  message: string
-  attachment_path: string | null
-  attachment_url: string | null
-  attachment_name: string | null
-  attachment_type: string | null
-  attachment_size: number | null
-  admin_response: string | null
-  admin_reaction: string | null
-  admin_rating: number | null
-  admin_responded_at: string | null
-  created_at: string
-}
 
 type ProfileRow = {
   id: string
@@ -40,7 +25,7 @@ type ProfileRow = {
   role?: string | null
 }
 
-const categories: Category[] = ["Feature idea", "Bug report", "General"]
+const categories: SuggestionCategory[] = ["Feature idea", "Bug report", "General"]
 
 function displayNameFrom(profile: ProfileRow | null, fallbackEmail?: string | null) {
   return (
@@ -57,7 +42,7 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
   const [userId, setUserId] = useState("")
   const [displayName, setDisplayName] = useState("")
   const [email, setEmail] = useState<string | null>(null)
-  const [category, setCategory] = useState<Category>("Feature idea")
+  const [category, setCategory] = useState<SuggestionCategory>("Feature idea")
   const [message, setMessage] = useState("")
   const [file, setFile] = useState<File | null>(null)
   const [dragging, setDragging] = useState(false)
@@ -108,7 +93,7 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
       if (showMySuggestions) {
         const { data, error: suggestionsError } = await supabase
           .from("suggestions")
-          .select("id, user_id, display_name, category, message, attachment_path, attachment_url, attachment_name, attachment_type, attachment_size, admin_response, admin_reaction, admin_rating, admin_responded_at, created_at")
+          .select(suggestionSelect)
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
 
@@ -162,27 +147,6 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
     chooseFile(pastedImage)
   }
 
-  async function uploadAttachment(currentUserId: string) {
-    if (!file || !supabase) return null
-
-    const path = `${currentUserId}/${Date.now()}-${cleanSuggestionAttachmentFileName(file.name)}`
-    const { error: uploadError } = await supabase.storage
-      .from("suggestion-attachments")
-      .upload(path, file, { contentType: file.type, upsert: false })
-
-    if (uploadError) throw uploadError
-
-    const { data } = supabase.storage.from("suggestion-attachments").getPublicUrl(path)
-
-    return {
-      attachment_path: path,
-      attachment_url: data.publicUrl || path,
-      attachment_name: file.name,
-      attachment_type: file.type,
-      attachment_size: file.size,
-    }
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!supabase || !canSubmit) return
@@ -192,26 +156,15 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
     setSuccess("")
 
     try {
-      const attachment = await uploadAttachment(userId)
-      const payload = {
-        user_id: userId,
-        display_name: displayName,
+      const data = await submitSuggestionRecord({
+        userId,
+        displayName,
         email,
         category,
-        message: message.trim(),
-        created_at: new Date().toISOString(),
-        ...(attachment ?? {}),
-      }
-
-      const { data, error: insertError } = await supabase
-        .from("suggestions")
-        .insert(payload)
-        .select("id, user_id, display_name, category, message, attachment_path, attachment_url, attachment_name, attachment_type, attachment_size, admin_response, admin_reaction, admin_rating, admin_responded_at, created_at")
-        .single()
-
-      if (insertError) throw insertError
-
-      setSuggestions((current) => (data ? [data as SuggestionRecord, ...current] : current))
+        message,
+        file,
+      })
+      setSuggestions((current) => [data, ...current])
       setMessage("")
       setFile(null)
       setSuccess("Thank you. Your suggestion has been sent to the AiForm team.")

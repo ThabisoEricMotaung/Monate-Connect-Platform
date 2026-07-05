@@ -28,11 +28,11 @@ import {
   IconX,
 } from "@tabler/icons-react"
 import {
-  cleanSuggestionAttachmentFileName,
   formatSuggestionAttachmentFileSize,
   imageFileFromClipboardItems,
   validateSuggestionAttachment,
 } from "@/lib/suggestionAttachments"
+import { submitSuggestion as submitSuggestionRecord } from "@/lib/suggestions"
 import { supabase } from "@/lib/supabase"
 
 type SupportTab = "assistant" | "feedback" | "accessibility" | "preferences"
@@ -594,43 +594,20 @@ export default function UnifiedSupportCenter() {
     chooseSuggestionFile(pastedImage)
   }
 
-  async function uploadSuggestionAttachment() {
-    if (!suggestionFile || !supabase || !userId) return null
-    const path = `${userId}/${Date.now()}-${cleanSuggestionAttachmentFileName(suggestionFile.name)}`
-    const { error } = await supabase.storage
-      .from("suggestion-attachments")
-      .upload(path, suggestionFile, { contentType: suggestionFile.type, upsert: false })
-    if (error) throw error
-    const { data } = supabase.storage.from("suggestion-attachments").getPublicUrl(path)
-    return {
-      attachment_path: path,
-      attachment_url: data.publicUrl || path,
-      attachment_name: suggestionFile.name,
-      attachment_type: suggestionFile.type,
-      attachment_size: suggestionFile.size,
-    }
-  }
-
   async function submitSuggestion() {
     if (!suggestion.trim()) return
     setSubmitting(true)
     setSuggestionError("")
 
     try {
-      if (!supabase) throw new Error("Suggestion capture is not configured yet.")
-      if (!userId) throw new Error("Please sign in to submit a suggestion.")
-
-      const attachment = await uploadSuggestionAttachment()
-      const { error } = await supabase.from("suggestions").insert({
-        user_id: userId,
-        display_name: displayName,
+      await submitSuggestionRecord({
+        userId,
+        displayName,
         email,
         category,
-        message: suggestion.trim(),
-        created_at: new Date().toISOString(),
-        ...(attachment ?? {}),
+        message: suggestion,
+        file: suggestionFile,
       })
-      if (error) throw error
 
       setSubmitted(true)
       setSuggestion("")
