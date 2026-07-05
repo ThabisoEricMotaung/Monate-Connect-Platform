@@ -6,6 +6,8 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
 type OnboardingProfile = {
+  first_name: string | null
+  last_name: string | null
   full_name: string | null
   business_name: string | null
   csd_number: string | null
@@ -54,7 +56,7 @@ export default function OnboardingPage() {
 
       const { data } = await supabase
         .from("profiles")
-        .select("full_name, business_name, csd_number, bbbee_level, bbbee_document_url, banking_verified, bank_verified, onboarding_seen")
+        .select("first_name, last_name, full_name, business_name, csd_number, bbbee_level, bbbee_document_url, banking_verified, bank_verified, onboarding_seen")
         .eq("id", user.id)
         .maybeSingle()
 
@@ -69,7 +71,7 @@ export default function OnboardingPage() {
     load()
   }, [router])
 
-  const firstName = profile?.full_name?.split(" ")[0] ?? "there"
+  const firstName = profile?.first_name?.trim() || profile?.full_name?.split(" ")[0] || "there"
 
   const checklist: ChecklistItem[] = profile
     ? [

@@ -29,11 +29,14 @@ function greeting(): string {
 }
 
 function displayNameFromProfile(
-  profile: { preferred_name?: string | null; full_name?: string | null } | null | undefined,
+  profile: { preferred_name?: string | null; first_name?: string | null; last_name?: string | null; full_name?: string | null } | null | undefined,
   fallbackFullName?: string | null
 ): string {
   const preferredName = profile?.preferred_name?.trim()
   if (preferredName) return preferredName
+
+  const splitName = [profile?.first_name?.trim(), profile?.last_name?.trim()].filter(Boolean).join(" ")
+  if (splitName) return splitName.split(/\s+/)[0] || "there"
 
   const fullName = profile?.full_name?.trim() || fallbackFullName?.trim() || ""
   return fullName.split(/\s+/)[0] || "there"
@@ -90,7 +93,7 @@ export default function DashboardPage() {
         nextWeek.setDate(nextWeek.getDate() + 7)
 
         const [initialProfileRes, rfqRes, closingWeekRes, quoteRes] = await Promise.all([
-          supabase.from("profiles").select("verification_status, full_name, preferred_name, dashboard_welcome_seen").eq("id", user.id).maybeSingle(),
+          supabase.from("profiles").select("verification_status, first_name, last_name, full_name, preferred_name, dashboard_welcome_seen").eq("id", user.id).maybeSingle(),
           supabase
             .from("rfqs")
             .select("id", { count: "exact", head: true })

@@ -61,7 +61,8 @@ const bbeeLevels = [
 
 type SignupForm = {
   role: "supplier" | "buyer"
-  fullName: string
+  firstName: string
+  lastName: string
   email: string
   password: string
   confirmPassword: string
@@ -104,7 +105,8 @@ const selectClass =
 
 const initialForm: SignupForm = {
   role: "supplier",
-  fullName: "",
+  firstName: "",
+  lastName: "",
   email: "",
   password: "",
   confirmPassword: "",
@@ -133,6 +135,18 @@ function cleanFileName(name: string) {
 
 function preferredFirstName(value: string) {
   return value.trim().split(/\s+/)[0] || "there"
+}
+
+function fullNameFromParts(firstName: string, lastName: string) {
+  return [firstName.trim(), lastName.trim()].filter(Boolean).join(" ")
+}
+
+function splitNameParts(value: string) {
+  const parts = value.trim().split(/\s+/).filter(Boolean)
+  return {
+    firstName: parts[0] ?? "",
+    lastName: parts.slice(1).join(" "),
+  }
 }
 
 function getPasswordRules(password: string): PasswordRule[] {
@@ -409,14 +423,23 @@ export default function SignupPage() {
           if (!user) return
 
           setUserId(user.id)
+          const metadataName =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            ""
+          const metadataFirstName =
+            user.user_metadata?.first_name ||
+            user.user_metadata?.given_name ||
+            splitNameParts(metadataName).firstName
+          const metadataLastName =
+            user.user_metadata?.last_name ||
+            user.user_metadata?.family_name ||
+            splitNameParts(metadataName).lastName
           setForm((current) => ({
             ...current,
             email: current.email || user.email || "",
-            fullName:
-              current.fullName ||
-              user.user_metadata?.full_name ||
-              user.user_metadata?.name ||
-              "",
+            firstName: current.firstName || metadataFirstName || "",
+            lastName: current.lastName || metadataLastName || "",
           }))
         })
       }
@@ -510,7 +533,8 @@ export default function SignupPage() {
     const nextErrors: SignupErrors = {}
 
     if (targetStep === 1) {
-      if (!form.fullName.trim()) nextErrors.fullName = "Full name is required."
+      if (!form.firstName.trim()) nextErrors.firstName = "First name is required."
+      if (!form.lastName.trim()) nextErrors.lastName = "Surname is required."
       if (!form.email.trim()) nextErrors.email = "Work email address is required."
       else if (!isValidEmail(form.email)) nextErrors.email = "Enter a valid email address."
       if (!isOauthSignup && !form.password) nextErrors.password = "Password is required."
@@ -568,6 +592,7 @@ export default function SignupPage() {
     }
 
     const normalizedEmail = form.email.trim().toLowerCase()
+    const fullName = fullNameFromParts(form.firstName, form.lastName)
 
     if (isOauthSignup) {
       const {
@@ -585,7 +610,18 @@ export default function SignupPage() {
       setForm((current) => ({
         ...current,
         email: user.email ?? normalizedEmail,
-        fullName: current.fullName || user.user_metadata?.full_name || user.user_metadata?.name || "",
+        firstName:
+          current.firstName ||
+          user.user_metadata?.first_name ||
+          user.user_metadata?.given_name ||
+          splitNameParts(user.user_metadata?.full_name || user.user_metadata?.name || "").firstName ||
+          "",
+        lastName:
+          current.lastName ||
+          user.user_metadata?.last_name ||
+          user.user_metadata?.family_name ||
+          splitNameParts(user.user_metadata?.full_name || user.user_metadata?.name || "").lastName ||
+          "",
       }))
       setLoading(false)
       setStep(2)
@@ -597,7 +633,10 @@ export default function SignupPage() {
       password: form.password,
       options: {
         data: {
-          full_name: form.fullName,
+          first_name: form.firstName.trim(),
+          last_name: form.lastName.trim(),
+          full_name: fullName,
+          preferred_name: form.firstName.trim(),
           role: form.role,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
@@ -729,6 +768,7 @@ export default function SignupPage() {
     }
 
     const normalizedEmail = form.email.trim().toLowerCase()
+    const fullName = fullNameFromParts(form.firstName, form.lastName)
 
     const smartScore = calculateSmartScore({
       business_name: form.businessName,
@@ -751,7 +791,10 @@ export default function SignupPage() {
     const { error: profileError } = await supabase.from("profiles").upsert({
       id: userId,
       email: normalizedEmail,
-      full_name: form.fullName,
+      first_name: form.firstName.trim(),
+      last_name: form.lastName.trim(),
+      full_name: fullName,
+      preferred_name: form.firstName.trim(),
       business_name: form.businessName,
       company_registration: form.registrationNumber,
       phone: form.phone,
@@ -968,12 +1011,21 @@ export default function SignupPage() {
                   ))}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-secondary">
-                    Full name <span className="font-semibold text-accent">*</span>
-                  </label>
-                  <input type="text" value={form.fullName} onChange={(e) => updateField("fullName", e.target.value)} className={inputClass} />
-                  <FieldError message={errors.fullName} />
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-secondary">
+                      First name <span className="font-semibold text-accent">*</span>
+                    </label>
+                    <input type="text" value={form.firstName} onChange={(e) => updateField("firstName", e.target.value)} className={inputClass} />
+                    <FieldError message={errors.firstName} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-secondary">
+                      Surname <span className="font-semibold text-accent">*</span>
+                    </label>
+                    <input type="text" value={form.lastName} onChange={(e) => updateField("lastName", e.target.value)} className={inputClass} />
+                    <FieldError message={errors.lastName} />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-secondary">Work email address <span className="font-semibold text-accent">*</span></label>
@@ -1220,7 +1272,7 @@ export default function SignupPage() {
 
               <div className="mt-5 grid gap-5 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-secondary">Tax reference number <span className="text-rose-500">*</span></label>
+                  <label className="block text-sm font-medium text-secondary">Tax reference number</label>
                   <input ref={taxReferenceRef} type="text" placeholder="e.g. 1234567890" value={form.taxReference} onChange={(e) => updateField("taxReference", e.target.value)} className={inputClass} />
                   <FieldError message={errors.taxReference} />
                 </div>
@@ -1246,7 +1298,7 @@ export default function SignupPage() {
               <div className="mt-5 rounded-2xl border border-panel bg-surface px-5 py-4">
                 <label className="flex gap-3 text-sm font-semibold text-secondary">
                   <input type="checkbox" checked={form.csdConfirmed} onChange={(e) => updateField("csdConfirmed", e.target.checked)} className="mt-1 h-4 w-4 rounded border-panel accent-[var(--accent)]" />
-                  <span>I confirm that my CSD profile is active and up to date.</span>
+                  <span>I confirm that my CSD profile is active and up to date. <span className="text-rose-500">*</span></span>
                 </label>
                 <FieldError message={errors.csdConfirmed} />
               </div>
@@ -1336,7 +1388,7 @@ export default function SignupPage() {
               <div className="text-center">
                 <p className="text-xs uppercase tracking-[0.24em] text-accent">{form.role === "buyer" ? "Buyer registration" : "Supplier onboarding"}</p>
                 <h1 className="mt-3 text-4xl font-semibold text-primary">
-                  Welcome to AiForm Procure, {preferredFirstName(form.fullName)}!
+                  Welcome to AiForm Procure, {preferredFirstName(form.firstName)}!
                 </h1>
                 <p className="mt-4 text-sm leading-6 text-secondary">
                   We&apos;ve sent a verification email to{" "}

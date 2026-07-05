@@ -9,6 +9,8 @@ import { supabase } from "@/lib/supabase"
 export type AccountMenuProfile = {
   business_name?: string | null
   email?: string | null
+  first_name?: string | null
+  last_name?: string | null
   full_name?: string | null
   preferred_name?: string | null
   role?: string | null
@@ -18,6 +20,7 @@ export type AccountMenuProfile = {
 function displayName(profile: AccountMenuProfile | null): string {
   return (
     profile?.preferred_name?.trim() ||
+    [profile?.first_name?.trim(), profile?.last_name?.trim()].filter(Boolean).join(" ") ||
     profile?.full_name?.trim() ||
     profile?.business_name?.trim() ||
     profile?.email?.trim() ||

@@ -37,6 +37,8 @@ type Tab = "profile" | "verification" | "documents" | "banking"
 
 type Profile = {
   id: string
+  first_name: string | null
+  last_name: string | null
   full_name: string | null
   preferred_name: string | null
   avatar_url: string | null
@@ -174,6 +176,9 @@ const labelCls =
 function profileDisplayName(profile: Profile | null): string {
   const preferredName = profile?.preferred_name?.trim()
   if (preferredName) return preferredName
+
+  const splitName = [profile?.first_name?.trim(), profile?.last_name?.trim()].filter(Boolean).join(" ")
+  if (splitName) return splitName.split(/\s+/)[0] || "Your"
 
   const fullName = profile?.full_name?.trim()
   if (fullName) return fullName.split(/\s+/)[0] || "Your"
@@ -357,15 +362,25 @@ function Badge({ children, color }: { children: React.ReactNode; color: "green" 
 function UploadZone({
   id,
   uploading,
-  onChange,
+  onFile,
 }: {
   id: string
   uploading: boolean
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onFile: (file: File | null) => void
 }) {
   return (
     <label
       htmlFor={id}
+      onDragOver={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+      }}
+      onDrop={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        if (uploading) return
+        onFile(event.dataTransfer.files?.[0] ?? null)
+      }}
       className="mt-3 flex cursor-pointer flex-col items-center gap-2 rounded-md border-2 border-dashed border-panel px-4 py-6 text-center transition hover:border-accent"
     >
       <svg className="h-6 w-6 text-muted" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
@@ -375,7 +390,17 @@ function UploadZone({
         {uploading ? "Uploading..." : "Drag and drop or click to browse"}
       </p>
       <p className="text-[0.65rem] text-muted">PDF - max 10 MB</p>
-      <input id={id} type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" onChange={onChange} disabled={uploading} />
+      <input
+        id={id}
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png"
+        className="sr-only"
+        onChange={(event) => {
+          onFile(event.target.files?.[0] ?? null)
+          event.target.value = ""
+        }}
+        disabled={uploading}
+      />
     </label>
   )
 }
@@ -550,8 +575,8 @@ function ProfileImageUploads({
             alt="Personal avatar"
             className="h-20 w-20 rounded-full border border-panel object-cover"
             fallbackClassName="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-panel bg-accent text-xl font-bold text-button"
-            fallbackText={initialsFromName(profile.full_name || profile.preferred_name || profile.email, "S")}
-            seedName={profile.full_name || profile.preferred_name || profile.email}
+            fallbackText={initialsFromName(profile.preferred_name || [profile.first_name, profile.last_name].filter(Boolean).join(" ") || profile.full_name || profile.email, "S")}
+            seedName={profile.preferred_name || [profile.first_name, profile.last_name].filter(Boolean).join(" ") || profile.full_name || profile.email}
           />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-heading">Profile photo (shown on your public listing)</p>
@@ -685,6 +710,7 @@ function ProfileHeaderCard({
   const businessName = profile.business_name?.trim() || "Your business"
   const contactName =
     profile.preferred_name?.trim() ||
+    [profile.first_name?.trim(), profile.last_name?.trim()].filter(Boolean).join(" ") ||
     profile.full_name?.trim() ||
     profile.email?.trim() ||
     businessName
@@ -1258,7 +1284,7 @@ function ProfileTab({
                 <input id="website" name="website" type="url" placeholder="https://" value={bizForm.website} onChange={handleBizChange} className={inputCls} />
               </div>
               <div className="sm:col-span-2">
-                <p className={labelCls}>Province(s) you operate in</p>
+                <p className={labelCls}>Province(s) you operate in <span className="text-rose-500">*</span></p>
                 <label className="mb-3 flex items-center gap-3 rounded-md border border-panel bg-card px-4 py-3 text-sm font-semibold text-secondary">
                   <input
                     type="checkbox"
@@ -2039,7 +2065,7 @@ function ProfilePageInner() {
 
       const [profileRes, bankRes] = await Promise.all([
         supabase.from("profiles").select(
-          "id, full_name, preferred_name, avatar_url, company_logo_url, business_name, province, provinces, industry, phone, email, website, description, company_registration, tax_reference, vat_number, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, banking_verified, bank_verified, director_verified, tax_clearance_url, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date, updated_at"
+          "id, first_name, last_name, full_name, preferred_name, avatar_url, company_logo_url, business_name, province, provinces, industry, phone, email, website, description, company_registration, tax_reference, vat_number, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, banking_verified, bank_verified, director_verified, tax_clearance_url, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date, updated_at"
         ).eq("id", user.id).maybeSingle(),
         supabase.from("supplier_bank_details").select(
           "id, bank_name, account_holder, account_number, branch_code, account_type, verification_status, verification_notes"
