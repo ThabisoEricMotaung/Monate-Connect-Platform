@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { IconPaperclip, IconSend } from "@tabler/icons-react"
+import { IconArchive, IconPaperclip, IconSend } from "@tabler/icons-react"
 import { getCurrentProfile } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 
@@ -22,6 +22,7 @@ type Suggestion = {
   admin_reaction: string | null
   admin_rating: number | null
   admin_responded_at: string | null
+  deleted_at: string | null
   created_at: string
 }
 
@@ -37,10 +38,10 @@ const categoryColors: Record<string, string> = {
   General: "bg-[#faf3e8] text-[#c8a060] border-[#c8a060]/30",
 }
 
-const categoryEmoji: Record<string, string> = {
-  "Feature idea": "Idea",
-  "Bug report": "Bug",
-  General: "Note",
+const categoryLabels: Record<string, string> = {
+  "Feature idea": "Feature Idea",
+  "Bug report": "Bug Report",
+  General: "General",
 }
 
 const reactions = ["", "👍", "👎", "❤️", "💡", "🎉", "🤔"]
@@ -78,6 +79,7 @@ export default function SuggestionsPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>("All")
   const [error, setError] = useState("")
+  const [clearingId, setClearingId] = useState<number | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -96,7 +98,8 @@ export default function SuggestionsPage() {
 
       const { data, error: loadError } = await supabase
         .from("suggestions")
-        .select("id, user_id, display_name, category, message, email, attachment_path, attachment_url, attachment_name, attachment_type, attachment_size, admin_response, admin_reaction, admin_rating, admin_responded_at, created_at")
+        .select("id, user_id, display_name, category, message, email, attachment_path, attachment_url, attachment_name, attachment_type, attachment_size, admin_response, admin_reaction, admin_rating, admin_responded_at, deleted_at, created_at")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false })
 
       if (!cancelled) {
@@ -165,6 +168,30 @@ export default function SuggestionsPage() {
     setSavingId(null)
   }
 
+  async function clearSuggestion(suggestion: Suggestion) {
+    if (!supabase) return
+    setClearingId(suggestion.id)
+    setError("")
+
+    const { error: clearError } = await supabase
+      .from("suggestions")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", suggestion.id)
+
+    if (clearError) {
+      setError(clearError.message)
+    } else {
+      setSuggestions((current) => current.filter((item) => item.id !== suggestion.id))
+      setDrafts((current) => {
+        const next = { ...current }
+        delete next[suggestion.id]
+        return next
+      })
+    }
+
+    setClearingId(null)
+  }
+
   return (
     <div>
       <div className="mb-8 border-b border-panel pb-6">
@@ -186,7 +213,7 @@ export default function SuggestionsPage() {
             }`}
           >
             <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-secondary">
-              {cat === "All" ? "Inbox" : categoryEmoji[cat]} {cat}
+              {cat === "All" ? "Inbox" : categoryLabels[cat] ?? cat}
             </p>
             <p className="text-2xl font-bold text-heading">{counts[cat as keyof typeof counts]}</p>
           </button>
@@ -216,9 +243,21 @@ export default function SuggestionsPage() {
               <div key={suggestion.id} className="rounded-xl border border-[#1a3a2a]/10 bg-white/60 p-5 shadow-md backdrop-blur">
                 <div className="mb-3 flex items-start justify-between gap-4">
                   <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${categoryColors[suggestion.category ?? "General"] ?? categoryColors.General}`}>
-                    {categoryEmoji[suggestion.category ?? "General"]} {suggestion.category ?? "General"}
+                    {categoryLabels[suggestion.category ?? "General"] ?? suggestion.category ?? "General"}
                   </span>
-                  <span className="shrink-0 text-xs text-muted">{timeAgo(suggestion.created_at)}</span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-xs text-muted">{timeAgo(suggestion.created_at)}</span>
+                    <button
+                      type="button"
+                      onClick={() => clearSuggestion(suggestion)}
+                      disabled={clearingId === suggestion.id}
+                      className="inline-flex items-center gap-1 rounded-lg border border-panel bg-card px-2.5 py-1 text-xs font-semibold text-muted transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      aria-label="Clear suggestion from admin queue"
+                    >
+                      <IconArchive className="h-3.5 w-3.5" aria-hidden />
+                      {clearingId === suggestion.id ? "Clearing..." : "Clear"}
+                    </button>
+                  </div>
                 </div>
                 <p className="mb-3 text-sm leading-relaxed text-heading">{suggestion.message}</p>
                 <div className="flex flex-wrap gap-3 text-xs text-muted">
