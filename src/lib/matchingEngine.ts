@@ -1,4 +1,5 @@
 import { calculateSupplierSmartScore } from "./smartScore"
+import { displayIndustry } from "./industries"
 import {
   applySupplierDocumentsToProfiles,
   fetchSupplierDocumentsByProfileIds,
@@ -128,7 +129,7 @@ function calculateIndustryScore(
   supplier: MatchingSupplier,
   rfq: MatchingRFQ
 ): number {
-  const supplierIndustry = normalize(supplier.industry)
+  const supplierIndustry = normalize(displayIndustry(supplier.industry))
   const rfqCategory = normalize(rfq.category)
 
   if (!supplierIndustry || !rfqCategory) return 0

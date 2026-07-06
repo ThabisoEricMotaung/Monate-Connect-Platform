@@ -9,6 +9,7 @@ import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import SignedDocumentLink from "@/components/SignedDocumentLink"
 import { logEvent } from "@/hooks/useSessionTracking"
 import { logActivity } from "@/lib/activity"
+import { OFFICIAL_INDUSTRY_OPTIONS, displayIndustry, industryFormValue } from "@/lib/industries"
 import {
   calculateSmartScore,
   getSmartScoreBreakdown,
@@ -765,7 +766,7 @@ function ProfileHeaderCard({
     businessName
   const smartScore = calculateSmartScore(scoreProfile(profile, bank))
   const location = profile.province ? displayProvinceValue(profile.province) : ""
-  const profileMeta = [profile.industry, location].filter(Boolean).join(" | ") || "Industry | Province"
+  const profileMeta = [displayIndustry(profile.industry), location].filter(Boolean).join(" | ") || "Industry | Province"
   const [uploading, setUploading] = useState<"avatar" | "logo" | null>(null)
   const [pendingUpload, setPendingUpload] = useState<{
     file: File
@@ -1101,7 +1102,7 @@ function ProfileTab({
   const [bizForm, setBizForm] = useState({
     preferred_name: profile.preferred_name ?? "",
     business_name: profile.business_name ?? "",
-    industry: profile.industry ?? "",
+    industry: industryFormValue(profile.industry),
     phone: formatSAPhoneInput(profile.phone ?? ""),
     email: profile.email ?? "",
     website: profile.website ?? "",
@@ -1232,7 +1233,7 @@ function ProfileTab({
     setBizForm({
       preferred_name: profile.preferred_name ?? "",
       business_name: profile.business_name ?? "",
-      industry: profile.industry ?? "",
+      industry: industryFormValue(profile.industry),
       phone: formatSAPhoneInput(profile.phone ?? ""),
       email: profile.email ?? "",
       website: profile.website ?? "",
@@ -1307,7 +1308,12 @@ function ProfileTab({
               </div>
               <div>
                 <label htmlFor="industry" className={labelCls}>Industry</label>
-                <input id="industry" name="industry" type="text" value={bizForm.industry} onChange={handleBizChange} className={inputCls} />
+                <select id="industry" name="industry" value={bizForm.industry} onChange={handleBizChange} className={inputCls}>
+                  <option value="">Select industry</option>
+                  {OFFICIAL_INDUSTRY_OPTIONS.map((industry) => (
+                    <option key={industry} value={industry}>{industry}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label htmlFor="phone" className={labelCls}>Phone number</label>
@@ -1384,7 +1390,7 @@ function ProfileTab({
               { label: "Preferred display name", value: profile.preferred_name },
               { label: "Registered business name", value: profile.business_name },
               { label: "Company registration number", value: profile.company_registration },
-              { label: "Industry", value: profile.industry },
+              { label: "Industry", value: displayIndustry(profile.industry) },
               { label: "Phone number", value: profile.phone },
               { label: "Work email", value: profile.email },
               { label: "Website", value: profile.website },
@@ -2232,7 +2238,7 @@ function RFQVisibilityCard({ profile }: { profile: Profile | null }) {
       <p className="text-[0.67rem] font-bold uppercase tracking-[0.24em] text-accent">RFQ visibility</p>
       <p className="mt-2 text-xs leading-relaxed text-secondary">
         Your profile appears in searches for{" "}
-        {profile?.industry ? <strong className="text-heading">{profile.industry}</strong> : "your industry"} RFQs in{" "}
+        {profile?.industry ? <strong className="text-heading">{displayIndustry(profile.industry)}</strong> : "your industry"} RFQs in{" "}
         {profile?.province ? <strong className="text-heading">{profile.province}</strong> : "your province"}.
       </p>
       <div className="mt-4 grid grid-cols-3 gap-3">

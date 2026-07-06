@@ -1,4 +1,5 @@
 import { supabase } from "./supabase"
+import { displayIndustry } from "./industries"
 import { calculateSupplierSmartScore, type SmartScoreResult } from "./smartScore"
 import {
   applySupplierDocumentsToProfiles,
@@ -323,7 +324,7 @@ export async function getSupplierScores(): Promise<SupplierIntelligenceRecord[]>
       supplierId: p.id,
       supplierName: p.business_name ?? "Unnamed Supplier",
       province: p.province,
-      industry: p.industry,
+      industry: displayIndustry(p.industry) || null,
       verificationStatus: p.verification_status,
       level: smartScore.label,
       riskRating,

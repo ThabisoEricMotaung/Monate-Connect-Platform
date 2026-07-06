@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "r
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { IconArrowLeft } from "@tabler/icons-react"
+import { OFFICIAL_INDUSTRY_OPTIONS } from "@/lib/industries"
 import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import {
@@ -32,17 +33,6 @@ const provinces = [
   "Free State",
   "North West",
   "Northern Cape",
-]
-
-const industryOptions = [
-  "Mining & Resources",
-  "Construction & Infrastructure",
-  "IT & Technology",
-  "Facilities & Cleaning",
-  "Logistics & Transport",
-  "Professional Services",
-  "Manufacturing",
-  "Other",
 ]
 
 const bbeeLevels = [
@@ -1165,7 +1155,7 @@ export default function SignupPage() {
                   <label className="block text-sm font-medium text-secondary">Industry <span className="text-rose-500">*</span></label>
                   <select value={form.industry} onChange={(e) => updateField("industry", e.target.value)} className={selectClass}>
                     <option value="">Select industry</option>
-                    {industryOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                    {OFFICIAL_INDUSTRY_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
                   <FieldError message={errors.industry} />
                 </div>

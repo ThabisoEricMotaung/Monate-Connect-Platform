@@ -1,6 +1,7 @@
 import { supabase } from "./supabase"
 import { calculateSupplierScore, type SupplierScoreProfile } from "./supplierScore"
 import { getComplianceStatus } from "./complianceStatus"
+import { displayIndustry } from "./industries"
 import {
   applySupplierDocumentsToProfiles,
   fetchSupplierDocumentsByProfileIds,
@@ -87,7 +88,7 @@ function industryMatchScore(
   industry: string | null
 ): { score: number; reason: string | null } {
   const cat = normalise(category)
-  const ind = normalise(industry)
+  const ind = normalise(displayIndustry(industry))
 
   if (!cat || !ind) return { score: 0, reason: null }
 
