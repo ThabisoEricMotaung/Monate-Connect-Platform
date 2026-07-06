@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import SmartScoreCircle from "@/components/SmartScoreCircle"
 import { requireAdminOrBuyer } from "@/lib/auth"
+import { displayIndustry } from "@/lib/industries"
 import { calculateSupplierSmartScore, type SmartScoreResult } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import {
@@ -195,7 +196,7 @@ export default function AdminWhatsAppNetworkPage() {
   const options = useMemo(
     () => ({
       provinces: Array.from(new Set(suppliers.map((supplier) => supplier.province).filter(Boolean))).sort() as string[],
-      industries: Array.from(new Set(suppliers.map((supplier) => supplier.industry).filter(Boolean))).sort() as string[],
+      industries: Array.from(new Set(suppliers.map((supplier) => displayIndustry(supplier.industry)).filter(Boolean))).sort() as string[],
       statuses: Array.from(new Set(suppliers.map((supplier) => supplier.verification_status).filter(Boolean))).sort() as string[],
       levels: Array.from(new Set(suppliers.map((supplier) => supplier.smartScore.label))).sort(),
     }),
@@ -211,7 +212,7 @@ export default function AdminWhatsAppNetworkPage() {
         (supplier.business_name ?? "").toLowerCase().includes(needle) ||
         (supplier.email ?? "").toLowerCase().includes(needle)
       const matchesProvince = !provinceFilter || supplier.province === provinceFilter
-      const matchesIndustry = !industryFilter || supplier.industry === industryFilter
+      const matchesIndustry = !industryFilter || displayIndustry(supplier.industry) === industryFilter
       const matchesStatus = !statusFilter || supplier.verification_status === statusFilter
       const matchesLevel = !levelFilter || supplier.smartScore.label === levelFilter
 
@@ -507,7 +508,7 @@ export default function AdminWhatsAppNetworkPage() {
                       {supplier.business_name || "Unnamed Supplier"}
                     </h2>
                     <p className="mt-1 text-xs text-muted">
-                      {[supplier.province, supplier.industry].filter(Boolean).join(" | ") || "No location/industry"}
+                      {[supplier.province, displayIndustry(supplier.industry)].filter(Boolean).join(" | ") || "No location/industry"}
                     </p>
                     <p className="mt-1 text-xs text-muted">
                       Phone: {supplier.phone || "No phone on profile"}

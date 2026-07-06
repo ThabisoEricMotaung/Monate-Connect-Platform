@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import BackLink from "@/components/BackLink"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
+import { displayIndustry } from "@/lib/industries"
 import { supabase } from "@/lib/supabase"
 
 export type PublicSupplierDirectoryRow = {
@@ -171,7 +172,7 @@ function SupplierCard({ supplier }: { supplier: PublicSupplierDirectoryRow }) {
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {supplier.industry && <InfoPill tint="teal">{supplier.industry}</InfoPill>}
+        {displayIndustry(supplier.industry) && <InfoPill tint="teal">{displayIndustry(supplier.industry)}</InfoPill>}
         <InfoPill>{province}</InfoPill>
         {bbbee && <InfoPill>{bbbee}</InfoPill>}
       </div>
@@ -221,7 +222,7 @@ function SupplierList({ suppliers }: { suppliers: PublicSupplierDirectoryRow[] }
                   {supplier.business_name || "Verified supplier"}
                 </h3>
                 <p className="mt-1 text-xs text-stone-500">
-                  {[supplier.industry, primaryProvince(supplier), levelValue(supplier.bbbee_level)].filter(Boolean).join(" | ")}
+                  {[displayIndustry(supplier.industry), primaryProvince(supplier), levelValue(supplier.bbbee_level)].filter(Boolean).join(" | ")}
                 </p>
               </div>
             </div>
@@ -317,7 +318,7 @@ export default function SupplierDirectory({ suppliers }: { suppliers: PublicSupp
   }, [suppliers])
 
   const industries = useMemo(() => {
-    return Array.from(new Set(suppliers.map((supplier) => supplier.industry?.trim()).filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b))
+    return Array.from(new Set(suppliers.map((supplier) => displayIndustry(supplier.industry)).filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b))
   }, [suppliers])
 
   const filtered = useMemo(() => {
@@ -327,13 +328,13 @@ export default function SupplierDirectory({ suppliers }: { suppliers: PublicSupp
       const searchHit =
         !search ||
         normalize(supplier.business_name).includes(search) ||
-        normalize(supplier.industry).includes(search) ||
+        normalize(displayIndustry(supplier.industry)).includes(search) ||
         normalize(primaryProvince(supplier)).includes(search) ||
         supplierProvinces(supplier).some((item) => normalize(item).includes(search))
 
       if (!searchHit) return false
       if (province && !matchesProvince(supplier, province)) return false
-      if (industry && supplier.industry !== industry) return false
+      if (industry && displayIndustry(supplier.industry) !== industry) return false
       if (bbbee && levelValue(supplier.bbbee_level) !== bbbee) return false
       return true
     })

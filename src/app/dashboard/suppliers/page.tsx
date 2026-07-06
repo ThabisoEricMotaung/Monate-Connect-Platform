@@ -9,6 +9,7 @@ import {
   type SupplierPerformanceReview,
 } from "@/lib/supplierPerformance"
 import { useI18n } from "@/lib/i18n"
+import { displayIndustry } from "@/lib/industries"
 import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import { hasComplianceWarning } from "@/lib/complianceStatus"
@@ -240,7 +241,7 @@ export default function SuppliersDirectoryPage() {
   const industryOptions = useMemo(
     () =>
       Array.from(
-        new Set(suppliers.map((supplier) => supplier.industry).filter(Boolean))
+        new Set(suppliers.map((supplier) => displayIndustry(supplier.industry)).filter(Boolean))
       ).sort() as string[],
     [suppliers]
   )
@@ -267,7 +268,7 @@ export default function SuppliersDirectoryPage() {
       const provinceMatches =
         !provinceFilter || supplier.province === provinceFilter
       const industryMatches =
-        !industryFilter || supplier.industry === industryFilter
+        !industryFilter || displayIndustry(supplier.industry) === industryFilter
       const statusMatches =
         !statusFilter || supplier.verification_status === statusFilter
 
@@ -481,7 +482,7 @@ export default function SuppliersDirectoryPage() {
                       {t("industry")}
                     </p>
                     <p className="mt-2 text-sm font-semibold text-heading">
-                      {supplier.industry || "-"}
+                      {displayIndustry(supplier.industry) || "-"}
                     </p>
                   </div>
                   <div className="rounded-md border border-panel bg-panel p-4">

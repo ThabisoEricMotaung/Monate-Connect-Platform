@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { getComplianceStatus } from "@/lib/complianceStatus"
+import { displayIndustry } from "@/lib/industries"
 import { calculateSupplierScore, type SupplierScore } from "@/lib/supplierScore"
 import { supabase } from "@/lib/supabase"
 import {
@@ -363,9 +364,9 @@ function SupplierRiskCard({ assessed }: { assessed: AssessedSupplier }) {
                 {profile.province}
               </span>
             )}
-            {profile.industry && (
+            {displayIndustry(profile.industry) && (
               <span className="inline-flex rounded border border-panel bg-panel px-2 py-0.5 text-[0.68rem] text-secondary">
-                {profile.industry}
+                {displayIndustry(profile.industry)}
               </span>
             )}
           </div>
@@ -581,7 +582,7 @@ export default function ComplianceRiskPage() {
   const industryOptions = useMemo(
     () =>
       Array.from(
-        new Set(profiles.map((p) => p.industry).filter(Boolean))
+        new Set(profiles.map((p) => displayIndustry(p.industry)).filter(Boolean))
       ).sort() as string[],
     [profiles]
   )
@@ -597,7 +598,7 @@ export default function ComplianceRiskPage() {
     return assessed.filter(({ profile, risk }) => {
       if (riskFilter && risk.level !== riskFilter) return false
       if (provinceFilter && profile.province !== provinceFilter) return false
-      if (industryFilter && profile.industry !== industryFilter) return false
+      if (industryFilter && displayIndustry(profile.industry) !== industryFilter) return false
       if (verificationFilter && profile.verification_status !== verificationFilter)
         return false
       return true
