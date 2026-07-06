@@ -263,7 +263,10 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
             type="file"
             accept="image/*,application/pdf"
             className="sr-only"
-            onChange={(event) => chooseFile(event.target.files?.[0] ?? null)}
+            onChange={(event) => {
+              chooseFile(event.target.files?.[0] ?? null)
+              event.target.value = ""
+            }}
           />
         </label>
 

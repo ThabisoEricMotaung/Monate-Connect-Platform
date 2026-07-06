@@ -3,6 +3,7 @@
 import {
   type ChangeEvent,
   type ClipboardEvent as ReactClipboardEvent,
+  type DragEvent,
   type FormEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   useEffect,
@@ -25,6 +26,7 @@ import {
   IconSend,
   IconSparkles,
   IconTextSize,
+  IconUpload,
   IconX,
 } from "@tabler/icons-react"
 import {
@@ -230,6 +232,7 @@ export default function UnifiedSupportCenter() {
   const [category, setCategory] = useState<FeedbackCategory>("Feature idea")
   const [suggestion, setSuggestion] = useState("")
   const [suggestionFile, setSuggestionFile] = useState<File | null>(null)
+  const [suggestionDragging, setSuggestionDragging] = useState(false)
   const [userId, setUserId] = useState("")
   const [displayName, setDisplayName] = useState("")
   const [email, setEmail] = useState<string | null>(null)
@@ -571,6 +574,7 @@ export default function UnifiedSupportCenter() {
 
   function chooseSuggestionFile(nextFile: File | null) {
     setSuggestionError("")
+    setSubmitted(false)
     if (!nextFile) {
       setSuggestionFile(null)
       return
@@ -582,6 +586,13 @@ export default function UnifiedSupportCenter() {
       return
     }
     setSuggestionFile(nextFile)
+  }
+
+  function handleSuggestionDrop(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault()
+    event.stopPropagation()
+    setSuggestionDragging(false)
+    chooseSuggestionFile(event.dataTransfer.files?.[0] ?? null)
   }
 
   function handleSuggestionPaste(event: ReactClipboardEvent<HTMLElement>) {
@@ -928,26 +939,61 @@ export default function UnifiedSupportCenter() {
                     />
 
                     <label
-                      className="mt-4 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#1a3a2a]/20 bg-white/70 px-3 py-3 text-sm font-semibold text-[#53665c] transition hover:border-[#c8a060]"
+                      htmlFor="support-feedback-attachment"
+                      onDragOver={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        setSuggestionDragging(true)
+                      }}
+                      onDragLeave={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        setSuggestionDragging(false)
+                      }}
+                      onDrop={handleSuggestionDrop}
+                      onPaste={handleSuggestionPaste}
+                      className={`mt-4 flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed px-3 py-4 text-center text-sm font-semibold transition ${
+                        suggestionDragging
+                          ? "border-[#5DCAA5] bg-[#e8f7f2] text-[#1a3a2a]"
+                          : "border-[#1a3a2a]/20 bg-white/70 text-[#53665c] hover:border-[#c8a060]"
+                      }`}
                       tabIndex={0}
                       aria-label="Suggestion attachment"
                     >
-                      <IconPaperclip className="h-5 w-5 text-[#c8a060]" aria-hidden />
-                      <span className="min-w-0 flex-1 truncate">
-                        {suggestionFile ? suggestionFile.name : "Attach image or PDF up to 10MB"}
-                      </span>
-                      {suggestionFile ? (
-                        <span className="shrink-0 text-xs text-[#53665c]">
-                          {formatSuggestionAttachmentFileSize(suggestionFile.size)}
-                        </span>
-                      ) : null}
+                      <IconUpload className="h-7 w-7 text-[#c8a060]" aria-hidden />
+                      <span className="mt-2 font-bold text-[#1a3a2a]">Drag and drop an attachment, or click to browse</span>
+                      <span className="mt-1 text-xs text-[#53665c]">Images and PDFs only, up to 10MB.</span>
                       <input
+                        id="support-feedback-attachment"
                         type="file"
                         accept="image/*,application/pdf"
                         className="sr-only"
-                        onChange={(event) => chooseSuggestionFile(event.target.files?.[0] ?? null)}
+                        onChange={(event) => {
+                          chooseSuggestionFile(event.target.files?.[0] ?? null)
+                          event.target.value = ""
+                        }}
                       />
                     </label>
+
+                    {suggestionFile ? (
+                      <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-[#1a3a2a]/10 bg-white/75 px-3 py-2 text-sm text-[#1a3a2a]">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <IconPaperclip className="h-4 w-4 shrink-0 text-[#c8a060]" aria-hidden />
+                          <span className="truncate font-bold">{suggestionFile.name}</span>
+                          <span className="shrink-0 text-xs text-[#53665c]">
+                            {formatSuggestionAttachmentFileSize(suggestionFile.size)}
+                          </span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => chooseSuggestionFile(null)}
+                          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#1a3a2a]/10 text-[#53665c] transition hover:border-rose-300 hover:text-rose-700"
+                          aria-label="Remove attachment"
+                        >
+                          <IconX className="h-4 w-4" aria-hidden />
+                        </button>
+                      </div>
+                    ) : null}
 
                     {suggestionError ? <p className="mt-2 text-xs font-bold text-rose-700">{suggestionError}</p> : null}
                     {submitted ? (
