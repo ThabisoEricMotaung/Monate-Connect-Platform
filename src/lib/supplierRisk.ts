@@ -1,4 +1,9 @@
 import { supabase } from "./supabase"
+import {
+  applySupplierDocumentsToProfiles,
+  fetchSupplierDocumentsByProfileIds,
+  type SupplierDocument,
+} from "./supplierDocuments"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -248,7 +253,7 @@ export async function getSupplierRiskAssessments(): Promise<SupplierRiskRecord[]
   const bankingData  = settled(raw[4])
   const reviewData   = settled(raw[5])
 
-  const profiles = (profileData ?? []) as unknown as Array<{
+  const profileRows = (profileData ?? []) as unknown as Array<{
     id: string
     business_name: string | null
     province: string | null
@@ -270,7 +275,10 @@ export async function getSupplierRiskAssessments(): Promise<SupplierRiskRecord[]
     csd_expiry_date: string | null
     cidb_expiry_date: string | null
     updated_at: string | null
+    supplier_documents?: SupplierDocument[]
   }>
+  const documentResult = await fetchSupplierDocumentsByProfileIds(profileRows.map((profile) => profile.id))
+  const profiles = applySupplierDocumentsToProfiles(profileRows, documentResult.documentsByProfile)
 
   const quotes = (quoteData ?? []) as Array<{ id: number; supplier_id: string | null; status: string | null; created_at: string | null }>
   const contracts = (contractData ?? []) as Array<{ id: number; supplier_id: string | null; status: string | null; created_at: string | null }>

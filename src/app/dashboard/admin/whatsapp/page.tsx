@@ -7,6 +7,11 @@ import { requireAdminOrBuyer } from "@/lib/auth"
 import { calculateSupplierSmartScore, type SmartScoreResult } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import {
+  applySupplierDocumentsToProfiles,
+  fetchSupplierDocumentsByProfileIds,
+  type SupplierDocument,
+} from "@/lib/supplierDocuments"
+import {
   createRFQWhatsAppMessage,
   createWhatsAppLink,
   logWhatsAppAlert,
@@ -32,6 +37,7 @@ type SupplierProfile = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
+  supplier_documents?: SupplierDocument[]
   updated_at: string | null
   smartScore: SmartScoreResult
 }
@@ -157,8 +163,17 @@ export default function AdminWhatsAppNetworkPage() {
         return
       }
 
+      const supplierRows = (supplierResult.data ?? []) as unknown as Omit<SupplierProfile, "smartScore">[]
+      const documentResult = await fetchSupplierDocumentsByProfileIds(supplierRows.map((supplier) => supplier.id))
+
+      if (documentResult.error) {
+        setErrorMessage(documentResult.error)
+        setLoading(false)
+        return
+      }
+
       setSuppliers(
-        ((supplierResult.data ?? []) as unknown as Omit<SupplierProfile, "smartScore">[]).map(
+        applySupplierDocumentsToProfiles(supplierRows, documentResult.documentsByProfile).map(
           (supplier) => ({
             ...supplier,
             smartScore: calculateSupplierSmartScore(supplier),

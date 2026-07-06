@@ -4,8 +4,10 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
+import { applySupplierDocuments, fetchSupplierDocumentsForProfile } from "@/lib/supplierDocuments"
 
 type OnboardingProfile = {
+  id: string
   first_name: string | null
   last_name: string | null
   full_name: string | null
@@ -56,11 +58,12 @@ export default function OnboardingPage() {
 
       const { data } = await supabase
         .from("profiles")
-        .select("first_name, last_name, full_name, business_name, csd_number, bbbee_level, bbbee_document_url, banking_verified, bank_verified, onboarding_seen")
+        .select("id, first_name, last_name, full_name, business_name, csd_number, bbbee_level, bbbee_document_url, banking_verified, bank_verified, onboarding_seen")
         .eq("id", user.id)
         .maybeSingle()
 
-      setProfile(data as OnboardingProfile | null)
+      const documents = data ? await fetchSupplierDocumentsForProfile(user.id) : { documents: [], error: null }
+      setProfile(data ? applySupplierDocuments(data as OnboardingProfile, documents.documents) : null)
       setLoading(false)
 
       // Mark onboarding as seen (non-blocking)

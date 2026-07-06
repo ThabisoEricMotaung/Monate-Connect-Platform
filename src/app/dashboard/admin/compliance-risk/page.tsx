@@ -7,6 +7,11 @@ import { requireAdminOrBuyer } from "@/lib/auth"
 import { getComplianceStatus } from "@/lib/complianceStatus"
 import { calculateSupplierScore, type SupplierScore } from "@/lib/supplierScore"
 import { supabase } from "@/lib/supabase"
+import {
+  applySupplierDocumentsToProfiles,
+  fetchSupplierDocumentsByProfileIds,
+  type SupplierDocument,
+} from "@/lib/supplierDocuments"
 
 // --- Types --------------------------------------------------------------------
 
@@ -30,6 +35,7 @@ type SupplierProfile = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
+  supplier_documents?: SupplierDocument[]
   tax_expiry_date: string | null
   bbbee_expiry_date: string | null
   csd_expiry_date: string | null
@@ -524,7 +530,15 @@ export default function ComplianceRiskPage() {
         return
       }
 
-      setProfiles((data ?? []) as unknown as SupplierProfile[])
+      const profileRows = (data ?? []) as unknown as SupplierProfile[]
+      const documents = await fetchSupplierDocumentsByProfileIds(profileRows.map((profile) => profile.id))
+      if (documents.error) {
+        setError(documents.error)
+        setLoading(false)
+        return
+      }
+
+      setProfiles(applySupplierDocumentsToProfiles(profileRows, documents.documentsByProfile))
       setLoading(false)
     }
 

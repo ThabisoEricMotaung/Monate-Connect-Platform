@@ -1,5 +1,10 @@
 import { supabase } from "./supabase"
 import { calculateSupplierSmartScore, type SmartScoreResult } from "./smartScore"
+import {
+  applySupplierDocumentsToProfiles,
+  fetchSupplierDocumentsByProfileIds,
+  type SupplierDocument,
+} from "./supplierDocuments"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -214,7 +219,7 @@ export async function getSupplierScores(): Promise<SupplierIntelligenceRecord[]>
     supabase.from("supplier_bank_details").select("supplier_id, verification_status"),
   ])
 
-  const profiles = (profileRes.data ?? []) as unknown as Array<{
+  const profileRows = (profileRes.data ?? []) as unknown as Array<{
     id: string; business_name: string | null; province: string | null
     industry: string | null; phone: string | null; email: string | null
     verification_status: string | null; csd_number: string | null
@@ -224,7 +229,10 @@ export async function getSupplierScores(): Promise<SupplierIntelligenceRecord[]>
     tax_document_url: string | null; company_registration_url: string | null
     cidb_document_url: string | null; capability_statement_url: string | null
     updated_at: string | null
+    supplier_documents?: SupplierDocument[]
   }>
+  const documentResult = await fetchSupplierDocumentsByProfileIds(profileRows.map((profile) => profile.id))
+  const profiles = applySupplierDocumentsToProfiles(profileRows, documentResult.documentsByProfile)
   const quotes = (quoteRes.data ?? []) as Array<{ id: number; supplier_id: string | null; status: string | null }>
   const contracts = (contractRes.data ?? []) as Array<{ id: number; supplier_id: string | null; status: string | null; contract_value: string | number | null }>
   const invoices = (invoiceRes.data ?? []) as Array<{ id: number; supplier_id: string | null; status: string | null }>

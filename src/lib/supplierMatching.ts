@@ -1,6 +1,11 @@
 import { supabase } from "./supabase"
 import { calculateSupplierScore, type SupplierScoreProfile } from "./supplierScore"
 import { getComplianceStatus } from "./complianceStatus"
+import {
+  applySupplierDocumentsToProfiles,
+  fetchSupplierDocumentsByProfileIds,
+  type SupplierDocument,
+} from "./supplierDocuments"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,6 +37,7 @@ export type SupplierForMatching = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
+  supplier_documents?: SupplierDocument[]
   tax_expiry_date: string | null
   bbbee_expiry_date: string | null
   csd_expiry_date: string | null
@@ -278,7 +284,9 @@ export async function getRecommendedSuppliersForRFQ(
   }
 
   const rfq = rfqRes.data as RFQForMatching
-  const suppliers = (profileRes.data ?? []) as SupplierForMatching[]
+  const supplierRows = (profileRes.data ?? []) as SupplierForMatching[]
+  const documents = await fetchSupplierDocumentsByProfileIds(supplierRows.map((supplier) => supplier.id))
+  const suppliers = applySupplierDocumentsToProfiles(supplierRows, documents.documentsByProfile)
   const allQuotes = (quoteRes.data ?? []) as Array<{
     supplier_id: string | null; status: string | null; rfq_id: number | null
   }>

@@ -1,4 +1,9 @@
 import { calculateSupplierSmartScore } from "./smartScore"
+import {
+  applySupplierDocumentsToProfiles,
+  fetchSupplierDocumentsByProfileIds,
+  type SupplierDocument,
+} from "./supplierDocuments"
 import { riskLevelFromScore } from "./supplierRisk"
 import { supabase } from "./supabase"
 
@@ -27,6 +32,7 @@ export type MatchingSupplier = {
   company_registration_url?: string | null
   cidb_document_url?: string | null
   capability_statement_url?: string | null
+  supplier_documents?: SupplierDocument[]
   updated_at?: string | null
   created_at?: string | null
 }
@@ -380,8 +386,11 @@ async function getMatchingContext() {
     safeList<ReviewRow>(supabase.from("supplier_reviews").select("supplier_id, rating, created_at")),
   ])
 
+  const documents = await fetchSupplierDocumentsByProfileIds(suppliers.map((supplier) => supplier.id))
+  const hydratedSuppliers = applySupplierDocumentsToProfiles(suppliers, documents.documentsByProfile)
+
   return {
-    suppliers,
+    suppliers: hydratedSuppliers,
     rfqs,
     activityMap: buildActivityMap({ quotes, contracts, invoices, reviews }),
   }

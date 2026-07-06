@@ -13,6 +13,11 @@ import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import { hasComplianceWarning } from "@/lib/complianceStatus"
 import { createWhatsAppLink } from "@/lib/whatsapp"
+import {
+  applySupplierDocumentsToProfiles,
+  fetchSupplierDocumentsByProfileIds,
+  type SupplierDocument,
+} from "@/lib/supplierDocuments"
 
 type SupplierProfile = {
   id: string
@@ -37,6 +42,7 @@ type SupplierProfile = {
   bbbee_expiry_date: string | null
   csd_expiry_date: string | null
   cidb_expiry_date: string | null
+  supplier_documents?: SupplierDocument[]
 }
 
 type SupplierReview = SupplierPerformanceReview & {
@@ -207,7 +213,15 @@ export default function SuppliersDirectoryPage() {
         return reviews
       }, {})
 
-      setSuppliers((data ?? []) as SupplierProfile[])
+      const profileRows = (data ?? []) as SupplierProfile[]
+      const documents = await fetchSupplierDocumentsByProfileIds(profileRows.map((supplier) => supplier.id))
+      if (documents.error) {
+        setErrorMessage(documents.error)
+        setLoading(false)
+        return
+      }
+
+      setSuppliers(applySupplierDocumentsToProfiles(profileRows, documents.documentsByProfile))
       setReviewsBySupplier(groupedReviews)
       setLoading(false)
     }

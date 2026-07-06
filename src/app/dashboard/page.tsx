@@ -13,6 +13,7 @@ import {
   getSmartScoreColour,
 } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
+import { applySupplierDocuments, fetchSupplierDocumentsForProfile } from "@/lib/supplierDocuments"
 
 function formatDeadline(dateStr: string | null | undefined): string {
   if (!dateStr) return "-"
@@ -203,8 +204,10 @@ export default function DashboardPage() {
 
         const storedScoreRaw = Number(profileRes.data.smart_score ?? 0)
         const storedScore = storedScoreRaw > 100 ? Math.round(storedScoreRaw / 10) : storedScoreRaw
+        const documentResult = await fetchSupplierDocumentsForProfile(user.id)
+        const hydratedProfile = applySupplierDocuments(profileRes.data, documentResult.documents)
         const calculatedScore = calculateSmartScore({
-          ...profileRes.data,
+          ...hydratedProfile,
           bank_name: bankRes.data?.bank_name ?? null,
           bank_account_number: bankRes.data?.account_number ?? null,
           bank_verification_status: bankRes.data?.verification_status ?? null,

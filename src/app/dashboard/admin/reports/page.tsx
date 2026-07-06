@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
+import { applySupplierDocumentsToProfiles, fetchSupplierDocumentsByProfileIds } from "@/lib/supplierDocuments"
 
 type ReportType =
   | "RFQ Report"
@@ -368,7 +369,18 @@ export default function AdminReportsPage() {
         return
       }
 
-      setRows(((data ?? []) as ReportRow[]).map((row) => addComputedFields(config.type, row)))
+      const rawRows = (data ?? []) as ReportRow[]
+      const rowsWithDocuments =
+        config.table === "profiles"
+          ? applySupplierDocumentsToProfiles(
+              rawRows.filter((row): row is ReportRow & { id: string } => typeof row.id === "string"),
+              (await fetchSupplierDocumentsByProfileIds(
+                rawRows.map((row) => (typeof row.id === "string" ? row.id : "")).filter(Boolean)
+              )).documentsByProfile
+            )
+          : rawRows
+
+      setRows(rowsWithDocuments.map((row) => addComputedFields(config.type, row)))
       setLoading(false)
     }
 

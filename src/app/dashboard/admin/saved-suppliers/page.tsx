@@ -8,6 +8,11 @@ import { requireAdminOrBuyer } from "@/lib/auth"
 import { getSavedSuppliers, type SavedSupplier } from "@/lib/savedSuppliers"
 import { calculateSupplierScore } from "@/lib/supplierScore"
 import { supabase } from "@/lib/supabase"
+import {
+  applySupplierDocumentsToProfiles,
+  fetchSupplierDocumentsByProfileIds,
+  type SupplierDocument,
+} from "@/lib/supplierDocuments"
 
 type SupplierProfile = {
   id: string
@@ -26,6 +31,7 @@ type SupplierProfile = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
+  supplier_documents?: SupplierDocument[]
 }
 
 type SavedSupplierRow = {
@@ -138,8 +144,17 @@ export default function AdminSavedSuppliersPage() {
       return
     }
 
+    const profileRows = (data ?? []) as SupplierProfile[]
+    const documentResult = await fetchSupplierDocumentsByProfileIds(profileRows.map((profile) => profile.id))
+
+    if (documentResult.error) {
+      setErrorMessage(documentResult.error)
+      setLoading(false)
+      return
+    }
+
     const profilesById = new Map(
-      ((data ?? []) as SupplierProfile[]).map((profile) => [profile.id, profile])
+      applySupplierDocumentsToProfiles(profileRows, documentResult.documentsByProfile).map((profile) => [profile.id, profile])
     )
 
     setRows(

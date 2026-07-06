@@ -14,6 +14,11 @@ import {
   YAxis,
 } from "recharts"
 import { supabase } from "@/lib/supabase"
+import {
+  applySupplierDocumentsToProfiles,
+  fetchSupplierDocumentsByProfileIds,
+  type SupplierDocument,
+} from "@/lib/supplierDocuments"
 
 type SupplierProfile = {
   id: string
@@ -29,6 +34,10 @@ type SupplierProfile = {
   csd_document_url: string | null
   bbbee_document_url: string | null
   tax_document_url: string | null
+  company_registration_url?: string | null
+  cidb_document_url?: string | null
+  capability_statement_url?: string | null
+  supplier_documents?: SupplierDocument[]
 }
 
 type ContractRow = {
@@ -172,10 +181,13 @@ async function loadComplianceData(): Promise<ComplianceData> {
     ),
   ])
 
+  const supplierIds = suppliers.rows.map((supplier) => supplier.id)
+  const documents = await fetchSupplierDocumentsByProfileIds(supplierIds)
+
   return {
-    suppliers: suppliers.rows,
+    suppliers: applySupplierDocumentsToProfiles(suppliers.rows, documents.documentsByProfile),
     contracts: contracts.rows,
-    errors: [suppliers.error, contracts.error].filter(Boolean) as string[],
+    errors: [suppliers.error, contracts.error, documents.error].filter(Boolean) as string[],
   }
 }
 

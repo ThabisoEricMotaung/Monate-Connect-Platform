@@ -6,6 +6,14 @@ import { useRouter } from "next/navigation"
 import SignedDocumentLink from "@/components/SignedDocumentLink"
 import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
+import {
+  activeSupplierDocuments,
+  applySupplierDocumentsToProfiles,
+  fetchSupplierDocumentsByProfileIds,
+  supplierDocumentLabels,
+  type SupplierDocument,
+  type SupplierDocumentStatus,
+} from "@/lib/supplierDocuments"
 
 type FilterMode = "all" | "pending" | "verified"
 type VerificationStep = "csd" | "bbbee" | "tax" | "banking" | "director"
@@ -40,7 +48,9 @@ type SupplierProfile = {
   director_verified: boolean | null
   company_registration: string | null
   company_registration_url: string | null
+  cidb_document_url?: string | null
   capability_statement_url: string | null
+  supplier_documents?: SupplierDocument[]
   smart_score: number | string | null
   created_at: string | null
   verification_notes: string | null
@@ -90,6 +100,7 @@ const profileSelect = [
   "director_verified",
   "company_registration",
   "company_registration_url",
+  "cidb_document_url",
   "capability_statement_url",
   "smart_score",
   "created_at",
@@ -336,6 +347,7 @@ function SkeletonQueue() {
 export default function AdminVerificationQueuePage() {
   const router = useRouter()
   const [profiles, setProfiles] = useState<SupplierProfile[]>([])
+  const [documentsBySupplier, setDocumentsBySupplier] = useState<Record<string, SupplierDocument[]>>({})
   const [banksBySupplier, setBanksBySupplier] = useState<Record<string, BankDetails>>({})
   const [notesBySupplier, setNotesBySupplier] = useState<Record<string, string>>({})
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -400,22 +412,34 @@ export default function AdminVerificationQueuePage() {
       )
       const supplierIds = supplierProfiles.map((profile) => profile.id)
       let bankMap: Record<string, BankDetails> = {}
+      let documentMap: Record<string, SupplierDocument[]> = {}
 
       if (supplierIds.length > 0) {
-        const { data: bankData, error: bankError } = await supabase
-          .from("supplier_bank_details")
-          .select("bank_name, account_number, verification_status, supplier_id")
-          .in("supplier_id", supplierIds)
+        const [bankResult, documentResult] = await Promise.all([
+          supabase
+            .from("supplier_bank_details")
+            .select("bank_name, account_number, verification_status, supplier_id")
+            .in("supplier_id", supplierIds),
+          fetchSupplierDocumentsByProfileIds(supplierIds),
+        ])
 
-        if (bankError) {
+        if (bankResult.error) {
           if (!cancelled) {
-            setErrorMessage(bankError.message)
+            setErrorMessage(bankResult.error.message)
+            setLoading(false)
+          }
+          return
+        }
+        if (documentResult.error) {
+          if (!cancelled) {
+            setErrorMessage(documentResult.error)
             setLoading(false)
           }
           return
         }
 
-        bankMap = (((bankData ?? []) as unknown) as BankDetails[]).reduce<Record<string, BankDetails>>(
+        documentMap = documentResult.documentsByProfile
+        bankMap = (((bankResult.data ?? []) as unknown) as BankDetails[]).reduce<Record<string, BankDetails>>(
           (map, bank) => {
             if (!bank.supplier_id || map[bank.supplier_id]) return map
             map[bank.supplier_id] = bank
@@ -426,7 +450,8 @@ export default function AdminVerificationQueuePage() {
       }
 
       if (!cancelled) {
-        setProfiles(supplierProfiles)
+        setProfiles(applySupplierDocumentsToProfiles(supplierProfiles, documentMap))
+        setDocumentsBySupplier(documentMap)
         setBanksBySupplier(bankMap)
         setNotesBySupplier(
           supplierProfiles.reduce<Record<string, string>>((notes, profile) => {
@@ -720,6 +745,130 @@ export default function AdminVerificationQueuePage() {
       ),
     )
     setActionFeedback(profile.id, pendingKey, { message: "Note saved", type: "success" })
+  }
+
+  async function updateDocumentStatus(
+    profile: SupplierProfile,
+    document: SupplierDocument,
+    status: Extract<SupplierDocumentStatus, "verified" | "rejected" | "expired" | "under_review">,
+  ) {
+    if (!supabase) return
+
+    const pendingKey = `document-${document.id}-${status}`
+    setPendingAction({ supplierId: profile.id, key: pendingKey })
+    setErrorMessage("")
+
+    const { data, error } = await supabase
+      .from("supplier_documents")
+      .update({
+        status,
+        reviewed_at: new Date().toISOString(),
+        review_notes: notesBySupplier[profile.id]?.trim() || document.review_notes || null,
+      })
+      .eq("id", document.id)
+      .select("id, profile_id, document_type, file_url, storage_path, original_filename, content_type, file_size, uploaded_at, status, reviewed_at, reviewed_by, review_notes")
+      .single()
+
+    setPendingAction(null)
+
+    if (error || !data) {
+      setErrorMessage(error?.message ?? "Document status could not be updated.")
+      setActionFeedback(profile.id, pendingKey, { message: "Document update failed", type: "error" })
+      return
+    }
+
+    const updatedDocument = data as SupplierDocument
+    setDocumentsBySupplier((current) => {
+      const nextDocuments = (current[profile.id] ?? []).map((item) =>
+        item.id === updatedDocument.id ? updatedDocument : item,
+      )
+      setProfiles((currentProfiles) =>
+        applySupplierDocumentsToProfiles(currentProfiles, {
+          ...current,
+          [profile.id]: nextDocuments,
+        }),
+      )
+      return { ...current, [profile.id]: nextDocuments }
+    })
+    setActionFeedback(profile.id, pendingKey, {
+      message: `${supplierDocumentLabels[updatedDocument.document_type]} marked ${status.replace("_", " ")}`,
+      type: "success",
+    })
+  }
+
+  function renderDocumentHistory(profile: SupplierProfile) {
+    const documents = documentsBySupplier[profile.id] ?? []
+    const shownDocuments = activeSupplierDocuments(documents)
+
+    return (
+      <div className="rounded-xl border border-panel bg-surface p-4">
+        <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted">
+          Document history
+        </p>
+        {shownDocuments.length === 0 ? (
+          <p className="mt-2 text-sm text-muted">No supplier document rows found.</p>
+        ) : (
+          <div className="mt-3 space-y-3">
+            {shownDocuments.map((document) => {
+              const pendingPrefix = `document-${document.id}`
+              const actionPending = pendingAction?.supplierId === profile.id && pendingAction.key.startsWith(pendingPrefix)
+              return (
+                <div key={document.id} className="rounded-lg border border-panel bg-card p-3">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-heading">{supplierDocumentLabels[document.document_type]}</p>
+                      <p className="mt-1 truncate text-xs text-muted">
+                        {document.original_filename || document.storage_path || document.file_url}
+                      </p>
+                      <p className="mt-1 text-xs text-secondary">
+                        Uploaded {formatDate(document.uploaded_at)} · Status: {document.status.replace("_", " ")}
+                      </p>
+                      {document.review_notes ? (
+                        <p className="mt-2 text-xs text-secondary">Review notes: {document.review_notes}</p>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <SignedDocumentLink value={document.file_url} bucket="supplier-documents" className="rounded-md border border-panel bg-panel px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent">
+                        Open
+                      </SignedDocumentLink>
+                      <ActionButton
+                        loading={actionPending && pendingAction?.key.endsWith("verified")}
+                        disabled={actionPending || document.status === "verified"}
+                        onClick={() => updateDocumentStatus(profile, document, "verified")}
+                      >
+                        Verify
+                      </ActionButton>
+                      <ActionButton
+                        tone="danger"
+                        loading={actionPending && pendingAction?.key.endsWith("rejected")}
+                        disabled={actionPending || document.status === "rejected"}
+                        onClick={() => updateDocumentStatus(profile, document, "rejected")}
+                      >
+                        Reject
+                      </ActionButton>
+                      <button
+                        type="button"
+                        disabled={actionPending || document.status === "under_review"}
+                        onClick={() => updateDocumentStatus(profile, document, "under_review")}
+                        className="rounded-md border border-panel bg-panel px-3 py-1.5 text-xs font-semibold text-secondary transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Under review
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+        {profile.cidb_document_url ? (
+          <div className="mt-3 rounded-lg border border-warning/30 bg-warning-soft p-3">
+            <p className="text-xs font-bold text-warning">Legacy CIDB document retained for manual review.</p>
+            <div className="mt-1">{documentLink(profile.cidb_document_url)}</div>
+          </div>
+        ) : null}
+      </div>
+    )
   }
 
   async function deleteSupplierAccount(profile: SupplierProfile) {
@@ -1100,6 +1249,8 @@ export default function AdminVerificationQueuePage() {
                         </div>
                       </>
                     ))}
+
+                    {renderDocumentHistory(profile)}
 
                     <div className="rounded-xl border border-panel bg-surface p-4">
                       <label

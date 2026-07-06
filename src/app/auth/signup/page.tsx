@@ -518,12 +518,38 @@ export default function SignupPage() {
     if (!form.csdDocumentFile || form.csdDocumentPath) return form.csdDocumentPath || null
     if (!supabase || !userId) throw new Error("Session expired — please reload and start over.")
 
-    const path = `${userId}/csd-certificate/${Date.now()}-${cleanFileName(form.csdDocumentFile.name)}`
+    const file = form.csdDocumentFile
+    const path = `${userId}/csd-certificate/${Date.now()}-${cleanFileName(file.name)}`
     const { error } = await supabase.storage
       .from("supplier-documents")
-      .upload(path, form.csdDocumentFile, { upsert: true })
+      .upload(path, file, { upsert: true })
 
     if (error) throw new Error(error.message)
+
+    const { data: document, error: documentError } = await supabase
+      .from("supplier_documents")
+      .insert({
+        profile_id: userId,
+        document_type: "csd",
+        file_url: path,
+        storage_path: path,
+        original_filename: file.name,
+        content_type: file.type || null,
+        file_size: file.size,
+        status: "under_review",
+      })
+      .select("id")
+      .single()
+
+    if (documentError) throw new Error(documentError.message)
+
+    const { error: supersedeError } = await supabase.rpc("supersede_supplier_documents", {
+      p_profile_id: userId,
+      p_document_type: "csd",
+      p_keep_document_id: document.id,
+    })
+
+    if (supersedeError) throw new Error(supersedeError.message)
 
     setForm((current) => ({ ...current, csdDocumentPath: path, csdDocumentFile: null }))
     return path
@@ -703,9 +729,8 @@ export default function SignupPage() {
     setErrors({})
 
     if (supabase && userId) {
-      let csdDocumentPath: string | null = null
       try {
-        csdDocumentPath = await uploadCsdDocumentIfNeeded()
+        await uploadCsdDocumentIfNeeded()
       } catch (error) {
         setErrors({ csdDocumentFile: error instanceof Error ? error.message : "CSD certificate upload failed." })
         setLoading(false)
@@ -722,7 +747,6 @@ export default function SignupPage() {
       await supabase.from("profiles").upsert({
         id: userId,
         csd_number: form.csdNumber,
-        ...(csdDocumentPath ? { csd_document_url: csdDocumentPath } : {}),
         tax_reference: form.taxReference,
         bbbee_level: form.bbeeLevel,
         vat_number: form.vatNumber || null,
@@ -779,9 +803,8 @@ export default function SignupPage() {
       bbbee_level: form.bbeeLevel,
     })
 
-    let csdDocumentPath: string | null = null
     try {
-      csdDocumentPath = await uploadCsdDocumentIfNeeded()
+      await uploadCsdDocumentIfNeeded()
     } catch (error) {
       setErrors({ csdDocumentFile: error instanceof Error ? error.message : "CSD certificate upload failed." })
       setLoading(false)
@@ -802,7 +825,6 @@ export default function SignupPage() {
       provinces: form.provinces,
       province: displayProvinceList(form.provinces),
       csd_number: form.csdNumber,
-      ...(csdDocumentPath ? { csd_document_url: csdDocumentPath } : {}),
       tax_reference: form.taxReference,
       bbbee_level: form.bbeeLevel,
       vat_number: form.vatNumber || null,

@@ -12,6 +12,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { applySupplierDocuments, fetchSupplierDocumentsForProfile } from "@/lib/supplierDocuments"
 
 type ProcurementWireScope = "public" | "dashboard"
 
@@ -23,6 +24,7 @@ type LiveRFQ = {
 }
 
 type WireProfile = {
+  id?: string
   smart_score?: number | string | null
   csd_number?: string | null
   bbbee_level?: string | null
@@ -129,7 +131,7 @@ export default function ProcurementWire({ scope = "public" }: { scope?: Procurem
         supabase
           .from("profiles")
           .select(
-            "smart_score, csd_number, bbbee_level, tax_document_url, tax_clearance_url",
+            "id, smart_score, csd_number, bbbee_level, tax_document_url, tax_clearance_url",
           )
           .eq("id", userId)
           .maybeSingle(),
@@ -141,7 +143,12 @@ export default function ProcurementWire({ scope = "public" }: { scope?: Procurem
         openRfqs: openRfqsResult.count ?? 0,
         pendingQuotes: pendingQuotesResult.count ?? 0,
       })
-      setProfile((profileResult.data as WireProfile | null) ?? null)
+      if (profileResult.data) {
+        const documents = await fetchSupplierDocumentsForProfile(userId)
+        if (!cancelled) setProfile(applySupplierDocuments(profileResult.data as WireProfile & { id: string }, documents.documents))
+      } else {
+        setProfile(null)
+      }
     }
 
     loadWireData()

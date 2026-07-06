@@ -17,6 +17,15 @@ import {
 import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning"
 import { supabase } from "@/lib/supabase"
 import {
+  activeSupplierDocuments,
+  applySupplierDocuments,
+  fetchSupplierDocumentsForProfile,
+  supplierDocumentLabels,
+  supplierDocumentStorageFolders,
+  type SupplierDocument,
+  type SupplierDocumentType,
+} from "@/lib/supplierDocuments"
+import {
   NATIONAL_PROVINCE_VALUE,
   SA_PHONE_ERROR,
   displayProvinceList,
@@ -103,10 +112,10 @@ type DocumentField =
 type DocUrls = Record<DocumentField, string>
 type SaveResult = { ok: boolean; error?: string }
 type DocumentUploadOption = {
-  value: string
+  value: SupplierDocumentType
   label: string
-  field: DocumentField
   storageType: string
+  legacyField?: DocumentField
 }
 
 // --- Constants ---
@@ -236,6 +245,23 @@ function validateDocumentUpload(file: File) {
 function formatUploadFileSize(size: number) {
   if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`
   return `${(size / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function documentStatusLabel(status: SupplierDocument["status"], profileStatus: string | null): "Verified" | "Under review" {
+  if (status === "verified" || isVerified(profileStatus)) return "Verified"
+  return "Under review"
+}
+
+function docUrlsFromDocuments(profile: Profile, documents: SupplierDocument[]): DocUrls {
+  const hydrated = applySupplierDocuments(profile, documents)
+  return {
+    csd_document_url: hydrated.csd_document_url ?? "",
+    bbbee_document_url: hydrated.bbbee_document_url ?? "",
+    tax_document_url: hydrated.tax_document_url ?? "",
+    company_registration_url: hydrated.company_registration_url ?? "",
+    cidb_document_url: hydrated.cidb_document_url ?? "",
+    capability_statement_url: hydrated.capability_statement_url ?? "",
+  }
 }
 
 function FieldError({ message }: { message?: string }) {
@@ -1529,14 +1555,14 @@ function VerificationTab({
   profile: Profile
   docUrls: DocUrls
   userId: string
-  onDocUploaded: (field: DocumentField, url: string) => void
+  onDocUploaded: (document: SupplierDocument) => void
   onTabChange: (tab: Tab) => void
 }) {
   const [uploadingField, setUploadingField] = useState<DocumentField | null>(null)
   const [uploadError, setUploadError] = useState("")
   const [uploadSuccess, setUploadSuccess] = useState("")
 
-  async function handleUpload(file: File | null, field: DocumentField, type: string) {
+  async function handleUpload(file: File | null, field: DocumentField, documentType: SupplierDocumentType) {
     if (!file || !supabase || !userId) return
     setUploadError("")
     setUploadSuccess("")
@@ -1548,16 +1574,21 @@ function VerificationTab({
     setUploadingField(field)
     const label = docLabel(field)
     const hadExistingDocument = Boolean(docUrls[field])
-    const path = `${userId}/${type}/${cleanFileName(file.name)}`
-    const { error: upErr } = await supabase.storage
-      .from("supplier-documents")
-      .upload(path, file, { contentType: file.type, upsert: true })
-    if (upErr) { setUploadError(upErr.message); setUploadingField(null); return }
-    const { error: profileError } = await supabase.from("profiles").update({ [field]: path }).eq("id", userId)
-    if (profileError) { setUploadError(profileError.message); setUploadingField(null); return }
-    onDocUploaded(field, path)
+    const result = await createSupplierDocumentUpload({
+      userId,
+      documentType,
+      label,
+      storageType: supplierDocumentStorageFolders[documentType],
+      file,
+    })
+    if (!result.ok) {
+      setUploadError(result.error)
+      setUploadingField(null)
+      return
+    }
+    onDocUploaded(result.document)
     setUploadingField(null)
-    setUploadSuccess(hadExistingDocument ? `Replaced previous ${label}` : `${label} uploaded`)
+    setUploadSuccess(hadExistingDocument || result.replaced ? `Replaced previous ${label}` : `${label} uploaded`)
   }
 
   function statusOf(doc: DocumentField): "verified" | "pending" | "missing" {
@@ -1606,7 +1637,7 @@ function VerificationTab({
                 ? <FileRow label="BBBEE Certificate" url={docUrls.bbbee_document_url} status={statusOf("bbbee_document_url") === "verified" ? "Verified" : "Under review"} />
                 : (
                   <>
-                    <UploadZone id="bbbee-upload" uploading={uploadingField === "bbbee_document_url"} onFile={(file) => handleUpload(file, "bbbee_document_url", "bbbee-certificate")} />
+                    <UploadZone id="bbbee-upload" uploading={uploadingField === "bbbee_document_url"} onFile={(file) => handleUpload(file, "bbbee_document_url", "bbbee")} />
                     <SmartScoreNudge />
                   </>
                 )
@@ -1628,7 +1659,7 @@ function VerificationTab({
                 ? <FileRow label="Tax Clearance" url={docUrls.tax_document_url} status={statusOf("tax_document_url") === "verified" ? "Verified" : "Under review"} />
                 : (
                   <>
-                    <UploadZone id="tax-upload" uploading={uploadingField === "tax_document_url"} onFile={(file) => handleUpload(file, "tax_document_url", "tax-clearance-document")} />
+                    <UploadZone id="tax-upload" uploading={uploadingField === "tax_document_url"} onFile={(file) => handleUpload(file, "tax_document_url", "tax_clearance")} />
                     <SmartScoreNudge />
                   </>
                 )
@@ -1664,33 +1695,96 @@ function VerificationTab({
 
 // --- TAB 3: Documents ---
 
-const ALL_DOC_FIELDS: DocumentField[] = [
-  "csd_document_url",
-  "bbbee_document_url",
-  "tax_document_url",
-  "company_registration_url",
-  "cidb_document_url",
-  "capability_statement_url",
+const DOCUMENT_UPLOAD_OPTIONS: DocumentUploadOption[] = [
+  { value: "cipc", label: supplierDocumentLabels.cipc, storageType: supplierDocumentStorageFolders.cipc, legacyField: "company_registration_url" },
+  { value: "tax_clearance", label: supplierDocumentLabels.tax_clearance, storageType: supplierDocumentStorageFolders.tax_clearance, legacyField: "tax_document_url" },
+  { value: "vat", label: supplierDocumentLabels.vat, storageType: supplierDocumentStorageFolders.vat },
+  { value: "bbbee", label: supplierDocumentLabels.bbbee, storageType: supplierDocumentStorageFolders.bbbee, legacyField: "bbbee_document_url" },
+  { value: "csd", label: supplierDocumentLabels.csd, storageType: supplierDocumentStorageFolders.csd, legacyField: "csd_document_url" },
+  { value: "bank_letter", label: supplierDocumentLabels.bank_letter, storageType: supplierDocumentStorageFolders.bank_letter },
+  { value: "uif", label: supplierDocumentLabels.uif, storageType: supplierDocumentStorageFolders.uif },
+  { value: "coid", label: supplierDocumentLabels.coid, storageType: supplierDocumentStorageFolders.coid },
+  { value: "company_profile", label: supplierDocumentLabels.company_profile, storageType: supplierDocumentStorageFolders.company_profile, legacyField: "capability_statement_url" },
+  { value: "supporting_document", label: supplierDocumentLabels.supporting_document, storageType: supplierDocumentStorageFolders.supporting_document },
 ]
 
-const DOCUMENT_UPLOAD_OPTIONS: DocumentUploadOption[] = [
-  { value: "cipc", label: "CIPC", field: "company_registration_url", storageType: "cipc" },
-  { value: "tax-clearance", label: "Tax Clearance", field: "tax_document_url", storageType: "tax-clearance" },
-  { value: "bbbee", label: "BBBEE Certificate", field: "bbbee_document_url", storageType: "bbbee-certificate" },
-  { value: "csd", label: "CSD", field: "csd_document_url", storageType: "csd" },
-  { value: "coid", label: "COID", field: "cidb_document_url", storageType: "coid" },
-]
+async function createSupplierDocumentUpload({
+  userId,
+  documentType,
+  label,
+  storageType,
+  file,
+}: {
+  userId: string
+  documentType: SupplierDocumentType
+  label: string
+  storageType: string
+  file: File
+}): Promise<{ ok: true; path: string; document: SupplierDocument; replaced: boolean } | { ok: false; error: string }> {
+  if (!supabase) return { ok: false, error: "Supabase is not configured." }
+
+  const path = `${userId}/${storageType}/${Date.now()}-${cleanFileName(file.name)}`
+  const { error: upErr } = await supabase.storage
+    .from("supplier-documents")
+    .upload(path, file, { contentType: file.type, upsert: false })
+
+  if (upErr) return { ok: false, error: upErr.message }
+
+  const { data: existingRows, error: existingError } = await supabase
+    .from("supplier_documents")
+    .select("id")
+    .eq("profile_id", userId)
+    .eq("document_type", documentType)
+    .neq("status", "superseded")
+    .limit(1)
+
+  if (existingError) return { ok: false, error: existingError.message }
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("supplier_documents")
+    .insert({
+      profile_id: userId,
+      document_type: documentType,
+      file_url: path,
+      storage_path: path,
+      original_filename: file.name,
+      content_type: file.type,
+      file_size: file.size,
+      status: "under_review",
+    })
+    .select("id, profile_id, document_type, file_url, storage_path, original_filename, content_type, file_size, uploaded_at, status, reviewed_at, reviewed_by, review_notes")
+    .single()
+
+  if (insertError || !inserted) return { ok: false, error: insertError?.message ?? `${label} record could not be saved.` }
+
+  const { error: supersedeError } = await supabase.rpc("supersede_supplier_documents", {
+    p_profile_id: userId,
+    p_document_type: documentType,
+    p_keep_document_id: inserted.id,
+  })
+
+  if (supersedeError) return { ok: false, error: supersedeError.message }
+
+  return {
+    ok: true,
+    path,
+    document: inserted as SupplierDocument,
+    replaced: Boolean(existingRows?.length),
+  }
+}
 
 function DocumentsTab({
   profile,
   docUrls,
+  documents,
   userId,
   onDocUploaded,
 }: {
   profile: Profile
   docUrls: DocUrls
+  documents: SupplierDocument[]
   userId: string
-  onDocUploaded: (field: DocumentField, url: string) => void
+  onDocUploaded: (document: SupplierDocument) => void
 }) {
   const [uploading, setUploading] = useState(false)
   const [uploadCategory, setUploadCategory] = useState("bbbee")
@@ -1699,7 +1793,7 @@ function DocumentsTab({
   const [uploadError, setUploadError] = useState("")
   const [uploadSuccess, setUploadSuccess] = useState("")
 
-  const existing = ALL_DOC_FIELDS.filter((f) => docUrls[f])
+  const activeDocuments = activeSupplierDocuments(documents)
   const selectedOption =
     DOCUMENT_UPLOAD_OPTIONS.find((option) => option.value === uploadCategory) ?? DOCUMENT_UPLOAD_OPTIONS[0]
 
@@ -1730,32 +1824,25 @@ function DocumentsTab({
     setUploading(true)
     setUploadError("")
     setUploadSuccess("")
-    const field = selectedOption.field
-    const hadExistingDocument = Boolean(docUrls[field])
-    const path = `${userId}/${selectedOption.storageType}/${cleanFileName(selectedFile.name)}`
-    const { error: upErr } = await supabase.storage
-      .from("supplier-documents")
-      .upload(path, selectedFile, { contentType: selectedFile.type, upsert: true })
-    if (upErr) {
-      setUploadError(upErr.message)
+    const hadExistingDocument = activeDocuments.some((document) => document.document_type === selectedOption.value)
+    const result = await createSupplierDocumentUpload({
+      userId,
+      documentType: selectedOption.value,
+      label: selectedOption.label,
+      storageType: selectedOption.storageType,
+      file: selectedFile,
+    })
+    if (!result.ok) {
+      setUploadError(result.error)
       setUploading(false)
       return
     }
-    const { error: profileError } = await supabase.from("profiles").update({ [field]: path }).eq("id", userId)
-    if (profileError) {
-      setUploadError(profileError.message)
-      setUploading(false)
-      return
-    }
-    onDocUploaded(field, path)
+    onDocUploaded(result.document)
     setUploading(false)
     setSelectedFile(null)
     setConfirmedDocumentType(false)
-    setUploadSuccess(hadExistingDocument ? `Replaced previous ${selectedOption.label}` : `${selectedOption.label} uploaded`)
+    setUploadSuccess(hadExistingDocument || result.replaced ? `Replaced previous ${selectedOption.label}` : `${selectedOption.label} uploaded`)
   }
-
-  const statusOfDoc = (): "Verified" | "Under review" =>
-    isVerified(profile.verification_status) ? "Verified" : "Under review"
 
   return (
     <div className="rounded-md border border-panel bg-panel p-6">
@@ -1764,22 +1851,39 @@ function DocumentsTab({
         <p className="mt-1 text-xs text-secondary">All compliance documents uploaded to your profile.</p>
       </div>
 
-      {existing.length === 0 ? (
+      {activeDocuments.length === 0 && !docUrls.cidb_document_url ? (
         <p className="py-6 text-center text-sm text-muted">No documents uploaded yet.</p>
       ) : (
         <div className="space-y-3">
-          {existing.map((field) => (
-            <div key={field} className="flex flex-wrap items-center gap-3 rounded-md border border-panel bg-card px-4 py-3">
+          {activeDocuments.map((document) => (
+            <div key={document.id} className="flex flex-wrap items-center gap-3 rounded-md border border-panel bg-card px-4 py-3">
               <svg className="h-5 w-5 shrink-0 text-muted" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
               </svg>
-              <span className="min-w-0 flex-1 text-sm font-semibold text-heading">{docLabel(field)}</span>
-              <Badge color={statusOfDoc() === "Verified" ? "green" : "amber"}>{statusOfDoc()}</Badge>
-              <SignedDocumentLink value={docUrls[field]} bucket="supplier-documents" className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent">
+              <span className="min-w-0 flex-1 text-sm font-semibold text-heading">
+                {supplierDocumentLabels[document.document_type]}
+                {document.original_filename ? <span className="ml-2 text-xs font-normal text-muted">{document.original_filename}</span> : null}
+              </span>
+              <Badge color={documentStatusLabel(document.status, profile.verification_status) === "Verified" ? "green" : "amber"}>
+                {documentStatusLabel(document.status, profile.verification_status)}
+              </Badge>
+              <SignedDocumentLink value={document.file_url} bucket="supplier-documents" className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent">
                 Download
               </SignedDocumentLink>
             </div>
           ))}
+          {docUrls.cidb_document_url && (
+            <div className="flex flex-wrap items-center gap-3 rounded-md border border-warning/30 bg-warning-soft px-4 py-3">
+              <svg className="h-5 w-5 shrink-0 text-warning" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              <span className="min-w-0 flex-1 text-sm font-semibold text-heading">CIDB Document <span className="ml-2 text-xs font-normal text-muted">Legacy record, pending manual migration</span></span>
+              <Badge color="amber">Legacy</Badge>
+              <SignedDocumentLink value={docUrls.cidb_document_url} bucket="supplier-documents" className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent">
+                Download
+              </SignedDocumentLink>
+            </div>
+          )}
         </div>
       )}
 
@@ -1812,10 +1916,7 @@ function DocumentsTab({
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>
-          <p className="mt-2 text-xs font-semibold text-secondary">
-            Additional document types coming soon.
-          </p>
-          {!docUrls[selectedOption.field] && <SmartScoreNudge />}
+          {selectedOption.legacyField && !docUrls[selectedOption.legacyField] && <SmartScoreNudge />}
         </div>
         <UploadZone id="new-doc-upload" uploading={uploading} onFile={chooseDocumentFile} />
         {selectedFile && (
@@ -2178,6 +2279,7 @@ function ProfilePageInner() {
     cidb_document_url: "",
     capability_statement_url: "",
   })
+  const [supplierDocuments, setSupplierDocuments] = useState<SupplierDocument[]>([])
   const [bank, setBank] = useState<BankRecord | null>(null)
   const [userId, setUserId] = useState("")
   const [loading, setLoading] = useState(true)
@@ -2201,28 +2303,26 @@ function ProfilePageInner() {
       if (userErr || !user) { setError("You must be signed in."); setLoading(false); return }
       setUserId(user.id)
 
-      const [profileRes, bankRes] = await Promise.all([
+      const [profileRes, bankRes, documentRes] = await Promise.all([
         supabase.from("profiles").select(
           "id, first_name, last_name, full_name, preferred_name, avatar_url, company_logo_url, business_name, province, provinces, industry, phone, email, website, description, company_registration, tax_reference, vat_number, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, banking_verified, bank_verified, director_verified, tax_clearance_url, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date, updated_at"
         ).eq("id", user.id).maybeSingle(),
         supabase.from("supplier_bank_details").select(
           "id, bank_name, account_holder, account_number, branch_code, account_type, verification_status, verification_notes"
         ).eq("supplier_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+        fetchSupplierDocumentsForProfile(user.id),
       ])
 
       if (profileRes.error) { setError(profileRes.error.message); setLoading(false); return }
 
       const p = profileRes.data as Profile | null
       if (p) {
-        setProfile(p)
-        setDocUrls({
-          csd_document_url: p.csd_document_url ?? "",
-          bbbee_document_url: p.bbbee_document_url ?? "",
-          tax_document_url: p.tax_document_url ?? "",
-          company_registration_url: p.company_registration_url ?? "",
-          cidb_document_url: p.cidb_document_url ?? "",
-          capability_statement_url: p.capability_statement_url ?? "",
-        })
+        if (documentRes.error) { setError(documentRes.error); setLoading(false); return }
+        const documents = documentRes.documents
+        const hydratedProfile = applySupplierDocuments(p, documents)
+        setSupplierDocuments(documents)
+        setProfile(hydratedProfile)
+        setDocUrls(docUrlsFromDocuments(p, documents))
       }
 
       if (bankRes.data && !bankRes.error) {
@@ -2269,14 +2369,23 @@ function ProfilePageInner() {
     return { ok: true }
   }
 
-  function handleDocUploaded(field: DocumentField, url: string) {
-    setDocUrls((p) => ({ ...p, [field]: url }))
+  function handleDocUploaded(document: SupplierDocument) {
+    const nextDocuments = [
+      document,
+      ...supplierDocuments.map((item) =>
+        item.document_type === document.document_type && item.id !== document.id
+          ? { ...item, status: "superseded" as const }
+          : item,
+      ),
+    ]
+    setSupplierDocuments(nextDocuments)
     setProfile((p) => {
-      const updated = p ? { ...p, [field]: url } : p
+      const updated = p ? applySupplierDocuments(p, nextDocuments) : p
+      if (updated) setDocUrls(docUrlsFromDocuments(updated, nextDocuments))
       syncSmartScore(userId, updated, bank)
       return updated
     })
-    void logEvent("document_uploaded", { document_type: field, path: url })
+    void logEvent("document_uploaded", { document_type: document.document_type, path: document.file_url })
   }
 
   function handleBankSaved(record: BankRecord) {
@@ -2422,7 +2531,7 @@ function ProfilePageInner() {
             <VerificationTab profile={profile} docUrls={docUrls} userId={userId} onDocUploaded={handleDocUploaded} onTabChange={requestTabChange} />
           )}
           {profile && activeTab === "documents" && (
-            <DocumentsTab profile={profile} docUrls={docUrls} userId={userId} onDocUploaded={handleDocUploaded} />
+            <DocumentsTab profile={profile} docUrls={docUrls} documents={supplierDocuments} userId={userId} onDocUploaded={handleDocUploaded} />
           )}
           {activeTab === "banking" && (
             <BankingTab userId={userId} bank={bank} businessName={profile?.business_name ?? null} onBankSaved={handleBankSaved} onDirtyChange={setHasUnsaved} />

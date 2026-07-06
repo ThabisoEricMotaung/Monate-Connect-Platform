@@ -22,6 +22,11 @@ type SupplierProfile = {
   cidb_grade: string | null
   company_logo_url: string | null
   smart_score?: number | string | null
+  supplier_documents?: Array<{
+    document_type?: string | null
+    file_url?: string | null
+    status?: string | null
+  }>
   created_at?: string | null
   updated_at?: string | null
 }
@@ -89,7 +94,16 @@ export default async function DashboardSupplierProfilePage({ params }: Props) {
 
   if (error || !data) return <NotFoundState />
 
-  const supplier = data as SupplierProfile
+  const { data: documents } = await supabase
+    .from("supplier_documents")
+    .select("document_type, file_url, status")
+    .eq("profile_id", id)
+    .neq("status", "superseded")
+
+  const supplier = {
+    ...(data as SupplierProfile),
+    supplier_documents: (documents ?? []) as SupplierProfile["supplier_documents"],
+  }
   const score = calculateSupplierSmartScore(supplier)
 
   return (

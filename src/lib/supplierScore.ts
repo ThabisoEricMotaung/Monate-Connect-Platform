@@ -14,6 +14,11 @@ export type SupplierScoreProfile = {
   company_registration_url?: string | null
   cidb_document_url?: string | null
   capability_statement_url?: string | null
+  supplier_documents?: Array<{
+    document_type?: string | null
+    file_url?: string | null
+    status?: string | null
+  }> | null
 }
 
 export type SupplierScore = {
@@ -23,6 +28,14 @@ export type SupplierScore = {
 
 function hasValue(value: string | null | undefined): boolean {
   return Boolean(value?.trim())
+}
+
+function hasSupplierDocument(profile: SupplierScoreProfile | null | undefined): boolean {
+  return Boolean(
+    profile?.supplier_documents?.some(
+      (document) => document.status !== "superseded" && hasValue(document.file_url)
+    )
+  )
 }
 
 export function calculateSupplierScore(
@@ -46,7 +59,7 @@ export function calculateSupplierScore(
     (hasValue(profile?.bbbee_level) ? 10 : 0) +
     (hasValue(profile?.tax_status) ? 10 : 0) +
     (hasValue(profile?.company_registration) ? 10 : 0) +
-    (complianceDocumentUrls.some(hasValue) ? 10 : 0) +
+    (complianceDocumentUrls.some(hasValue) || hasSupplierDocument(profile) ? 10 : 0) +
     (profile?.verification_status === "Verified" ? 10 : 0)
 
   if (score <= 39) {

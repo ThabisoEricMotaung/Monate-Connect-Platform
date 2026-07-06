@@ -18,6 +18,11 @@ import {
 } from "recharts"
 import { formatRand, parseMoney } from "@/lib/format"
 import { supabase } from "@/lib/supabase"
+import {
+  applySupplierDocumentsToProfiles,
+  fetchSupplierDocumentsByProfileIds,
+  type SupplierDocument,
+} from "@/lib/supplierDocuments"
 
 type SupplierProfile = {
   id: string
@@ -29,6 +34,7 @@ type SupplierProfile = {
   province: string | null
   industry: string | null
   verification_status: string | null
+  supplier_documents?: SupplierDocument[]
 }
 
 type PurchaseOrderRow = {
@@ -148,15 +154,15 @@ function monthIndex(value: string | null): number | null {
   return date.getMonth()
 }
 
-function loadScorecardData(): Promise<ScorecardData> {
+async function loadScorecardData(): Promise<ScorecardData> {
   if (!supabase) {
-    return Promise.resolve({
+    return {
       ...EMPTY_DATA,
       errors: ["Supabase environment variables are not configured."],
-    })
+    }
   }
 
-  return Promise.all([
+  const [suppliers, purchaseOrders, contracts] = await Promise.all([
     readRows<SupplierProfile>(
       "profiles",
       supabase
@@ -178,12 +184,16 @@ function loadScorecardData(): Promise<ScorecardData> {
         .select("id, supplier_id, supplier_name, contract_value, created_at, status")
         .order("created_at", { ascending: true }),
     ),
-  ]).then(([suppliers, purchaseOrders, contracts]) => ({
-    suppliers: suppliers.rows,
+  ])
+
+  const documents = await fetchSupplierDocumentsByProfileIds(suppliers.rows.map((supplier) => supplier.id))
+
+  return {
+    suppliers: applySupplierDocumentsToProfiles(suppliers.rows, documents.documentsByProfile),
     purchaseOrders: purchaseOrders.rows,
     contracts: contracts.rows,
-    errors: [suppliers.error, purchaseOrders.error, contracts.error].filter(Boolean) as string[],
-  }))
+    errors: [suppliers.error, purchaseOrders.error, contracts.error, documents.error].filter(Boolean) as string[],
+  }
 }
 
 function ChartTip({

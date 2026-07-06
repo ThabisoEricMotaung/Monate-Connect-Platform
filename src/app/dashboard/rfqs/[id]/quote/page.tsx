@@ -10,6 +10,11 @@ import { createNotificationsForRoles } from "@/lib/notifications"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
+import {
+  applySupplierDocuments,
+  fetchSupplierDocumentsForProfile,
+  type SupplierDocument,
+} from "@/lib/supplierDocuments"
 
 type RFQ = {
   id: number
@@ -56,6 +61,7 @@ type SupplierProfile = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
+  supplier_documents?: SupplierDocument[]
   updated_at?: string | null
 }
 
@@ -297,7 +303,17 @@ export default function QuoteSubmissionPage() {
           .eq("id", user.id)
           .maybeSingle()
 
-        setProfile((profileData ?? null) as SupplierProfile | null)
+        if (profileData) {
+          const documentResult = await fetchSupplierDocumentsForProfile(user.id)
+          if (documentResult.error) {
+            setErrorMessage(documentResult.error)
+            setLoading(false)
+            return
+          }
+          setProfile(applySupplierDocuments(profileData as SupplierProfile, documentResult.documents))
+        } else {
+          setProfile(null)
+        }
       }
 
       if (currentRfq.created_by) {

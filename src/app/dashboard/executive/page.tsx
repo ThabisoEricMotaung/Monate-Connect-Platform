@@ -17,6 +17,11 @@ import {
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
 import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
+import {
+  applySupplierDocumentsToProfiles,
+  fetchSupplierDocumentsByProfileIds,
+  type SupplierDocument,
+} from "@/lib/supplierDocuments"
 
 type RfqRow = {
   id: number
@@ -79,6 +84,7 @@ type SupplierProfile = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
+  supplier_documents?: SupplierDocument[]
   updated_at: string | null
 }
 
@@ -287,13 +293,16 @@ async function loadCommandCentreData(): Promise<CommandCentreData & { errors: st
 
   const results = [rfqs, contracts, purchaseOrders, invoices, quotes, suppliers]
 
+  const documentResult = await fetchSupplierDocumentsByProfileIds(suppliers.rows.map((supplier) => supplier.id))
+  const hydratedSuppliers = applySupplierDocumentsToProfiles(suppliers.rows, documentResult.documentsByProfile)
+
   return {
     rfqs: rfqs.rows,
     contracts: contracts.rows,
     purchaseOrders: purchaseOrders.rows,
     invoices: invoices.rows,
     quotes: quotes.rows,
-    suppliers: suppliers.rows,
+    suppliers: hydratedSuppliers,
     missingTables: results
       .map((result, index) =>
         result.missing
@@ -301,7 +310,7 @@ async function loadCommandCentreData(): Promise<CommandCentreData & { errors: st
           : null
       )
       .filter(Boolean) as string[],
-    errors: results.map((result) => result.error).filter(Boolean) as string[],
+    errors: [...results.map((result) => result.error), documentResult.error].filter(Boolean) as string[],
   }
 }
 

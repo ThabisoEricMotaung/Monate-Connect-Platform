@@ -6,6 +6,7 @@ import { evaluateWorkflowRules } from "./workflowRules"
 import { checkAndLogApprovalRequirement } from "./approvalMatrix"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "./auth"
 import { supabase } from "./supabase"
+import { applySupplierDocuments, fetchSupplierDocumentsForProfile, type SupplierDocument } from "./supplierDocuments"
 
 export const PURCHASE_ORDER_STATUSES = [
   "Issued",
@@ -65,6 +66,15 @@ export type PurchaseOrderSupplier = {
   verification_status: string | null
   csd_number: string | null
   bbbee_level: string | null
+  tax_status?: string | null
+  company_registration?: string | null
+  csd_document_url?: string | null
+  bbbee_document_url?: string | null
+  tax_document_url?: string | null
+  company_registration_url?: string | null
+  cidb_document_url?: string | null
+  capability_statement_url?: string | null
+  supplier_documents?: SupplierDocument[]
 }
 
 export type PurchaseOrderRFQReference = {
@@ -311,7 +321,7 @@ export async function getPurchaseOrderById(
     purchaseOrder.supplier_id
       ? supabase
           .from("profiles")
-          .select("id, business_name, province, industry, phone, email, verification_status, csd_number, bbbee_level")
+          .select("id, business_name, province, industry, phone, email, verification_status, csd_number, bbbee_level, tax_status, company_registration, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url")
           .eq("id", purchaseOrder.supplier_id)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
@@ -336,11 +346,17 @@ export async function getPurchaseOrderById(
   if (quoteResult.error) throw quoteResult.error
 
   const quote = quoteResult.data as PurchaseOrderQuoteReference | null
+  const supplierDocuments = purchaseOrder.supplier_id
+    ? await fetchSupplierDocumentsForProfile(purchaseOrder.supplier_id)
+    : { documents: [], error: null }
+  const supplier = supplierResult.data
+    ? applySupplierDocuments(supplierResult.data as PurchaseOrderSupplier, supplierDocuments.documents)
+    : null
 
   return {
     ...purchaseOrder,
     notes: quote?.supporting_notes ?? null,
-    supplier: supplierResult.data as PurchaseOrderSupplier | null,
+    supplier,
     rfq: rfqResult.data as PurchaseOrderRFQReference | null,
     quote,
   }

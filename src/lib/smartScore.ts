@@ -49,6 +49,11 @@ export type SupplierSmartScoreProfile = {
   director_verified?: boolean | null
   updated_at?: string | null
   created_at?: string | null
+  supplier_documents?: Array<{
+    document_type?: string | null
+    file_url?: string | null
+    status?: string | null
+  }> | null
 }
 
 export type SmartScoreColour = "success" | "warning" | "danger"
@@ -125,6 +130,43 @@ function hasAnyValue(value: unknown): boolean {
   return value !== null && value !== undefined
 }
 
+function hasSupplierDocument(
+  profile: SupplierSmartScoreProfile,
+  documentType: string,
+  fallback?: unknown
+): boolean {
+  return Boolean(
+    profile.supplier_documents?.some(
+      (document) =>
+        document.document_type === documentType &&
+        document.status !== "superseded" &&
+        hasAnyValue(document.file_url)
+    ) || hasAnyValue(fallback)
+  )
+}
+
+function supplierDocumentCount(profile: SupplierSmartScoreProfile | null | undefined): number {
+  if (!profile) return 0
+
+  const documentTypes = new Set<string>()
+  for (const document of profile.supplier_documents ?? []) {
+    if (document.status !== "superseded" && document.document_type && hasAnyValue(document.file_url)) {
+      documentTypes.add(document.document_type)
+    }
+  }
+
+  const legacyDocuments = [
+    profile.csd_document_url,
+    profile.bbbee_document_url,
+    profile.tax_document_url,
+    profile.company_registration_url,
+    profile.cidb_document_url,
+    profile.capability_statement_url,
+  ].filter(hasValue).length
+
+  return Math.max(documentTypes.size, legacyDocuments)
+}
+
 function profileProvinces(profile: SupplierSmartScoreProfile | RFQMatchProfile): string[] {
   const provinces = Array.isArray(profile.provinces)
     ? profile.provinces.map((item) => item.trim()).filter(Boolean)
@@ -160,7 +202,8 @@ function profileTaxVerified(profile: SupplierSmartScoreProfile): boolean {
   }
 
   return Boolean(
-    isVerified(profile.tax_status) && hasAnyValue(profile.tax_document_url ?? profile.tax_clearance_url)
+    isVerified(profile.tax_status) &&
+      hasSupplierDocument(profile, "tax_clearance", profile.tax_document_url ?? profile.tax_clearance_url)
   )
 }
 
@@ -252,7 +295,7 @@ export function calculateSmartScore(profile: SupplierSmartScoreProfile | null | 
 
   if (profileTaxVerified(profile)) {
     score += 15
-  } else if (hasAnyValue(profile.tax_clearance_url ?? profile.tax_document_url)) {
+  } else if (hasSupplierDocument(profile, "tax_clearance", profile.tax_clearance_url ?? profile.tax_document_url)) {
     score += 7
   }
 
@@ -266,7 +309,7 @@ export function calculateSmartScore(profile: SupplierSmartScoreProfile | null | 
     score += 10
   }
 
-  if (hasAnyValue(profile.capability_statement_url)) {
+  if (hasSupplierDocument(profile, "company_profile", profile.capability_statement_url)) {
     score += 5
   }
 
@@ -302,7 +345,7 @@ export function getSmartScoreBreakdown(
   const csdPending = !csdVerified && hasAnyValue(safeProfile.csd_number)
   const bbbeeVerified = profileBBBEEVerified(safeProfile)
   const taxVerified = profileTaxVerified(safeProfile)
-  const taxPending = !taxVerified && hasAnyValue(safeProfile.tax_clearance_url ?? safeProfile.tax_document_url)
+  const taxPending = !taxVerified && hasSupplierDocument(safeProfile, "tax_clearance", safeProfile.tax_clearance_url ?? safeProfile.tax_document_url)
   const bankingVerified = profileBankingVerified(safeProfile)
   const bankingPending = !bankingVerified && profileHasBankingDetails(safeProfile)
 
@@ -353,8 +396,8 @@ export function getSmartScoreBreakdown(
       key: "company_profile",
       label: "Company profile document",
       points: 5,
-      earnedPoints: hasAnyValue(safeProfile.capability_statement_url) ? 5 : 0,
-      status: hasAnyValue(safeProfile.capability_statement_url) ? "earned" : "optional",
+      earnedPoints: hasSupplierDocument(safeProfile, "company_profile", safeProfile.capability_statement_url) ? 5 : 0,
+      status: hasSupplierDocument(safeProfile, "company_profile", safeProfile.capability_statement_url) ? "earned" : "optional",
     },
   ]
 }
@@ -433,7 +476,7 @@ export function calculateSupplierSmartScore(
     profile?.cidb_grade,
   ].filter(hasValue).length
 
-  const uploadedDocuments = complianceDocuments.filter(hasValue).length
+  const uploadedDocuments = Math.max(complianceDocuments.filter(hasValue).length, supplierDocumentCount(profile))
   const averageRating = activity.averageRating ?? null
   const paymentReliabilityRate =
     activity.paymentReliabilityRate ??
@@ -469,7 +512,7 @@ export function calculateSupplierSmartScore(
   const level = getLevel(score)
   const tips: string[] = []
 
-  if (!hasValue(profile?.tax_document_url)) {
+  if (!hasSupplierDocument(profile ?? {}, "tax_clearance", profile?.tax_document_url ?? profile?.tax_clearance_url)) {
     tips.push("Upload tax clearance to gain points")
   }
 
