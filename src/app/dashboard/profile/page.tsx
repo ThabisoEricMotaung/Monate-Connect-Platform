@@ -102,6 +102,12 @@ type DocumentField =
 
 type DocUrls = Record<DocumentField, string>
 type SaveResult = { ok: boolean; error?: string }
+type DocumentUploadOption = {
+  value: string
+  label: string
+  field: DocumentField
+  storageType: string
+}
 
 // --- Constants ---
 
@@ -154,6 +160,8 @@ const PERSONAL_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"]
 const COMPANY_LOGO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"]
 const PERSONAL_PHOTO_MAX_BYTES = 2 * 1024 * 1024
 const COMPANY_LOGO_MAX_BYTES = 5 * 1024 * 1024
+const DOCUMENT_MAX_BYTES = 10 * 1024 * 1024
+const DOCUMENT_TYPES = ["application/pdf", "image/jpeg", "image/png"] as const
 const COVER_GRADIENTS = [
   ["#1a3a2a", "#2d5a3d"],
   ["#c8a060", "#a67c3a"],
@@ -213,6 +221,21 @@ function docLabel(field: DocumentField): string {
     capability_statement_url: "Company Profile",
   }
   return map[field]
+}
+
+function validateDocumentUpload(file: File) {
+  if (!DOCUMENT_TYPES.includes(file.type as (typeof DOCUMENT_TYPES)[number])) {
+    return "Upload a PDF, JPG, or PNG document."
+  }
+  if (file.size > DOCUMENT_MAX_BYTES) {
+    return "Document must be 10MB or smaller."
+  }
+  return ""
+}
+
+function formatUploadFileSize(size: number) {
+  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`
 }
 
 function FieldError({ message }: { message?: string }) {
@@ -1511,17 +1534,30 @@ function VerificationTab({
 }) {
   const [uploadingField, setUploadingField] = useState<DocumentField | null>(null)
   const [uploadError, setUploadError] = useState("")
+  const [uploadSuccess, setUploadSuccess] = useState("")
 
   async function handleUpload(file: File | null, field: DocumentField, type: string) {
     if (!file || !supabase || !userId) return
     setUploadError("")
+    setUploadSuccess("")
+    const validation = validateDocumentUpload(file)
+    if (validation) {
+      setUploadError(validation)
+      return
+    }
     setUploadingField(field)
+    const label = docLabel(field)
+    const hadExistingDocument = Boolean(docUrls[field])
     const path = `${userId}/${type}/${cleanFileName(file.name)}`
-    const { error: upErr } = await supabase.storage.from("supplier-documents").upload(path, file, { upsert: true })
+    const { error: upErr } = await supabase.storage
+      .from("supplier-documents")
+      .upload(path, file, { contentType: file.type, upsert: true })
     if (upErr) { setUploadError(upErr.message); setUploadingField(null); return }
-    await supabase.from("profiles").update({ [field]: path }).eq("id", userId)
+    const { error: profileError } = await supabase.from("profiles").update({ [field]: path }).eq("id", userId)
+    if (profileError) { setUploadError(profileError.message); setUploadingField(null); return }
     onDocUploaded(field, path)
     setUploadingField(null)
+    setUploadSuccess(hadExistingDocument ? `Replaced previous ${label}` : `${label} uploaded`)
   }
 
   function statusOf(doc: DocumentField): "verified" | "pending" | "missing" {
@@ -1538,6 +1574,11 @@ function VerificationTab({
       {uploadError && (
         <div className="mb-4 rounded-md border border-rose-500/25 bg-rose-500/10 px-4 py-3">
           <p className="text-xs font-semibold text-rose-700">{uploadError}</p>
+        </div>
+      )}
+      {uploadSuccess && (
+        <div className="mb-4 rounded-md border border-success/30 bg-success-soft px-4 py-3">
+          <p className="text-xs font-semibold text-success">{uploadSuccess}</p>
         </div>
       )}
 
@@ -1632,6 +1673,14 @@ const ALL_DOC_FIELDS: DocumentField[] = [
   "capability_statement_url",
 ]
 
+const DOCUMENT_UPLOAD_OPTIONS: DocumentUploadOption[] = [
+  { value: "cipc", label: "CIPC", field: "company_registration_url", storageType: "cipc" },
+  { value: "tax-clearance", label: "Tax Clearance", field: "tax_document_url", storageType: "tax-clearance" },
+  { value: "bbbee", label: "BBBEE Certificate", field: "bbbee_document_url", storageType: "bbbee-certificate" },
+  { value: "csd", label: "CSD", field: "csd_document_url", storageType: "csd" },
+  { value: "coid", label: "COID", field: "cidb_document_url", storageType: "coid" },
+]
+
 function DocumentsTab({
   profile,
   docUrls,
@@ -1644,25 +1693,65 @@ function DocumentsTab({
   onDocUploaded: (field: DocumentField, url: string) => void
 }) {
   const [uploading, setUploading] = useState(false)
-  const [uploadCategory, setUploadCategory] = useState<DocumentField>("bbbee_document_url")
+  const [uploadCategory, setUploadCategory] = useState("bbbee")
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [confirmedDocumentType, setConfirmedDocumentType] = useState(false)
   const [uploadError, setUploadError] = useState("")
   const [uploadSuccess, setUploadSuccess] = useState("")
 
   const existing = ALL_DOC_FIELDS.filter((f) => docUrls[f])
+  const selectedOption =
+    DOCUMENT_UPLOAD_OPTIONS.find((option) => option.value === uploadCategory) ?? DOCUMENT_UPLOAD_OPTIONS[0]
 
-  async function handleNewUpload(file: File | null) {
-    if (!file || !supabase || !userId) return
+  function chooseDocumentFile(file: File | null) {
     setUploadError("")
     setUploadSuccess("")
+    setConfirmedDocumentType(false)
+    if (!file) {
+      setSelectedFile(null)
+      return
+    }
+    const validation = validateDocumentUpload(file)
+    if (validation) {
+      setSelectedFile(null)
+      setUploadError(validation)
+      return
+    }
+    setSelectedFile(file)
+  }
+
+  async function handleNewUpload() {
+    if (!selectedFile || !supabase || !userId || !selectedOption) return
+    const validation = validateDocumentUpload(selectedFile)
+    if (validation) {
+      setUploadError(validation)
+      return
+    }
     setUploading(true)
-    const type = uploadCategory.replace("_document_url", "").replace("_url", "").replace(/_/g, "-")
-    const path = `${userId}/${type}/${cleanFileName(file.name)}`
-    const { error: upErr } = await supabase.storage.from("supplier-documents").upload(path, file, { upsert: true })
-    if (upErr) { setUploadError(upErr.message); setUploading(false); return }
-    await supabase.from("profiles").update({ [uploadCategory]: path }).eq("id", userId)
-    onDocUploaded(uploadCategory, path)
+    setUploadError("")
+    setUploadSuccess("")
+    const field = selectedOption.field
+    const hadExistingDocument = Boolean(docUrls[field])
+    const path = `${userId}/${selectedOption.storageType}/${cleanFileName(selectedFile.name)}`
+    const { error: upErr } = await supabase.storage
+      .from("supplier-documents")
+      .upload(path, selectedFile, { contentType: selectedFile.type, upsert: true })
+    if (upErr) {
+      setUploadError(upErr.message)
+      setUploading(false)
+      return
+    }
+    const { error: profileError } = await supabase.from("profiles").update({ [field]: path }).eq("id", userId)
+    if (profileError) {
+      setUploadError(profileError.message)
+      setUploading(false)
+      return
+    }
+    onDocUploaded(field, path)
     setUploading(false)
-    setUploadSuccess(`${docLabel(uploadCategory)} uploaded.`)
+    setSelectedFile(null)
+    setConfirmedDocumentType(false)
+    setUploadSuccess(hadExistingDocument ? `Replaced previous ${selectedOption.label}` : `${selectedOption.label} uploaded`)
   }
 
   const statusOfDoc = (): "Verified" | "Under review" =>
@@ -1708,12 +1797,65 @@ function DocumentsTab({
         )}
         <div className="mb-3">
           <label htmlFor="doc-category" className={labelCls}>Document type</label>
-          <select id="doc-category" value={uploadCategory} onChange={(e) => setUploadCategory(e.target.value as DocumentField)} className={inputCls}>
-            {ALL_DOC_FIELDS.map((f) => <option key={f} value={f}>{docLabel(f)}</option>)}
+          <select
+            id="doc-category"
+            value={uploadCategory}
+            onChange={(e) => {
+              setUploadCategory(e.target.value)
+              setConfirmedDocumentType(false)
+              setUploadSuccess("")
+              setUploadError("")
+            }}
+            className={inputCls}
+          >
+            {DOCUMENT_UPLOAD_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
           </select>
-          {!docUrls[uploadCategory] && <SmartScoreNudge />}
+          <p className="mt-2 text-xs font-semibold text-secondary">
+            Additional document types coming soon.
+          </p>
+          {!docUrls[selectedOption.field] && <SmartScoreNudge />}
         </div>
-        <UploadZone id="new-doc-upload" uploading={uploading} onFile={handleNewUpload} />
+        <UploadZone id="new-doc-upload" uploading={uploading} onFile={chooseDocumentFile} />
+        {selectedFile && (
+          <div className="mt-3 rounded-md border border-panel bg-card px-4 py-3">
+            <div className="flex items-center justify-between gap-3 text-sm text-heading">
+              <span className="min-w-0 flex items-center gap-2">
+                <svg className="h-4 w-4 shrink-0 text-muted" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+                <span className="truncate font-semibold">{selectedFile.name}</span>
+                <span className="shrink-0 text-xs text-muted">{formatUploadFileSize(selectedFile.size)}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => chooseDocumentFile(null)}
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-panel text-muted transition hover:border-rose-300 hover:text-rose-700"
+                aria-label="Remove selected document"
+              >
+                <span aria-hidden="true">x</span>
+              </button>
+            </div>
+            <label className="mt-3 flex items-start gap-2 text-xs font-semibold text-secondary">
+              <input
+                type="checkbox"
+                checked={confirmedDocumentType}
+                onChange={(event) => setConfirmedDocumentType(event.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-panel text-accent focus:ring-accent/30"
+              />
+              <span>I confirm this file is my {selectedOption.label}</span>
+            </label>
+            <button
+              type="button"
+              onClick={() => void handleNewUpload()}
+              disabled={uploading || !selectedFile || !confirmedDocumentType}
+              className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-accent bg-accent px-4 py-2.5 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {uploading ? "Uploading..." : "Upload document"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
