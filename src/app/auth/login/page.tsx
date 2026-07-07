@@ -3,6 +3,7 @@
 import { useEffect, useState, type MouseEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import PasswordInput from "@/components/PasswordInput"
 import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 
@@ -409,8 +410,7 @@ export default function LoginPage() {
             <div>
               <label className="block text-sm font-medium text-secondary">Password <span className="text-rose-500">*</span>
               </label>
-              <input
-                type="password"
+              <PasswordInput
                 placeholder="Your password"
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setErrorMessage("") }}

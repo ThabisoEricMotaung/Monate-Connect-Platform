@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "r
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { IconArrowLeft } from "@tabler/icons-react"
+import PasswordInput from "@/components/PasswordInput"
 import { OFFICIAL_INDUSTRY_OPTIONS } from "@/lib/industries"
 import { calculateSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
@@ -233,60 +234,6 @@ function AuthDivider() {
   )
 }
 
-function VisibilityIcon({ visible }: { visible: boolean }) {
-  if (visible) {
-    return (
-      <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
-        <path
-          d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M7.2 7.6C5.2 8.8 3.8 10.6 3 12c1.8 3.1 5.1 6 9 6 1.3 0 2.5-.3 3.6-.8M10 5.2A8.5 8.5 0 0 1 12 5c3.9 0 7.2 2.9 9 7-.5.9-1.2 1.8-2 2.6"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.8"
-        />
-      </svg>
-    )
-  }
-
-  return (
-    <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
-      <path
-        d="M3 12c1.8-3.1 5.1-6 9-6s7.2 2.9 9 6c-1.8 3.1-5.1 6-9 6s-7.2-2.9-9-6Z"
-        stroke="currentColor"
-        strokeLinejoin="round"
-        strokeWidth="1.8"
-      />
-      <path
-        d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
-        stroke="currentColor"
-        strokeLinejoin="round"
-        strokeWidth="1.8"
-      />
-    </svg>
-  )
-}
-
-function PasswordVisibilityButton({
-  visible,
-  onClick,
-  label,
-}: {
-  visible: boolean
-  onClick: () => void
-  label: string
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted transition hover:text-accent"
-    >
-      <VisibilityIcon visible={visible} />
-    </button>
-  )
-}
-
 function FieldError({ message }: { message?: string }) {
   if (!message) return null
   return <p className="mt-2 text-xs font-semibold text-rose-700">{message}</p>
@@ -378,8 +325,6 @@ export default function SignupPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [isOauthSignup, setIsOauthSignup] = useState(false)
   const [showOauthRegistrationNotice, setShowOauthRegistrationNotice] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [complianceWarnings, setComplianceWarnings] = useState<MissingComplianceItem[]>([])
   const [acknowledgedComplianceWarnings, setAcknowledgedComplianceWarnings] = useState(false)
   const csdUploadRef = useRef<HTMLInputElement>(null)
@@ -1049,38 +994,24 @@ export default function SignupPage() {
                   <>
                     <div>
                       <label className="block text-sm font-medium text-secondary">Password <span className="font-semibold text-accent">*</span></label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          value={form.password}
-                          onChange={(e) => updateField("password", e.target.value)}
-                          className={`${inputClass} pr-12`}
-                        />
-                        <PasswordVisibilityButton
-                          visible={showPassword}
-                          onClick={() => setShowPassword((current) => !current)}
-                          label={showPassword ? "Hide password" : "Show password"}
-                        />
-                      </div>
+                      <PasswordInput
+                        value={form.password}
+                        onChange={(e) => updateField("password", e.target.value)}
+                        className={inputClass}
+                      />
                       <PasswordStrengthMeter password={form.password} />
                       <FieldError message={errors.password} />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-secondary">Confirm password <span className="font-semibold text-accent">*</span></label>
-                      <div className="relative">
-                        <input
-                          type={showConfirmPassword ? "text" : "password"}
-                          value={form.confirmPassword}
-                          onChange={(e) => updateField("confirmPassword", e.target.value)}
-                          className={`${inputClass} pr-12`}
-                        />
-                        <PasswordVisibilityButton
-                          visible={showConfirmPassword}
-                          onClick={() => setShowConfirmPassword((current) => !current)}
-                          label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                        />
-                      </div>
+                      <PasswordInput
+                        value={form.confirmPassword}
+                        onChange={(e) => updateField("confirmPassword", e.target.value)}
+                        className={inputClass}
+                        hideLabel="Hide confirm password"
+                        revealLabel="Show confirm password"
+                      />
                       <FieldError message={errors.confirmPassword || (passwordsDoNotMatch ? "Passwords do not match" : undefined)} />
                     </div>
                   </>

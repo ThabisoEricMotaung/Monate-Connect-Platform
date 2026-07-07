@@ -3,6 +3,7 @@
 import { useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import PasswordInput from "@/components/PasswordInput"
 import { supabase } from "@/lib/supabase"
 
 type PageStatus = "waiting" | "ready" | "invalid" | "success"
@@ -299,8 +300,7 @@ export default function ResetPasswordPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-secondary">New password <span className="text-rose-500">*</span></label>
-            <input
-              type="password"
+            <PasswordInput
               placeholder="Minimum 8 characters"
               value={password}
               onChange={(e) => { setPassword(e.target.value); setError(null) }}
@@ -312,8 +312,7 @@ export default function ResetPasswordPage() {
 
           <div>
             <label className="block text-sm font-medium text-secondary">Confirm password <span className="text-rose-500">*</span></label>
-            <input
-              type="password"
+            <PasswordInput
               placeholder="Repeat new password"
               value={confirm}
               onChange={(e) => { setConfirm(e.target.value); setError(null) }}
