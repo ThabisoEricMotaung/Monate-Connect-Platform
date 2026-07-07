@@ -17,6 +17,9 @@ type RFQ = {
   budget: string | null
   status: string | null
   deadline: string | null
+  is_external_opportunity?: boolean | null
+  original_source_url?: string | null
+  source_name?: string | null
 }
 
 type SavedRFQRow = {
@@ -89,7 +92,7 @@ export default function SavedRFQsPage() {
 
       const { data: rfqData, error: rfqError } = await supabase
         .from("rfqs")
-        .select("id, title, description, province, region, category, budget, status, deadline")
+        .select("id, title, description, province, region, category, budget, status, deadline, is_external_opportunity, original_source_url, source_name")
         .in("id", rfqIds)
 
       if (rfqError) {
@@ -203,6 +206,8 @@ export default function SavedRFQsPage() {
             const displayStatus = getRFQDisplayStatus(rfq.status, rfq.deadline)
             const isClosed =
               displayStatus === "Closed" || displayStatus === "Awarded"
+            const isExternalOpportunity = Boolean(rfq.is_external_opportunity)
+            const sourceName = rfq.source_name?.trim() || "External"
 
             return (
               <article
@@ -224,6 +229,11 @@ export default function SavedRFQsPage() {
                       >
                         {displayStatus}
                       </span>
+                      {isExternalOpportunity && (
+                        <span className="inline-flex rounded-md border border-accent/30 bg-accent/10 px-2.5 py-0.5 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-accent-strong">
+                          {sourceName}
+                        </span>
+                      )}
                     </div>
                     <h2 className="mt-2 text-xl font-semibold leading-snug text-heading">
                       {rfq.title}
@@ -292,7 +302,23 @@ export default function SavedRFQsPage() {
                   >
                     View RFQ
                   </Link>
-                  {!isClosed && (
+                  {isExternalOpportunity ? (
+                    <>
+                      {rfq.original_source_url && (
+                        <a
+                          href={rfq.original_source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
+                        >
+                          View Original Tender
+                        </a>
+                      )}
+                      <p className="basis-full text-xs leading-5 text-muted">
+                        This opportunity is sourced from {sourceName}. Apply through the official channel; quotes cannot be submitted through AiForm Procure.
+                      </p>
+                    </>
+                  ) : !isClosed && (
                     <Link
                       href={`/dashboard/rfqs/${rfq.id}/submit`}
                       className="inline-flex items-center justify-center rounded-md border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:border-accent hover:text-accent"

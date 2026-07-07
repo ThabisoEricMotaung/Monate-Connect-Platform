@@ -29,6 +29,9 @@ type RFQ = {
   status: string | null
   deadline: string | null
   attachment_url: string | null
+  is_external_opportunity?: boolean | null
+  original_source_url?: string | null
+  source_name?: string | null
 }
 
 const statusStyles: Record<string, string> = {
@@ -89,6 +92,8 @@ export default async function RFQDetailPage({ params }: Props) {
   const rfq = data as RFQ
   const displayStatus = getRFQDisplayStatus(rfq.status, rfq.deadline)
   const isClosed = displayStatus === "Closed"
+  const isExternalOpportunity = Boolean(rfq.is_external_opportunity)
+  const sourceName = rfq.source_name?.trim() || "the original tender source"
   const rfqCompliance = checkRFQCompliance(rfq)
   const recommendedSuppliers = (await getRFQMatches(rfq.id)).slice(0, 5)
 
@@ -115,6 +120,11 @@ export default async function RFQDetailPage({ params }: Props) {
           <span className="text-sm font-medium text-secondary">
             Deadline: {formatDeadline(rfq.deadline)}
           </span>
+          {isExternalOpportunity && (
+            <span className="inline-flex rounded-md border border-accent/30 bg-accent/10 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-accent-strong">
+              {rfq.source_name?.trim() || "External"}
+            </span>
+          )}
         </div>
 
         {rfq.description && (
@@ -367,7 +377,30 @@ export default async function RFQDetailPage({ params }: Props) {
 
       <div className="mt-8 flex flex-wrap gap-4 rounded-md border border-panel bg-card px-5 py-4">
 
-        {isClosed ? (
+        {isExternalOpportunity ? (
+          <div className="w-full rounded-md border border-accent/30 bg-accent/10 px-5 py-4">
+            <p className="text-sm font-semibold text-heading">
+              This opportunity is sourced from {sourceName}.
+            </p>
+            <p className="mt-1 text-sm leading-6 text-secondary">
+              Apply directly through the official channel. Quotes cannot be submitted through AiForm Procure for this listing.
+            </p>
+            {rfq.original_source_url ? (
+              <a
+                href={rfq.original_source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
+              >
+                View Original Tender
+              </a>
+            ) : (
+              <span className="mt-4 inline-flex rounded-md border border-panel bg-surface px-5 py-2.5 text-sm font-semibold text-secondary">
+                Original source URL unavailable
+              </span>
+            )}
+          </div>
+        ) : isClosed ? (
           <div className="rounded-md border border-rose-500/25 bg-rose-500/10 px-5 py-3">
             <p className="text-sm font-semibold text-rose-700">
               This RFQ has closed and no longer accepts submissions.

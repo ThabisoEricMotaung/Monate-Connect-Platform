@@ -32,6 +32,9 @@ type PublicRFQ = {
   bbbee_requirement?: string | null
   bbee_requirement?: string | null
   bbbee_level?: string | null
+  is_external_opportunity?: boolean | null
+  original_source_url?: string | null
+  source_name?: string | null
 }
 
 type SortKey = "deadline" | "newest" | "value"
@@ -189,7 +192,7 @@ async function fetchPublicRFQs(): Promise<PublicRFQ[]> {
   const { data, error } = await supabase
     .from("rfqs")
     .select(
-      "id,title,description,buyer_name,buyer_org,industry,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count"
+      "id,title,description,buyer_name,buyer_org,industry,category,province,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count,is_external_opportunity,original_source_url,source_name"
     )
     .ilike("status", "open")
     .gt("closing_date", new Date().toISOString())
@@ -596,6 +599,8 @@ function RFQCard({
   const isClosingSoon = daysLeft !== null && daysLeft >= 0 && daysLeft <= 3
   const isNew = isPostedWithin48h(getPublishedDate(rfq))
   const blurDesc = !isAuth && (idx + 1) % 3 === 0
+  const isExternalOpportunity = Boolean(rfq.is_external_opportunity)
+  const externalLabel = rfq.source_name?.trim() || "External"
 
   // left-border accent: blue =2 days (=48h), amber =3 days
   const borderAccent =
@@ -626,6 +631,11 @@ function RFQCard({
             {isClosingSoon && (
               <span className="rounded-full border border-warning bg-warning-soft px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-warning">
                 Closing soon
+              </span>
+            )}
+            {isExternalOpportunity && (
+              <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-accent-strong">
+                {externalLabel}
               </span>
             )}
           </div>
@@ -678,12 +688,23 @@ function RFQCard({
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-panel pt-3">
         <p className="text-xs text-muted">Closes {formatDate(getClosingDate(rfq))}</p>
         {isAuth ? (
-          <Link
-            href={"/dashboard/rfqs?open=" + rfq.id}
-            className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-panel hover:text-heading"
-          >
-            View &amp; quote
-          </Link>
+          isExternalOpportunity && rfq.original_source_url ? (
+            <a
+              href={rfq.original_source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-panel hover:text-heading"
+            >
+              View Original Tender
+            </a>
+          ) : (
+            <Link
+              href={"/dashboard/rfqs?open=" + rfq.id}
+              className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-panel hover:text-heading"
+            >
+              View &amp; quote
+            </Link>
+          )
         ) : (
           <button
             onClick={() => onPreview(rfq)}

@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useAutosave } from "@/hooks/useAutosave"
 import { logActivity } from "@/lib/activity"
 import { logAuditAction } from "@/lib/audit"
@@ -8,7 +9,7 @@ import { useI18n } from "@/lib/i18n"
 import { createNotificationsForRoles } from "@/lib/notifications"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { supabase } from "@/lib/supabase"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
 import ComplianceChecklist from "@/components/compliance/ComplianceChecklist"
 
@@ -22,6 +23,9 @@ type RFQSubmissionState = {
   attachment_url: string | null
   category: string | null
   province: string | null
+  is_external_opportunity?: boolean | null
+  original_source_url?: string | null
+  source_name?: string | null
 }
 
 type QuoteDraft = {
@@ -258,6 +262,7 @@ function buildTenderResponse(
 export default function SubmitQuotePage() {
   const { t } = useI18n()
   const params = useParams<{ id: string }>()
+  const router = useRouter()
 
   // Core form state
   const [rfq, setRfq] = useState<RFQSubmissionState | null>(null)
@@ -317,7 +322,7 @@ export default function SubmitQuotePage() {
       }
       const { data, error } = await supabase
         .from("rfqs")
-        .select("id, title, deadline, status, attachment_url, category, province")
+        .select("id, title, deadline, status, attachment_url, category, province, is_external_opportunity, original_source_url, source_name")
         .eq("id", Number(params.id))
         .single()
 
@@ -438,6 +443,23 @@ export default function SubmitQuotePage() {
     const user = await getCurrentUser()
     if (!user) {
       setErrorMessage("You must be signed in as a supplier before submitting a quote.")
+      return
+    }
+
+    const { data: latestRfq, error: latestRfqError } = await supabase
+      .from("rfqs")
+      .select("id, is_external_opportunity")
+      .eq("id", rfqId)
+      .single()
+
+    if (latestRfqError) {
+      setErrorMessage(latestRfqError.message)
+      return
+    }
+
+    if (latestRfq?.is_external_opportunity) {
+      setErrorMessage("This is an externally-sourced opportunity. Apply through the original tender source; quotes cannot be submitted through AiForm Procure.")
+      window.setTimeout(() => router.push(`/dashboard/rfqs/${rfqId}`), 1200)
       return
     }
 
@@ -571,6 +593,42 @@ export default function SubmitQuotePage() {
     { key: "pricingAndAssumptions", title: "Pricing and Assumptions", destination: "Supporting Notes" },
     { key: "availabilityAndNextSteps", title: "Availability and Next Steps", destination: "Supporting Notes" },
   ]
+
+  if (rfq?.is_external_opportunity) {
+    const sourceName = rfq.source_name?.trim() || "the original tender source"
+    return (
+      <section className="enterprise-main-panel">
+        <div className="enterprise-breadcrumbs">
+          {t("home")} / {t("dashboard")} / {t("rfqs")} / External opportunity
+        </div>
+        <div className="enterprise-card">
+          <p className="enterprise-section-label">External opportunity</p>
+          <h1 className="enterprise-page-title">Apply through the official source</h1>
+          <p className="enterprise-page-description">
+            This opportunity is sourced from {sourceName}. Quotes cannot be submitted through AiForm Procure for this listing.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            {rfq.original_source_url && (
+              <a
+                href={rfq.original_source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="enterprise-primary-button"
+              >
+                View Original Tender
+              </a>
+            )}
+            <Link
+              href={`/dashboard/rfqs/${params.id}`}
+              className="inline-flex items-center justify-center rounded-md border border-panel bg-panel px-5 py-3 text-sm font-semibold text-secondary transition hover:bg-surface"
+            >
+              Back to RFQ
+            </Link>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="enterprise-main-panel">

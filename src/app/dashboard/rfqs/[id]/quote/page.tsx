@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import { logActivity } from "@/lib/activity"
 import { logAuditAction } from "@/lib/audit"
@@ -35,6 +35,9 @@ type RFQ = {
   bbbee_requirement?: string | null
   bbbee_level?: string | null
   line_items?: RFQLineItem[] | string | null
+  is_external_opportunity?: boolean | null
+  original_source_url?: string | null
+  source_name?: string | null
 }
 
 type RFQLineItem = {
@@ -249,6 +252,7 @@ function ChecklistIcon({ state }: { state: "success" | "warning" | "muted" }) {
 
 export default function QuoteSubmissionPage() {
   const params = useParams<{ id: string }>()
+  const router = useRouter()
   const firstErrorRef = useRef<HTMLDivElement | null>(null)
   const [rfq, setRfq] = useState<RFQ | null>(null)
   const [profile, setProfile] = useState<SupplierProfile | null>(null)
@@ -452,6 +456,25 @@ export default function QuoteSubmissionPage() {
 
     setSubmitting(true)
 
+    const { data: latestRfq, error: latestRfqError } = await supabase
+      .from("rfqs")
+      .select("id, is_external_opportunity")
+      .eq("id", Number(params.id))
+      .single()
+
+    if (latestRfqError) {
+      setSubmitting(false)
+      setErrorMessage(latestRfqError.message)
+      return
+    }
+
+    if (latestRfq?.is_external_opportunity) {
+      setSubmitting(false)
+      setErrorMessage("This is an externally-sourced opportunity. Apply through the original tender source; quotes cannot be submitted through AiForm Procure.")
+      window.setTimeout(() => router.push(`/dashboard/rfqs/${params.id}`), 1200)
+      return
+    }
+
     const supplierName =
       profile?.business_name ||
       user.user_metadata?.business_name ||
@@ -551,6 +574,39 @@ export default function QuoteSubmissionPage() {
       <div className="rounded-md border border-rose-500/25 bg-rose-500/10 p-6">
         <p className="text-sm font-semibold text-rose-700">Quote page failed to load</p>
         <p className="mt-1 text-xs text-rose-700">{errorMessage}</p>
+      </div>
+    )
+  }
+
+  if (rfq?.is_external_opportunity) {
+    const sourceName = rfq.source_name?.trim() || "the original tender source"
+    return (
+      <div className="rounded-md border border-accent/30 bg-accent/10 p-6 shadow-panel">
+        <p className="text-xs uppercase tracking-[0.28em] text-accent">
+          External opportunity
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold text-heading">Apply through the official source</h1>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-secondary">
+          This opportunity is sourced from {sourceName}. Quotes cannot be submitted through AiForm Procure for this listing.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          {rfq.original_source_url && (
+            <a
+              href={rfq.original_source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-3 text-sm font-semibold text-button transition hover:bg-accent-strong"
+            >
+              View Original Tender
+            </a>
+          )}
+          <Link
+            href={`/dashboard/rfqs/${params.id}`}
+            className="inline-flex items-center justify-center rounded-md border border-panel bg-panel px-5 py-3 text-sm font-semibold text-secondary transition hover:bg-surface"
+          >
+            Back to RFQ
+          </Link>
+        </div>
       </div>
     )
   }

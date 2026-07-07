@@ -48,6 +48,7 @@ type BuyerProfile = {
   full_name?: string | null
   email: string | null
   role: string | null
+  is_opportunities_curator?: boolean | null
 }
 
 type FormState = {
@@ -77,6 +78,9 @@ type FormState = {
   allowAmendments: boolean
   requireCoverNote: boolean
   listPublicly: boolean
+  isExternalOpportunity: boolean
+  sourceName: string
+  originalSourceUrl: string
 }
 
 type Errors = Partial<Record<keyof FormState | "lineItems", string>>
@@ -169,11 +173,23 @@ function initialForm(): FormState {
     allowAmendments: true,
     requireCoverNote: false,
     listPublicly: true,
+    isExternalOpportunity: false,
+    sourceName: "",
+    originalSourceUrl: "",
   }
 }
 
 function cleanAmountInput(value: string): string {
   return value.replace(/[^\d]/g, "")
+}
+
+function isValidUrl(value: string): boolean {
+  try {
+    const url = new URL(value)
+    return url.protocol === "http:" || url.protocol === "https:"
+  } catch {
+    return false
+  }
 }
 
 function cleanFileName(fileName: string): string {
@@ -436,7 +452,7 @@ export default function NewRFQPage() {
       const [profileResult, supplierResult] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, business_name, full_name, email, role")
+          .select("id, business_name, full_name, email, role, is_opportunities_curator")
           .eq("id", profile?.id)
           .maybeSingle(),
         supabase
@@ -546,6 +562,7 @@ export default function NewRFQPage() {
   }
 
   const canPublish = stepComplete[1] && stepComplete[2] && stepComplete[3]
+  const canPostExternalOpportunity = Boolean(buyerProfile?.is_opportunities_curator)
   const shortTurnaround = form.closingDate ? (calendarDaysFromToday(form.closingDate) ?? 99) < 7 : false
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
@@ -615,6 +632,7 @@ export default function NewRFQPage() {
 
   function validateStep(targetStep: Step): boolean {
     const nextErrors: Errors = {}
+    const canPostExternalOpportunity = Boolean(buyerProfile?.is_opportunities_curator)
 
     if (targetStep === 1) {
       if (!form.title.trim()) nextErrors.title = "RFQ title is required."
@@ -644,6 +662,13 @@ export default function NewRFQPage() {
       }
       if (!validation.valueOrder) {
         nextErrors.valueMin = "Minimum value cannot exceed maximum value"
+      }
+      if (canPostExternalOpportunity && form.isExternalOpportunity) {
+        if (!form.originalSourceUrl.trim()) {
+          nextErrors.originalSourceUrl = "Original source URL is required for external opportunities."
+        } else if (!isValidUrl(form.originalSourceUrl.trim())) {
+          nextErrors.originalSourceUrl = "Enter a valid http or https URL."
+        }
       }
     }
 
@@ -739,6 +764,10 @@ export default function NewRFQPage() {
       const budget = maxValue || minValue
       const description = composeDescription(form)
       const closingDate = form.closingDate || null
+      const canPostExternalOpportunity = Boolean(buyerProfile?.is_opportunities_curator)
+      const isExternalOpportunity = canPostExternalOpportunity && form.isExternalOpportunity
+      const originalSourceUrl = isExternalOpportunity ? form.originalSourceUrl.trim() : null
+      const sourceName = isExternalOpportunity ? form.sourceName.trim() || null : null
 
       const payload = {
         title: form.title.trim() || "Untitled RFQ draft",
@@ -751,6 +780,9 @@ export default function NewRFQPage() {
         status,
         attachment_url: attachmentUrl,
         created_by: creatorId,
+        is_external_opportunity: isExternalOpportunity,
+        original_source_url: originalSourceUrl,
+        source_name: sourceName,
       }
 
       const { data: rfqData, error: insertError } = await supabase
@@ -1456,6 +1488,59 @@ export default function NewRFQPage() {
                     <h2 className="mt-2 text-lg font-semibold text-heading">Supplier visibility</h2>
                   </div>
                   <div className="mt-6 space-y-3">
+                    {canPostExternalOpportunity && (
+                      <div className="rounded-md border border-accent/30 bg-surface p-4">
+                        <label className="flex items-start justify-between gap-4">
+                          <span>
+                            <span className="block text-sm font-semibold text-heading">
+                              This is an externally-sourced opportunity
+                            </span>
+                            <span className="mt-1 block text-xs text-muted">
+                              Suppliers will be sent to the official source instead of submitting quotes in AiForm Procure.
+                            </span>
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={form.isExternalOpportunity}
+                            onChange={(event) =>
+                              updateField("isExternalOpportunity", event.target.checked)
+                            }
+                            className="mt-1 h-4 w-4 accent-current"
+                          />
+                        </label>
+
+                        {form.isExternalOpportunity && (
+                          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                            <div>
+                              <label htmlFor="sourceName" className={labelClass}>
+                                Source name
+                              </label>
+                              <input
+                                id="sourceName"
+                                value={form.sourceName}
+                                onChange={(event) => updateField("sourceName", event.target.value)}
+                                placeholder="e.g. eTenders.gov.za"
+                                className={inputClass}
+                              />
+                            </div>
+                            <div>
+                              <label htmlFor="originalSourceUrl" className={labelClass}>
+                                Original source URL
+                              </label>
+                              <input
+                                id="originalSourceUrl"
+                                type="url"
+                                value={form.originalSourceUrl}
+                                onChange={(event) => updateField("originalSourceUrl", event.target.value)}
+                                placeholder="https://..."
+                                className={inputClass}
+                              />
+                              <ErrorText field="originalSourceUrl" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {[
                       ["notifyMatchedSuppliers", "Notify matched suppliers", "Send email alerts to suppliers whose profile matches this RFQ"],
                       ["allowAmendments", "Allow quote amendments", "Suppliers can update their quote before the deadline"],

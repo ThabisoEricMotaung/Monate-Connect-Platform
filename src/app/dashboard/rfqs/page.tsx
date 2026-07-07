@@ -37,6 +37,9 @@ type RFQ = {
   bbbee_requirement?: string | null
   bbbee_level?: string | null
   quote_count?: number | null
+  is_external_opportunity?: boolean | null
+  original_source_url?: string | null
+  source_name?: string | null
 }
 
 type SupplierProfile = {
@@ -419,7 +422,7 @@ export default function RFQsPage() {
       const { data, error: rfqError } = await supabase
         .from("rfqs")
         .select(
-          "id,title,description,buyer_name,buyer_org,industry,category,province,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count"
+          "id,title,description,buyer_name,buyer_org,industry,category,province,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count,is_external_opportunity,original_source_url,source_name"
         )
         .ilike("status", "open")
         .eq("is_public", true)
@@ -810,6 +813,8 @@ export default function RFQsPage() {
 
   function RFQCard({ item }: { item: MarketplaceRFQ }) {
     const rfq = item.rfq
+    const isExternalOpportunity = Boolean(rfq.is_external_opportunity)
+    const externalLabel = rfq.source_name?.trim() || "External"
     const primaryPill = item.isClosingSoon
       ? "Closing soon"
       : item.isNewToday
@@ -868,6 +873,11 @@ export default function RFQsPage() {
                 Saved
               </span>
             )}
+            {isExternalOpportunity && (
+              <span className="inline-flex rounded-md border border-accent/30 bg-accent/10 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-accent-strong">
+                {externalLabel}
+              </span>
+            )}
             {activeTab === "matched" && (
               <span className="inline-flex rounded-md border border-success/30 bg-success-soft px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-success">
                 {item.matchScore}% match
@@ -905,12 +915,23 @@ export default function RFQsPage() {
             >
               View details
             </Link>
-            <Link
-              href={`/dashboard/rfqs/${rfq.id}/submit`}
-              className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong"
-            >
-              Submit quote -&gt;
-            </Link>
+            {isExternalOpportunity && rfq.original_source_url ? (
+              <a
+                href={rfq.original_source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong"
+              >
+                View Original Tender
+              </a>
+            ) : (
+              <Link
+                href={`/dashboard/rfqs/${rfq.id}/submit`}
+                className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong"
+              >
+                Submit quote -&gt;
+              </Link>
+            )}
           </div>
         </div>
       </article>
