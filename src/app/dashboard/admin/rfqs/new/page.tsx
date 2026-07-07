@@ -702,16 +702,16 @@ export default function NewRFQPage() {
     return filePath
   }
 
-  async function createRFQ(status: "Draft" | "Open") {
+  async function createRFQ(status: "draft" | "open") {
     setErrorMessage("")
     setSuccessMessage("")
     setWarningMessage("")
 
-    if (status === "Draft" && !form.title.trim()) {
+    if (status === "draft" && !form.title.trim()) {
       setWarningMessage("Draft saved without a title. Add a title before publishing.")
     }
 
-    if (status === "Open" && (!canPublish || !validation.valueOrder)) {
+    if (status === "open" && (!canPublish || !validation.valueOrder)) {
       validateStep(1)
       validateStep(2)
       validateStep(3)
@@ -738,6 +738,7 @@ export default function NewRFQPage() {
       const maxValue = cleanAmountInput(form.valueMax)
       const budget = maxValue || minValue
       const description = composeDescription(form)
+      const closingDate = form.closingDate || null
 
       const payload = {
         title: form.title.trim() || "Untitled RFQ draft",
@@ -745,7 +746,8 @@ export default function NewRFQPage() {
         province: form.provinces.join(", "),
         category: form.category,
         budget,
-        deadline: form.closingDate || null,
+        closing_date: closingDate,
+        deadline: closingDate,
         status,
         attachment_url: attachmentUrl,
         created_by: creatorId,
@@ -775,7 +777,7 @@ export default function NewRFQPage() {
 
       try {
         await logAuditAction({
-          action: status === "Draft" ? "rfq.draft_created" : "rfq.created",
+          action: status === "draft" ? "rfq.draft_created" : "rfq.created",
           entity_type: "rfq",
           entity_id: rfqData?.id ?? null,
           old_values: null,
@@ -787,7 +789,7 @@ export default function NewRFQPage() {
           },
         })
         await logActivity({
-          action: status === "Draft" ? "rfq.draft_created" : "rfq.created",
+          action: status === "draft" ? "rfq.draft_created" : "rfq.created",
           entity_type: "rfq",
           entity_id: rfqData?.id ?? null,
           metadata: {
@@ -803,7 +805,7 @@ export default function NewRFQPage() {
         console.warn("RFQ creation audit/activity logging failed:", activityError)
       }
 
-      if (status === "Open") {
+      if (status === "open") {
         await notifyNewRFQ({
           id: rfqData?.id ?? null,
           title: payload.title,
@@ -831,7 +833,7 @@ export default function NewRFQPage() {
 
       removeStoredDraft(draftId)
       setSuccessMessage(
-        status === "Open" ? "RFQ published successfully." : "RFQ draft saved successfully.",
+        status === "open" ? "RFQ published successfully." : "RFQ draft saved successfully.",
       )
       const isBuyer = buyerProfile?.role?.trim().toLowerCase() === "buyer"
       setHasUnsavedChanges(false)
@@ -1583,7 +1585,7 @@ export default function NewRFQPage() {
             )}
             <button
               type="button"
-              onClick={step === 3 ? () => createRFQ("Draft") : saveLocalDraft}
+              onClick={step === 3 ? () => createRFQ("draft") : saveLocalDraft}
               disabled={submitting}
               className="rounded-md border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:border-accent hover:text-accent disabled:opacity-50"
             >
@@ -1600,7 +1602,7 @@ export default function NewRFQPage() {
             ) : (
               <button
                 type="button"
-                onClick={() => createRFQ("Open")}
+                onClick={() => createRFQ("open")}
                 disabled={!canPublish || submitting}
                 className="rounded-md border border-success bg-success px-4 py-2 text-sm font-semibold text-button transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >

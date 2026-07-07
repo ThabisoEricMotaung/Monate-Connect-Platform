@@ -29,7 +29,7 @@ export function getRFQDisplayStatus(
   storedStatus: string | null | undefined,
   deadline: string | Date | null | undefined
 ): string {
-  if (storedStatus === "Awarded") return "Awarded"
+  if (storedStatus?.trim().toLowerCase() === "awarded") return "Awarded"
 
   return getRFQDeadlineStatus(deadline)
 }

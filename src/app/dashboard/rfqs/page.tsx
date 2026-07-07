@@ -419,9 +419,9 @@ export default function RFQsPage() {
       const { data, error: rfqError } = await supabase
         .from("rfqs")
         .select(
-          "id,title,description,buyer_name,buyer_org,industry,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count"
+          "id,title,description,buyer_name,buyer_org,industry,category,province,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count"
         )
-        .eq("status", "open")
+        .ilike("status", "open")
         .eq("is_public", true)
         .gt("closing_date", new Date().toISOString())
         .order("closing_date", { ascending: true, nullsFirst: false })

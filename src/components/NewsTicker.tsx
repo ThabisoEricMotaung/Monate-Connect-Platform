@@ -181,7 +181,7 @@ export default function NewsTicker() {
       const { data, error } = await supabase
         .from("rfqs")
         .select("id,title,buyer_org,industry,published_date,created_at")
-        .eq("status", "open")
+        .ilike("status", "open")
         .eq("is_public", true)
         .order("published_date", { ascending: false, nullsFirst: false })
         .limit(3);

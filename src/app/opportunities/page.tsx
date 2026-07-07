@@ -191,7 +191,7 @@ async function fetchPublicRFQs(): Promise<PublicRFQ[]> {
     .select(
       "id,title,description,buyer_name,buyer_org,industry,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count"
     )
-    .eq("status", "open")
+    .ilike("status", "open")
     .gt("closing_date", new Date().toISOString())
     .eq("is_public", true)
     .order("closing_date", { ascending: true, nullsFirst: false })
