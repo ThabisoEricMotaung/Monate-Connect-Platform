@@ -10,9 +10,11 @@ import {
   activeSupplierDocuments,
   applySupplierDocumentsToProfiles,
   fetchSupplierDocumentsByProfileIds,
+  latestSupplierDocuments,
   supplierDocumentLabels,
   type SupplierDocument,
   type SupplierDocumentStatus,
+  type SupplierDocumentType,
 } from "@/lib/supplierDocuments"
 
 type FilterMode = "all" | "pending" | "verified"
@@ -115,6 +117,98 @@ const STEP_LABELS: Record<VerificationStep, string> = {
   tax: "Tax",
   banking: "Banking",
   director: "Director",
+}
+
+type ChecklistItem = {
+  key: string
+  label: string
+  shortLabel: string
+  verifyLink?: { label: string; href: string }
+}
+
+// Document category each step's checklist result should be recorded against.
+const STEP_DOCUMENT_TYPE: Record<VerificationStep, SupplierDocumentType> = {
+  csd: "csd",
+  bbbee: "bbbee",
+  tax: "tax_clearance",
+  banking: "bank_letter",
+  director: "cipc",
+}
+
+// Review-aid checklists shown per document category. These are a lightweight
+// UI nudge only — not a persisted data model. On Approve, whichever items are
+// checked are summarised into the matching supplier_documents.review_notes row.
+const CHECKLIST_ITEMS: Record<VerificationStep, ChecklistItem[]> = {
+  csd: [
+    { key: "number-matches", label: "CSD/MAAA number present and matches profile", shortLabel: "number matches" },
+    {
+      key: "name-matches",
+      label: "Company name on document matches registered business name",
+      shortLabel: "name matches",
+    },
+    { key: "status-active", label: "Status shown as Active", shortLabel: "status active" },
+  ],
+  bbbee: [
+    { key: "cert-number", label: "Certificate/tracking number present", shortLabel: "cert number present" },
+    {
+      key: "name-matches",
+      label: "Company name matches registered business name",
+      shortLabel: "name matches",
+    },
+    { key: "level-matches", label: "BBBEE level stated matches profile", shortLabel: "level matches" },
+    { key: "not-expired", label: "Expiry date has not passed", shortLabel: "not expired" },
+    {
+      key: "legit-issuer",
+      label:
+        "Issued by legitimate accredited body (SANAS-accredited agency for full ratings, or correct DTIC EME/QSE self-affidavit template for smaller entities)",
+      shortLabel: "legitimate issuer",
+    },
+  ],
+  tax: [
+    {
+      key: "ref-number",
+      label: "Tax reference number present and matches profile",
+      shortLabel: "ref number matches",
+    },
+    { key: "name-matches", label: "Company name matches", shortLabel: "name matches" },
+    {
+      key: "sars-verified",
+      label:
+        "Verified via SARS TCS PIN — not just a static PDF, since SARS compliance status is live, not static",
+      shortLabel: "verified via SARS TCS",
+      verifyLink: {
+        label: "Verify externally ->",
+        href: "https://tools.sars.gov.za/sarsonlinequery/tcsverify",
+      },
+    },
+    { key: "green-status", label: "Not expired / result is Green (compliant)", shortLabel: "not expired / green" },
+  ],
+  banking: [
+    {
+      key: "real-letter",
+      label: "Real bank confirmation letter present (not just typed account details)",
+      shortLabel: "real bank letter",
+    },
+    {
+      key: "holder-matches",
+      label: "Account holder name matches registered business name exactly",
+      shortLabel: "holder name matches",
+    },
+  ],
+  director: [
+    { key: "reg-number", label: "Registration number matches profile", shortLabel: "reg number matches" },
+    { key: "name-matches", label: "Company name matches", shortLabel: "name matches" },
+    { key: "director-names", label: "Director names legible/present", shortLabel: "director names present" },
+    {
+      key: "cipc-verified",
+      label: 'Verified via CIPC BizPortal BizProfile — status shows "In Business"',
+      shortLabel: "verified via CIPC BizProfile",
+      verifyLink: {
+        label: "Verify externally ->",
+        href: "https://www.bizportal.gov.za/bizprofile.aspx",
+      },
+    },
+  ],
 }
 
 function normalizeBool(value: boolean | null | undefined): boolean {
@@ -245,23 +339,25 @@ function ActionButton({
   loading,
   onClick,
   tone = "default",
+  emphasize = false,
 }: {
   children: ReactNode
   disabled?: boolean
   loading?: boolean
   onClick: () => void
   tone?: "default" | "danger"
+  emphasize?: boolean
 }) {
   return (
     <button
       type="button"
       disabled={disabled || loading}
       onClick={onClick}
-      className={
+      className={`${
         tone === "danger"
           ? "rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-50"
           : "rounded-md border border-accent bg-accent px-3 py-1.5 text-xs font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
-      }
+      } ${emphasize ? "ring-2 ring-success/70" : ""}`}
     >
       {loading ? (
         <span className="inline-flex items-center gap-1.5">
@@ -316,6 +412,60 @@ function DetailLine({ label, value }: { label: string; value: string | null | un
   )
 }
 
+function ReviewChecklist({
+  profileId,
+  step,
+  items,
+  checklistState,
+  onToggleItem,
+}: {
+  profileId: string
+  step: VerificationStep
+  items: ChecklistItem[]
+  checklistState: Record<string, boolean>
+  onToggleItem: (itemKey: string) => void
+}) {
+  return (
+    <div className="mt-3 rounded-lg border border-panel bg-card p-3">
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted">Review checklist</p>
+      <ul className="mt-2 space-y-2">
+        {items.map((item) => {
+          const itemKey = `${profileId}:${step}:${item.key}`
+          const checked = Boolean(checklistState[itemKey])
+          const inputId = `checklist-${itemKey}`
+          return (
+            <li key={item.key} className="flex items-start gap-2.5">
+              <input
+                type="checkbox"
+                id={inputId}
+                checked={checked}
+                onChange={() => onToggleItem(itemKey)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-panel accent-[var(--accent)]"
+              />
+              <label htmlFor={inputId} className="text-sm leading-5 text-secondary">
+                {item.label}
+                {item.verifyLink && (
+                  <>
+                    {" "}
+                    <a
+                      href={item.verifyLink.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-accent underline-offset-4 hover:underline"
+                    >
+                      {item.verifyLink.label}
+                    </a>
+                  </>
+                )}
+              </label>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
 function supplierDisplayName(profile: SupplierProfile): string {
   if (profile.is_deleted) return "Deleted User"
   return profile.business_name || profile.full_name || "Unnamed supplier"
@@ -360,6 +510,8 @@ export default function AdminVerificationQueuePage() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [deleteTarget, setDeleteTarget] = useState<SupplierProfile | null>(null)
   const [deletePending, setDeletePending] = useState(false)
+  const [checklistState, setChecklistState] = useState<Record<string, boolean>>({})
+  const [checklistOpen, setChecklistOpen] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     let cancelled = false
@@ -514,6 +666,50 @@ export default function AdminVerificationQueuePage() {
       account_number: bank?.account_number ?? null,
       bank_verification_status: bank?.verification_status ?? null,
     }
+  }
+
+  function toggleChecklistOpen(profileId: string, step: VerificationStep) {
+    const key = `${profileId}:${step}`
+    setChecklistOpen((current) => ({ ...current, [key]: !current[key] }))
+  }
+
+  function toggleChecklistItem(itemKey: string) {
+    setChecklistState((current) => ({ ...current, [itemKey]: !current[itemKey] }))
+  }
+
+  function buildChecklistSummary(profileId: string, step: VerificationStep): string {
+    const checked = CHECKLIST_ITEMS[step].filter(
+      (item) => checklistState[`${profileId}:${step}:${item.key}`],
+    )
+    if (checked.length === 0) return ""
+    return `Checked: ${checked.map((item) => item.shortLabel).join(", ")}`
+  }
+
+  async function saveChecklistSummary(profile: SupplierProfile, step: VerificationStep, summary: string) {
+    if (!supabase || !summary) return
+
+    const documentType = STEP_DOCUMENT_TYPE[step]
+    const latestDocument = latestSupplierDocuments(documentsBySupplier[profile.id])[documentType]
+    if (!latestDocument) return
+
+    const { data, error } = await supabase
+      .from("supplier_documents")
+      .update({ review_notes: summary })
+      .eq("id", latestDocument.id)
+      .select(
+        "id, profile_id, document_type, file_url, storage_path, original_filename, content_type, file_size, uploaded_at, status, reviewed_at, reviewed_by, review_notes",
+      )
+      .single()
+
+    if (error || !data) return
+
+    const updatedDocument = data as SupplierDocument
+    setDocumentsBySupplier((current) => ({
+      ...current,
+      [profile.id]: (current[profile.id] ?? []).map((item) =>
+        item.id === updatedDocument.id ? updatedDocument : item,
+      ),
+    }))
   }
 
   async function updateStep(profile: SupplierProfile, step: VerificationStep, verified: boolean) {
@@ -929,8 +1125,16 @@ export default function AdminVerificationQueuePage() {
     const stepFeedback =
       inlineFeedback[`${profile.id}:${approveKey}`] ?? inlineFeedback[`${profile.id}:${revokeKey}`]
 
+    const checklistItems = CHECKLIST_ITEMS[step]
+    const checklistKey = `${profile.id}:${step}`
+    const isChecklistOpen = Boolean(checklistOpen[checklistKey])
+    const checkedCount = checklistItems.filter(
+      (item) => checklistState[`${profile.id}:${step}:${item.key}`],
+    ).length
+    const allChecked = checkedCount === checklistItems.length
+
     return (
-      <div className="grid gap-4 rounded-xl border border-panel bg-surface p-4 md:grid-cols-[1fr_auto] md:items-center">
+      <div className="grid gap-4 rounded-xl border border-panel bg-surface p-4 md:grid-cols-[1fr_auto] md:items-start">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-sm font-bold text-heading">{title}</h3>
@@ -946,12 +1150,40 @@ export default function AdminVerificationQueuePage() {
             )}
           </div>
           <div className="mt-3 grid gap-3 text-sm text-secondary sm:grid-cols-2">{children}</div>
+
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => toggleChecklistOpen(profile.id, step)}
+              className="text-xs font-semibold text-accent underline-offset-4 transition hover:text-accent-strong hover:underline"
+            >
+              {isChecklistOpen ? "Hide review checklist" : "Review checklist"}
+              {" "}
+              <span className="text-muted">
+                ({checkedCount}/{checklistItems.length})
+              </span>
+            </button>
+            {isChecklistOpen && (
+              <ReviewChecklist
+                profileId={profile.id}
+                step={step}
+                items={checklistItems}
+                checklistState={checklistState}
+                onToggleItem={toggleChecklistItem}
+              />
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 md:justify-end">
           <ActionButton
             loading={approvePending}
             disabled={isDeleted || Boolean(options?.expired) || stepPending || verified}
-            onClick={() => updateStep(profile, step, true)}
+            emphasize={allChecked}
+            onClick={() => {
+              const summary = buildChecklistSummary(profile.id, step)
+              updateStep(profile, step, true)
+              if (summary) void saveChecklistSummary(profile, step, summary)
+            }}
           >
             Approve
           </ActionButton>
