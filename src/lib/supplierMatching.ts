@@ -1,13 +1,9 @@
 import { supabase } from "./supabase"
-import { calculateSupplierSmartScore, type SupplierSmartScoreProfile } from "./smartScore"
 import { getComplianceStatus } from "./complianceStatus"
 import { displayIndustry } from "./industries"
+import { groupBySupplierId, mergeSupplierScoreInputs, scoreCanonicalSupplierInput, type SupplierBankScoreRecord } from "./supplierScoreAssembly"
 import { isVerifiedStatus } from "./supplierStatus"
-import {
-  applySupplierDocumentsToProfiles,
-  fetchSupplierDocumentsByProfileIds,
-  type SupplierDocument,
-} from "./supplierDocuments"
+import { fetchSupplierDocumentsByProfileIds, type SupplierDocument } from "./supplierDocuments"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -184,30 +180,12 @@ export function calculateSupplierMatch(
   }
 
   // 4. Supplier readiness score above 80 (+15)
-  const scoreProfile: SupplierSmartScoreProfile = {
-    business_name: supplier.business_name,
-    province: supplier.province,
-    industry: supplier.industry,
-    phone: supplier.phone,
-    csd_number: supplier.csd_number,
-    csd_verified: supplier.csd_verified,
-    bbbee_level: supplier.bbbee_level,
-    bbbee_verified: supplier.bbbee_verified,
-    tax_status: supplier.tax_status,
-    tax_verified: supplier.tax_verified,
-    company_registration: supplier.company_registration,
-    director_verified: supplier.director_verified,
-    bank_verified: supplier.bank_verified,
-    banking_verified: supplier.banking_verified,
-    verification_status: supplier.verification_status,
-    csd_document_url: supplier.csd_document_url,
-    bbbee_document_url: supplier.bbbee_document_url,
-    tax_document_url: supplier.tax_document_url,
-    company_registration_url: supplier.company_registration_url,
-    cidb_document_url: supplier.cidb_document_url,
-    capability_statement_url: supplier.capability_statement_url,
-  }
-  const { score: readiness } = calculateSupplierSmartScore(scoreProfile)
+  const { score: readiness } = scoreCanonicalSupplierInput(supplier, {
+    rfqResponses: stats.totalQuotes,
+    awardedQuotes: stats.awardedQuotes,
+    contracts: stats.totalContracts,
+    completedContracts: stats.completedContracts,
+  })
   if (readiness >= 80) {
     breakdown.readinessBonus = 15
     reasons.push(`High readiness score of ${readiness}/100 — strong procurement candidate`)
@@ -269,7 +247,7 @@ export async function getRecommendedSuppliersForRFQ(
     return { rfq: {} as RFQForMatching, results: [] }
   }
 
-  const [rfqRes, profileRes, quoteRes, contractRes] = await Promise.all([
+  const [rfqRes, profileRes, quoteRes, contractRes, bankRes] = await Promise.all([
     supabase
       .from("rfqs")
       .select("id, title, category, province, budget, deadline, status")
@@ -292,6 +270,9 @@ export async function getRecommendedSuppliersForRFQ(
     supabase
       .from("contracts")
       .select("supplier_id, status"),
+    supabase
+      .from("supplier_bank_details")
+      .select("supplier_id, verification_status"),
   ])
 
   if (rfqRes.error || !rfqRes.data) {
@@ -301,7 +282,14 @@ export async function getRecommendedSuppliersForRFQ(
   const rfq = rfqRes.data as RFQForMatching
   const supplierRows = (profileRes.data ?? []) as SupplierForMatching[]
   const documents = await fetchSupplierDocumentsByProfileIds(supplierRows.map((supplier) => supplier.id))
-  const suppliers = applySupplierDocumentsToProfiles(supplierRows, documents.documentsByProfile)
+  const banksBySupplier = groupBySupplierId((bankRes.data ?? []) as SupplierBankScoreRecord[])
+  const suppliers = supplierRows.map((supplier) =>
+    mergeSupplierScoreInputs({
+      profile: supplier,
+      documents: documents.documentsByProfile[supplier.id] ?? [],
+      banks: banksBySupplier[supplier.id] ?? [],
+    })
+  )
   const allQuotes = (quoteRes.data ?? []) as Array<{
     supplier_id: string | null; status: string | null; rfq_id: number | null
   }>

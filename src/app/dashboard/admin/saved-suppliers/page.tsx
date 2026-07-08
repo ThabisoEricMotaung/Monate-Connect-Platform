@@ -6,13 +6,9 @@ import { useRouter } from "next/navigation"
 import SaveSupplierControl from "@/components/suppliers/SaveSupplierControl"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { getSavedSuppliers, type SavedSupplier } from "@/lib/savedSuppliers"
-import { calculateSupplierSmartScore } from "@/lib/smartScore"
+import { getSmartScoreLevel, type SmartScoreResult } from "@/lib/smartScore"
+import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
 import { supabase } from "@/lib/supabase"
-import {
-  applySupplierDocumentsToProfiles,
-  fetchSupplierDocumentsByProfileIds,
-  type SupplierDocument,
-} from "@/lib/supplierDocuments"
 
 type SupplierProfile = {
   id: string
@@ -38,7 +34,6 @@ type SupplierProfile = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
-  supplier_documents?: SupplierDocument[]
 }
 
 type SavedSupplierRow = {
@@ -72,9 +67,7 @@ function scoreBar(score: number): string {
   return "bg-success"
 }
 
-function ReadinessScore({ supplier }: { supplier: SupplierProfile }) {
-  const readiness = calculateSupplierSmartScore(supplier)
-
+function ReadinessScore({ readiness }: { readiness: SmartScoreResult }) {
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
@@ -121,6 +114,7 @@ function SavedSuppliersSkeleton() {
 export default function AdminSavedSuppliersPage() {
   const router = useRouter()
   const [rows, setRows] = useState<SavedSupplierRow[]>([])
+  const [readinessScores, setReadinessScores] = useState<Record<string, SmartScoreResult>>({})
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
 
@@ -152,18 +146,18 @@ export default function AdminSavedSuppliersPage() {
     }
 
     const profileRows = (data ?? []) as SupplierProfile[]
-    const documentResult = await fetchSupplierDocumentsByProfileIds(profileRows.map((profile) => profile.id))
+    const canonicalScores = await getCanonicalSupplierSmartScoreBatch({
+      supplierIds,
+      client: supabase,
+      profiles: profileRows,
+    })
+    const profilesById = new Map(profileRows.map((profile) => [profile.id, profile]))
 
-    if (documentResult.error) {
-      setErrorMessage(documentResult.error)
-      setLoading(false)
-      return
-    }
-
-    const profilesById = new Map(
-      applySupplierDocumentsToProfiles(profileRows, documentResult.documentsByProfile).map((profile) => [profile.id, profile])
+    setReadinessScores(
+      Object.fromEntries(
+        Object.entries(canonicalScores).map(([id, record]) => [id, record.result])
+      )
     )
-
     setRows(
       savedSuppliers.map((saved) => ({
         saved,
@@ -296,7 +290,7 @@ export default function AdminSavedSuppliersPage() {
                       Readiness Score
                     </p>
                     <div className="mt-2">
-                      <ReadinessScore supplier={supplier} />
+                      <ReadinessScore readiness={readinessScores[supplier.id] ?? getSmartScoreLevel(0)} />
                     </div>
                   </div>
                   <div className="rounded-md border border-panel bg-panel p-4 md:col-span-2 xl:col-span-4">

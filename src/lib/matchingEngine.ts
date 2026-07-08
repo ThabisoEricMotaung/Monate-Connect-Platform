@@ -1,10 +1,6 @@
-import { calculateSupplierSmartScore } from "./smartScore"
 import { displayIndustry } from "./industries"
-import {
-  applySupplierDocumentsToProfiles,
-  fetchSupplierDocumentsByProfileIds,
-  type SupplierDocument,
-} from "./supplierDocuments"
+import { fetchSupplierDocumentsByProfileIds, type SupplierDocument } from "./supplierDocuments"
+import { groupBySupplierId, mergeSupplierScoreInputs, scoreCanonicalSupplierInput, type SupplierBankScoreRecord } from "./supplierScoreAssembly"
 import { riskLevelFromScore } from "./supplierRisk"
 import { supabase } from "./supabase"
 
@@ -236,7 +232,7 @@ export function calculateSupplierMatch(
     id: rfq?.id ?? 0,
     ...rfq,
   }
-  const smartScoreResult = calculateSupplierSmartScore(safeSupplier, {
+  const smartScoreResult = scoreCanonicalSupplierInput(safeSupplier, {
     rfqResponses: activity.quotes ?? 0,
     awardedQuotes: activity.awardedQuotes ?? 0,
     contracts: activity.contracts ?? 0,
@@ -369,7 +365,7 @@ async function getMatchingContext() {
     }
   }
 
-  const [suppliers, rfqs, quotes, contracts, invoices, reviews] = await Promise.all([
+  const [suppliers, rfqs, quotes, contracts, invoices, reviews, banks] = await Promise.all([
     safeList<MatchingSupplier>(
       supabase
         .from("profiles")
@@ -392,10 +388,18 @@ async function getMatchingContext() {
     safeList<ContractRow>(supabase.from("contracts").select("supplier_id, status, created_at")),
     safeList<InvoiceRow>(supabase.from("invoices").select("supplier_id, status, created_at")),
     safeList<ReviewRow>(supabase.from("supplier_reviews").select("supplier_id, rating, created_at")),
+    safeList<SupplierBankScoreRecord>(supabase.from("supplier_bank_details").select("supplier_id, verification_status")),
   ])
 
   const documents = await fetchSupplierDocumentsByProfileIds(suppliers.map((supplier) => supplier.id))
-  const hydratedSuppliers = applySupplierDocumentsToProfiles(suppliers, documents.documentsByProfile)
+  const banksBySupplier = groupBySupplierId(banks)
+  const hydratedSuppliers = suppliers.map((supplier) =>
+    mergeSupplierScoreInputs({
+      profile: supplier,
+      documents: documents.documentsByProfile[supplier.id] ?? [],
+      banks: banksBySupplier[supplier.id] ?? [],
+    })
+  )
 
   return {
     suppliers: hydratedSuppliers,

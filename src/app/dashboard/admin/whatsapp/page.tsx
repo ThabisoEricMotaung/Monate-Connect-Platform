@@ -5,13 +5,9 @@ import { useRouter } from "next/navigation"
 import SmartScoreCircle from "@/components/SmartScoreCircle"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { displayIndustry } from "@/lib/industries"
-import { calculateSupplierSmartScore, type SmartScoreResult } from "@/lib/smartScore"
+import { getSmartScoreLevel, type SmartScoreResult } from "@/lib/smartScore"
+import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
 import { supabase } from "@/lib/supabase"
-import {
-  applySupplierDocumentsToProfiles,
-  fetchSupplierDocumentsByProfileIds,
-  type SupplierDocument,
-} from "@/lib/supplierDocuments"
 import {
   createRFQWhatsAppMessage,
   createWhatsAppLink,
@@ -38,7 +34,6 @@ type SupplierProfile = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
-  supplier_documents?: SupplierDocument[]
   updated_at: string | null
   smartScore: SmartScoreResult
 }
@@ -166,21 +161,17 @@ export default function AdminWhatsAppNetworkPage() {
       }
 
       const supplierRows = (supplierResult.data ?? []) as unknown as Omit<SupplierProfile, "smartScore">[]
-      const documentResult = await fetchSupplierDocumentsByProfileIds(supplierRows.map((supplier) => supplier.id))
-
-      if (documentResult.error) {
-        setErrorMessage(documentResult.error)
-        setLoading(false)
-        return
-      }
+      const supplierIds = supplierRows.map((supplier) => supplier.id)
+      const canonicalScores =
+        supplierIds.length > 0
+          ? await getCanonicalSupplierSmartScoreBatch({ supplierIds, client: supabase, profiles: supplierRows })
+          : {}
 
       setSuppliers(
-        applySupplierDocumentsToProfiles(supplierRows, documentResult.documentsByProfile).map(
-          (supplier) => ({
-            ...supplier,
-            smartScore: calculateSupplierSmartScore(supplier),
-          })
-        )
+        supplierRows.map((supplier) => ({
+          ...supplier,
+          smartScore: canonicalScores[supplier.id]?.result ?? getSmartScoreLevel(0),
+        }))
       )
       setRfqs((rfqResult.data ?? []) as RFQOption[])
       setLoading(false)

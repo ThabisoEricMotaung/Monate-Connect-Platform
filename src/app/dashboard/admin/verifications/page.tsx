@@ -4,8 +4,10 @@ import { useEffect, useMemo, useState } from "react"
 import type { ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import SignedDocumentLink from "@/components/SignedDocumentLink"
-import { buildSupplierActivityById } from "@/lib/intelligence"
-import { calculateSupplierSmartScore } from "@/lib/smartScore"
+import type { SmartScoreResult } from "@/lib/smartScore"
+import {
+  getCanonicalSupplierSmartScoreBatch,
+} from "@/lib/supplierScoring"
 import { supabase } from "@/lib/supabase"
 import {
   activeSupplierDocuments,
@@ -43,6 +45,7 @@ type SupplierProfile = {
   bbbee_document_url: string | null
   bbbee_expiry_date: string | null
   tax_verified: boolean | null
+  tax_status?: string | null
   tax_clearance_url: string | null
   tax_document_url: string | null
   tax_expiry_date: string | null
@@ -56,6 +59,7 @@ type SupplierProfile = {
   supplier_documents?: SupplierDocument[]
   smart_score: number | string | null
   created_at: string | null
+  updated_at?: string | null
   verification_notes: string | null
   is_deleted?: boolean | null
   deleted_at?: string | null
@@ -95,6 +99,7 @@ const profileSelect = [
   "bbbee_document_url",
   "bbbee_expiry_date",
   "tax_verified",
+  "tax_status",
   "tax_clearance_url",
   "tax_document_url",
   "tax_expiry_date",
@@ -107,6 +112,7 @@ const profileSelect = [
   "capability_statement_url",
   "smart_score",
   "created_at",
+  "updated_at",
   "verification_notes",
   "is_deleted",
   "deleted_at",
@@ -508,6 +514,7 @@ export default function AdminVerificationQueuePage() {
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const [inlineFeedback, setInlineFeedback] = useState<Record<string, InlineFeedback>>({})
   const [scoreHighlight, setScoreHighlight] = useState<Record<string, boolean>>({})
+  const [scoreResults, setScoreResults] = useState<Record<string, SmartScoreResult | null>>({})
   const [refreshKey, setRefreshKey] = useState(0)
   const [deleteTarget, setDeleteTarget] = useState<SupplierProfile | null>(null)
   const [deletePending, setDeletePending] = useState(false)
@@ -602,10 +609,41 @@ export default function AdminVerificationQueuePage() {
         )
       }
 
+      const hydratedProfiles = applySupplierDocumentsToProfiles(supplierProfiles, documentMap)
+      let canonicalProfiles = hydratedProfiles
+      let scoreResultMap: Record<string, SmartScoreResult | null> = {}
+
+      if (supplierIds.length > 0) {
+        try {
+          const scorerProfiles = hydratedProfiles.map((profile) => ({
+            ...profile,
+            provinces: normalizeProvinces(profile.provinces),
+          }))
+          const canonicalScores = await getCanonicalSupplierSmartScoreBatch({
+            supplierIds,
+            client: supabase,
+            profiles: scorerProfiles,
+          })
+          canonicalProfiles = hydratedProfiles.map((profile) => ({
+            ...profile,
+            smart_score: canonicalScores[profile.id]?.result.score ?? profile.smart_score,
+          }))
+          scoreResultMap = Object.fromEntries(
+            hydratedProfiles.map((profile) => [
+              profile.id,
+              canonicalScores[profile.id]?.result ?? null,
+            ])
+          )
+        } catch (scoreError) {
+          console.warn("Canonical SmartScore queue load failed:", scoreError)
+        }
+      }
+
       if (!cancelled) {
-        setProfiles(applySupplierDocumentsToProfiles(supplierProfiles, documentMap))
+        setProfiles(canonicalProfiles)
         setDocumentsBySupplier(documentMap)
         setBanksBySupplier(bankMap)
+        setScoreResults(scoreResultMap)
         setNotesBySupplier(
           supplierProfiles.reduce<Record<string, string>>((notes, profile) => {
             notes[profile.id] = profile.verification_notes ?? ""
@@ -658,40 +696,26 @@ export default function AdminVerificationQueuePage() {
     }, 1500)
   }
 
-  function mergeBankFields(profile: SupplierProfile, bank?: BankDetails) {
-    return {
-      ...profile,
-      provinces: normalizeProvinces(profile.provinces),
-      bank_name: bank?.bank_name ?? null,
-      bank_account_number: bank?.account_number ?? null,
-      account_number: bank?.account_number ?? null,
-      bank_verification_status: bank?.verification_status ?? null,
-    }
-  }
-
   async function calculateCanonicalSmartScore(profile: SupplierProfile, bank?: BankDetails) {
     if (!supabase) {
-      return calculateSupplierSmartScore(mergeBankFields(profile, bank)).score
+      return 0
+    }
+    const canonicalScores = await getCanonicalSupplierSmartScoreBatch({
+      supplierIds: [profile.id],
+      client: supabase,
+      profiles: [{ ...profile, provinces: normalizeProvinces(profile.provinces) }],
+      banks: bank ? [bank] : undefined,
+    })
+    const canonical = canonicalScores[profile.id]
+    if (canonical) {
+      setScoreResults((current) => ({
+        ...current,
+        [profile.id]: canonical.result,
+      }))
+      return canonical.result.score
     }
 
-    const [quoteRes, contractRes, invoiceRes, paymentRes] = await Promise.all([
-      supabase.from("quotes").select("id, supplier_id, status").eq("supplier_id", profile.id),
-      supabase.from("contracts").select("id, supplier_id, status").eq("supplier_id", profile.id),
-      supabase.from("invoices").select("id, supplier_id, status").eq("supplier_id", profile.id),
-      supabase.from("payments").select("id, supplier_id, status").eq("supplier_id", profile.id),
-    ])
-    const activityBySupplier = buildSupplierActivityById({
-      supplierIds: [profile.id],
-      quotes: (quoteRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-      contracts: (contractRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-      invoices: (invoiceRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-      payments: (paymentRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-    })
-
-    return calculateSupplierSmartScore(
-      mergeBankFields(profile, bank),
-      activityBySupplier[profile.id] ?? {},
-    ).score
+    return profile.smart_score ? Number(profile.smart_score) : 0
   }
 
   function toggleChecklistOpen(profileId: string, step: VerificationStep) {
@@ -835,7 +859,6 @@ export default function AdminVerificationQueuePage() {
     if (!supabase) return
 
     const currentProfile = profiles.find((item) => item.id === profile.id) ?? profile
-    const bank = banksBySupplier[currentProfile.id]
     const flagUpdates =
       action === "verify"
         ? {
@@ -861,8 +884,7 @@ export default function AdminVerificationQueuePage() {
       ...nextProfile,
       verification_status: nextVerificationStatus,
     }
-    const nextBank = bank
-    const nextSmartScore = await calculateCanonicalSmartScore(scoreProfile, nextBank)
+    const nextSmartScore = await calculateCanonicalSmartScore(scoreProfile, banksBySupplier[currentProfile.id])
     const pendingKey = `bulk-${action}`
 
     setPendingAction({ supplierId: currentProfile.id, key: pendingKey })
@@ -1062,6 +1084,41 @@ export default function AdminVerificationQueuePage() {
           </div>
         ) : null}
       </div>
+    )
+  }
+
+  function renderScoreBreakdown(profile: SupplierProfile) {
+    const scoreResult = scoreResults[profile.id]
+    if (!scoreResult?.breakdown) {
+      return (
+        <p className="mt-3 rounded-md border border-panel bg-panel px-3 py-2 text-xs text-muted">
+          Score breakdown will appear after the canonical scorer refreshes.
+        </p>
+      )
+    }
+
+    return (
+      <details className="mt-3 rounded-md border border-panel bg-panel p-3">
+        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.14em] text-secondary">
+          SmartScore breakdown
+        </summary>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {scoreResult.breakdown.map((item) => (
+            <div key={item.key} className="rounded-md bg-card px-3 py-2">
+              <p className="text-[0.62rem] uppercase tracking-[0.14em] text-muted">{item.label}</p>
+              <p className="mt-1 text-sm font-semibold text-heading">
+                {item.earnedPoints}/{item.points}
+              </p>
+              <p className="mt-1 text-[0.62rem] uppercase tracking-[0.12em] text-muted">{item.status}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 rounded-md bg-card px-3 py-2 text-sm font-semibold text-heading">
+          Compliance {scoreResult.complianceBase ?? 0} + activity{" "}
+          {Math.round((scoreResult.activityBonus ?? 0) * 10) / 10}/{scoreResult.activityBonusCap ?? 8} ={" "}
+          {scoreResult.score}
+        </div>
+      </details>
     )
   }
 
@@ -1414,6 +1471,7 @@ export default function AdminVerificationQueuePage() {
                           />
                         </div>
                       </div>
+                      {renderScoreBreakdown(profile)}
                     </div>
 
                     <div>

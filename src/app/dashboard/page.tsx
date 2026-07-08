@@ -9,12 +9,10 @@ import {
   normalizePurchaseOrderStatus,
 } from "@/lib/purchaseOrders"
 import {
-  calculateSupplierSmartScore,
   getSmartScoreColour,
 } from "@/lib/smartScore"
-import { buildSupplierActivityById } from "@/lib/intelligence"
+import { getCanonicalSupplierSmartScore } from "@/lib/supplierScoring"
 import { supabase } from "@/lib/supabase"
-import { applySupplierDocuments, fetchSupplierDocumentsForProfile } from "@/lib/supplierDocuments"
 
 function formatDeadline(dateStr: string | null | undefined): string {
   if (!dateStr) return "-"
@@ -167,72 +165,20 @@ export default function DashboardPage() {
           return
         }
 
-        const [profileRes, bankRes] = await Promise.all([
-          supabase
-            .from("profiles")
-            .select(
-              "id, preferred_name, business_name, province, provinces, industry, phone, email, description, role, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, tax_clearance_url, tax_document_url, banking_verified, bank_verified, director_verified, capability_statement_url, updated_at"
-            )
-            .eq("id", user.id)
-            .maybeSingle(),
-          supabase
-            .from("supplier_bank_details")
-            .select("bank_name, account_number, verification_status")
-            .eq("supplier_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle(),
-        ])
+        const canonicalScore = await getCanonicalSupplierSmartScore(user.id, supabase)
 
-        if (profileRes.error) throw profileRes.error
-
-        if (!profileRes.data) {
-          setSmartScore(calculateSupplierSmartScore({
-            business_name: user.user_metadata.business_name,
-            province: user.user_metadata.province,
-            industry: user.user_metadata.industry,
-            phone: user.user_metadata.phone,
-            email: user.email,
-            verification_status: user.user_metadata.verification_status,
-          }).score)
-          setSmartScoreError("We couldn't find a profile record yet. This score is based on your account metadata.")
+        if (!canonicalScore) {
+          setSmartScore(0)
+          setSmartScoreError("We couldn't find a profile record yet. Complete onboarding to calculate your SmartScore.")
           return
         }
 
-        if (bankRes.error) {
-          console.warn("SmartScore bank fetch failed:", bankRes.error)
-        }
-
-        const [documentResult, quoteActivityRes, contractActivityRes, invoiceActivityRes, paymentActivityRes] = await Promise.all([
-          fetchSupplierDocumentsForProfile(user.id),
-          supabase.from("quotes").select("id, supplier_id, status").eq("supplier_id", user.id),
-          supabase.from("contracts").select("id, supplier_id, status").eq("supplier_id", user.id),
-          supabase.from("invoices").select("id, supplier_id, status").eq("supplier_id", user.id),
-          supabase.from("payments").select("id, supplier_id, status").eq("supplier_id", user.id),
-        ])
-        const hydratedProfile = applySupplierDocuments(profileRes.data, documentResult.documents)
-        const activityBySupplier = buildSupplierActivityById({
-          supplierIds: [user.id],
-          quotes: (quoteActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-          contracts: (contractActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-          invoices: (invoiceActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-          payments: (paymentActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-        })
-        const calculatedScore = calculateSupplierSmartScore(
-          {
-            ...hydratedProfile,
-            bank_name: bankRes.data?.bank_name ?? null,
-            bank_account_number: bankRes.data?.account_number ?? null,
-            bank_verification_status: bankRes.data?.verification_status ?? null,
-          },
-          activityBySupplier[user.id] ?? {},
-        ).score
-        const displayScore = calculatedScore
+        const displayScore = canonicalScore.result.score
 
         setSmartScore(displayScore)
         setSmartScoreError("")
 
-        if (displayScore !== Number(profileRes.data.smart_score ?? 0)) {
+        if (displayScore !== Number(canonicalScore.input.smart_score ?? 0)) {
           void supabase
             .from("profiles")
             .update({ smart_score: displayScore, updated_at: new Date().toISOString() })

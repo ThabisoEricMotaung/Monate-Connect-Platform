@@ -6,7 +6,8 @@ import { evaluateWorkflowRules } from "./workflowRules"
 import { checkAndLogApprovalRequirement } from "./approvalMatrix"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "./auth"
 import { supabase } from "./supabase"
-import { applySupplierDocuments, fetchSupplierDocumentsForProfile, type SupplierDocument } from "./supplierDocuments"
+import { fetchSupplierDocumentsForProfile, type SupplierDocument } from "./supplierDocuments"
+import { mergeSupplierScoreInputs, type SupplierBankScoreRecord } from "./supplierScoreAssembly"
 
 export const PURCHASE_ORDER_STATUSES = [
   "Issued",
@@ -323,7 +324,7 @@ export async function getPurchaseOrderById(
 
   const purchaseOrder = data as PurchaseOrder
 
-  const [supplierResult, rfqResult, quoteResult] = await Promise.all([
+  const [supplierResult, rfqResult, quoteResult, bankResult] = await Promise.all([
     purchaseOrder.supplier_id
       ? supabase
           .from("profiles")
@@ -345,18 +346,26 @@ export async function getPurchaseOrderById(
           .eq("id", purchaseOrder.quote_id)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    purchaseOrder.supplier_id
+      ? supabase.from("supplier_bank_details").select("supplier_id, verification_status").eq("supplier_id", purchaseOrder.supplier_id)
+      : Promise.resolve({ data: [], error: null }),
   ])
 
   if (supplierResult.error) throw supplierResult.error
   if (rfqResult.error) throw rfqResult.error
   if (quoteResult.error) throw quoteResult.error
+  if (bankResult.error) throw bankResult.error
 
   const quote = quoteResult.data as PurchaseOrderQuoteReference | null
   const supplierDocuments = purchaseOrder.supplier_id
     ? await fetchSupplierDocumentsForProfile(purchaseOrder.supplier_id)
     : { documents: [], error: null }
   const supplier = supplierResult.data
-    ? applySupplierDocuments(supplierResult.data as PurchaseOrderSupplier, supplierDocuments.documents)
+    ? mergeSupplierScoreInputs({
+        profile: supplierResult.data as PurchaseOrderSupplier,
+        documents: supplierDocuments.documents,
+        banks: (bankResult.data ?? []) as SupplierBankScoreRecord[],
+      })
     : null
 
   return {

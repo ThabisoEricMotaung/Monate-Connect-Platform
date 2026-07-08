@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
-import { calculateSupplierSmartScore } from "@/lib/smartScore"
+import type { SmartScoreResult, SupplierSmartScoreProfile } from "@/lib/smartScore"
+import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
 import { supabase } from "@/lib/supabase"
 import { applySupplierDocumentsToProfiles, fetchSupplierDocumentsByProfileIds } from "@/lib/supplierDocuments"
 
@@ -239,7 +240,7 @@ function getComplianceRisk(row: ReportRow): string {
   return "Low"
 }
 
-function addComputedFields(type: ReportType, row: ReportRow): ReportRow {
+function addComputedFields(type: ReportType, row: ReportRow, smartScore?: SmartScoreResult): ReportRow {
   if (type === "Compliance Risk Report") {
     return {
       ...row,
@@ -247,16 +248,15 @@ function addComputedFields(type: ReportType, row: ReportRow): ReportRow {
     }
   }
 
-  if (type === "SmartScore Report") {
-    const score = calculateSupplierSmartScore(row)
+  if (type === "SmartScore Report" && smartScore) {
     return {
       ...row,
-      smart_score: score.score,
-      smart_score_level: score.label,
+      smart_score: smartScore.score,
+      smart_score_level: smartScore.label,
       risk_level:
-        score.score <= 39
+        smartScore.score <= 39
           ? "High"
-          : score.score <= 59
+          : smartScore.score <= 59
             ? "Medium"
             : "Low",
     }
@@ -380,7 +380,26 @@ export default function AdminReportsPage() {
             )
           : rawRows
 
-      setRows(rowsWithDocuments.map((row) => addComputedFields(config.type, row)))
+      const canonicalScores =
+        config.type === "SmartScore Report" && config.table === "profiles"
+          ? await getCanonicalSupplierSmartScoreBatch({
+              supplierIds: rowsWithDocuments
+                .map((row) => (typeof row.id === "string" ? row.id : ""))
+                .filter(Boolean),
+              client: supabase,
+              profiles: rowsWithDocuments.filter((row): row is SupplierSmartScoreProfile & { id: string } => typeof row.id === "string"),
+            })
+          : {}
+
+      setRows(
+        rowsWithDocuments.map((row) =>
+          addComputedFields(
+            config.type,
+            row,
+            typeof row.id === "string" ? canonicalScores[row.id]?.result : undefined,
+          )
+        )
+      )
       setLoading(false)
     }
 

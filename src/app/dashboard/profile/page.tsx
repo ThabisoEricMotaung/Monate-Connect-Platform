@@ -11,10 +11,10 @@ import { logEvent } from "@/hooks/useSessionTracking"
 import { logActivity } from "@/lib/activity"
 import { OFFICIAL_INDUSTRY_OPTIONS, displayIndustry, industryFormValue } from "@/lib/industries"
 import {
-  calculateSupplierSmartScore,
-  getSmartScoreBreakdown,
-  type SupplierSmartScoreProfile,
+  getSmartScoreLevel,
+  type SmartScoreResult,
 } from "@/lib/smartScore"
+import { getCanonicalSupplierSmartScore } from "@/lib/supplierScoring"
 import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning"
 import { supabase } from "@/lib/supabase"
 import {
@@ -334,18 +334,6 @@ async function getCroppedImageBlob(image: HTMLImageElement, crop: PixelCrop): Pr
       else reject(new Error("Cropped image could not be saved."))
     }, "image/jpeg", 0.92)
   })
-}
-
-function scoreProfile(profile: Profile | null, bank: BankRecord | null): SupplierSmartScoreProfile | null {
-  if (!profile) return null
-
-  return {
-    ...profile,
-    provinces: profile.provinces?.length ? profile.provinces : profile.province ? [profile.province] : [],
-    bank_name: bank?.bank_name ?? null,
-    bank_account_number: bank?.account_number ?? null,
-    bank_verification_status: bank?.verification_status ?? null,
-  }
 }
 
 function syncSmartScore(userId: string, profile: Profile | null) {
@@ -747,11 +735,13 @@ function ProfileImageUploads({
 function ProfileHeaderCard({
   profile,
   bank,
+  smartScore,
   onTabChange,
   onSave,
 }: {
   profile: Profile
   bank: BankRecord | null
+  smartScore: number
   onTabChange: (tab: Tab) => void
   onSave: (patch: Partial<Profile>) => Promise<SaveResult>
 }) {
@@ -767,7 +757,6 @@ function ProfileHeaderCard({
     profile.full_name?.trim() ||
     profile.email?.trim() ||
     businessName
-  const smartScore = calculateSupplierSmartScore(scoreProfile(profile, bank)).score
   const location = profile.province ? displayProvinceValue(profile.province) : ""
   const profileMeta = [displayIndustry(profile.industry), location].filter(Boolean).join(" | ") || "Industry | Province"
   const [uploading, setUploading] = useState<"avatar" | "logo" | null>(null)
@@ -2161,10 +2150,9 @@ function BankingTab({
 
 // --- Sidebar: SmartScore card ---
 
-function SmartScoreCard({ profile, bank }: { profile: Profile | null; bank: BankRecord | null }) {
-  const smartProfile = scoreProfile(profile, bank)
-  const items = getSmartScoreBreakdown(smartProfile)
-  const score = calculateSupplierSmartScore(smartProfile).score
+function SmartScoreCard({ scoreResult }: { scoreResult: SmartScoreResult }) {
+  const score = scoreResult.score
+  const items = scoreResult.breakdown ?? []
 
   const levelLabel =
     score >= 90
@@ -2228,6 +2216,14 @@ function SmartScoreCard({ profile, bank }: { profile: Profile | null; bank: Bank
             </div>
           )
         })}
+        {scoreResult.activityBonus != null && scoreResult.activityBonus > 0 && (
+          <div className="flex items-center justify-between gap-2 rounded-md bg-panel px-2 py-1.5 text-xs">
+            <span className="text-secondary">Activity bonus</span>
+            <span className="font-semibold text-accent">
+              +{Math.round(scoreResult.activityBonus * 10) / 10}/{scoreResult.activityBonusCap ?? 8}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -2290,6 +2286,7 @@ function ProfilePageInner() {
   })
   const [supplierDocuments, setSupplierDocuments] = useState<SupplierDocument[]>([])
   const [bank, setBank] = useState<BankRecord | null>(null)
+  const [canonicalSmartScore, setCanonicalSmartScore] = useState<SmartScoreResult>(getSmartScoreLevel(0))
   const [userId, setUserId] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -2338,6 +2335,9 @@ function ProfilePageInner() {
         setBank(bankRes.data as BankRecord)
       }
 
+      const canonicalScore = await getCanonicalSupplierSmartScore(user.id, supabase)
+      setCanonicalSmartScore(canonicalScore?.result ?? getSmartScoreLevel(0))
+
       setLoading(false)
     }
     load()
@@ -2372,6 +2372,9 @@ function ProfilePageInner() {
       syncSmartScore(userId, updated)
       return updated
     })
+    void getCanonicalSupplierSmartScore(userId, supabase).then((score) => {
+      setCanonicalSmartScore(score?.result ?? getSmartScoreLevel(0))
+    })
     setHasUnsaved(false)
     setError("")
     void logEvent("profile_saved")
@@ -2394,12 +2397,18 @@ function ProfilePageInner() {
       syncSmartScore(userId, updated)
       return updated
     })
+    void getCanonicalSupplierSmartScore(userId, supabase).then((score) => {
+      setCanonicalSmartScore(score?.result ?? getSmartScoreLevel(0))
+    })
     void logEvent("document_uploaded", { document_type: document.document_type, path: document.file_url })
   }
 
   function handleBankSaved(record: BankRecord) {
     setBank(record)
     syncSmartScore(userId, profile)
+    void getCanonicalSupplierSmartScore(userId, supabase).then((score) => {
+      setCanonicalSmartScore(score?.result ?? getSmartScoreLevel(0))
+    })
   }
 
   async function handleDeleteAccount() {
@@ -2523,7 +2532,7 @@ function ProfilePageInner() {
         ))}
       </div>
 
-      {profile && <ProfileHeaderCard profile={profile} bank={bank} onTabChange={requestTabChange} onSave={handleSave} />}
+      {profile && <ProfileHeaderCard profile={profile} bank={bank} smartScore={canonicalSmartScore.score} onTabChange={requestTabChange} onSave={handleSave} />}
 
       <div className="mt-4 flex flex-col gap-4 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1">
@@ -2548,7 +2557,7 @@ function ProfilePageInner() {
         </div>
 
         <aside className="w-full space-y-4 xl:w-72 xl:shrink-0">
-          <SmartScoreCard profile={profile} bank={bank} />
+          <SmartScoreCard scoreResult={canonicalSmartScore} />
           <RFQVisibilityCard profile={profile} />
         </aside>
       </div>

@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
-import { buildSupplierActivityById } from "@/lib/intelligence"
-import { calculateSupplierSmartScore } from "@/lib/smartScore"
+import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
 import { isVerifiedStatus } from "@/lib/supplierStatus"
 import SupplierDirectory, { type PublicSupplierDirectoryRow } from "./SupplierDirectory"
 
@@ -65,34 +64,15 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
   const supplierIds = verifiedRows.map((supplier) => supplier.id)
   if (supplierIds.length === 0) return []
 
-  const [quoteRes, contractRes, invoiceRes, paymentRes, bankingRes] = await Promise.all([
-    supabase.from("quotes").select("id, supplier_id, status").in("supplier_id", supplierIds),
-    supabase.from("contracts").select("id, supplier_id, status").in("supplier_id", supplierIds),
-    supabase.from("invoices").select("id, supplier_id, status").in("supplier_id", supplierIds),
-    supabase.from("payments").select("id, supplier_id, status").in("supplier_id", supplierIds),
-    supabase.from("supplier_bank_details").select("supplier_id, verification_status").in("supplier_id", supplierIds),
-  ])
-  const activityBySupplier = buildSupplierActivityById({
+  const canonicalScores = await getCanonicalSupplierSmartScoreBatch({
     supplierIds,
-    quotes: (quoteRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-    contracts: (contractRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-    invoices: (invoiceRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-    payments: (paymentRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+    client: supabase,
+    profiles: verifiedRows,
   })
-  const bankingRows = (bankingRes.data ?? []) as Array<{ supplier_id: string | null; verification_status: string | null }>
 
   return verifiedRows
     .map((supplier) => {
-      const bankVerified = bankingRows.some(
-        (bank) => bank.supplier_id === supplier.id && isVerifiedStatus(bank.verification_status),
-      )
-      const smartScore = calculateSupplierSmartScore(
-        {
-          ...supplier,
-          bank_verified: Boolean(supplier.bank_verified || supplier.banking_verified || bankVerified),
-        },
-        activityBySupplier[supplier.id] ?? {},
-      ).score
+      const canonical = canonicalScores[supplier.id]
 
       return {
         id: supplier.id,
@@ -103,12 +83,12 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
         verification_status: supplier.verification_status,
         bbbee_level: supplier.bbbee_level,
         cidb_grade: supplier.cidb_grade,
-        smart_score: smartScore,
+        smart_score: canonical?.result.score ?? supplier.smart_score,
         csd_verified: supplier.csd_verified,
         bbbee_verified: supplier.bbbee_verified,
         tax_verified: supplier.tax_verified,
         banking_verified: supplier.banking_verified,
-        bank_verified: Boolean(supplier.bank_verified || bankVerified),
+        bank_verified: Boolean(canonical?.input.bank_verified),
         director_verified: supplier.director_verified,
         website: supplier.website,
         description: supplier.description,

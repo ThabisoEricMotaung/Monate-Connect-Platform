@@ -1,16 +1,12 @@
 import { supabase } from "./supabase"
 import { displayIndustry } from "./industries"
 import {
-  calculateSupplierSmartScore,
   type SmartScoreResult,
   type SupplierSmartScoreActivity,
 } from "./smartScore"
+import { groupBySupplierId, mergeSupplierScoreInputs, scoreCanonicalSupplierInput, type SupplierBankScoreRecord } from "./supplierScoreAssembly"
 import { isVerifiedStatus } from "./supplierStatus"
-import {
-  applySupplierDocumentsToProfiles,
-  fetchSupplierDocumentsByProfileIds,
-  type SupplierDocument,
-} from "./supplierDocuments"
+import { fetchSupplierDocumentsByProfileIds, type SupplierDocument } from "./supplierDocuments"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -300,34 +296,29 @@ export async function getSupplierScores(): Promise<SupplierIntelligenceRecord[]>
     supplier_documents?: SupplierDocument[]
   }>
   const documentResult = await fetchSupplierDocumentsByProfileIds(profileRows.map((profile) => profile.id))
-  const profiles = applySupplierDocumentsToProfiles(profileRows, documentResult.documentsByProfile)
   const quotes = (quoteRes.data ?? []) as Array<{ id: number; supplier_id: string | null; status: string | null }>
   const contracts = (contractRes.data ?? []) as Array<{ id: number; supplier_id: string | null; status: string | null; contract_value: string | number | null }>
   const invoices = (invoiceRes.data ?? []) as Array<{ id: number; supplier_id: string | null; status: string | null }>
   const payments = (paymentRes.data ?? []) as Array<{ id: number; supplier_id: string | null; status: string | null }>
-  const banking = (bankingRes.data ?? []) as Array<{ supplier_id: string | null; verification_status: string | null }>
+  const banking = (bankingRes.data ?? []) as SupplierBankScoreRecord[]
+  const banksBySupplier = groupBySupplierId(banking)
 
   const totalRFQs = await supabase.from("rfqs").select("id", { count: "exact", head: true })
   const rfqTotal = totalRFQs.count ?? 1
 
   const activityBySupplier = buildSupplierActivityById({
-    supplierIds: profiles.map((profile) => profile.id),
+    supplierIds: profileRows.map((profile) => profile.id),
     quotes,
     contracts,
     invoices,
     payments,
   })
 
-  return profiles.map((p) => {
+  return profileRows.map((p) => {
     const supplierQuotes = quotes.filter((q) => q.supplier_id === p.id)
     const supplierContracts = contracts.filter((c) => c.supplier_id === p.id)
     const supplierInvoices = invoices.filter((i) => i.supplier_id === p.id)
     const supplierPayments = payments.filter((payment) => payment.supplier_id === p.id)
-    const bankingVerified = banking.some(
-      (record) =>
-        record.supplier_id === p.id &&
-        isVerifiedStatus(record.verification_status)
-    )
 
     const responseRate = Math.min(100, Math.round((supplierQuotes.length / rfqTotal) * 100))
 
@@ -363,13 +354,12 @@ export async function getSupplierScores(): Promise<SupplierIntelligenceRecord[]>
     const score = Math.round(
       (responseRate + awardRate + completionRate + invoiceCompliance + paymentReliabilityRate) / 5
     )
-    const smartScore = calculateSupplierSmartScore(
-      {
-        ...p,
-        bank_verified: bankingVerified,
-      },
-      activityBySupplier[p.id] ?? {}
-    )
+    const scoreInput = mergeSupplierScoreInputs({
+      profile: p,
+      documents: documentResult.documentsByProfile[p.id] ?? [],
+      banks: banksBySupplier[p.id] ?? [],
+    })
+    const smartScore = scoreCanonicalSupplierInput(scoreInput, activityBySupplier[p.id] ?? {})
 
     const riskLevel: "Low" | "Medium" | "High" =
       score >= 70 ? "Low" : score >= 40 ? "Medium" : "High"

@@ -15,9 +15,28 @@ export type SmartScoreResult = {
   tone: SmartScoreTone
   monthlyTrend: number
   tips: string[]
+  breakdown?: SmartScoreBreakdownItem[]
+  complianceBase?: number
+  activityBonus?: number
+  activityBonusCap?: number
+  activityBreakdown?: SupplierSmartScoreActivityBreakdown
+}
+
+export type SupplierSmartScoreActivityBreakdown = {
+  rfqResponseBonus: number
+  awardedQuoteBonus: number
+  completedContractBonus: number
+  paidInvoiceBonus: number
+  paymentReliabilityBonus: number
+  reviewBonus: number
+  recentActivityBonus: number
+  recentUpdateBonus: number
+  rawActivityBonus: number
+  cappedActivityBonus: number
 }
 
 export type SupplierSmartScoreProfile = {
+  role?: string | null
   business_name?: string | null
   province?: string | null
   provinces?: string[] | null
@@ -26,6 +45,7 @@ export type SupplierSmartScoreProfile = {
   email?: string | null
   description?: string | null
   verification_status?: string | null
+  smart_score?: number | string | null
   csd_number?: string | null
   csd_verified?: boolean | null
   bbbee_level?: string | null
@@ -59,7 +79,7 @@ export type SupplierSmartScoreProfile = {
 }
 
 export const SUPPLIER_SMART_SCORE_PROFILE_SELECT =
-  "id, business_name, province, provinces, industry, phone, email, description, verification_status, " +
+  "id, business_name, province, provinces, industry, phone, email, description, verification_status, smart_score, " +
   "csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, tax_clearance_url, " +
   "company_registration, cidb_grade, csd_document_url, bbbee_document_url, tax_document_url, " +
   "company_registration_url, cidb_document_url, capability_statement_url, banking_verified, " +
@@ -154,28 +174,6 @@ function hasSupplierDocument(
   )
 }
 
-function supplierDocumentCount(profile: SupplierSmartScoreProfile | null | undefined): number {
-  if (!profile) return 0
-
-  const documentTypes = new Set<string>()
-  for (const document of profile.supplier_documents ?? []) {
-    if (document.status !== "superseded" && document.document_type && hasAnyValue(document.file_url)) {
-      documentTypes.add(document.document_type)
-    }
-  }
-
-  const legacyDocuments = [
-    profile.csd_document_url,
-    profile.bbbee_document_url,
-    profile.tax_document_url,
-    profile.company_registration_url,
-    profile.cidb_document_url,
-    profile.capability_statement_url,
-  ].filter(hasValue).length
-
-  return Math.max(documentTypes.size, legacyDocuments)
-}
-
 function profileProvinces(profile: SupplierSmartScoreProfile | RFQMatchProfile): string[] {
   const provinces = Array.isArray(profile.provinces)
     ? profile.provinces.map((item) => item.trim()).filter(Boolean)
@@ -191,10 +189,6 @@ function profileProvinces(profile: SupplierSmartScoreProfile | RFQMatchProfile):
   }
 
   return []
-}
-
-function parseLevel(value: string | null | undefined): number {
-  return Number(value?.replace(/[^0-9]/g, "") || "0")
 }
 
 function profileCsdVerified(profile: SupplierSmartScoreProfile): boolean {
@@ -254,6 +248,7 @@ function getLevel(score: number): Pick<SmartScoreResult, "label" | "tone"> {
 }
 
 const isVerified = isVerifiedStatus
+const SUPPLIER_ACTIVITY_BONUS_CAP = 8
 
 function hasRecentDate(value: string | null | undefined): boolean {
   if (!value) return false
@@ -262,14 +257,6 @@ function hasRecentDate(value: string | null | undefined): boolean {
 
   const days = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24)
   return days >= 0 && days <= 30
-}
-
-function bankingVerified(profile: SupplierSmartScoreProfile): boolean {
-  return Boolean(
-    profile.bank_verified ||
-      isVerified(profile.banking_verification_status) ||
-      isVerified(profile.bank_verification_status)
-  )
 }
 
 export function getSmartScoreLabel(score: number): string {
@@ -285,12 +272,11 @@ export function getSmartScoreColour(score: number): SmartScoreColour {
   return "danger"
 }
 
-export function getSmartScoreBreakdown(
+function buildSmartScoreBreakdown(
   profile: SupplierSmartScoreProfile | null | undefined
 ): SmartScoreBreakdownItem[] {
   const safeProfile = profile ?? {}
   const provinces = profileProvinces(safeProfile)
-  const bbbeeLevel = parseLevel(safeProfile.bbbee_level)
   const businessEarned =
     hasAnyValue(safeProfile.business_name) &&
     hasAnyValue(safeProfile.industry) &&
@@ -298,8 +284,13 @@ export function getSmartScoreBreakdown(
     hasAnyValue(safeProfile.phone) &&
     hasAnyValue(safeProfile.description)
   const csdVerified = profileCsdVerified(safeProfile)
-  const csdPending = !csdVerified && hasAnyValue(safeProfile.csd_number)
+  const csdPending =
+    !csdVerified &&
+    (hasAnyValue(safeProfile.csd_number) || hasSupplierDocument(safeProfile, "csd", safeProfile.csd_document_url))
   const bbbeeVerified = profileBBBEEVerified(safeProfile)
+  const bbbeePending =
+    !bbbeeVerified &&
+    (hasAnyValue(safeProfile.bbbee_level) || hasSupplierDocument(safeProfile, "bbbee", safeProfile.bbbee_document_url))
   const taxVerified = profileTaxVerified(safeProfile)
   const taxPending = !taxVerified && hasSupplierDocument(safeProfile, "tax_clearance", safeProfile.tax_clearance_url ?? safeProfile.tax_document_url)
   const bankingVerified = profileBankingVerified(safeProfile)
@@ -324,8 +315,8 @@ export function getSmartScoreBreakdown(
       key: "bbbee",
       label: "BBBEE certificate verified",
       points: 20,
-      earnedPoints: bbbeeVerified && bbbeeLevel >= 1 && bbbeeLevel <= 4 ? 20 : bbbeeVerified ? 10 : 0,
-      status: bbbeeVerified ? "earned" : hasAnyValue(safeProfile.bbbee_level) ? "pending" : "missing",
+      earnedPoints: bbbeeVerified ? 20 : bbbeePending ? 10 : 0,
+      status: bbbeeVerified ? "earned" : bbbeePending ? "pending" : "missing",
     },
     {
       key: "tax",
@@ -403,36 +394,18 @@ export function getSmartScoreLevel(score: number): SmartScoreResult {
     tone: level.tone,
     monthlyTrend: 0,
     tips: [],
+    breakdown: undefined,
   }
 }
 
-export function calculateSupplierSmartScore(
+function complianceBaseFromBreakdown(breakdown: SmartScoreBreakdownItem[]): number {
+  return breakdown.reduce((total, item) => total + item.earnedPoints, 0)
+}
+
+function activityBonusBreakdown(
   profile: SupplierSmartScoreProfile | null | undefined,
-  activity: SupplierSmartScoreActivity = {}
-): SmartScoreResult {
-  const complianceDocuments = [
-    profile?.csd_document_url,
-    profile?.bbbee_document_url,
-    profile?.tax_document_url,
-    profile?.company_registration_url,
-    profile?.cidb_document_url,
-    profile?.capability_statement_url,
-  ]
-
-  const completedProfileFields = [
-    profile?.business_name,
-    profile?.province,
-    profile?.industry,
-    profile?.phone,
-    profile?.email,
-    profile?.csd_number,
-    profile?.bbbee_level,
-    profile?.tax_status,
-    profile?.company_registration,
-    profile?.cidb_grade,
-  ].filter(hasValue).length
-
-  const uploadedDocuments = Math.max(complianceDocuments.filter(hasValue).length, supplierDocumentCount(profile))
+  activity: SupplierSmartScoreActivity
+): SupplierSmartScoreActivityBreakdown {
   const averageRating = activity.averageRating ?? null
   const paymentReliabilityRate =
     activity.paymentReliabilityRate ??
@@ -441,29 +414,59 @@ export function calculateSupplierSmartScore(
       : activity.payments && activity.payments > 0
         ? Math.round(((activity.paidPayments ?? 0) / activity.payments) * 100)
         : 0)
-  const reviewContribution =
-    averageRating === null
-      ? Math.min(activity.reviewCount ?? 0, 5) * 10
-      : Math.min(120, Math.round((averageRating / 5) * 120))
 
-  const rawScore =
-    80 +
-      (isVerified(profile?.verification_status) ? 120 : 30) +
-      uploadedDocuments * 30 +
-      (bankingVerified(profile ?? {}) ? 90 : 0) +
-      completedProfileFields * 16 +
-      Math.min(activity.rfqResponses ?? 0, 10) * 14 +
-      Math.min(activity.awardedQuotes ?? 0, 8) * 22 +
-      Math.min(activity.contracts ?? 0, 6) * 18 +
-      Math.min(activity.completedContracts ?? 0, 6) * 30 +
-      Math.min(activity.invoices ?? 0, 8) * 10 +
-      Math.min(activity.approvedInvoices ?? 0, 8) * 14 +
-      Math.min(activity.paidInvoices ?? 0, 8) * 18 +
-      Math.min(100, Math.max(0, paymentReliabilityRate)) * 1.25 +
-      reviewContribution +
-      Math.min(activity.recentActivityCount ?? 0, 5) * 18 +
-      (hasRecentDate(profile?.updated_at) ? 30 : 0)
-  const score = clampScore(rawScore / 10)
+  const rfqResponseBonus = Math.min(activity.rfqResponses ?? 0, 5) * 0.6
+  const awardedQuoteBonus = Math.min(activity.awardedQuotes ?? 0, 3) * 1.2
+  const completedContractBonus = Math.min(activity.completedContracts ?? 0, 3) * 1.2
+  const paidInvoiceBonus = Math.min(activity.paidInvoices ?? 0, 5) * 0.5
+  const paymentReliabilityBonus = Math.min(100, Math.max(0, paymentReliabilityRate)) * 0.02
+  const reviewBonus =
+    averageRating === null
+      ? Math.min(activity.reviewCount ?? 0, 4) * 0.35
+      : Math.min(2, Math.max(0, (averageRating / 5) * 2))
+  const recentActivityBonus = Math.min(activity.recentActivityCount ?? 0, 5) * 0.3
+  const recentUpdateBonus = hasRecentDate(profile?.updated_at) ? 0.5 : 0
+  const rawActivityBonus =
+    rfqResponseBonus +
+    awardedQuoteBonus +
+    completedContractBonus +
+    paidInvoiceBonus +
+    paymentReliabilityBonus +
+    reviewBonus +
+    recentActivityBonus +
+    recentUpdateBonus
+  const cappedActivityBonus = Math.min(SUPPLIER_ACTIVITY_BONUS_CAP, rawActivityBonus)
+
+  return {
+    rfqResponseBonus,
+    awardedQuoteBonus,
+    completedContractBonus,
+    paidInvoiceBonus,
+    paymentReliabilityBonus,
+    reviewBonus,
+    recentActivityBonus,
+    recentUpdateBonus,
+    rawActivityBonus,
+    cappedActivityBonus,
+  }
+}
+
+export function calculateSupplierSmartScore(
+  profile: SupplierSmartScoreProfile | null | undefined,
+  activity: SupplierSmartScoreActivity = {}
+): SmartScoreResult {
+  const breakdown = buildSmartScoreBreakdown(profile)
+  const complianceBase = complianceBaseFromBreakdown(breakdown)
+  const activityBreakdown = activityBonusBreakdown(profile, activity)
+  const paymentReliabilityRate =
+    activity.paymentReliabilityRate ??
+    (activity.approvedInvoices && activity.approvedInvoices > 0
+      ? Math.round(((activity.paidInvoices ?? 0) / activity.approvedInvoices) * 100)
+      : activity.payments && activity.payments > 0
+        ? Math.round(((activity.paidPayments ?? 0) / activity.payments) * 100)
+        : 0)
+  const activityBonus = activityBreakdown.cappedActivityBonus
+  const score = clampScore(complianceBase + activityBonus)
 
   const level = getLevel(score)
   const tips: string[] = []
@@ -472,11 +475,11 @@ export function calculateSupplierSmartScore(
     tips.push("Upload tax clearance to gain points")
   }
 
-  if (!bankingVerified(profile ?? {})) {
+  if (!profileBankingVerified(profile ?? {})) {
     tips.push("Verify banking details to gain points")
   }
 
-  if (completedProfileFields < 8) {
+  if (!breakdown.find((item) => item.key === "business" && item.status === "earned")) {
     tips.push("Complete profile to gain points")
   }
 
@@ -500,6 +503,11 @@ export function calculateSupplierSmartScore(
       Math.min(activity.recentActivityCount ?? 0, 5) * 6 +
       (hasRecentDate(profile?.updated_at) ? 8 : 0),
     tips: tips.slice(0, 4),
+    breakdown,
+    complianceBase,
+    activityBonus,
+    activityBonusCap: SUPPLIER_ACTIVITY_BONUS_CAP,
+    activityBreakdown,
   }
 }
 

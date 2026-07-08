@@ -26,8 +26,7 @@ import {
   updatePurchaseOrderStatus,
   type PurchaseOrder,
 } from "@/lib/purchaseOrders"
-import { buildSupplierActivityById } from "@/lib/intelligence"
-import { calculateSupplierSmartScore, type SupplierSmartScoreActivity } from "@/lib/smartScore"
+import { getCanonicalSupplierSmartScore } from "@/lib/supplierScoring"
 import { supabase } from "@/lib/supabase"
 
 type AwardTab = "po" | "contract" | "invoices"
@@ -239,7 +238,7 @@ export default function AwardWorkspacePage() {
   const [po, setPo] = useState<PurchaseOrder | null>(null)
   const [contract, setContract] = useState<Contract | null>(null)
   const [invoice, setInvoice] = useState<Invoice | null>(null)
-  const [supplierActivity, setSupplierActivity] = useState<SupplierSmartScoreActivity>({})
+  const [supplierScore, setSupplierScore] = useState<number | null>(null)
   const [history, setHistory] = useState<Record<string, ActivityEvent[]>>({})
   const [tab, setTab] = useState<AwardTab>("po")
   const [loading, setLoading] = useState(true)
@@ -294,7 +293,7 @@ export default function AwardWorkspacePage() {
       if (!loadedPo) {
         setProfile(currentProfile)
         setPo(null)
-        setSupplierActivity({})
+        setSupplierScore(null)
         setLoading(false)
         return
       }
@@ -325,22 +324,10 @@ export default function AwardWorkspacePage() {
       }
 
       if (supabase && loadedPo.supplier_id) {
-        const [quoteActivityRes, contractActivityRes, invoiceActivityRes, paymentActivityRes] = await Promise.all([
-          supabase.from("quotes").select("id, supplier_id, status").eq("supplier_id", loadedPo.supplier_id),
-          supabase.from("contracts").select("id, supplier_id, status").eq("supplier_id", loadedPo.supplier_id),
-          supabase.from("invoices").select("id, supplier_id, status").eq("supplier_id", loadedPo.supplier_id),
-          supabase.from("payments").select("id, supplier_id, status").eq("supplier_id", loadedPo.supplier_id),
-        ])
-        const activityBySupplier = buildSupplierActivityById({
-          supplierIds: [loadedPo.supplier_id],
-          quotes: (quoteActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-          contracts: (contractActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-          invoices: (invoiceActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-          payments: (paymentActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-        })
-        setSupplierActivity(activityBySupplier[loadedPo.supplier_id] ?? {})
+        const canonicalScore = await getCanonicalSupplierSmartScore(loadedPo.supplier_id, supabase)
+        setSupplierScore(canonicalScore?.result.score ?? null)
       } else {
-        setSupplierActivity({})
+        setSupplierScore(null)
       }
 
       const poHistory = await getPurchaseOrderTimeline(loadedPo.id)
@@ -386,7 +373,6 @@ export default function AwardWorkspacePage() {
   const contractStatus = contractStatusLabel(contract, isSupplier)
   const invoiceStatus = invoiceStatusLabel(invoice)
   const currentStep = po ? deriveCurrentStep(po, contract, invoice) : 1
-  const supplierScore = po?.supplier ? calculateSupplierSmartScore(po.supplier, supplierActivity).score : null
   const awardTitle = po?.title || po?.rfq?.title || po?.po_number || "Award workspace"
   const buyerOrg = po?.rfq?.title ? "Procurement division" : "Buyer organisation"
   const hasPendingAction =

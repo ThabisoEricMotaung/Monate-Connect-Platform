@@ -1,8 +1,8 @@
 import Link from "next/link"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import SmartScoreCircle from "@/components/SmartScoreCircle"
-import { buildSupplierActivityById } from "@/lib/intelligence"
-import { calculateSupplierSmartScore } from "@/lib/smartScore"
+import { getSmartScoreLevel } from "@/lib/smartScore"
+import { getCanonicalSupplierSmartScore } from "@/lib/supplierScoring"
 import { isVerifiedStatus } from "@/lib/supplierStatus"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 
@@ -109,29 +109,14 @@ export default async function DashboardSupplierProfilePage({ params }: Props) {
     .eq("profile_id", id)
     .neq("status", "superseded")
 
-  const [quoteResult, contractResult, invoiceResult, paymentResult, bankingResult] = await Promise.all([
-    supabase.from("quotes").select("id, supplier_id, status").eq("supplier_id", id),
-    supabase.from("contracts").select("id, supplier_id, status").eq("supplier_id", id),
-    supabase.from("invoices").select("id, supplier_id, status").eq("supplier_id", id),
-    supabase.from("payments").select("id, supplier_id, status").eq("supplier_id", id),
-    supabase.from("supplier_bank_details").select("supplier_id, verification_status").eq("supplier_id", id),
-  ])
-
-  const bankRows = (bankingResult.data ?? []) as Array<{ supplier_id: string | null; verification_status: string | null }>
-  const activityBySupplier = buildSupplierActivityById({
-    supplierIds: [id],
-    quotes: (quoteResult.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-    contracts: (contractResult.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-    invoices: (invoiceResult.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-    payments: (paymentResult.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-  })
+  const canonicalScore = await getCanonicalSupplierSmartScore(id, supabase)
 
   const supplier = {
     ...(data as SupplierProfile),
-    bank_verified: bankRows.some((bank) => isVerifiedStatus(bank.verification_status)),
+    bank_verified: canonicalScore?.input.bank_verified ?? false,
     supplier_documents: (documents ?? []) as SupplierProfile["supplier_documents"],
   }
-  const score = calculateSupplierSmartScore(supplier, activityBySupplier[id] ?? {})
+  const score = canonicalScore?.result ?? getSmartScoreLevel(0)
 
   return (
     <div>

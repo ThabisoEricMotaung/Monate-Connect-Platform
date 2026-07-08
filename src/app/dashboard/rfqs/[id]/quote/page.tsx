@@ -8,14 +8,10 @@ import { logAuditAction } from "@/lib/audit"
 import { getCurrentUser } from "@/lib/auth"
 import { createNotificationsForRoles } from "@/lib/notifications"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
-import { buildSupplierActivityById } from "@/lib/intelligence"
-import { calculateSupplierSmartScore, type SupplierSmartScoreActivity } from "@/lib/smartScore"
+import { getSmartScoreLevel, type SmartScoreResult } from "@/lib/smartScore"
+import { getCanonicalSupplierSmartScore } from "@/lib/supplierScoring"
 import { supabase } from "@/lib/supabase"
-import {
-  applySupplierDocuments,
-  fetchSupplierDocumentsForProfile,
-  type SupplierDocument,
-} from "@/lib/supplierDocuments"
+import type { SupplierDocument } from "@/lib/supplierDocuments"
 
 type RFQ = {
   id: number
@@ -263,7 +259,7 @@ export default function QuoteSubmissionPage() {
   const firstErrorRef = useRef<HTMLDivElement | null>(null)
   const [rfq, setRfq] = useState<RFQ | null>(null)
   const [profile, setProfile] = useState<SupplierProfile | null>(null)
-  const [profileActivity, setProfileActivity] = useState<SupplierSmartScoreActivity>({})
+  const [profileSmartScore, setProfileSmartScore] = useState<SmartScoreResult>(getSmartScoreLevel(0))
   const [buyer, setBuyer] = useState<BuyerProfile | null>(null)
   const [buyerRFQCount, setBuyerRFQCount] = useState<number | null>(null)
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>([])
@@ -309,37 +305,14 @@ export default function QuoteSubmissionPage() {
 
       const user = await getCurrentUser()
       if (user) {
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("id, business_name, email, province, industry, verification_status, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, company_registration, director_verified, bank_verified, banking_verified, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, updated_at")
-          .eq("id", user.id)
-          .maybeSingle()
+        const canonicalScore = await getCanonicalSupplierSmartScore(user.id, supabase)
 
-        if (profileData) {
-          const [documentResult, quoteActivityRes, contractActivityRes, invoiceActivityRes, paymentActivityRes] = await Promise.all([
-            fetchSupplierDocumentsForProfile(user.id),
-            supabase.from("quotes").select("id, supplier_id, status").eq("supplier_id", user.id),
-            supabase.from("contracts").select("id, supplier_id, status").eq("supplier_id", user.id),
-            supabase.from("invoices").select("id, supplier_id, status").eq("supplier_id", user.id),
-            supabase.from("payments").select("id, supplier_id, status").eq("supplier_id", user.id),
-          ])
-          if (documentResult.error) {
-            setErrorMessage(documentResult.error)
-            setLoading(false)
-            return
-          }
-          const activityBySupplier = buildSupplierActivityById({
-            supplierIds: [user.id],
-            quotes: (quoteActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-            contracts: (contractActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-            invoices: (invoiceActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-            payments: (paymentActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
-          })
-          setProfile(applySupplierDocuments(profileData as SupplierProfile, documentResult.documents))
-          setProfileActivity(activityBySupplier[user.id] ?? {})
+        if (canonicalScore) {
+          setProfile(canonicalScore.input as SupplierProfile)
+          setProfileSmartScore(canonicalScore.result)
         } else {
           setProfile(null)
-          setProfileActivity({})
+          setProfileSmartScore(getSmartScoreLevel(0))
         }
       }
 
@@ -391,7 +364,7 @@ export default function QuoteSubmissionPage() {
   const vat = vatRegistered ? subtotal * 0.15 : 0
   const total = subtotal + vat
   const coverWords = wordCount(coverNote)
-  const smartScore = calculateSupplierSmartScore(profile, profileActivity)
+  const smartScore = profileSmartScore
   const bbeeQualifies = qualifiesForBBBEE(profile?.bbbee_level, bbeeRequirement(rfq))
   const lineItemsPriced = lineItems.length > 0 && lineItems.every((item) => numeric(item.qty) > 0 && numeric(item.unitPrice) > 0)
   const csdActive = Boolean(profile?.csd_number?.trim())

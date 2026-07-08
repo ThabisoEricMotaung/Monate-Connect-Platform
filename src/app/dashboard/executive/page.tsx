@@ -15,14 +15,10 @@ import {
   YAxis,
 } from "recharts"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
-import { calculateSupplierSmartScore } from "@/lib/smartScore"
+import type { SmartScoreResult } from "@/lib/smartScore"
+import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
 import { isVerifiedStatus } from "@/lib/supplierStatus"
 import { supabase } from "@/lib/supabase"
-import {
-  applySupplierDocumentsToProfiles,
-  fetchSupplierDocumentsByProfileIds,
-  type SupplierDocument,
-} from "@/lib/supplierDocuments"
 
 type RfqRow = {
   id: number
@@ -85,7 +81,6 @@ type SupplierProfile = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
-  supplier_documents?: SupplierDocument[]
   updated_at: string | null
 }
 
@@ -127,6 +122,7 @@ type CommandCentreData = {
   invoices: InvoiceRow[]
   quotes: QuoteRow[]
   suppliers: SupplierProfile[]
+  canonicalScores: Record<string, SmartScoreResult>
   missingTables: string[]
 }
 
@@ -238,6 +234,7 @@ async function loadCommandCentreData(): Promise<CommandCentreData & { errors: st
       invoices: [],
       quotes: [],
       suppliers: [],
+      canonicalScores: {},
       missingTables: ["Supabase"],
       errors: ["Supabase environment variables are not configured."],
     }
@@ -294,8 +291,11 @@ async function loadCommandCentreData(): Promise<CommandCentreData & { errors: st
 
   const results = [rfqs, contracts, purchaseOrders, invoices, quotes, suppliers]
 
-  const documentResult = await fetchSupplierDocumentsByProfileIds(suppliers.rows.map((supplier) => supplier.id))
-  const hydratedSuppliers = applySupplierDocumentsToProfiles(suppliers.rows, documentResult.documentsByProfile)
+  const supplierIds = suppliers.rows.map((supplier) => supplier.id)
+  const canonicalScores =
+    supplierIds.length > 0
+      ? await getCanonicalSupplierSmartScoreBatch({ supplierIds, client: supabase, profiles: suppliers.rows })
+      : {}
 
   return {
     rfqs: rfqs.rows,
@@ -303,7 +303,10 @@ async function loadCommandCentreData(): Promise<CommandCentreData & { errors: st
     purchaseOrders: purchaseOrders.rows,
     invoices: invoices.rows,
     quotes: quotes.rows,
-    suppliers: hydratedSuppliers,
+    suppliers: suppliers.rows,
+    canonicalScores: Object.fromEntries(
+      Object.entries(canonicalScores).map(([id, record]) => [id, record.result])
+    ),
     missingTables: results
       .map((result, index) =>
         result.missing
@@ -311,7 +314,7 @@ async function loadCommandCentreData(): Promise<CommandCentreData & { errors: st
           : null
       )
       .filter(Boolean) as string[],
-    errors: [...results.map((result) => result.error), documentResult.error].filter(Boolean) as string[],
+    errors: results.map((result) => result.error).filter(Boolean) as string[],
   }
 }
 
@@ -358,14 +361,14 @@ function buildTrend(data: CommandCentreData): TrendRow[] {
     .map(([, row]) => row)
 }
 
-function buildRiskSummary(suppliers: SupplierProfile[]): RiskSummary {
-  return suppliers.reduce<RiskSummary>(
+function buildRiskSummary(data: CommandCentreData): RiskSummary {
+  return data.suppliers.reduce<RiskSummary>(
     (summary, supplier) => {
-      const smartScore = calculateSupplierSmartScore(supplier)
+      const score = data.canonicalScores[supplier.id]?.score ?? 0
 
-      if (smartScore.score < 30) summary.critical += 1
-      else if (smartScore.score <= 39) summary.high += 1
-      else if (smartScore.score <= 59) summary.medium += 1
+      if (score < 30) summary.critical += 1
+      else if (score <= 39) summary.high += 1
+      else if (score <= 59) summary.medium += 1
       else summary.low += 1
 
       return summary
@@ -438,18 +441,12 @@ function buildTopSuppliers(data: CommandCentreData): SupplierRow[] {
           (sum, purchaseOrder) => sum + parseMoney(purchaseOrder.amount),
           0
         )
-      const smartScore = calculateSupplierSmartScore(supplier, {
-        awardedQuotes: awards,
-        completedContracts: contracts.filter(
-          (contract) => contract.status === "Completed"
-        ).length,
-        recentActivityCount: awards + contracts.length + purchaseOrders.length,
-      })
+      const smartScore = data.canonicalScores[supplier.id]?.score ?? 0
 
       return {
         supplierId: supplier.id,
         supplier: supplier.business_name || "Unnamed Supplier",
-        smartScore: smartScore.score,
+        smartScore,
         awards,
         contracts: contracts.length,
         procurementValue,
@@ -551,6 +548,7 @@ export default function ExecutiveCommandCentrePage() {
         invoices: [],
         quotes: [],
         suppliers: [],
+        canonicalScores: {},
         missingTables: ["unknown"],
       })
       setLoading(false)
@@ -592,7 +590,7 @@ export default function ExecutiveCommandCentrePage() {
     ).length
 
     const trend = buildTrend(data)
-    const riskSummary = buildRiskSummary(data.suppliers)
+    const riskSummary = buildRiskSummary(data)
     const provinces = buildProvincialActivity(data)
     const topSuppliers = buildTopSuppliers(data)
     const useMock = data.missingTables.length > 0

@@ -6,14 +6,10 @@ import Link from "next/link"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { getComplianceStatus } from "@/lib/complianceStatus"
 import { displayIndustry } from "@/lib/industries"
-import { calculateSupplierSmartScore, type SmartScoreResult } from "@/lib/smartScore"
+import { getSmartScoreLevel, type SmartScoreResult } from "@/lib/smartScore"
+import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
 import { isVerifiedStatus } from "@/lib/supplierStatus"
 import { supabase } from "@/lib/supabase"
-import {
-  applySupplierDocumentsToProfiles,
-  fetchSupplierDocumentsByProfileIds,
-  type SupplierDocument,
-} from "@/lib/supplierDocuments"
 
 // --- Types --------------------------------------------------------------------
 
@@ -44,7 +40,6 @@ type SupplierProfile = {
   company_registration_url: string | null
   cidb_document_url: string | null
   capability_statement_url: string | null
-  supplier_documents?: SupplierDocument[]
   tax_expiry_date: string | null
   bbbee_expiry_date: string | null
   csd_expiry_date: string | null
@@ -501,6 +496,7 @@ function SkeletonCard() {
 export default function ComplianceRiskPage() {
   const router = useRouter()
   const [profiles, setProfiles] = useState<SupplierProfile[]>([])
+  const [readinessScores, setReadinessScores] = useState<Record<string, SmartScoreResult>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [riskFilter, setRiskFilter] = useState<RiskLevel | "">("")
@@ -541,14 +537,18 @@ export default function ComplianceRiskPage() {
       }
 
       const profileRows = (data ?? []) as unknown as SupplierProfile[]
-      const documents = await fetchSupplierDocumentsByProfileIds(profileRows.map((profile) => profile.id))
-      if (documents.error) {
-        setError(documents.error)
-        setLoading(false)
-        return
-      }
+      const supplierIds = profileRows.map((profile) => profile.id)
+      const canonicalScores =
+        supplierIds.length > 0
+          ? await getCanonicalSupplierSmartScoreBatch({ supplierIds, client: supabase, profiles: profileRows })
+          : {}
 
-      setProfiles(applySupplierDocumentsToProfiles(profileRows, documents.documentsByProfile))
+      setProfiles(profileRows)
+      setReadinessScores(
+        Object.fromEntries(
+          Object.entries(canonicalScores).map(([id, record]) => [id, record.result])
+        )
+      )
       setLoading(false)
     }
 
@@ -561,14 +561,14 @@ export default function ComplianceRiskPage() {
       .map((profile) => ({
         profile,
         risk: assessRisk(profile),
-        readiness: calculateSupplierSmartScore(profile),
+        readiness: readinessScores[profile.id] ?? getSmartScoreLevel(0),
       }))
       .sort((a, b) => {
         const levelDiff =
           RISK_ORDER.indexOf(a.risk.level) - RISK_ORDER.indexOf(b.risk.level)
         return levelDiff !== 0 ? levelDiff : a.readiness.score - b.readiness.score
       })
-  }, [profiles])
+  }, [profiles, readinessScores])
 
   const summary = useMemo(() => {
     const counts: Record<RiskLevel, number> = {

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation"
 import { IconArrowLeft } from "@tabler/icons-react"
 import PasswordInput from "@/components/PasswordInput"
 import { OFFICIAL_INDUSTRY_OPTIONS } from "@/lib/industries"
-import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import {
   NATIONAL_PROVINCE_VALUE,
@@ -626,12 +625,6 @@ export default function SignupPage() {
     setLoading(true)
 
     if (supabase && userId) {
-      const smartScore = calculateSupplierSmartScore({
-        business_name: form.businessName,
-        industry: form.industry,
-        provinces: form.provinces,
-        phone: form.phone,
-      }).score
       await supabase.from("profiles").upsert({
         id: userId,
         business_name: form.businessName,
@@ -640,7 +633,6 @@ export default function SignupPage() {
         industry: form.industry,
         provinces: form.provinces,
         province: displayProvinceList(form.provinces),
-        smart_score: smartScore,
         updated_at: new Date().toISOString(),
       }, { onConflict: "id" })
     }
@@ -671,21 +663,12 @@ export default function SignupPage() {
         setLoading(false)
         return
       }
-      const smartScore = calculateSupplierSmartScore({
-        business_name: form.businessName,
-        industry: form.industry,
-        provinces: form.provinces,
-        phone: form.phone,
-        csd_number: form.csdNumber,
-        bbbee_level: form.bbeeLevel,
-      }).score
       await supabase.from("profiles").upsert({
         id: userId,
         csd_number: form.csdNumber,
         tax_reference: form.taxReference,
         bbbee_level: form.bbeeLevel,
         vat_number: form.vatNumber || null,
-        smart_score: smartScore,
         updated_at: new Date().toISOString(),
       }, { onConflict: "id" })
     }
@@ -729,15 +712,6 @@ export default function SignupPage() {
     const normalizedEmail = form.email.trim().toLowerCase()
     const fullName = fullNameFromParts(form.firstName, form.lastName)
 
-    const smartScore = calculateSupplierSmartScore({
-      business_name: form.businessName,
-      industry: form.industry,
-      provinces: form.provinces,
-      phone: form.phone,
-      csd_number: form.csdNumber,
-      bbbee_level: form.bbeeLevel,
-    }).score
-
     try {
       await uploadCsdDocumentIfNeeded()
     } catch (error) {
@@ -766,7 +740,6 @@ export default function SignupPage() {
       verification_status: "Pending Review",
       registration_complete: true,
       role: form.role,
-      smart_score: smartScore,
       updated_at: new Date().toISOString(),
     }, { onConflict: "id" })
 
