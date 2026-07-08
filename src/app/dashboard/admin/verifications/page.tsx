@@ -8,6 +8,7 @@ import type { SmartScoreResult } from "@/lib/smartScore"
 import {
   getCanonicalSupplierSmartScoreBatch,
 } from "@/lib/supplierScoring"
+import { sendMessage } from "@/lib/messages"
 import { supabase } from "@/lib/supabase"
 import {
   activeSupplierDocuments,
@@ -507,6 +508,7 @@ export default function AdminVerificationQueuePage() {
   const [documentsBySupplier, setDocumentsBySupplier] = useState<Record<string, SupplierDocument[]>>({})
   const [banksBySupplier, setBanksBySupplier] = useState<Record<string, BankDetails>>({})
   const [notesBySupplier, setNotesBySupplier] = useState<Record<string, string>>({})
+  const [supplierNotesBySupplier, setSupplierNotesBySupplier] = useState<Record<string, string>>({})
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<FilterMode>("all")
   const [loading, setLoading] = useState(true)
@@ -963,6 +965,34 @@ export default function AdminVerificationQueuePage() {
     setActionFeedback(profile.id, pendingKey, { message: "Note saved", type: "success" })
   }
 
+  async function sendSupplierNote(profile: SupplierProfile) {
+    const nextNote = supplierNotesBySupplier[profile.id]?.trim() ?? ""
+    const pendingKey = "supplier-note"
+
+    if (!nextNote) {
+      setActionFeedback(profile.id, pendingKey, { message: "Enter a note before sending", type: "error" })
+      return
+    }
+
+    setPendingAction({ supplierId: profile.id, key: pendingKey })
+    setErrorMessage("")
+
+    try {
+      await sendMessage({
+        receiverId: profile.id,
+        subject: "AiForm Procure verification note",
+        message: nextNote,
+      })
+      setSupplierNotesBySupplier((current) => ({ ...current, [profile.id]: "" }))
+      setActionFeedback(profile.id, pendingKey, { message: "Note sent to supplier", type: "success" })
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Supplier note could not be sent.")
+      setActionFeedback(profile.id, pendingKey, { message: "Send failed - try again", type: "error" })
+    } finally {
+      setPendingAction(null)
+    }
+  }
+
   async function updateDocumentStatus(
     profile: SupplierProfile,
     document: SupplierDocument,
@@ -1335,6 +1365,8 @@ export default function AdminVerificationQueuePage() {
                 pendingAction.key === "bulk-pending")
             const notesPending =
               pendingAction?.supplierId === profile.id && pendingAction.key === "notes"
+            const supplierNotePending =
+              pendingAction?.supplierId === profile.id && pendingAction.key === "supplier-note"
             const scoreFlashing = Boolean(scoreHighlight[profile.id])
             const isDeleted = profile.is_deleted === true
 
@@ -1469,6 +1501,55 @@ export default function AdminVerificationQueuePage() {
                               inlineFeedback[`${profile.id}:bulk-pending`]
                             }
                           />
+                        </div>
+                      </div>
+                      <div className="mt-4 border-t border-panel pt-4">
+                        <label
+                          htmlFor={`supplier-note-${profile.id}`}
+                          className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted"
+                        >
+                          Send note to supplier
+                        </label>
+                        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-start">
+                          <textarea
+                            id={`supplier-note-${profile.id}`}
+                            rows={2}
+                            value={supplierNotesBySupplier[profile.id] ?? ""}
+                            onChange={(event) =>
+                              setSupplierNotesBySupplier((current) => ({
+                                ...current,
+                                [profile.id]: event.target.value,
+                              }))
+                            }
+                            disabled={isDeleted || supplierNotePending}
+                            className="min-h-[72px] flex-1 resize-none rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-60"
+                            placeholder="Please upload your bank confirmation letter."
+                          />
+                          <button
+                            type="button"
+                            disabled={
+                              isDeleted ||
+                              supplierNotePending ||
+                              !supplierNotesBySupplier[profile.id]?.trim()
+                            }
+                            onClick={() => sendSupplierNote(profile)}
+                            className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {supplierNotePending ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 22 6.477 22 12h-4z" />
+                                </svg>
+                                Sending...
+                              </span>
+                            ) : (
+                              "Send note"
+                            )}
+                          </button>
+                        </div>
+                        <div className="mt-2">
+                          <InlineFeedbackBadge feedback={inlineFeedback[`${profile.id}:supplier-note`]} />
                         </div>
                       </div>
                       {renderScoreBreakdown(profile)}
