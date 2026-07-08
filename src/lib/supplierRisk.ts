@@ -1,4 +1,5 @@
 import { supabase } from "./supabase"
+import { isVerifiedStatus } from "./supplierStatus"
 import {
   applySupplierDocumentsToProfiles,
   fetchSupplierDocumentsByProfileIds,
@@ -335,7 +336,7 @@ export async function getSupplierRiskAssessments(): Promise<SupplierRiskRecord[]
       return order.indexOf(a.verification_status ?? "") - order.indexOf(b.verification_status ?? "")
     })[0]
     const bankingStatus = bestBank?.verification_status ?? null
-    const bankingVerified = bankingStatus === "Verified"
+    const bankingVerified = isVerifiedStatus(bankingStatus)
     const bankingMissing = sBanking.length === 0
 
     // Documents
@@ -384,7 +385,7 @@ export async function getSupplierRiskAssessments(): Promise<SupplierRiskRecord[]
 
     const triggeredIds: string[] = []
 
-    if (p.verification_status !== "Verified") triggeredIds.push("not_verified")
+    if (!isVerifiedStatus(p.verification_status)) triggeredIds.push("not_verified")
     if (bankingMissing) triggeredIds.push("banking_missing")
     else if (!bankingVerified) triggeredIds.push("banking_unverified")
     if (!p.csd_number?.trim()) triggeredIds.push("missing_csd")

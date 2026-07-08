@@ -1,3 +1,5 @@
+import { isVerifiedStatus } from "./supplierStatus"
+
 export type SmartScoreLevel =
   | "Emerging Supplier / High Risk"
   | "Developing Supplier"
@@ -244,9 +246,7 @@ function getLevel(score: number): Pick<SmartScoreResult, "label" | "tone"> {
   return { label: "Elite Supplier", tone: "gold" }
 }
 
-function isVerified(status: string | null | undefined): boolean {
-  return (status ?? "").toLowerCase().includes("verified")
-}
+const isVerified = isVerifiedStatus
 
 function hasRecentDate(value: string | null | undefined): boolean {
   if (!value) return false
@@ -263,57 +263,6 @@ function bankingVerified(profile: SupplierSmartScoreProfile): boolean {
       isVerified(profile.banking_verification_status) ||
       isVerified(profile.bank_verification_status)
   )
-}
-
-export function calculateSmartScore(profile: SupplierSmartScoreProfile | null | undefined): number {
-  if (!profile) return 0
-
-  let score = 0
-  const provinces = profileProvinces(profile)
-
-  if (
-    hasAnyValue(profile.business_name) &&
-    hasAnyValue(profile.industry) &&
-    provinces.length > 0 &&
-    hasAnyValue(profile.phone) &&
-    hasAnyValue(profile.description)
-  ) {
-    score += 20
-  }
-
-  if (profileCsdVerified(profile)) {
-    score += 20
-  } else if (hasAnyValue(profile.csd_number)) {
-    score += 10
-  }
-
-  if (profileBBBEEVerified(profile)) {
-    const level = parseLevel(profile.bbbee_level)
-    if (level >= 1 && level <= 4) score += 20
-    else score += 10
-  }
-
-  if (profileTaxVerified(profile)) {
-    score += 15
-  } else if (hasSupplierDocument(profile, "tax_clearance", profile.tax_clearance_url ?? profile.tax_document_url)) {
-    score += 7
-  }
-
-  if (profileBankingVerified(profile)) {
-    score += 10
-  } else if (profileHasBankingDetails(profile)) {
-    score += 5
-  }
-
-  if (profile.director_verified) {
-    score += 10
-  }
-
-  if (hasSupplierDocument(profile, "company_profile", profile.capability_statement_url)) {
-    score += 5
-  }
-
-  return Math.min(score, 100)
 }
 
 export function getSmartScoreLabel(score: number): string {

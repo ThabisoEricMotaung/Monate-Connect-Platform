@@ -4,7 +4,7 @@ import { useEffect, useState, type MouseEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import PasswordInput from "@/components/PasswordInput"
-import { calculateSmartScore } from "@/lib/smartScore"
+import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 
 type LoginProfile = {
@@ -191,7 +191,7 @@ export default function LoginPage() {
           verification_status: "Pending Review",
           ...(roleColumnAvailable ? { role: "supplier" } : {}),
         }
-        const profileScore = calculateSmartScore(profilePayload)
+        const profileScore = calculateSupplierSmartScore(profilePayload).score
 
         const { error: profileInsertError } = await supabase
           .from("profiles")
@@ -216,7 +216,7 @@ export default function LoginPage() {
           industry: profile.industry || user.user_metadata?.industry || "",
           phone: profile.phone || user.user_metadata?.phone || "",
         }
-        const profileScore = calculateSmartScore({ ...profile, ...profileUpdatePayload })
+        const profileScore = calculateSupplierSmartScore({ ...profile, ...profileUpdatePayload }).score
 
         const { error: profileUpdateError } = await supabase
           .from("profiles")

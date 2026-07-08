@@ -16,6 +16,7 @@ import {
 } from "recharts"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
 import { calculateSupplierSmartScore } from "@/lib/smartScore"
+import { isVerifiedStatus } from "@/lib/supplierStatus"
 import { supabase } from "@/lib/supabase"
 import {
   applySupplierDocumentsToProfiles,
@@ -569,7 +570,7 @@ export default function ExecutiveCommandCentrePage() {
         0
       )
     const activeRFQs = data.rfqs.filter((rfq) =>
-      ["Open", "Active", "Published"].includes(String(rfq.status ?? ""))
+      ["open", "active", "published"].includes(String(rfq.status ?? "").trim().toLowerCase())
     ).length
     const activeContracts = data.contracts.filter((contract) =>
       ["Active", "In Progress"].includes(String(contract.status ?? ""))
@@ -587,7 +588,7 @@ export default function ExecutiveCommandCentrePage() {
         0
       )
     const verifiedSuppliers = data.suppliers.filter(
-      (supplier) => supplier.verification_status === "Verified"
+      (supplier) => isVerifiedStatus(supplier.verification_status)
     ).length
 
     const trend = buildTrend(data)

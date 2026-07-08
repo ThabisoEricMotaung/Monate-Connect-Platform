@@ -1,7 +1,17 @@
 "use client"
 
+import {
+  IconArchive,
+  IconArrowLeft,
+  IconBell,
+  IconExternalLink,
+  IconFile,
+  IconMail,
+  IconPaperclip,
+  IconSend,
+} from "@tabler/icons-react"
 import Link from "next/link"
-import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { FormEvent, KeyboardEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import {
@@ -85,9 +95,6 @@ type Thread = {
   deadline: string | null
   messages: ThreadMessage[]
 }
-
-const searchInputClass =
-  "w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30"
 
 function profileName(profile: ProfileSummary | undefined, fallback = "Platform"): string {
   if (!profile) return fallback
@@ -369,7 +376,7 @@ function IconButton({
   onClick,
 }: {
   label: string
-  children: string
+  children: ReactNode
   onClick?: () => void
 }) {
   return (
@@ -378,7 +385,7 @@ function IconButton({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-panel bg-panel text-sm font-bold text-heading transition hover:border-accent hover:bg-surface"
+      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#d8c79d]/50 bg-[#f8f4ec] text-[#1a3a2a] transition hover:border-[#c8a060] hover:bg-white"
     >
       {children}
     </button>
@@ -583,7 +590,7 @@ export default function MessagesPage() {
           event: "*",
           schema: "public",
           table: "notifications",
-          filter: `recipient_id=eq.${currentUserId}`,
+          filter: `user_id=eq.${currentUserId}`,
         },
         () => loadPageData({ silent: true }),
       )
@@ -861,26 +868,26 @@ export default function MessagesPage() {
   const showDeadlineWarning = deadlineDays != null && deadlineDays >= 0 && deadlineDays <= 3
 
   return (
-    <div className="h-[calc(100vh-9rem)] min-h-[720px] overflow-hidden rounded-md border border-panel bg-card shadow-panel">
+    <div className="h-[calc(100vh-9rem)] min-h-[720px] overflow-hidden rounded-md border border-[#d8c79d]/50 bg-[#f8f4ec] shadow-panel">
       <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)_280px]">
         <aside
-          className={`min-h-0 border-r border-panel bg-panel ${
+          className={`min-h-0 border-r border-[#254d38] bg-[#1a3a2a] text-[#f8f4ec] ${
             screenMode === "conversation" ? "hidden lg:flex" : "flex"
           } flex-col`}
         >
-          <div className="border-b border-panel p-4">
+          <div className="border-b border-white/10 p-4">
             <div className="flex items-center justify-between gap-3">
-              <h1 className="text-xl font-semibold text-heading">Messages</h1>
+              <h1 className="text-xl font-semibold text-[#f8f4ec]">Messages</h1>
               <button
                 type="button"
                 onClick={() => setShowNotifications(true)}
-                className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-panel bg-card text-heading xl:hidden"
+                className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/15 bg-white/10 text-[#f8f4ec] xl:hidden"
                 aria-label="Open notifications"
                 title="Open notifications"
               >
-                N
+                <IconBell aria-hidden="true" className="h-4 w-4" stroke={1.8} />
                 {unreadNotificationCount > 0 && (
-                  <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-rose-600" />
+                  <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-[#c8a060]" />
                 )}
               </button>
             </div>
@@ -888,9 +895,9 @@ export default function MessagesPage() {
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search conversations..."
-              className={`${searchInputClass} mt-4`}
+              className="mt-4 w-full rounded-md border border-white/15 bg-white/10 px-3 py-2.5 text-sm text-[#f8f4ec] outline-none transition placeholder:text-white/45 focus:border-[#c8a060] focus:ring-1 focus:ring-[#c8a060]/40"
             />
-            <div className="mt-4 grid grid-cols-3 rounded-md border border-panel bg-card p-1">
+            <div className="mt-4 grid grid-cols-3 rounded-md border border-white/10 bg-black/10 p-1">
               {[
                 { id: "all" as const, label: "All", count: unreadThreadCount },
                 { id: "unread" as const, label: "Unread" },
@@ -903,12 +910,12 @@ export default function MessagesPage() {
                   className={`rounded px-2 py-2 text-xs font-bold transition ${
                     threadTab === tab.id
                       ? "bg-surface text-heading shadow-sm"
-                      : "text-secondary hover:text-heading"
+                      : "text-[#f8f4ec]/70 hover:text-[#f8f4ec]"
                   }`}
                 >
                   {tab.label}
                   {tab.count ? (
-                    <span className="ml-1 rounded-full bg-rose-600 px-1.5 py-0.5 text-[0.6rem] text-white">
+                    <span className="ml-1 rounded-full bg-[#c8a060] px-1.5 py-0.5 text-[0.6rem] text-[#1a3a2a]">
                       {tab.count}
                     </span>
                   ) : null}
@@ -932,14 +939,14 @@ export default function MessagesPage() {
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-panel">
+              <div className="divide-y divide-white/10">
                 {visibleThreads.map((thread) => (
                   <button
                     key={thread.id}
                     type="button"
                     onClick={() => openThread(thread)}
-                    className={`flex w-full gap-3 p-4 text-left transition hover:bg-surface ${
-                      activeThread?.id === thread.id ? "bg-surface" : ""
+                    className={`flex w-full gap-3 p-4 text-left transition hover:bg-white/10 ${
+                      activeThread?.id === thread.id ? "bg-white/10" : ""
                     }`}
                   >
                     <ThreadAvatar thread={thread} />
@@ -947,27 +954,27 @@ export default function MessagesPage() {
                       <span className="flex items-center justify-between gap-2">
                         <span
                           className={`truncate text-sm ${
-                            thread.unread ? "font-bold text-heading" : "font-semibold text-secondary"
+                            thread.unread ? "font-bold text-[#f8f4ec]" : "font-semibold text-[#f8f4ec]/75"
                           }`}
                         >
                           {thread.senderName}
                         </span>
-                        <span className="shrink-0 text-[0.65rem] text-muted">
+                        <span className="shrink-0 text-[0.65rem] text-[#f8f4ec]/55">
                           {relativeTime(thread.timestamp)}
                         </span>
                       </span>
-                      <span className="mt-1 block truncate text-[0.68rem] font-bold uppercase tracking-[0.14em] text-accent">
+                      <span className="mt-1 block truncate text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[#c8a060]">
                         {thread.contextType} - {thread.contextTitle}
                       </span>
                       <span
                         className={`mt-1 block truncate text-xs ${
-                          thread.unread ? "font-bold text-heading" : "text-muted"
+                          thread.unread ? "font-bold text-[#f8f4ec]" : "text-[#f8f4ec]/55"
                         }`}
                       >
                         {thread.preview}
                       </span>
                     </span>
-                    {thread.unread && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-accent" />}
+                    {thread.unread && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#c8a060]" />}
                   </button>
                 ))}
               </div>
@@ -978,20 +985,20 @@ export default function MessagesPage() {
         <section
           className={`min-h-0 ${
             screenMode === "threads" ? "hidden lg:flex" : "flex"
-          } flex-col bg-page`}
+          } flex-col bg-[#f8f4ec]`}
         >
           {activeThread ? (
             <>
-              <div className="border-b border-panel bg-card p-4">
+              <div className="border-b border-[#d8c79d]/50 bg-white p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 gap-3">
                     <button
                       type="button"
                       onClick={() => setScreenMode("threads")}
-                      className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-panel bg-panel text-heading lg:hidden"
+                      className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#d8c79d]/50 bg-[#f8f4ec] text-[#1a3a2a] lg:hidden"
                       aria-label="Back to conversations"
                     >
-                      B
+                      <IconArrowLeft aria-hidden="true" className="h-4 w-4" stroke={1.8} />
                     </button>
                     <ThreadAvatar thread={activeThread} />
                     <div className="min-w-0">
@@ -1012,23 +1019,23 @@ export default function MessagesPage() {
                     <Link
                       href={documentHref(activeThread, isAdminOrBuyer)}
                       target="_blank"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-panel bg-panel text-sm font-bold text-heading transition hover:border-accent hover:bg-surface"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#d8c79d]/50 bg-[#f8f4ec] text-[#1a3a2a] transition hover:border-[#c8a060] hover:bg-white"
                       aria-label="View document"
                       title="View document"
                     >
-                      V
+                      <IconExternalLink aria-hidden="true" className="h-4 w-4" stroke={1.8} />
                     </Link>
                     <IconButton label="Archive conversation" onClick={archiveActiveThread}>
-                      A
+                      <IconArchive aria-hidden="true" className="h-4 w-4" stroke={1.8} />
                     </IconButton>
                     <IconButton label="Mark unread" onClick={markActiveUnread}>
-                      U
+                      <IconMail aria-hidden="true" className="h-4 w-4" stroke={1.8} />
                     </IconButton>
                   </div>
                 </div>
 
                 {!activeThread.platform && (
-                  <div className="mt-4 rounded-md border border-panel bg-panel p-4">
+                  <div className="mt-4 rounded-md border border-[#d8c79d]/60 bg-[#f8f4ec] p-4">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
                         <p className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-secondary">
@@ -1065,7 +1072,7 @@ export default function MessagesPage() {
                 </div>
               )}
 
-              <div ref={feedRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
+              <div ref={feedRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto bg-[#f8f4ec] p-5">
                 <p className="text-center text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted">
                   Conversation started {longDate(activeThread.messages[0]?.created_at ?? null)} when{" "}
                   {activeThread.messages[0]?.subject || "the procurement thread was opened"}
@@ -1091,8 +1098,8 @@ export default function MessagesPage() {
                         <div
                           className={`rounded-md px-4 py-3 text-sm leading-6 shadow-sm ${
                             message.mine
-                              ? "bg-accent text-button"
-                              : "border border-panel bg-card text-heading"
+                              ? "bg-[#1a3a2a] text-[#f8f4ec]"
+                              : "border border-[#d8c79d]/60 bg-white text-heading"
                           }`}
                         >
                           {message.message}
@@ -1103,7 +1110,7 @@ export default function MessagesPage() {
                             href={attachment.href ?? "#"}
                             className="mt-2 flex items-center gap-2 rounded-md border border-panel bg-card px-3 py-2 text-xs font-semibold text-heading"
                           >
-                            <span>F</span>
+                            <IconFile aria-hidden="true" className="h-4 w-4 shrink-0" stroke={1.8} />
                             <span className="truncate">{attachment.name}</span>
                             <span className="text-muted">{attachment.size}</span>
                           </a>
@@ -1120,7 +1127,7 @@ export default function MessagesPage() {
               </div>
 
               {!activeThread.platform && (
-                <form onSubmit={handleSend} className="border-t border-panel bg-card p-4">
+                <form onSubmit={handleSend} className="border-t border-[#d8c79d]/50 bg-white p-4">
                   {pendingFiles.length > 0 && (
                     <div className="mb-3 flex flex-wrap gap-2">
                       {pendingFiles.map((file) => (
@@ -1133,7 +1140,7 @@ export default function MessagesPage() {
                       ))}
                     </div>
                   )}
-                  <div className="flex items-end gap-3 rounded-md border border-panel bg-panel p-2">
+                  <div className="flex items-end gap-3 rounded-md border border-[#d8c79d]/60 bg-[#f8f4ec] p-2">
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -1144,11 +1151,11 @@ export default function MessagesPage() {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-panel bg-card text-heading transition hover:border-accent"
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#d8c79d]/50 bg-white text-[#1a3a2a] transition hover:border-[#c8a060]"
                       aria-label="Attach files"
                       title="Attach files"
                     >
-                      P
+                      <IconPaperclip aria-hidden="true" className="h-4 w-4" stroke={1.8} />
                     </button>
                     <textarea
                       ref={textareaRef}
@@ -1162,11 +1169,11 @@ export default function MessagesPage() {
                     <button
                       type="submit"
                       disabled={sending || !replyText.trim()}
-                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-accent bg-accent text-sm font-bold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#1a3a2a] bg-[#1a3a2a] text-[#f8f4ec] transition hover:bg-[#244f39] disabled:cursor-not-allowed disabled:opacity-50"
                       aria-label="Send message"
                       title="Send message"
                     >
-                      S
+                      <IconSend aria-hidden="true" className="h-4 w-4" stroke={1.8} />
                     </button>
                   </div>
                 </form>

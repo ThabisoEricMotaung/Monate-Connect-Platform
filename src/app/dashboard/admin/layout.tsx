@@ -283,6 +283,13 @@ export default function AdminDashboardLayout({
             badgeTone: "danger",
           },
           {
+            name: "Messages",
+            href: "/dashboard/messages",
+            icon: IconMessageCircle,
+            badge: metrics.unreadMessages,
+            badgeTone: "danger",
+          },
+          {
             name: "Purchase orders",
             href: "/dashboard/admin/purchase-orders",
             icon: IconShoppingCart,

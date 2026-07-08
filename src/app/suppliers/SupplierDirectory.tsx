@@ -286,7 +286,13 @@ function EmptyState() {
   )
 }
 
-export default function SupplierDirectory({ suppliers }: { suppliers: PublicSupplierDirectoryRow[] }) {
+export default function SupplierDirectory({
+  suppliers,
+  errorMessage = "",
+}: {
+  suppliers: PublicSupplierDirectoryRow[]
+  errorMessage?: string
+}) {
   const [query, setQuery] = useState("")
   const [province, setProvince] = useState("")
   const [industry, setIndustry] = useState("")
@@ -398,6 +404,11 @@ export default function SupplierDirectory({ suppliers }: { suppliers: PublicSupp
               style={{ borderColor: "rgba(200,160,96,0.55)" }}
             />
           </div>
+          {errorMessage && (
+            <div className="mt-5 rounded-md border border-[#c8a060]/60 bg-[#f8f4ec] px-4 py-3 text-sm font-semibold text-[#1a3a2a]">
+              Supplier directory is temporarily unavailable. The issue has been logged for review.
+            </div>
+          )}
         </div>
       </section>
 

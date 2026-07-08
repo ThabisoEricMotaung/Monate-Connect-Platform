@@ -6,7 +6,8 @@ import Link from "next/link"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { getComplianceStatus } from "@/lib/complianceStatus"
 import { displayIndustry } from "@/lib/industries"
-import { calculateSupplierScore, type SupplierScore } from "@/lib/supplierScore"
+import { calculateSupplierSmartScore, type SmartScoreResult } from "@/lib/smartScore"
+import { isVerifiedStatus } from "@/lib/supplierStatus"
 import { supabase } from "@/lib/supabase"
 import {
   applySupplierDocumentsToProfiles,
@@ -55,7 +56,7 @@ type RiskAssessment = {
 type AssessedSupplier = {
   profile: SupplierProfile
   risk: RiskAssessment
-  readiness: SupplierScore
+  readiness: SmartScoreResult
 }
 
 // --- Constants ----------------------------------------------------------------
@@ -192,7 +193,7 @@ function assessRisk(profile: SupplierProfile): RiskAssessment {
   }
 
   // Verification gap
-  if (profile.verification_status !== "Verified") score += 2
+  if (!isVerifiedStatus(profile.verification_status)) score += 2
 
   const level: RiskLevel =
     score >= 12
@@ -552,7 +553,7 @@ export default function ComplianceRiskPage() {
       .map((profile) => ({
         profile,
         risk: assessRisk(profile),
-        readiness: calculateSupplierScore(profile),
+        readiness: calculateSupplierSmartScore(profile),
       }))
       .sort((a, b) => {
         const levelDiff =

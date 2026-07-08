@@ -9,9 +9,10 @@ import {
   normalizePurchaseOrderStatus,
 } from "@/lib/purchaseOrders"
 import {
-  calculateSmartScore,
+  calculateSupplierSmartScore,
   getSmartScoreColour,
 } from "@/lib/smartScore"
+import { buildSupplierActivityById } from "@/lib/intelligence"
 import { supabase } from "@/lib/supabase"
 import { applySupplierDocuments, fetchSupplierDocumentsForProfile } from "@/lib/supplierDocuments"
 
@@ -186,14 +187,14 @@ export default function DashboardPage() {
         if (profileRes.error) throw profileRes.error
 
         if (!profileRes.data) {
-          setSmartScore(calculateSmartScore({
+          setSmartScore(calculateSupplierSmartScore({
             business_name: user.user_metadata.business_name,
             province: user.user_metadata.province,
             industry: user.user_metadata.industry,
             phone: user.user_metadata.phone,
             email: user.email,
             verification_status: user.user_metadata.verification_status,
-          }))
+          }).score)
           setSmartScoreError("We couldn't find a profile record yet. This score is based on your account metadata.")
           return
         }
@@ -202,22 +203,36 @@ export default function DashboardPage() {
           console.warn("SmartScore bank fetch failed:", bankRes.error)
         }
 
-        const storedScoreRaw = Number(profileRes.data.smart_score ?? 0)
-        const storedScore = storedScoreRaw > 100 ? Math.round(storedScoreRaw / 10) : storedScoreRaw
-        const documentResult = await fetchSupplierDocumentsForProfile(user.id)
+        const [documentResult, quoteActivityRes, contractActivityRes, invoiceActivityRes, paymentActivityRes] = await Promise.all([
+          fetchSupplierDocumentsForProfile(user.id),
+          supabase.from("quotes").select("id, supplier_id, status").eq("supplier_id", user.id),
+          supabase.from("contracts").select("id, supplier_id, status").eq("supplier_id", user.id),
+          supabase.from("invoices").select("id, supplier_id, status").eq("supplier_id", user.id),
+          supabase.from("payments").select("id, supplier_id, status").eq("supplier_id", user.id),
+        ])
         const hydratedProfile = applySupplierDocuments(profileRes.data, documentResult.documents)
-        const calculatedScore = calculateSmartScore({
-          ...hydratedProfile,
-          bank_name: bankRes.data?.bank_name ?? null,
-          bank_account_number: bankRes.data?.account_number ?? null,
-          bank_verification_status: bankRes.data?.verification_status ?? null,
+        const activityBySupplier = buildSupplierActivityById({
+          supplierIds: [user.id],
+          quotes: (quoteActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+          contracts: (contractActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+          invoices: (invoiceActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+          payments: (paymentActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
         })
-        const displayScore = storedScore > 0 ? storedScore : calculatedScore
+        const calculatedScore = calculateSupplierSmartScore(
+          {
+            ...hydratedProfile,
+            bank_name: bankRes.data?.bank_name ?? null,
+            bank_account_number: bankRes.data?.account_number ?? null,
+            bank_verification_status: bankRes.data?.verification_status ?? null,
+          },
+          activityBySupplier[user.id] ?? {},
+        ).score
+        const displayScore = calculatedScore
 
         setSmartScore(displayScore)
         setSmartScoreError("")
 
-        if (displayScore !== storedScoreRaw) {
+        if (displayScore !== Number(profileRes.data.smart_score ?? 0)) {
           void supabase
             .from("profiles")
             .update({ smart_score: displayScore, updated_at: new Date().toISOString() })

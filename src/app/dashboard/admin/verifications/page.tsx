@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react"
 import type { ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import SignedDocumentLink from "@/components/SignedDocumentLink"
-import { calculateSmartScore } from "@/lib/smartScore"
+import { buildSupplierActivityById } from "@/lib/intelligence"
+import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import {
   activeSupplierDocuments,
@@ -668,6 +669,31 @@ export default function AdminVerificationQueuePage() {
     }
   }
 
+  async function calculateCanonicalSmartScore(profile: SupplierProfile, bank?: BankDetails) {
+    if (!supabase) {
+      return calculateSupplierSmartScore(mergeBankFields(profile, bank)).score
+    }
+
+    const [quoteRes, contractRes, invoiceRes, paymentRes] = await Promise.all([
+      supabase.from("quotes").select("id, supplier_id, status").eq("supplier_id", profile.id),
+      supabase.from("contracts").select("id, supplier_id, status").eq("supplier_id", profile.id),
+      supabase.from("invoices").select("id, supplier_id, status").eq("supplier_id", profile.id),
+      supabase.from("payments").select("id, supplier_id, status").eq("supplier_id", profile.id),
+    ])
+    const activityBySupplier = buildSupplierActivityById({
+      supplierIds: [profile.id],
+      quotes: (quoteRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+      contracts: (contractRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+      invoices: (invoiceRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+      payments: (paymentRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+    })
+
+    return calculateSupplierSmartScore(
+      mergeBankFields(profile, bank),
+      activityBySupplier[profile.id] ?? {},
+    ).score
+  }
+
   function toggleChecklistOpen(profileId: string, step: VerificationStep) {
     const key = `${profileId}:${step}`
     setChecklistOpen((current) => ({ ...current, [key]: !current[key] }))
@@ -734,7 +760,7 @@ export default function AdminVerificationQueuePage() {
       step === "banking" && bank
         ? { ...bank, verification_status: bankStatusForVerified(verified) }
         : bank
-    const nextSmartScore = calculateSmartScore(mergeBankFields(scoreProfile, nextBank))
+    const nextSmartScore = await calculateCanonicalSmartScore(scoreProfile, nextBank)
     const pendingKey = `${step}-${verified ? "approve" : "revoke"}`
 
     setPendingAction({ supplierId: currentProfile.id, key: pendingKey })
@@ -840,7 +866,7 @@ export default function AdminVerificationQueuePage() {
       action === "verify" && bank
         ? { ...bank, verification_status: bankStatusForVerified(true) }
         : bank
-    const nextSmartScore = calculateSmartScore(mergeBankFields(scoreProfile, nextBank))
+    const nextSmartScore = await calculateCanonicalSmartScore(scoreProfile, nextBank)
     const pendingKey = `bulk-${action}`
 
     setPendingAction({ supplierId: currentProfile.id, key: pendingKey })
@@ -911,7 +937,7 @@ export default function AdminVerificationQueuePage() {
     if (!supabase) return
 
     const nextNote = notesBySupplier[profile.id] ?? ""
-    const nextSmartScore = calculateSmartScore(mergeBankFields(profile, banksBySupplier[profile.id]))
+    const nextSmartScore = await calculateCanonicalSmartScore(profile, banksBySupplier[profile.id])
     const pendingKey = "notes"
 
     setPendingAction({ supplierId: profile.id, key: pendingKey })

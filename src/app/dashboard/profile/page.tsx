@@ -11,7 +11,7 @@ import { logEvent } from "@/hooks/useSessionTracking"
 import { logActivity } from "@/lib/activity"
 import { OFFICIAL_INDUSTRY_OPTIONS, displayIndustry, industryFormValue } from "@/lib/industries"
 import {
-  calculateSmartScore,
+  calculateSupplierSmartScore,
   getSmartScoreBreakdown,
   type SupplierSmartScoreProfile,
 } from "@/lib/smartScore"
@@ -348,17 +348,20 @@ function scoreProfile(profile: Profile | null, bank: BankRecord | null): Supplie
   }
 }
 
-function syncSmartScore(userId: string, profile: Profile | null, bank: BankRecord | null) {
+function syncSmartScore(userId: string, profile: Profile | null) {
   if (!supabase || !userId || !profile) return
-  const score = calculateSmartScore(scoreProfile(profile, bank))
 
-  void supabase
-    .from("profiles")
-    .update({ smart_score: score, updated_at: new Date().toISOString() })
-    .eq("id", userId)
-    .then(({ error }) => {
-      if (error) console.warn("SmartScore update failed:", error.message)
+  void supabase.auth.getSession().then(({ data }) => {
+    const token = data.session?.access_token
+    if (!token) return
+
+    void fetch("/api/profile/update-score", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch((error) => {
+      console.warn("SmartScore update failed:", error)
     })
+  })
 }
 
 // --- Score circle (0-100) ---
@@ -764,7 +767,7 @@ function ProfileHeaderCard({
     profile.full_name?.trim() ||
     profile.email?.trim() ||
     businessName
-  const smartScore = calculateSmartScore(scoreProfile(profile, bank))
+  const smartScore = calculateSupplierSmartScore(scoreProfile(profile, bank)).score
   const location = profile.province ? displayProvinceValue(profile.province) : ""
   const profileMeta = [displayIndustry(profile.industry), location].filter(Boolean).join(" | ") || "Industry | Province"
   const [uploading, setUploading] = useState<"avatar" | "logo" | null>(null)
@@ -2161,7 +2164,7 @@ function BankingTab({
 function SmartScoreCard({ profile, bank }: { profile: Profile | null; bank: BankRecord | null }) {
   const smartProfile = scoreProfile(profile, bank)
   const items = getSmartScoreBreakdown(smartProfile)
-  const score = calculateSmartScore(smartProfile)
+  const score = calculateSupplierSmartScore(smartProfile).score
 
   const levelLabel =
     score >= 90
@@ -2366,7 +2369,7 @@ function ProfilePageInner() {
     }
     setProfile((p) => {
       const updated = p ? { ...p, ...patch } : p
-      syncSmartScore(userId, updated, bank)
+      syncSmartScore(userId, updated)
       return updated
     })
     setHasUnsaved(false)
@@ -2388,7 +2391,7 @@ function ProfilePageInner() {
     setProfile((p) => {
       const updated = p ? applySupplierDocuments(p, nextDocuments) : p
       if (updated) setDocUrls(docUrlsFromDocuments(updated, nextDocuments))
-      syncSmartScore(userId, updated, bank)
+      syncSmartScore(userId, updated)
       return updated
     })
     void logEvent("document_uploaded", { document_type: document.document_type, path: document.file_url })
@@ -2396,7 +2399,7 @@ function ProfilePageInner() {
 
   function handleBankSaved(record: BankRecord) {
     setBank(record)
-    syncSmartScore(userId, profile, record)
+    syncSmartScore(userId, profile)
   }
 
   async function handleDeleteAccount() {

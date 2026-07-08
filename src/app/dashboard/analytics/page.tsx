@@ -18,6 +18,7 @@ import {
 import { getCurrentProfile } from "@/lib/auth"
 import { getComplianceStatus } from "@/lib/complianceStatus"
 import { supabase } from "@/lib/supabase"
+import { isVerifiedStatus } from "@/lib/supplierStatus"
 
 // --- Types -------------------------------------------------------------------
 
@@ -480,10 +481,10 @@ export default function AnalyticsDashboardPage() {
       totalRFQs: filteredRFQs.length,
       totalQuotes: filteredQuotes.length,
       verifiedSuppliers: profiles.filter(
-        (p) => p.verification_status === "Verified"
+        (p) => isVerifiedStatus(p.verification_status)
       ).length,
       purchaseOrders: filteredPOs.length,
-      awardedRFQs: filteredRFQs.filter((r) => r.status === "Awarded").length,
+      awardedRFQs: filteredRFQs.filter((r) => r.status?.trim().toLowerCase() === "awarded").length,
       activeSuppliers: activeIds.size,
     }
   }, [filteredRFQs, filteredQuotes, profiles, filteredPOs])

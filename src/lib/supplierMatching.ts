@@ -1,7 +1,8 @@
 import { supabase } from "./supabase"
-import { calculateSupplierScore, type SupplierScoreProfile } from "./supplierScore"
+import { calculateSupplierSmartScore, type SupplierSmartScoreProfile } from "./smartScore"
 import { getComplianceStatus } from "./complianceStatus"
 import { displayIndustry } from "./industries"
+import { isVerifiedStatus } from "./supplierStatus"
 import {
   applySupplierDocumentsToProfiles,
   fetchSupplierDocumentsByProfileIds,
@@ -171,13 +172,13 @@ export function calculateSupplierMatch(
   if (indReason) reasons.push(indReason)
 
   // 3. Verification status (+15)
-  if (supplier.verification_status === "Verified") {
+  if (isVerifiedStatus(supplier.verification_status)) {
     breakdown.verificationBonus = 15
     reasons.push("Verified supplier with confirmed compliance documentation")
   }
 
   // 4. Supplier readiness score above 80 (+15)
-  const scoreProfile: SupplierScoreProfile = {
+  const scoreProfile: SupplierSmartScoreProfile = {
     business_name: supplier.business_name,
     province: supplier.province,
     industry: supplier.industry,
@@ -194,7 +195,7 @@ export function calculateSupplierMatch(
     cidb_document_url: supplier.cidb_document_url,
     capability_statement_url: supplier.capability_statement_url,
   }
-  const { score: readiness } = calculateSupplierScore(scoreProfile)
+  const { score: readiness } = calculateSupplierSmartScore(scoreProfile)
   if (readiness >= 80) {
     breakdown.readinessBonus = 15
     reasons.push(`High readiness score of ${readiness}/100 — strong procurement candidate`)

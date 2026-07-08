@@ -12,6 +12,7 @@ export type NotificationType =
   | "Invoice Approved"
   | "Payment Paid"
   | "Clarification Response"
+  | "Message Received"
   | "Compliance Expiry Warning"
 
 export type Notification = {

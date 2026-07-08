@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase"
+import { createNotification } from "@/lib/notifications"
 
 export type ProcurementMessage = {
   id: number
@@ -133,6 +134,14 @@ export async function sendMessage({
     })
     throw new Error(error.message)
   }
+
+  await createNotification({
+    userId: normalizedReceiverId,
+    type: "Message Received",
+    title: subject.trim(),
+    message: message.trim(),
+    link: `/dashboard/messages?thread_message=${data.id}`,
+  })
 
   return data as ProcurementMessage
 }

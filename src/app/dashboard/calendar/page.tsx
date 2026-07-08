@@ -286,7 +286,7 @@ export default function ProcurementCalendarPage() {
       .filter(isCalendarEvent)
 
     const awardedEvents = rfqs
-      .filter((rfq) => rfq.status === "Awarded")
+      .filter((rfq) => rfq.status?.trim().toLowerCase() === "awarded")
       .map((rfq): CalendarEvent | null => {
         const eventDate = toEventDate(rfq.deadline ?? rfq.created_at)
         if (!eventDate) return null

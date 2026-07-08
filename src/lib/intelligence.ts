@@ -1,6 +1,11 @@
 import { supabase } from "./supabase"
 import { displayIndustry } from "./industries"
-import { calculateSupplierSmartScore, type SmartScoreResult } from "./smartScore"
+import {
+  calculateSupplierSmartScore,
+  type SmartScoreResult,
+  type SupplierSmartScoreActivity,
+} from "./smartScore"
+import { isVerifiedStatus } from "./supplierStatus"
 import {
   applySupplierDocumentsToProfiles,
   fetchSupplierDocumentsByProfileIds,
@@ -103,6 +108,62 @@ export type RegionalInsightRecord = {
   activeContracts: number
 }
 
+type ActivityQuote = { supplier_id: string | null; status: string | null }
+type ActivityContract = { supplier_id: string | null; status: string | null }
+type ActivityInvoice = { supplier_id: string | null; status: string | null }
+type ActivityPayment = { supplier_id: string | null; status: string | null }
+
+export function buildSupplierActivityById({
+  supplierIds,
+  quotes,
+  contracts,
+  invoices,
+  payments,
+}: {
+  supplierIds: string[]
+  quotes: ActivityQuote[]
+  contracts: ActivityContract[]
+  invoices: ActivityInvoice[]
+  payments: ActivityPayment[]
+}): Record<string, SupplierSmartScoreActivity> {
+  return Object.fromEntries(
+    supplierIds.map((supplierId) => {
+      const supplierQuotes = quotes.filter((q) => q.supplier_id === supplierId)
+      const supplierContracts = contracts.filter((c) => c.supplier_id === supplierId)
+      const supplierInvoices = invoices.filter((i) => i.supplier_id === supplierId)
+      const supplierPayments = payments.filter((payment) => payment.supplier_id === supplierId)
+      const awardedQuotes = supplierQuotes.filter((q) => q.status === "Awarded" || q.status === "Approved").length
+      const completedContracts = supplierContracts.filter((c) => c.status === "Completed").length
+      const approvedInvoices = supplierInvoices.filter((i) => i.status === "Approved" || i.status === "Paid").length
+      const paidInvoices = supplierInvoices.filter((i) => i.status === "Paid").length
+      const paidPayments = supplierPayments.filter((payment) => payment.status === "Paid").length
+      const paymentReliabilityRate = approvedInvoices > 0
+        ? Math.round((paidInvoices / approvedInvoices) * 100)
+        : supplierPayments.length > 0
+          ? Math.round((paidPayments / supplierPayments.length) * 100)
+          : 0
+
+      return [
+        supplierId,
+        {
+          rfqResponses: supplierQuotes.length,
+          awardedQuotes,
+          contracts: supplierContracts.length,
+          completedContracts,
+          invoices: supplierInvoices.length,
+          approvedInvoices,
+          paidInvoices,
+          payments: supplierPayments.length,
+          paidPayments,
+          paymentReliabilityRate,
+          recentActivityCount:
+            supplierQuotes.length + supplierContracts.length + supplierInvoices.length + supplierPayments.length,
+        },
+      ]
+    }),
+  )
+}
+
 // ─── getExecutiveMetrics ──────────────────────────────────────────────────────
 
 export async function getExecutiveMetrics(): Promise<ExecutiveMetrics> {
@@ -140,7 +201,7 @@ export async function getExecutiveMetrics(): Promise<ExecutiveMetrics> {
   )
   const activeSuppliers = activeSupplierIds.size
 
-  const activeRFQs = rfqs.filter((r) => r.status === "Open").length
+  const activeRFQs = rfqs.filter((r) => r.status?.trim().toLowerCase() === "open").length
 
   const awardedContracts = contracts.filter((c) =>
     c.status === "Active" || c.status === "Completed"
@@ -160,9 +221,11 @@ export async function getExecutiveMetrics(): Promise<ExecutiveMetrics> {
     : 0
 
   // Health score: weighted composite
-  const closedRFQs = rfqs.filter((r) => r.status === "Awarded" || r.status === "Closed" || r.status === "Cancelled")
+  const closedRFQs = rfqs.filter((r) =>
+    ["awarded", "closed", "cancelled"].includes(r.status?.trim().toLowerCase() ?? "")
+  )
   const awardRate = closedRFQs.length > 0
-    ? rfqs.filter((r) => r.status === "Awarded").length / closedRFQs.length
+    ? rfqs.filter((r) => r.status?.trim().toLowerCase() === "awarded").length / closedRFQs.length
     : 0
 
   const approvedInvoices = invoices.filter((i) => i.status === "Approved" || i.status === "Paid")
@@ -176,7 +239,7 @@ export async function getExecutiveMetrics(): Promise<ExecutiveMetrics> {
     : 0
 
   const supplierCount = profiles.filter((p) => p.role === "supplier").length
-  const verifiedCount = profiles.filter((p) => p.verification_status === "Verified").length
+  const verifiedCount = profiles.filter((p) => isVerifiedStatus(p.verification_status)).length
   const verificationRate = supplierCount > 0 ? verifiedCount / supplierCount : 0
 
   const procurementHealthScore = Math.round(
@@ -243,6 +306,14 @@ export async function getSupplierScores(): Promise<SupplierIntelligenceRecord[]>
   const totalRFQs = await supabase.from("rfqs").select("id", { count: "exact", head: true })
   const rfqTotal = totalRFQs.count ?? 1
 
+  const activityBySupplier = buildSupplierActivityById({
+    supplierIds: profiles.map((profile) => profile.id),
+    quotes,
+    contracts,
+    invoices,
+    payments,
+  })
+
   return profiles.map((p) => {
     const supplierQuotes = quotes.filter((q) => q.supplier_id === p.id)
     const supplierContracts = contracts.filter((c) => c.supplier_id === p.id)
@@ -251,7 +322,7 @@ export async function getSupplierScores(): Promise<SupplierIntelligenceRecord[]>
     const bankingVerified = banking.some(
       (record) =>
         record.supplier_id === p.id &&
-        String(record.verification_status ?? "").toLowerCase().includes("verified")
+        isVerifiedStatus(record.verification_status)
     )
 
     const responseRate = Math.min(100, Math.round((supplierQuotes.length / rfqTotal) * 100))
@@ -293,20 +364,7 @@ export async function getSupplierScores(): Promise<SupplierIntelligenceRecord[]>
         ...p,
         bank_verified: bankingVerified,
       },
-      {
-      rfqResponses: supplierQuotes.length,
-      awardedQuotes,
-      contracts: supplierContracts.length,
-      completedContracts,
-      invoices: supplierInvoices.length,
-      approvedInvoices,
-      paidInvoices,
-      payments: supplierPayments.length,
-      paidPayments: supplierPayments.filter((payment) => payment.status === "Paid").length,
-      paymentReliabilityRate,
-      recentActivityCount:
-        supplierQuotes.length + supplierContracts.length + supplierInvoices.length + supplierPayments.length,
-      }
+      activityBySupplier[p.id] ?? {}
     )
 
     const riskLevel: "Low" | "Medium" | "High" =

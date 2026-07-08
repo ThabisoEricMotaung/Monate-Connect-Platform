@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts"
 import { supabase } from "@/lib/supabase"
+import { isVerifiedStatus } from "@/lib/supplierStatus"
 import {
   applySupplierDocumentsToProfiles,
   fetchSupplierDocumentsByProfileIds,
@@ -331,7 +332,7 @@ export default function ComplianceReportPage() {
 
     return {
       totalSuppliers,
-      verifiedSuppliers: data.suppliers.filter((supplier) => supplier.verification_status === "Verified").length,
+      verifiedSuppliers: data.suppliers.filter((supplier) => isVerifiedStatus(supplier.verification_status)).length,
       pendingVerification: data.suppliers.filter((supplier) => supplier.verification_status === "Pending Review").length,
       bbbeeCompliant: data.suppliers.filter((supplier) => hasValue(supplier.bbbee_level)).length,
       csdRegistered: data.suppliers.filter((supplier) => hasValue(supplier.csd_number)).length,

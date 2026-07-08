@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import SaveSupplierControl from "@/components/suppliers/SaveSupplierControl"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { getSavedSuppliers, type SavedSupplier } from "@/lib/savedSuppliers"
-import { calculateSupplierScore } from "@/lib/supplierScore"
+import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import {
   applySupplierDocumentsToProfiles,
@@ -66,7 +66,7 @@ function scoreBar(score: number): string {
 }
 
 function ReadinessScore({ supplier }: { supplier: SupplierProfile }) {
-  const readiness = calculateSupplierScore(supplier)
+  const readiness = calculateSupplierSmartScore(supplier)
 
   return (
     <div>

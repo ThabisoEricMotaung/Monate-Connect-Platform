@@ -427,9 +427,9 @@ export default function AwardReportPage() {
       await Promise.all([
         supabase.from("quotes").update({ status: "Awarded" }).eq("id", selectedQuoteId).eq("rfq_id", rfqId),
         supabase.from("quotes").update({ status: "Not Awarded" }).eq("rfq_id", rfqId).neq("id", selectedQuoteId),
-        supabase.from("rfqs").update({ status: "Awarded" }).eq("id", rfqId),
+        supabase.from("rfqs").update({ status: "awarded" }).eq("id", rfqId),
       ])
-      setRfq(prev => prev ? { ...prev, status: "Awarded" } : prev)
+      setRfq(prev => prev ? { ...prev, status: "awarded" } : prev)
       setQuotes(prev => prev.map(q => ({ ...q, status: q.id === selectedQuoteId ? "Awarded" : "Not Awarded" })))
     }
 

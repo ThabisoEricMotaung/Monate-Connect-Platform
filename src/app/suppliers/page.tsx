@@ -3,11 +3,13 @@ import SupplierDirectory, { type PublicSupplierDirectoryRow } from "./SupplierDi
 
 async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (!supabaseUrl || !supabaseAnonKey) return []
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("Supabase is not configured")
+  }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
@@ -20,6 +22,7 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
   let { data, error } = await supabase
     .from("profiles")
     .select(`${baseSelect},company_logo_url`)
+    .eq("role", "supplier")
     .order("smart_score", { ascending: false, nullsFirst: false })
     .order("business_name", { ascending: true })
 
@@ -27,6 +30,7 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
     const retry = await supabase
       .from("profiles")
       .select(baseSelect)
+      .eq("role", "supplier")
       .order("smart_score", { ascending: false, nullsFirst: false })
       .order("business_name", { ascending: true })
     data = retry.data?.map((supplier) => ({ ...supplier, company_logo_url: null })) ?? null
@@ -35,14 +39,21 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
 
   if (error) {
     console.error("Public supplier directory fetch failed:", error)
-    return []
+    throw new Error(error.message)
   }
 
   return (data ?? []) as unknown as PublicSupplierDirectoryRow[]
 }
 
 export default async function SuppliersPage() {
-  const suppliers = await getPublicSuppliers()
+  let suppliers: PublicSupplierDirectoryRow[] = []
+  let errorMessage = ""
 
-  return <SupplierDirectory suppliers={suppliers} />
+  try {
+    suppliers = await getPublicSuppliers()
+  } catch (error) {
+    errorMessage = error instanceof Error ? error.message : "Supplier directory is temporarily unavailable."
+  }
+
+  return <SupplierDirectory suppliers={suppliers} errorMessage={errorMessage} />
 }

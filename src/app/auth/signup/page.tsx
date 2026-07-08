@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { IconArrowLeft } from "@tabler/icons-react"
 import PasswordInput from "@/components/PasswordInput"
 import { OFFICIAL_INDUSTRY_OPTIONS } from "@/lib/industries"
-import { calculateSmartScore } from "@/lib/smartScore"
+import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import {
   NATIONAL_PROVINCE_VALUE,
@@ -626,12 +626,12 @@ export default function SignupPage() {
     setLoading(true)
 
     if (supabase && userId) {
-      const smartScore = calculateSmartScore({
+      const smartScore = calculateSupplierSmartScore({
         business_name: form.businessName,
         industry: form.industry,
         provinces: form.provinces,
         phone: form.phone,
-      })
+      }).score
       await supabase.from("profiles").upsert({
         id: userId,
         business_name: form.businessName,
@@ -671,14 +671,14 @@ export default function SignupPage() {
         setLoading(false)
         return
       }
-      const smartScore = calculateSmartScore({
+      const smartScore = calculateSupplierSmartScore({
         business_name: form.businessName,
         industry: form.industry,
         provinces: form.provinces,
         phone: form.phone,
         csd_number: form.csdNumber,
         bbbee_level: form.bbeeLevel,
-      })
+      }).score
       await supabase.from("profiles").upsert({
         id: userId,
         csd_number: form.csdNumber,
@@ -729,14 +729,14 @@ export default function SignupPage() {
     const normalizedEmail = form.email.trim().toLowerCase()
     const fullName = fullNameFromParts(form.firstName, form.lastName)
 
-    const smartScore = calculateSmartScore({
+    const smartScore = calculateSupplierSmartScore({
       business_name: form.businessName,
       industry: form.industry,
       provinces: form.provinces,
       phone: form.phone,
       csd_number: form.csdNumber,
       bbbee_level: form.bbeeLevel,
-    })
+    }).score
 
     try {
       await uploadCsdDocumentIfNeeded()

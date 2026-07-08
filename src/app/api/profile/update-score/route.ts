@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
-import { calculateSmartScore } from "@/lib/smartScore"
+import { buildSupplierActivityById } from "@/lib/intelligence"
+import { calculateSupplierSmartScore } from "@/lib/smartScore"
 
 export async function POST(request: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
     return new Response("Unauthorized", { status: 401 })
   }
 
-  const [profileRes, bankRes] = await Promise.all([
+  const [profileRes, bankRes, quoteRes, contractRes, invoiceRes, paymentRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
     supabase
       .from("supplier_bank_details")
@@ -41,6 +42,10 @@ export async function POST(request: Request) {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase.from("quotes").select("id, supplier_id, status").eq("supplier_id", user.id),
+    supabase.from("contracts").select("id, supplier_id, status").eq("supplier_id", user.id),
+    supabase.from("invoices").select("id, supplier_id, status").eq("supplier_id", user.id),
+    supabase.from("payments").select("id, supplier_id, status").eq("supplier_id", user.id),
   ])
 
   if (profileRes.error) {
@@ -51,12 +56,22 @@ export async function POST(request: Request) {
     return new Response("Not found", { status: 404 })
   }
 
-  const score = calculateSmartScore({
-    ...profileRes.data,
-    bank_name: bankRes.data?.bank_name ?? null,
-    bank_account_number: bankRes.data?.account_number ?? null,
-    bank_verification_status: bankRes.data?.verification_status ?? null,
+  const activityBySupplier = buildSupplierActivityById({
+    supplierIds: [user.id],
+    quotes: (quoteRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+    contracts: (contractRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+    invoices: (invoiceRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+    payments: (paymentRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
   })
+  const score = calculateSupplierSmartScore(
+    {
+      ...profileRes.data,
+      bank_name: bankRes.data?.bank_name ?? null,
+      bank_account_number: bankRes.data?.account_number ?? null,
+      bank_verification_status: bankRes.data?.verification_status ?? null,
+    },
+    activityBySupplier[user.id] ?? {},
+  ).score
 
   const { error: updateError } = await supabase
     .from("profiles")

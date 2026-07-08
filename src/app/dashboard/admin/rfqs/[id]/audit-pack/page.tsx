@@ -215,7 +215,10 @@ export default function AuditPackPage() {
         findings.push(`Awarded supplier: ${awardedQuote.supplier_name ?? supplierId}`)
       }
 
-      if (loadedQuotes.filter((q) => q.status === "Awarded").length === 0 && loadedRfq.status === "Awarded") {
+      if (
+        loadedQuotes.filter((q) => q.status === "Awarded").length === 0 &&
+        loadedRfq.status?.trim().toLowerCase() === "awarded"
+      ) {
         findings.push("RFQ is marked Awarded but no quote has Awarded status — verify award records.")
         status = "Exceptions Noted"
       }

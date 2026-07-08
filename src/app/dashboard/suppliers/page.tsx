@@ -10,7 +10,9 @@ import {
 } from "@/lib/supplierPerformance"
 import { useI18n } from "@/lib/i18n"
 import { displayIndustry } from "@/lib/industries"
-import { calculateSupplierSmartScore } from "@/lib/smartScore"
+import { buildSupplierActivityById } from "@/lib/intelligence"
+import { calculateSupplierSmartScore, type SupplierSmartScoreActivity } from "@/lib/smartScore"
+import { isVerifiedStatus } from "@/lib/supplierStatus"
 import { supabase } from "@/lib/supabase"
 import { hasComplianceWarning } from "@/lib/complianceStatus"
 import { createWhatsAppLink } from "@/lib/whatsapp"
@@ -44,6 +46,7 @@ type SupplierProfile = {
   csd_expiry_date: string | null
   cidb_expiry_date: string | null
   supplier_documents?: SupplierDocument[]
+  bank_verified?: boolean | null
 }
 
 type SupplierReview = SupplierPerformanceReview & {
@@ -82,15 +85,18 @@ function normalize(value: string | null): string {
 function ReadinessScore({
   supplier,
   reviews,
+  activity,
 }: {
   supplier: SupplierProfile
   reviews: SupplierPerformanceReview[]
+  activity: SupplierSmartScoreActivity
 }) {
   const performance = calculateSupplierPerformance(reviews)
   const score = calculateSupplierSmartScore(supplier, {
+    ...activity,
     reviewCount: performance.reviewCount,
     averageRating: performance.averageScore,
-    recentActivityCount: performance.reviewCount,
+    recentActivityCount: (activity.recentActivityCount ?? 0) + performance.reviewCount,
   })
 
   return (
@@ -169,6 +175,7 @@ export default function SuppliersDirectoryPage() {
   const [reviewsBySupplier, setReviewsBySupplier] = useState<
     Record<string, SupplierPerformanceReview[]>
   >({})
+  const [activityBySupplier, setActivityBySupplier] = useState<Record<string, SupplierSmartScoreActivity>>({})
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
 
@@ -191,9 +198,18 @@ export default function SuppliersDirectoryPage() {
         return
       }
 
-      const { data: reviewData, error: reviewError } = await supabase
-        .from("supplier_reviews")
-        .select("supplier_id, rating, delivery_score, price_score, compliance_score, communication_score, quality_score")
+      const [reviewResult, quoteResult, contractResult, invoiceResult, paymentResult, bankingResult] = await Promise.all([
+        supabase
+          .from("supplier_reviews")
+          .select("supplier_id, rating, delivery_score, price_score, compliance_score, communication_score, quality_score"),
+        supabase.from("quotes").select("id, supplier_id, status"),
+        supabase.from("contracts").select("id, supplier_id, status"),
+        supabase.from("invoices").select("id, supplier_id, status"),
+        supabase.from("payments").select("id, supplier_id, status"),
+        supabase.from("supplier_bank_details").select("supplier_id, verification_status"),
+      ])
+
+      const { data: reviewData, error: reviewError } = reviewResult
 
       if (reviewError) {
         setErrorMessage(reviewError.message)
@@ -215,6 +231,14 @@ export default function SuppliersDirectoryPage() {
       }, {})
 
       const profileRows = (data ?? []) as SupplierProfile[]
+      const supplierIds = profileRows.map((supplier) => supplier.id)
+      const bankRows = (bankingResult.data ?? []) as Array<{ supplier_id: string | null; verification_status: string | null }>
+      const profilesWithBanking = profileRows.map((supplier) => ({
+        ...supplier,
+        bank_verified: bankRows.some(
+          (bank) => bank.supplier_id === supplier.id && isVerifiedStatus(bank.verification_status),
+        ),
+      }))
       const documents = await fetchSupplierDocumentsByProfileIds(profileRows.map((supplier) => supplier.id))
       if (documents.error) {
         setErrorMessage(documents.error)
@@ -222,8 +246,15 @@ export default function SuppliersDirectoryPage() {
         return
       }
 
-      setSuppliers(applySupplierDocumentsToProfiles(profileRows, documents.documentsByProfile))
+      setSuppliers(applySupplierDocumentsToProfiles(profilesWithBanking, documents.documentsByProfile))
       setReviewsBySupplier(groupedReviews)
+      setActivityBySupplier(buildSupplierActivityById({
+        supplierIds,
+        quotes: (quoteResult.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+        contracts: (contractResult.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+        invoices: (invoiceResult.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+        payments: (paymentResult.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+      }))
       setLoading(false)
     }
 
@@ -507,6 +538,7 @@ export default function SuppliersDirectoryPage() {
                   <ReadinessScore
                     supplier={supplier}
                     reviews={reviewsBySupplier[supplier.id] ?? []}
+                    activity={activityBySupplier[supplier.id] ?? {}}
                   />
                 </div>
                 <div className="mt-3">

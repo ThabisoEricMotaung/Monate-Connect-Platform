@@ -212,12 +212,12 @@ async function deleteDemoRows(table: string): Promise<DemoSeedResult> {
 
 function buildRfqs(): DemoRfq[] {
   return [
-    { id: 910001, title: "Underground Mining Safety Support Services", category: "Mining Services", province: "North West", budget: "R8 500 000", status: "Open" },
-    { id: 910002, title: "Municipal Substation Refurbishment", category: "Electrical", province: "Gauteng", budget: "R12 000 000", status: "Closing Soon" },
-    { id: 910003, title: "Clinic Extension and Civil Works", category: "Construction", province: "KwaZulu-Natal", budget: "R18 750 000", status: "Awarded" },
-    { id: 910004, title: "Provincial PPE Supply Framework", category: "PPE", province: "Eastern Cape", budget: "R4 200 000", status: "Awarded" },
-    { id: 910005, title: "Water Treatment Plant Maintenance", category: "Water Services", province: "Mpumalanga", budget: "R9 800 000", status: "Open" },
-    { id: 910006, title: "Cloud Migration and End User Support", category: "ICT", province: "Gauteng", budget: "R6 600 000", status: "Completed" },
+    { id: 910001, title: "Underground Mining Safety Support Services", category: "Mining Services", province: "North West", budget: "R8 500 000", status: "open" },
+    { id: 910002, title: "Municipal Substation Refurbishment", category: "Electrical", province: "Gauteng", budget: "R12 000 000", status: "open" },
+    { id: 910003, title: "Clinic Extension and Civil Works", category: "Construction", province: "KwaZulu-Natal", budget: "R18 750 000", status: "awarded" },
+    { id: 910004, title: "Provincial PPE Supply Framework", category: "PPE", province: "Eastern Cape", budget: "R4 200 000", status: "awarded" },
+    { id: 910005, title: "Water Treatment Plant Maintenance", category: "Water Services", province: "Mpumalanga", budget: "R9 800 000", status: "open" },
+    { id: 910006, title: "Cloud Migration and End User Support", category: "ICT", province: "Gauteng", budget: "R6 600 000", status: "closed" },
   ]
 }
 
@@ -320,13 +320,17 @@ export async function generateDemoData(): Promise<DemoSeedResult[]> {
       updated_at: addDays(-10 + index),
       is_demo: true,
     })),
-    rfqs: rfqs.map((rfq, index) => ({
-      ...rfq,
-      description: `Demo RFQ for ${rfq.category.toLowerCase()} procurement in ${rfq.province}.`,
-      deadline: addDays(10 + index * 4),
-      created_at: addDays(-45 + index * 5),
-      is_demo: true,
-    })),
+    rfqs: rfqs.map((rfq, index) => {
+      const closingDate = addDays(10 + index * 4)
+      return {
+        ...rfq,
+        description: `Demo RFQ for ${rfq.category.toLowerCase()} procurement in ${rfq.province}.`,
+        deadline: closingDate,
+        closing_date: closingDate,
+        created_at: addDays(-45 + index * 5),
+        is_demo: true,
+      }
+    }),
     quotes: quotes.map((quote, index) => ({
       ...quote,
       timeline: index % 2 === 0 ? "45 days" : "60 days",

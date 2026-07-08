@@ -105,6 +105,7 @@ const BASE_NAVIGATION: NavGroup[] = [
       { name: "Create RFQ", href: "/dashboard/buyer/rfqs/new", icon: IconPlus },
       { name: "My RFQs", href: "/dashboard/buyer/rfqs", icon: IconFileText },
       { name: "Quotes received", href: "/dashboard/buyer/quotes", icon: IconMessageCircle },
+      { name: "Messages", href: "/dashboard/messages", icon: IconMessageCircle },
       { name: "Purchase orders", href: "/dashboard/buyer/purchase-orders", icon: IconShoppingCart },
       { name: "Spend Analysis", href: "/dashboard/spend-analysis", icon: IconChartBar },
       { name: "Contracts", href: "/dashboard/buyer/contracts", icon: IconFileCertificate },
@@ -137,6 +138,7 @@ export default function BuyerDashboardLayout({
   const [profile, setProfile] = useState<BuyerProfile | null>(null)
   const [activeRfqs, setActiveRfqs] = useState(0)
   const [unreviewedQuotes, setUnreviewedQuotes] = useState(0)
+  const [unreadMessages, setUnreadMessages] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   function closeSidebar() {
@@ -154,7 +156,7 @@ export default function BuyerDashboardLayout({
       } = await supabase.auth.getUser()
       if (!user || cancelled) return
 
-      const [profileResult, rfqResult, quoteResult] = await Promise.all([
+      const [profileResult, rfqResult, quoteResult, messageResult] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, business_name, email, full_name, preferred_name, role, avatar_url")
@@ -162,6 +164,7 @@ export default function BuyerDashboardLayout({
           .maybeSingle(),
         supabase.from("rfqs").select("id, status"),
         supabase.from("quotes").select("id, status"),
+        supabase.from("messages").select("id, is_read").eq("receiver_id", user.id),
       ])
 
       if (cancelled) return
@@ -181,6 +184,9 @@ export default function BuyerDashboardLayout({
           ["", "pending", "under review"].includes(String(q.status ?? "").toLowerCase()),
         ).length,
       )
+
+      const messages = (messageResult.data ?? []) as { is_read: boolean | null }[]
+      setUnreadMessages(messages.filter((message) => !message.is_read).length)
     }
 
     load()
@@ -204,6 +210,7 @@ export default function BuyerDashboardLayout({
     items: group.items.map((item) => {
       if (item.href === "/dashboard/buyer/rfqs") return { ...item, badge: activeRfqs }
       if (item.href === "/dashboard/buyer/quotes") return { ...item, badge: unreviewedQuotes }
+      if (item.href === "/dashboard/messages") return { ...item, badge: unreadMessages }
       return item
     }),
   }))

@@ -1,4 +1,5 @@
 // ─── Types ────────────────────────────────────────────────────────────────────
+import { isVerifiedStatus } from "./supplierStatus"
 
 export type ComplianceIssueSeverity = "error" | "warning" | "info"
 
@@ -192,7 +193,7 @@ export function checkAwardCompliance(
   const recommendations: string[] = []
 
   // RFQ state checks
-  if (rfq.status === "Awarded") {
+  if (rfq.status?.trim().toLowerCase() === "awarded") {
     issues.push({
       severity: "error",
       code: "rfq_already_awarded",
@@ -240,7 +241,7 @@ export function checkAwardCompliance(
     })
     recommendations.push("Manually verify supplier registration, B-BBEE, and tax clearance before award.")
   } else {
-    if (supplier.verification_status !== "Verified") {
+    if (!isVerifiedStatus(supplier.verification_status)) {
       issues.push({
         severity: "error",
         code: "supplier_not_verified",
@@ -461,7 +462,7 @@ export function checkPaymentCompliance(
       message: "Supplier banking details have not been submitted — payment cannot be processed.",
     })
     recommendations.push("Request the supplier to submit banking details via the supplier portal.")
-  } else if (banking.verification_status !== "Verified") {
+  } else if (!isVerifiedStatus(banking.verification_status)) {
     issues.push({
       severity: "error",
       code: "payment_banking_unverified",

@@ -619,7 +619,7 @@ export default function AdminRFQQuotesPage() {
     const { error: e2 } = await supabase.from("quotes").update({ status: "Not Awarded" }).eq("rfq_id", rfqId).neq("id", selectedQuoteId)
     if (e2) { setAwardingId(null); setErrorMessage(e2.message); return }
 
-    const { error: e3 } = await supabase.from("rfqs").update({ status: "Awarded" }).eq("id", rfqId)
+    const { error: e3 } = await supabase.from("rfqs").update({ status: "awarded" }).eq("id", rfqId)
     setAwardingId(null)
     if (e3) { setErrorMessage(e3.message); return }
 
@@ -630,7 +630,7 @@ export default function AdminRFQQuotesPage() {
         entity_type: "quote",
         entity_id: selectedQuoteId,
         old_values: { status: selected?.status ?? null, rfq_status: rfq.status },
-        new_values: { status: "Awarded", rfq_status: "Awarded" },
+        new_values: { status: "Awarded", rfq_status: "awarded" },
         metadata: { rfq_id: rfq.id, supplier_id: selected?.supplier_id ?? null, supplier_name: selected?.supplier_name ?? null },
       })
       await logActivity({ action: "RFQ awarded", entity_type: "rfq", entity_id: params.id, metadata: { quote_id: selectedQuoteId } })
@@ -646,7 +646,7 @@ export default function AdminRFQQuotesPage() {
       })
     }
 
-    setRfq((cur) => cur ? { ...cur, status: "Awarded" } : cur)
+    setRfq((cur) => cur ? { ...cur, status: "awarded" } : cur)
     setQuotes((cur) => cur.map((q) => ({ ...q, status: q.id === selectedQuoteId ? "Awarded" : "Not Awarded" })))
     setSuccessMessage(`RFQ-${rfq.id} has been awarded to quote ${selectedQuoteId}.`)
   }
