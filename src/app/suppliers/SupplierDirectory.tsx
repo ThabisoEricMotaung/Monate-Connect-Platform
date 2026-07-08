@@ -6,6 +6,7 @@ import BackLink from "@/components/BackLink"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import { displayIndustry } from "@/lib/industries"
 import { supabase } from "@/lib/supabase"
+import { isVerifiedStatus } from "@/lib/supplierStatus"
 
 export type PublicSupplierDirectoryRow = {
   id: string
@@ -13,6 +14,7 @@ export type PublicSupplierDirectoryRow = {
   province: string | null
   provinces: string[] | null
   industry: string | null
+  verification_status: string | null
   bbbee_level: string | null
   cidb_grade: string | null
   smart_score: number | string | null
@@ -83,6 +85,10 @@ function verificationItems(supplier: PublicSupplierDirectoryRow) {
     ["BANK", Boolean(supplier.banking_verified || supplier.bank_verified)],
     ["DIR", Boolean(supplier.director_verified)],
   ] as const
+}
+
+function isPublicVerifiedSupplier(supplier: PublicSupplierDirectoryRow): boolean {
+  return isVerifiedStatus(supplier.verification_status)
 }
 
 function BuildingStoreIcon({ className = "h-12 w-12" }: { className?: string }) {
@@ -162,7 +168,9 @@ function SupplierCard({ supplier }: { supplier: PublicSupplierDirectoryRow }) {
             seedName={supplier.business_name}
           />
           <div className="min-w-0">
-            <p className="mb-1 text-[0.68rem] font-semibold" style={{ color: TEAL }}>&#10003; Verified</p>
+            {isPublicVerifiedSupplier(supplier) && (
+              <p className="mb-1 text-[0.68rem] font-semibold" style={{ color: TEAL }}>&#10003; Verified</p>
+            )}
             <h2 className="font-display text-[15px] font-medium leading-snug text-[#1f2f28]">
               {supplier.business_name || "Verified supplier"}
             </h2>
@@ -331,6 +339,7 @@ export default function SupplierDirectory({
     const search = normalize(query)
 
     return suppliers.filter((supplier) => {
+      if (!isPublicVerifiedSupplier(supplier)) return false
       const searchHit =
         !search ||
         normalize(supplier.business_name).includes(search) ||

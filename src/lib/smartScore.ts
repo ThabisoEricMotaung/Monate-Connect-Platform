@@ -58,6 +58,13 @@ export type SupplierSmartScoreProfile = {
   }> | null
 }
 
+export const SUPPLIER_SMART_SCORE_PROFILE_SELECT =
+  "id, business_name, province, provinces, industry, phone, email, description, verification_status, " +
+  "csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, tax_clearance_url, " +
+  "company_registration, cidb_grade, csd_document_url, bbbee_document_url, tax_document_url, " +
+  "company_registration_url, cidb_document_url, capability_statement_url, banking_verified, " +
+  "bank_verified, director_verified, updated_at, created_at"
+
 export type SmartScoreColour = "success" | "warning" | "danger"
 
 export type SmartScoreBreakdownItem = {

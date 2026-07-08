@@ -842,7 +842,6 @@ export default function AdminVerificationQueuePage() {
             csd_verified: true,
             bbbee_verified: true,
             tax_verified: true,
-            bank_verified: true,
             director_verified: true,
           }
         : {}
@@ -862,10 +861,7 @@ export default function AdminVerificationQueuePage() {
       ...nextProfile,
       verification_status: nextVerificationStatus,
     }
-    const nextBank =
-      action === "verify" && bank
-        ? { ...bank, verification_status: bankStatusForVerified(true) }
-        : bank
+    const nextBank = bank
     const nextSmartScore = await calculateCanonicalSmartScore(scoreProfile, nextBank)
     const pendingKey = `bulk-${action}`
 
@@ -882,10 +878,6 @@ export default function AdminVerificationQueuePage() {
           : item,
       ),
     )
-    if (action === "verify" && nextBank) {
-      setBanksBySupplier((current) => ({ ...current, [currentProfile.id]: nextBank }))
-    }
-
     const profileUpdate = {
       ...flagUpdates,
       verification_status: nextVerificationStatus,
@@ -900,35 +892,15 @@ export default function AdminVerificationQueuePage() {
     if (profileError) {
       setErrorMessage(profileError.message)
       setProfiles((current) => current.map((item) => (item.id === currentProfile.id ? currentProfile : item)))
-      if (action === "verify" && bank) {
-        setBanksBySupplier((current) => ({ ...current, [currentProfile.id]: bank }))
-      }
       setPendingAction(null)
       setActionFeedback(currentProfile.id, pendingKey, { message: "Couldn't save — try again", type: "error" })
       return
     }
 
-    if (action === "verify") {
-      const { error: bankError } = await supabase
-        .from("supplier_bank_details")
-        .update({ verification_status: bankStatusForVerified(true) })
-        .eq("supplier_id", currentProfile.id)
-
-      if (bankError) {
-        setErrorMessage(bankError.message)
-        setPendingAction(null)
-        setActionFeedback(currentProfile.id, pendingKey, {
-          message: "Profile updated, but banking status update failed.",
-          type: "error",
-        })
-        return
-      }
-    }
-
     setPendingAction(null)
     setScoreFlash(currentProfile.id)
     setActionFeedback(currentProfile.id, pendingKey, {
-      message: `Supplier marked ${nextVerificationStatus}. SmartScore updated to ${nextSmartScore}.`,
+      message: `Supplier marked ${nextVerificationStatus}. Banking review unchanged. SmartScore updated to ${nextSmartScore}.`,
       type: "success",
     })
   }

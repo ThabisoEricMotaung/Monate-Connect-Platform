@@ -4,7 +4,6 @@ import { useEffect, useState, type MouseEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import PasswordInput from "@/components/PasswordInput"
-import { calculateSupplierSmartScore } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 
 type LoginProfile = {
@@ -16,6 +15,12 @@ type LoginProfile = {
   description?: string | null
   smart_score?: number | string | null
   role?: string | null
+  csd_verified?: boolean | null
+  bbbee_verified?: boolean | null
+  tax_verified?: boolean | null
+  director_verified?: boolean | null
+  bank_verified?: boolean | null
+  banking_verified?: boolean | null
 }
 
 function isMissingRoleColumnError(error: { message?: string } | null): boolean {
@@ -144,7 +149,7 @@ export default function LoginPage() {
     if (user) {
       const { data: profileWithRole, error: profileSelectError } = await supabase
         .from("profiles")
-        .select("id, business_name, province, industry, phone, description, smart_score, role")
+        .select("id, business_name, province, industry, phone, description, smart_score, role, csd_verified, bbbee_verified, tax_verified, director_verified, bank_verified, banking_verified")
         .eq("id", user.id)
         .maybeSingle()
       let profile = profileWithRole as LoginProfile | null
@@ -163,7 +168,7 @@ export default function LoginPage() {
 
         const { data: fallbackProfile, error: fallbackProfileError } = await supabase
           .from("profiles")
-          .select("id, business_name, province, industry, phone, description, smart_score")
+          .select("id, business_name, province, industry, phone, description, smart_score, csd_verified, bbbee_verified, tax_verified, director_verified, bank_verified, banking_verified")
           .eq("id", user.id)
           .maybeSingle()
 
@@ -191,11 +196,10 @@ export default function LoginPage() {
           verification_status: "Pending Review",
           ...(roleColumnAvailable ? { role: "supplier" } : {}),
         }
-        const profileScore = calculateSupplierSmartScore(profilePayload).score
 
         const { error: profileInsertError } = await supabase
           .from("profiles")
-          .insert([{ ...profilePayload, smart_score: profileScore }])
+          .insert([profilePayload])
 
         if (profileInsertError) {
           console.error(profileInsertError)
@@ -216,11 +220,10 @@ export default function LoginPage() {
           industry: profile.industry || user.user_metadata?.industry || "",
           phone: profile.phone || user.user_metadata?.phone || "",
         }
-        const profileScore = calculateSupplierSmartScore({ ...profile, ...profileUpdatePayload }).score
 
         const { error: profileUpdateError } = await supabase
           .from("profiles")
-          .update({ ...profileUpdatePayload, smart_score: profileScore })
+          .update(profileUpdatePayload)
           .eq("id", user.id)
 
         if (profileUpdateError) {

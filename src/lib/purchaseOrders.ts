@@ -65,9 +65,15 @@ export type PurchaseOrderSupplier = {
   email: string | null
   verification_status: string | null
   csd_number: string | null
+  csd_verified?: boolean | null
   bbbee_level: string | null
+  bbbee_verified?: boolean | null
   tax_status?: string | null
+  tax_verified?: boolean | null
   company_registration?: string | null
+  director_verified?: boolean | null
+  bank_verified?: boolean | null
+  banking_verified?: boolean | null
   csd_document_url?: string | null
   bbbee_document_url?: string | null
   tax_document_url?: string | null
@@ -321,7 +327,7 @@ export async function getPurchaseOrderById(
     purchaseOrder.supplier_id
       ? supabase
           .from("profiles")
-          .select("id, business_name, province, industry, phone, email, verification_status, csd_number, bbbee_level, tax_status, company_registration, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url")
+          .select("id, business_name, province, industry, phone, email, verification_status, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, company_registration, director_verified, bank_verified, banking_verified, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url")
           .eq("id", purchaseOrder.supplier_id)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),

@@ -23,10 +23,16 @@ export type MatchingSupplier = {
   email?: string | null
   verification_status?: string | null
   csd_number?: string | null
+  csd_verified?: boolean | null
   bbbee_level?: string | null
+  bbbee_verified?: boolean | null
   tax_status?: string | null
+  tax_verified?: boolean | null
   company_registration?: string | null
   cidb_grade?: string | null
+  director_verified?: boolean | null
+  bank_verified?: boolean | null
+  banking_verified?: boolean | null
   csd_document_url?: string | null
   bbbee_document_url?: string | null
   tax_document_url?: string | null
@@ -370,6 +376,7 @@ async function getMatchingContext() {
         .select(
           "id, business_name, province, industry, phone, email, verification_status, " +
             "csd_number, bbbee_level, tax_status, company_registration, cidb_grade, " +
+            "csd_verified, bbbee_verified, tax_verified, bank_verified, banking_verified, director_verified, " +
             "csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, " +
             "cidb_document_url, capability_statement_url, updated_at, created_at"
         )

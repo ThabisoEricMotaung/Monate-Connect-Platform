@@ -139,7 +139,8 @@ export default function AdminWhatsAppNetworkPage() {
           .from("profiles")
           .select(
             "id, business_name, province, industry, phone, email, verification_status, " +
-              "csd_number, bbbee_level, tax_status, company_registration, cidb_grade, " +
+              "csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, company_registration, cidb_grade, " +
+              "bank_verified, banking_verified, director_verified, " +
               "csd_document_url, bbbee_document_url, tax_document_url, " +
               "company_registration_url, cidb_document_url, capability_statement_url, updated_at"
           )

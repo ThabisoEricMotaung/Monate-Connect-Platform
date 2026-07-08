@@ -8,7 +8,8 @@ import { logAuditAction } from "@/lib/audit"
 import { getCurrentUser } from "@/lib/auth"
 import { createNotificationsForRoles } from "@/lib/notifications"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
-import { calculateSupplierSmartScore } from "@/lib/smartScore"
+import { buildSupplierActivityById } from "@/lib/intelligence"
+import { calculateSupplierSmartScore, type SupplierSmartScoreActivity } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import {
   applySupplierDocuments,
@@ -55,9 +56,15 @@ type SupplierProfile = {
   industry: string | null
   verification_status: string | null
   csd_number: string | null
+  csd_verified?: boolean | null
   bbbee_level: string | null
+  bbbee_verified?: boolean | null
   tax_status: string | null
+  tax_verified?: boolean | null
   company_registration: string | null
+  director_verified?: boolean | null
+  bank_verified?: boolean | null
+  banking_verified?: boolean | null
   csd_document_url: string | null
   bbbee_document_url: string | null
   tax_document_url: string | null
@@ -256,6 +263,7 @@ export default function QuoteSubmissionPage() {
   const firstErrorRef = useRef<HTMLDivElement | null>(null)
   const [rfq, setRfq] = useState<RFQ | null>(null)
   const [profile, setProfile] = useState<SupplierProfile | null>(null)
+  const [profileActivity, setProfileActivity] = useState<SupplierSmartScoreActivity>({})
   const [buyer, setBuyer] = useState<BuyerProfile | null>(null)
   const [buyerRFQCount, setBuyerRFQCount] = useState<number | null>(null)
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>([])
@@ -303,20 +311,35 @@ export default function QuoteSubmissionPage() {
       if (user) {
         const { data: profileData } = await supabase
           .from("profiles")
-          .select("id, business_name, email, province, industry, verification_status, csd_number, bbbee_level, tax_status, company_registration, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, updated_at")
+          .select("id, business_name, email, province, industry, verification_status, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, company_registration, director_verified, bank_verified, banking_verified, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, updated_at")
           .eq("id", user.id)
           .maybeSingle()
 
         if (profileData) {
-          const documentResult = await fetchSupplierDocumentsForProfile(user.id)
+          const [documentResult, quoteActivityRes, contractActivityRes, invoiceActivityRes, paymentActivityRes] = await Promise.all([
+            fetchSupplierDocumentsForProfile(user.id),
+            supabase.from("quotes").select("id, supplier_id, status").eq("supplier_id", user.id),
+            supabase.from("contracts").select("id, supplier_id, status").eq("supplier_id", user.id),
+            supabase.from("invoices").select("id, supplier_id, status").eq("supplier_id", user.id),
+            supabase.from("payments").select("id, supplier_id, status").eq("supplier_id", user.id),
+          ])
           if (documentResult.error) {
             setErrorMessage(documentResult.error)
             setLoading(false)
             return
           }
+          const activityBySupplier = buildSupplierActivityById({
+            supplierIds: [user.id],
+            quotes: (quoteActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+            contracts: (contractActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+            invoices: (invoiceActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+            payments: (paymentActivityRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
+          })
           setProfile(applySupplierDocuments(profileData as SupplierProfile, documentResult.documents))
+          setProfileActivity(activityBySupplier[user.id] ?? {})
         } else {
           setProfile(null)
+          setProfileActivity({})
         }
       }
 
@@ -368,7 +391,7 @@ export default function QuoteSubmissionPage() {
   const vat = vatRegistered ? subtotal * 0.15 : 0
   const total = subtotal + vat
   const coverWords = wordCount(coverNote)
-  const smartScore = calculateSupplierSmartScore(profile)
+  const smartScore = calculateSupplierSmartScore(profile, profileActivity)
   const bbeeQualifies = qualifiesForBBBEE(profile?.bbbee_level, bbeeRequirement(rfq))
   const lineItemsPriced = lineItems.length > 0 && lineItems.every((item) => numeric(item.qty) > 0 && numeric(item.unitPrice) > 0)
   const csdActive = Boolean(profile?.csd_number?.trim())
