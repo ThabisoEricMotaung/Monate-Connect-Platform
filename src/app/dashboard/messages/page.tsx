@@ -739,12 +739,20 @@ export default function MessagesPage() {
       const notification = notifications.find((item) => item.id === notificationId)
 
       if (notification && !notification.read) {
-        await markNotificationRead(notification.id)
         setNotifications((currentNotifications) =>
           currentNotifications.map((item) =>
             item.id === notification.id ? { ...item, read: true } : item,
           ),
         )
+        try {
+          await markNotificationRead(notification.id)
+        } catch {
+          setNotifications((currentNotifications) =>
+            currentNotifications.map((item) =>
+              item.id === notification.id ? { ...item, read: false } : item,
+            ),
+          )
+        }
       }
       return
     }
@@ -954,12 +962,20 @@ export default function MessagesPage() {
 
   async function handleNotificationClick(notification: Notification) {
     if (!notification.read) {
-      await markNotificationRead(notification.id)
       setNotifications((currentNotifications) =>
         currentNotifications.map((item) =>
           item.id === notification.id ? { ...item, read: true } : item,
         ),
       )
+      try {
+        await markNotificationRead(notification.id)
+      } catch {
+        setNotifications((currentNotifications) =>
+          currentNotifications.map((item) =>
+            item.id === notification.id ? { ...item, read: false } : item,
+          ),
+        )
+      }
     }
 
     const linkedThread = threads.find(
@@ -983,10 +999,14 @@ export default function MessagesPage() {
   async function markAllNotificationsRead() {
     const unreadNotifications = notifications.filter((notification) => !notification.read)
 
-    await Promise.all(unreadNotifications.map((notification) => markNotificationRead(notification.id)))
     setNotifications((currentNotifications) =>
       currentNotifications.map((notification) => ({ ...notification, read: true })),
     )
+    try {
+      await Promise.all(unreadNotifications.map((notification) => markNotificationRead(notification.id)))
+    } catch {
+      loadPageData({ silent: true })
+    }
   }
 
   const deadlineDays = activeThread ? daysUntil(activeThread.deadline) : null
@@ -1269,7 +1289,11 @@ export default function MessagesPage() {
                 </div>
               )}
 
-              <div ref={feedRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto bg-[#f8f4ec] p-5">
+              <div
+                key={activeThread.id}
+                ref={feedRef}
+                className="min-h-0 flex-1 space-y-5 overflow-y-auto bg-[#f8f4ec] p-5"
+              >
                 <p className="text-center text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted">
                   Conversation started {longDate(activeThread.messages[0]?.created_at ?? null)} when{" "}
                   {activeThread.messages[0]?.subject || "the procurement thread was opened"}

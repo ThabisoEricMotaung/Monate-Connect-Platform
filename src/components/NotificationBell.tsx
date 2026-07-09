@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { getNotifications, type Notification } from "@/lib/notifications"
+import {
+  getNotifications,
+  notificationReadEvent,
+  type NotificationReadEventDetail,
+  type Notification,
+} from "@/lib/notifications"
 import { getInboxMessages } from "@/lib/messages"
 import { supabase } from "@/lib/supabase"
 
@@ -43,6 +48,22 @@ export default function NotificationBell() {
       cancelled = true
       window.clearInterval(intervalId)
     }
+  }, [])
+
+  useEffect(() => {
+    function handleNotificationRead(event: Event) {
+      const { id, read } = (event as CustomEvent<NotificationReadEventDetail>).detail
+      setNotifications((current) =>
+        current.map((notification) =>
+          notification.id === id
+            ? { ...notification, read }
+            : notification,
+        ),
+      )
+    }
+
+    window.addEventListener(notificationReadEvent, handleNotificationRead)
+    return () => window.removeEventListener(notificationReadEvent, handleNotificationRead)
   }, [])
 
   useEffect(() => {

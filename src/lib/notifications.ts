@@ -1,5 +1,8 @@
 ﻿import { supabase } from "@/lib/supabase"
 
+export const notificationReadEvent = "monate:notification-read"
+export type NotificationReadEventDetail = { id: number; read: boolean }
+
 export type NotificationType =
   | "RFQ Match"
   | "RFQ Deadline"
@@ -86,6 +89,14 @@ export async function getNotifications(limit = 20): Promise<Notification[]> {
 export async function markNotificationRead(notificationId: number): Promise<void> {
   if (!supabase) return
 
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent<NotificationReadEventDetail>(notificationReadEvent, {
+        detail: { id: notificationId, read: true },
+      }),
+    )
+  }
+
   const { error } = await supabase
     .from("notifications")
     .update({ is_read: true })
@@ -93,6 +104,14 @@ export async function markNotificationRead(notificationId: number): Promise<void
 
   if (error) {
     console.error("Notification read update failed:", error)
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent<NotificationReadEventDetail>(notificationReadEvent, {
+          detail: { id: notificationId, read: false },
+        }),
+      )
+    }
+    throw new Error(error.message)
   }
 }
 

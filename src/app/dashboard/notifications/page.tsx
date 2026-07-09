@@ -48,7 +48,6 @@ export default function NotificationsPage() {
 
   async function handleOpen(notification: Notification) {
     if (!notification.read) {
-      await markNotificationRead(notification.id)
       setNotifications((currentNotifications) =>
         currentNotifications.map((currentNotification) =>
           currentNotification.id === notification.id
@@ -56,6 +55,17 @@ export default function NotificationsPage() {
             : currentNotification
         )
       )
+      try {
+        await markNotificationRead(notification.id)
+      } catch {
+        setNotifications((currentNotifications) =>
+          currentNotifications.map((currentNotification) =>
+            currentNotification.id === notification.id
+              ? { ...currentNotification, read: false }
+              : currentNotification
+          )
+        )
+      }
     }
 
     if (notification.link) {
@@ -64,7 +74,6 @@ export default function NotificationsPage() {
   }
 
   async function handleMarkRead(notificationId: number) {
-    await markNotificationRead(notificationId)
     setNotifications((currentNotifications) =>
       currentNotifications.map((notification) =>
         notification.id === notificationId
@@ -72,6 +81,17 @@ export default function NotificationsPage() {
           : notification
       )
     )
+    try {
+      await markNotificationRead(notificationId)
+    } catch {
+      setNotifications((currentNotifications) =>
+        currentNotifications.map((notification) =>
+          notification.id === notificationId
+            ? { ...notification, read: false }
+            : notification
+        )
+      )
+    }
   }
 
   return (
