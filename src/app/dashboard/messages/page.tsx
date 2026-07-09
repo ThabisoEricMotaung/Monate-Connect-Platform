@@ -4,11 +4,17 @@ import {
   IconArchive,
   IconArrowLeft,
   IconBell,
+  IconBold,
   IconExternalLink,
   IconFile,
+  IconItalic,
   IconMail,
+  IconMoodSmile,
   IconPaperclip,
+  IconPlus,
   IconSend,
+  IconTrash,
+  IconX,
 } from "@tabler/icons-react"
 import Link from "next/link"
 import { FormEvent, KeyboardEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -18,6 +24,7 @@ import {
   getInboxMessages,
   getSentMessages,
   markMessageRead,
+  removeThreadFromInbox,
   sendMessage,
   type ProcurementMessage,
 } from "@/lib/messages"
@@ -33,6 +40,8 @@ type ThreadTab = "all" | "unread" | "archived"
 type NotificationTab = "all" | "action" | "updates"
 type ContextType = "RFQ" | "Quote" | "Contract" | "PO"
 type ScreenMode = "threads" | "conversation"
+type InboxTab = "messages" | "sent" | "notifications"
+type EmojiPickerTarget = "reply" | "new" | null
 
 type ProfileSummary = {
   id: string
@@ -324,52 +333,6 @@ function buildThreads({
     .sort((a, b) => new Date(b.timestamp ?? 0).getTime() - new Date(a.timestamp ?? 0).getTime())
 }
 
-function buildPlatformThreads(notifications: Notification[], archivedIds: Set<string>): Thread[] {
-  return notifications.slice(0, 8).map((notification) => {
-    const id = `platform:${notification.id}`
-    const linkParts = notification.link?.split("/") ?? []
-    const parsedRfqId = Number(linkParts.at(-1))
-    const rfqId = Number.isSafeInteger(parsedRfqId) && parsedRfqId > 0 ? parsedRfqId : null
-
-    return {
-      id,
-      senderName: "Platform",
-      senderRole: null,
-      senderAvatarUrl: null,
-      senderOrg: "AiForm Procure",
-      contextType: notification.title.toLowerCase().includes("quote") ? "Quote" : "RFQ",
-      contextTitle: notification.title,
-      subject: notification.title,
-      preview: notification.message,
-      timestamp: notification.created_at,
-      unread: !notification.read,
-      platform: true,
-      archived: archivedIds.has(id),
-      rfqId,
-      quoteId: null,
-      counterpartId: "platform",
-      buyerOrg: "AiForm Procure",
-      province: null,
-      value: null,
-      deadline: null,
-      messages: [
-        {
-          id: -notification.id,
-          sender_id: "platform",
-          receiver_id: notification.user_id,
-          subject: notification.title,
-          message: notification.message,
-          rfq_id: rfqId,
-          quote_id: null,
-          is_read: notification.read,
-          created_at: notification.created_at,
-          mine: false,
-        },
-      ],
-    }
-  })
-}
-
 function IconButton({
   label,
   children,
@@ -389,6 +352,26 @@ function IconButton({
     >
       {children}
     </button>
+  )
+}
+
+const MESSAGE_EMOJIS = ["👍", "✅", "😊", "🙏", "📎", "📅", "💼", "🎉"]
+
+function FormattedMessageText({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g)
+
+  return (
+    <span className="whitespace-pre-wrap break-words">
+      {parts.map((part, index) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return <strong key={index}>{part.slice(2, -2)}</strong>
+        }
+        if (part.startsWith("*") && part.endsWith("*")) {
+          return <em key={index}>{part.slice(1, -1)}</em>
+        }
+        return <span key={index}>{part}</span>
+      })}
+    </span>
   )
 }
 
@@ -414,6 +397,7 @@ export default function MessagesPage() {
   const router = useRouter()
   const feedRef = useRef<HTMLDivElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const newMessageTextareaRef = useRef<HTMLTextAreaElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const [currentUserId, setCurrentUserId] = useState("")
@@ -433,6 +417,16 @@ export default function MessagesPage() {
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
   const [showNotifications, setShowNotifications] = useState(false)
+  const [inboxTab, setInboxTab] = useState<InboxTab>("messages")
+  const [showNewMessage, setShowNewMessage] = useState(false)
+  const [recipientOptions, setRecipientOptions] = useState<ProfileSummary[]>([])
+  const [recipientSearch, setRecipientSearch] = useState("")
+  const [newRecipientId, setNewRecipientId] = useState("")
+  const [newSubject, setNewSubject] = useState("")
+  const [newBody, setNewBody] = useState("")
+  const [composerError, setComposerError] = useState("")
+  const [statusMessage, setStatusMessage] = useState("")
+  const [emojiPickerTarget, setEmojiPickerTarget] = useState<EmojiPickerTarget>(null)
   const [screenMode, setScreenMode] = useState<ScreenMode>("threads")
 
   const isAdminOrBuyer = hasAdminOrBuyerAccess(profile)
@@ -532,6 +526,28 @@ export default function MessagesPage() {
         loadProfilesForMessages(allMessages),
         loadRfqContext(allMessages),
       ])
+
+      if (supabase && currentUser?.id && currentProfile) {
+        const normalizedRole = currentProfile.role?.trim().toLowerCase()
+        const allowedRoles =
+          normalizedRole === "admin"
+            ? ["buyer", "supplier"]
+            : normalizedRole === "supplier"
+              ? ["buyer", "admin"]
+              : ["supplier"]
+        const { data: recipients, error: recipientError } = await supabase
+          .from("profiles")
+          .select("id, business_name, full_name, email, role, province, avatar_url")
+          .in("role", allowedRoles)
+          .neq("id", currentUser.id)
+          .order("business_name", { ascending: true })
+
+        if (recipientError) {
+          console.error("Recipient lookup failed:", recipientError)
+        } else {
+          setRecipientOptions((recipients ?? []) as ProfileSummary[])
+        }
+      }
     } catch (error) {
       console.error("Messages workspace failed to load:", error)
       setErrorMessage("Messages could not be loaded right now.")
@@ -551,6 +567,7 @@ export default function MessagesPage() {
 
     if (params.get("notifications") === "1" || params.get("panel") === "notifications") {
       setShowNotifications(true)
+      setInboxTab("notifications")
     }
   }, [])
 
@@ -612,20 +629,31 @@ export default function MessagesPage() {
     return () => window.clearInterval(intervalId)
   }, [loadPageData])
 
-  const threads = useMemo(() => {
+  const allThreads = useMemo(() => {
     if (!currentUserId) return []
 
-    return [
-      ...buildThreads({
+    return buildThreads({
         messages,
         currentUserId,
         profiles,
         rfqs,
         archivedIds,
-      }),
-      ...buildPlatformThreads(notifications, archivedIds),
-    ].sort((a, b) => new Date(b.timestamp ?? 0).getTime() - new Date(a.timestamp ?? 0).getTime())
-  }, [archivedIds, currentUserId, messages, notifications, profiles, rfqs])
+      })
+  }, [archivedIds, currentUserId, messages, profiles, rfqs])
+
+  const sentThreads = useMemo(() => {
+    if (!currentUserId) return []
+
+    return buildThreads({
+      messages: messages.filter((message) => message.sender_id === currentUserId),
+      currentUserId,
+      profiles,
+      rfqs,
+      archivedIds,
+    })
+  }, [archivedIds, currentUserId, messages, profiles, rfqs])
+
+  const threads = inboxTab === "sent" ? sentThreads : allThreads
 
   const activeThread = useMemo(
     () => threads.find((thread) => thread.id === activeThreadId) ?? threads[0] ?? null,
@@ -633,8 +661,8 @@ export default function MessagesPage() {
   )
 
   const unreadThreadCount = useMemo(
-    () => threads.filter((thread) => thread.unread && !thread.archived).length,
-    [threads],
+    () => allThreads.filter((thread) => thread.unread && !thread.archived).length,
+    [allThreads],
   )
 
   const unreadNotificationCount = useMemo(
@@ -646,9 +674,9 @@ export default function MessagesPage() {
     const normalizedSearch = searchTerm.trim().toLowerCase()
 
     return threads.filter((thread) => {
-      if (threadTab === "unread" && !thread.unread) return false
-      if (threadTab === "archived" && !thread.archived) return false
-      if (threadTab !== "archived" && thread.archived) return false
+      if (inboxTab === "messages" && threadTab === "unread" && !thread.unread) return false
+      if (inboxTab === "messages" && threadTab === "archived" && !thread.archived) return false
+      if (inboxTab === "messages" && threadTab !== "archived" && thread.archived) return false
 
       if (!normalizedSearch) return true
 
@@ -663,7 +691,7 @@ export default function MessagesPage() {
         .toLowerCase()
         .includes(normalizedSearch)
     })
-  }, [searchTerm, threadTab, threads])
+  }, [inboxTab, searchTerm, threadTab, threads])
 
   const visibleNotifications = useMemo(
     () =>
@@ -742,6 +770,24 @@ export default function MessagesPage() {
     setThreadTab("all")
   }
 
+  async function deleteActiveThread() {
+    if (!activeThread || activeThread.platform) return
+    if (!window.confirm("Remove this conversation from your Inbox? The other participant will keep their copy.")) {
+      return
+    }
+
+    setErrorMessage("")
+    try {
+      await removeThreadFromInbox(activeThread.messages.filter((message) => message.id > 0).map((message) => message.id))
+      const removedIds = new Set(activeThread.messages.map((message) => message.id))
+      setMessages((currentMessages) => currentMessages.filter((message) => !removedIds.has(message.id)))
+      setActiveThreadId("")
+      setScreenMode("threads")
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Conversation could not be removed.")
+    }
+  }
+
   function markActiveUnread() {
     if (!activeThread || activeThread.platform) return
 
@@ -786,6 +832,8 @@ export default function MessagesPage() {
       rfq_id: activeThread.rfqId,
       quote_id: activeThread.quoteId,
       is_read: true,
+      deleted_by_sender: false,
+      deleted_by_receiver: false,
       created_at: new Date().toISOString(),
       attachments: optimisticAttachments,
       optimistic: true,
@@ -815,6 +863,83 @@ export default function MessagesPage() {
       setMessages((currentMessages) => currentMessages.filter((message) => message.id !== tempId))
       setReplyText(nextReply)
       setErrorMessage(error instanceof Error ? error.message : "Message could not be sent.")
+    } finally {
+      setSending(false)
+    }
+  }
+
+  function insertComposerText(
+    target: "reply" | "new",
+    text: string,
+  ) {
+    const ref = target === "reply" ? textareaRef : newMessageTextareaRef
+    const value = target === "reply" ? replyText : newBody
+    const setValue = target === "reply" ? setReplyText : setNewBody
+    const textarea = ref.current
+    const start = textarea?.selectionStart ?? value.length
+    const end = textarea?.selectionEnd ?? value.length
+
+    setValue(`${value.slice(0, start)}${text}${value.slice(end)}`)
+    window.requestAnimationFrame(() => {
+      textarea?.focus()
+      textarea?.setSelectionRange(start + text.length, start + text.length)
+    })
+  }
+
+  function formatComposerSelection(
+    target: "reply" | "new",
+    marker: "*" | "**",
+  ) {
+    const ref = target === "reply" ? textareaRef : newMessageTextareaRef
+    const value = target === "reply" ? replyText : newBody
+    const setValue = target === "reply" ? setReplyText : setNewBody
+    const textarea = ref.current
+    const start = textarea?.selectionStart ?? value.length
+    const end = textarea?.selectionEnd ?? value.length
+    const selected = value.slice(start, end)
+    const replacement = `${marker}${selected || "text"}${marker}`
+
+    setValue(`${value.slice(0, start)}${replacement}${value.slice(end)}`)
+    window.requestAnimationFrame(() => {
+      textarea?.focus()
+      const selectionStart = start + marker.length
+      textarea?.setSelectionRange(selectionStart, selectionStart + (selected || "text").length)
+    })
+  }
+
+  async function handleNewMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setComposerError("")
+    if (!newRecipientId || !newSubject.trim() || !newBody.trim()) {
+      setComposerError("Choose a recipient and enter a subject and message.")
+      return
+    }
+
+    setSending(true)
+    setErrorMessage("")
+    try {
+      const sent = await sendMessage({
+        receiverId: newRecipientId,
+        subject: newSubject,
+        message: newBody,
+      })
+      const recipient = recipientOptions.find((option) => option.id === newRecipientId)
+      if (recipient) {
+        setProfiles((current) => ({ ...current, [recipient.id]: recipient }))
+      }
+      setMessages((current) => [...current, sent])
+      setNewRecipientId("")
+      setNewSubject("")
+      setNewBody("")
+      setRecipientSearch("")
+      setShowNewMessage(false)
+      setInboxTab("sent")
+      setStatusMessage("Message sent successfully.")
+      window.setTimeout(() => setStatusMessage(""), 4_000)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Message could not be sent."
+      setComposerError(message)
+      setErrorMessage(message)
     } finally {
       setSending(false)
     }
@@ -867,9 +992,72 @@ export default function MessagesPage() {
   const deadlineDays = activeThread ? daysUntil(activeThread.deadline) : null
   const showDeadlineWarning = deadlineDays != null && deadlineDays >= 0 && deadlineDays <= 3
 
+  const matchingRecipients = recipientOptions.filter((recipient) =>
+    [recipient.business_name, recipient.full_name, recipient.email]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(recipientSearch.trim().toLowerCase()),
+  )
+
   return (
-    <div className="h-[calc(100vh-9rem)] min-h-[720px] overflow-hidden rounded-md border border-[#d8c79d]/50 bg-[#f8f4ec] shadow-panel">
-      <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)_280px]">
+    <div className="relative h-[calc(100vh-9rem)] min-h-[720px] overflow-hidden rounded-md border border-[#d8c79d]/50 bg-[#f8f4ec] shadow-panel">
+      <div className="flex h-16 items-center justify-between border-b border-panel bg-white px-4">
+        <div>
+          <h1 className="text-xl font-semibold text-heading">Inbox</h1>
+          <div className="mt-1 flex gap-5" role="tablist" aria-label="Inbox sections">
+            {([
+              ["messages", "Messages", unreadThreadCount],
+              ["sent", "Sent", 0],
+              ["notifications", "Notifications", unreadNotificationCount],
+            ] as const).map(([id, label, count]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={inboxTab === id}
+                onClick={() => setInboxTab(id)}
+                className={`text-xs font-bold ${inboxTab === id ? "text-accent" : "text-muted"}`}
+              >
+                {label}{count > 0 ? ` (${count})` : ""}
+              </button>
+            ))}
+          </div>
+        </div>
+        {inboxTab !== "notifications" && (
+          <button
+            type="button"
+            onClick={() => {
+              setComposerError("")
+              setShowNewMessage(true)
+            }}
+            className="inline-flex items-center gap-2 rounded-md bg-[#1a3a2a] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#244f39]"
+          >
+            <IconPlus aria-hidden="true" className="h-4 w-4" />
+            New message
+          </button>
+        )}
+      </div>
+
+      {statusMessage && (
+        <div role="status" className="absolute right-6 top-20 z-40 rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm font-bold text-success shadow-panel">
+          {statusMessage}
+        </div>
+      )}
+
+      {inboxTab === "notifications" ? (
+        <div className="flex h-[calc(100%-4rem)] flex-col bg-panel">
+          <NotificationsPanel
+            notifications={visibleNotifications}
+            notificationTab={notificationTab}
+            unreadCount={unreadNotificationCount}
+            onTabChange={setNotificationTab}
+            onOpen={handleNotificationClick}
+            onMarkAllRead={markAllNotificationsRead}
+          />
+        </div>
+      ) : (
+      <div className="grid h-[calc(100%-4rem)] min-h-0 grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside
           className={`min-h-0 border-r border-[#254d38] bg-[#1a3a2a] text-[#f8f4ec] ${
             screenMode === "conversation" ? "hidden lg:flex" : "flex"
@@ -877,7 +1065,9 @@ export default function MessagesPage() {
         >
           <div className="border-b border-white/10 p-4">
             <div className="flex items-center justify-between gap-3">
-              <h1 className="text-xl font-semibold text-[#f8f4ec]">Messages</h1>
+              <h2 className="text-lg font-semibold text-[#f8f4ec]">
+                {inboxTab === "sent" ? "Sent messages" : "Conversations"}
+              </h2>
               <button
                 type="button"
                 onClick={() => setShowNotifications(true)}
@@ -897,6 +1087,7 @@ export default function MessagesPage() {
               placeholder="Search conversations..."
               className="mt-4 w-full rounded-md border border-white/15 bg-white/10 px-3 py-2.5 text-sm text-[#f8f4ec] outline-none transition placeholder:text-white/45 focus:border-[#c8a060] focus:ring-1 focus:ring-[#c8a060]/40"
             />
+            {inboxTab === "messages" && (
             <div className="mt-4 grid grid-cols-3 rounded-md border border-white/10 bg-black/10 p-1">
               {[
                 { id: "all" as const, label: "All", count: unreadThreadCount },
@@ -922,6 +1113,7 @@ export default function MessagesPage() {
                 </button>
               ))}
             </div>
+            )}
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
@@ -1028,6 +1220,11 @@ export default function MessagesPage() {
                     <IconButton label="Archive conversation" onClick={archiveActiveThread}>
                       <IconArchive aria-hidden="true" className="h-4 w-4" stroke={1.8} />
                     </IconButton>
+                    {!activeThread.platform && (
+                      <IconButton label="Remove conversation" onClick={deleteActiveThread}>
+                        <IconTrash aria-hidden="true" className="h-4 w-4" stroke={1.8} />
+                      </IconButton>
+                    )}
                     <IconButton label="Mark unread" onClick={markActiveUnread}>
                       <IconMail aria-hidden="true" className="h-4 w-4" stroke={1.8} />
                     </IconButton>
@@ -1102,7 +1299,7 @@ export default function MessagesPage() {
                               : "border border-[#d8c79d]/60 bg-white text-heading"
                           }`}
                         >
-                          {message.message}
+                          <FormattedMessageText text={message.message} />
                         </div>
                         {message.attachments?.map((attachment) => (
                           <a
@@ -1140,6 +1337,26 @@ export default function MessagesPage() {
                       ))}
                     </div>
                   )}
+                  <div className="relative mb-2 flex items-center gap-1" aria-label="Message formatting">
+                    <button type="button" onClick={() => formatComposerSelection("reply", "**")} className="rounded p-2 text-secondary hover:bg-panel" aria-label="Bold">
+                      <IconBold className="h-4 w-4" />
+                    </button>
+                    <button type="button" onClick={() => formatComposerSelection("reply", "*")} className="rounded p-2 text-secondary hover:bg-panel" aria-label="Italic">
+                      <IconItalic className="h-4 w-4" />
+                    </button>
+                    <button type="button" onClick={() => setEmojiPickerTarget((current) => current === "reply" ? null : "reply")} className="rounded p-2 text-secondary hover:bg-panel" aria-label="Add emoji">
+                      <IconMoodSmile className="h-4 w-4" />
+                    </button>
+                    {emojiPickerTarget === "reply" && (
+                      <div className="absolute bottom-10 left-16 z-10 flex gap-1 rounded-md border border-panel bg-white p-2 shadow-panel">
+                        {MESSAGE_EMOJIS.map((emoji) => (
+                          <button key={emoji} type="button" onClick={() => { insertComposerText("reply", emoji); setEmojiPickerTarget(null) }} className="rounded p-1.5 text-lg hover:bg-panel" aria-label={`Add ${emoji}`}>
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-end gap-3 rounded-md border border-[#d8c79d]/60 bg-[#f8f4ec] p-2">
                     <input
                       ref={fileInputRef}
@@ -1189,17 +1406,8 @@ export default function MessagesPage() {
           )}
         </section>
 
-        <aside className="hidden min-h-0 border-l border-panel bg-panel xl:flex xl:flex-col">
-          <NotificationsPanel
-            notifications={visibleNotifications}
-            notificationTab={notificationTab}
-            unreadCount={unreadNotificationCount}
-            onTabChange={setNotificationTab}
-            onOpen={handleNotificationClick}
-            onMarkAllRead={markAllNotificationsRead}
-          />
-        </aside>
       </div>
+      )}
 
       {showNotifications && (
         <div className="fixed inset-0 z-50 bg-black/40 p-4 xl:hidden" role="dialog" aria-modal="true">
@@ -1222,6 +1430,90 @@ export default function MessagesPage() {
               onMarkAllRead={markAllNotificationsRead}
             />
           </div>
+        </div>
+      )}
+
+      {showNewMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" role="dialog" aria-modal="true" aria-labelledby="new-message-title">
+          <form onSubmit={handleNewMessage} className="w-full max-w-xl rounded-lg border border-panel bg-white p-6 shadow-panel">
+            <div className="flex items-center justify-between">
+              <h2 id="new-message-title" className="text-xl font-semibold text-heading">New message</h2>
+              <button type="button" onClick={() => setShowNewMessage(false)} aria-label="Close composer" className="rounded-md p-2 text-muted hover:bg-panel">
+                <IconX className="h-5 w-5" />
+              </button>
+            </div>
+            <label className="mt-5 block text-sm font-bold text-heading">
+              Recipient
+              <input
+                value={recipientSearch}
+                onChange={(event) => {
+                  setRecipientSearch(event.target.value)
+                  setNewRecipientId("")
+                }}
+                placeholder="Search by business or contact name"
+                className="mt-2 w-full rounded-md border border-panel px-3 py-2.5 font-normal outline-none focus:border-accent"
+              />
+            </label>
+            {recipientSearch && !newRecipientId && (
+              <div className="mt-2 max-h-44 overflow-y-auto rounded-md border border-panel">
+                {matchingRecipients.length ? matchingRecipients.slice(0, 20).map((recipient) => (
+                  <button
+                    key={recipient.id}
+                    type="button"
+                    onClick={() => {
+                      setNewRecipientId(recipient.id)
+                      setRecipientSearch(profileName(recipient))
+                    }}
+                    className="block w-full border-b border-panel px-3 py-2.5 text-left last:border-0 hover:bg-surface"
+                  >
+                    <span className="block text-sm font-bold text-heading">{profileName(recipient)}</span>
+                    <span className="text-xs text-muted">{recipient.role}</span>
+                  </button>
+                )) : <p className="p-3 text-sm text-muted">No eligible recipients found.</p>}
+              </div>
+            )}
+            <label className="mt-4 block text-sm font-bold text-heading">
+              Subject
+              <input value={newSubject} onChange={(event) => setNewSubject(event.target.value)} maxLength={160} className="mt-2 w-full rounded-md border border-panel px-3 py-2.5 font-normal outline-none focus:border-accent" />
+            </label>
+            <div className="mt-4">
+              <label htmlFor="new-message-body" className="block text-sm font-bold text-heading">
+                Message
+              </label>
+              <div className="relative mt-2 flex items-center gap-1 rounded-t-md border border-b-0 border-panel bg-panel px-2 py-1" aria-label="Message formatting">
+                <button type="button" onClick={() => formatComposerSelection("new", "**")} className="rounded p-2 text-secondary hover:bg-white" aria-label="Bold">
+                  <IconBold className="h-4 w-4" />
+                </button>
+                <button type="button" onClick={() => formatComposerSelection("new", "*")} className="rounded p-2 text-secondary hover:bg-white" aria-label="Italic">
+                  <IconItalic className="h-4 w-4" />
+                </button>
+                <button type="button" onClick={() => setEmojiPickerTarget((current) => current === "new" ? null : "new")} className="rounded p-2 text-secondary hover:bg-white" aria-label="Add emoji">
+                  <IconMoodSmile className="h-4 w-4" />
+                </button>
+                {emojiPickerTarget === "new" && (
+                  <div className="absolute left-16 top-11 z-10 flex gap-1 rounded-md border border-panel bg-white p-2 shadow-panel">
+                    {MESSAGE_EMOJIS.map((emoji) => (
+                      <button key={emoji} type="button" onClick={() => { insertComposerText("new", emoji); setEmojiPickerTarget(null) }} className="rounded p-1.5 text-lg hover:bg-panel" aria-label={`Add ${emoji}`}>
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <textarea id="new-message-body" ref={newMessageTextareaRef} value={newBody} onChange={(event) => setNewBody(event.target.value)} rows={6} className="w-full resize-y rounded-b-md border border-panel px-3 py-2.5 font-normal outline-none focus:border-accent" />
+            </div>
+            {composerError && (
+              <p role="alert" className="mt-3 rounded-md border border-rose-500/25 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
+                {composerError}
+              </p>
+            )}
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowNewMessage(false)} className="rounded-md border border-panel px-4 py-2.5 text-sm font-bold text-secondary">Cancel</button>
+              <button type="submit" disabled={sending || !newRecipientId || !newSubject.trim() || !newBody.trim()} className="rounded-md bg-[#1a3a2a] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">
+                {sending ? "Sending..." : "Send message"}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

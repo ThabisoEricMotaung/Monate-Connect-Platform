@@ -3,25 +3,31 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { getNotifications, type Notification } from "@/lib/notifications"
+import { getInboxMessages } from "@/lib/messages"
 import { supabase } from "@/lib/supabase"
 
 export default function NotificationBell() {
   const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadMessages, setUnreadMessages] = useState(0)
 
   const unreadCount = useMemo(
-    () => notifications.filter((notification) => !notification.read).length,
-    [notifications],
+    () => notifications.filter((notification) => !notification.read).length + unreadMessages,
+    [notifications, unreadMessages],
   )
 
   useEffect(() => {
     let cancelled = false
 
     async function loadNotifications() {
-      const loadedNotifications = await getNotifications(20)
+      const [loadedNotifications, messages] = await Promise.all([
+        getNotifications(20),
+        getInboxMessages(),
+      ])
 
       if (!cancelled) {
         setNotifications(loadedNotifications)
+        setUnreadMessages(messages.filter((message) => !message.is_read).length)
       }
     }
 
@@ -81,7 +87,7 @@ export default function NotificationBell() {
   return (
     <button
       type="button"
-      aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
+      aria-label={`Inbox${unreadCount ? `, ${unreadCount} unread items` : ""}`}
       onClick={() => router.push("/dashboard/messages?notifications=1")}
       className="relative inline-flex h-11 w-11 items-center justify-center rounded-md border border-panel bg-panel text-heading shadow-sm transition hover:border-accent hover:bg-surface focus:outline-none focus:ring-2 focus:ring-accent/30"
     >

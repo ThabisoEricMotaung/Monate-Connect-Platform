@@ -28,6 +28,7 @@ type SupplierProfile = {
   industry: string | null
   phone: string | null
   email: string | null
+  role?: string | null
   verification_status: string | null
   created_at: string | null
   csd_number: string | null
@@ -181,7 +182,7 @@ export default function SuppliersDirectoryPage() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, business_name, province, industry, phone, email, verification_status, created_at, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, company_registration, director_verified, bank_verified, banking_verified, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date")
+        .select("id, business_name, province, industry, phone, email, role, verification_status, created_at, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, company_registration, director_verified, bank_verified, banking_verified, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date")
         .order("business_name", { ascending: true })
 
       if (error) {
@@ -218,15 +219,17 @@ export default function SuppliersDirectoryPage() {
       }, {})
 
       const profileRows = (data ?? []) as SupplierProfile[]
-      const supplierIds = profileRows.map((supplier) => supplier.id)
-      const documents = await fetchSupplierDocumentsByProfileIds(profileRows.map((supplier) => supplier.id))
+      // Only include actual supplier accounts
+      const supplierProfileRows = profileRows.filter((p) => p.role === "supplier")
+      const supplierIds = supplierProfileRows.map((supplier) => supplier.id)
+      const documents = await fetchSupplierDocumentsByProfileIds(supplierProfileRows.map((supplier) => supplier.id))
       if (documents.error) {
         setErrorMessage(documents.error)
         setLoading(false)
         return
       }
 
-      const hydratedProfiles = applySupplierDocumentsToProfiles(profileRows, documents.documentsByProfile)
+      const hydratedProfiles = applySupplierDocumentsToProfiles(supplierProfileRows, documents.documentsByProfile)
       const canonicalScores = await getCanonicalSupplierSmartScoreBatch({
         supplierIds,
         client: supabase,

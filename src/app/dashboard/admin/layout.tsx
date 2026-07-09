@@ -197,11 +197,12 @@ export default function AdminDashboardLayout({
     async function loadMetrics() {
       if (!supabase || !authorized || !profile?.id) return
 
-      const [rfqResult, quoteResult, savedResult, messageResult] = await Promise.all([
+      const [rfqResult, quoteResult, savedResult, messageResult, notificationResult] = await Promise.all([
         supabase.from("rfqs").select("id, status"),
         supabase.from("quotes").select("id, status"),
         supabase.from("saved_suppliers").select("id").eq("user_id", profile.id),
         supabase.from("messages").select("id, is_read").eq("receiver_id", profile.id),
+        supabase.from("notifications").select("id, is_read").eq("user_id", profile.id),
       ])
 
       if (cancelled) return
@@ -209,6 +210,7 @@ export default function AdminDashboardLayout({
       const rfqs = (rfqResult.data ?? []) as { status: string | null }[]
       const quotes = (quoteResult.data ?? []) as { status: string | null }[]
       const messages = (messageResult.data ?? []) as { is_read: boolean | null }[]
+      const notifications = (notificationResult.data ?? []) as { is_read: boolean | null }[]
 
       setMetrics({
         activeRfqs: rfqs.filter((rfq) =>
@@ -218,7 +220,9 @@ export default function AdminDashboardLayout({
           ["", "pending", "under review"].includes(String(quote.status ?? "").toLowerCase()),
         ).length,
         shortlistedSuppliers: savedResult.data?.length ?? 0,
-        unreadMessages: messages.filter((message) => !message.is_read).length,
+        unreadMessages:
+          messages.filter((message) => !message.is_read).length +
+          notifications.filter((notification) => !notification.is_read).length,
       })
     }
 
@@ -283,7 +287,7 @@ export default function AdminDashboardLayout({
             badgeTone: "danger",
           },
           {
-            name: "Messages",
+            name: "Inbox",
             href: "/dashboard/messages",
             icon: IconMessageCircle,
             badge: metrics.unreadMessages,

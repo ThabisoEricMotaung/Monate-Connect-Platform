@@ -24,7 +24,7 @@ const segmentLabels: Record<string, string> = {
   contracts: "Contracts",
   invoices: "Invoices",
   matching: "Matching",
-  messages: "Messages",
+  messages: "Inbox",
   new: "New",
   onboarding: "Onboarding",
   payments: "Payments",

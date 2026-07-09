@@ -10,6 +10,8 @@ export type ProcurementMessage = {
   rfq_id: number | null
   quote_id: number | null
   is_read: boolean
+  deleted_by_sender: boolean | null
+  deleted_by_receiver: boolean | null
   created_at: string | null
 }
 
@@ -22,6 +24,8 @@ export type SendMessageInput = {
 }
 
 const messageSelect =
+  "id, sender_id, receiver_id, subject, message, rfq_id, quote_id, is_read, deleted_by_sender, deleted_by_receiver, created_at"
+const legacyMessageSelect =
   "id, sender_id, receiver_id, subject, message, rfq_id, quote_id, is_read, created_at"
 
 const uuidPattern =
@@ -122,7 +126,7 @@ export async function sendMessage({
   const { data, error } = await supabase
     .from("messages")
     .insert([payload])
-    .select(messageSelect)
+    .select(legacyMessageSelect)
     .single()
 
   if (error) {
@@ -143,7 +147,11 @@ export async function sendMessage({
     link: `/dashboard/messages?thread_message=${data.id}`,
   })
 
-  return data as ProcurementMessage
+  return {
+    ...data,
+    deleted_by_sender: false,
+    deleted_by_receiver: false,
+  } as ProcurementMessage
 }
 
 export async function getInboxMessages(): Promise<ProcurementMessage[]> {
@@ -160,11 +168,26 @@ export async function getInboxMessages(): Promise<ProcurementMessage[]> {
     .from("messages")
     .select(messageSelect)
     .eq("receiver_id", user.id)
+    .or("deleted_by_receiver.is.null,deleted_by_receiver.eq.false")
     .order("created_at", { ascending: false })
 
   if (error) {
-    console.error("Inbox messages failed to load:", error)
-    return []
+    const { data: legacyData, error: legacyError } = await supabase
+      .from("messages")
+      .select(legacyMessageSelect)
+      .eq("receiver_id", user.id)
+      .order("created_at", { ascending: false })
+
+    if (legacyError) {
+      console.error("Inbox messages failed to load:", legacyError)
+      return []
+    }
+
+    return (legacyData ?? []).map((message) => ({
+      ...message,
+      deleted_by_sender: null,
+      deleted_by_receiver: null,
+    })) as ProcurementMessage[]
   }
 
   return (data ?? []) as ProcurementMessage[]
@@ -184,11 +207,26 @@ export async function getSentMessages(): Promise<ProcurementMessage[]> {
     .from("messages")
     .select(messageSelect)
     .eq("sender_id", user.id)
+    .or("deleted_by_sender.is.null,deleted_by_sender.eq.false")
     .order("created_at", { ascending: false })
 
   if (error) {
-    console.error("Sent messages failed to load:", error)
-    return []
+    const { data: legacyData, error: legacyError } = await supabase
+      .from("messages")
+      .select(legacyMessageSelect)
+      .eq("sender_id", user.id)
+      .order("created_at", { ascending: false })
+
+    if (legacyError) {
+      console.error("Sent messages failed to load:", legacyError)
+      return []
+    }
+
+    return (legacyData ?? []).map((message) => ({
+      ...message,
+      deleted_by_sender: null,
+      deleted_by_receiver: null,
+    })) as ProcurementMessage[]
   }
 
   return (data ?? []) as ProcurementMessage[]
@@ -213,4 +251,45 @@ export async function markMessageRead(messageId: number): Promise<void> {
   if (error) {
     console.error("Message read update failed:", error)
   }
+}
+
+export async function removeMessageFromInbox(messageId: number): Promise<void> {
+  if (!supabase) throw new Error("Supabase environment variables are not configured.")
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) throw new Error("User not authenticated.")
+
+  const { data: message, error: lookupError } = await supabase
+    .from("messages")
+    .select("sender_id, receiver_id")
+    .eq("id", messageId)
+    .maybeSingle()
+
+  if (lookupError || !message) {
+    throw new Error(lookupError?.message || "Message was not found.")
+  }
+
+  const field =
+    message.sender_id === user.id
+      ? "deleted_by_sender"
+      : message.receiver_id === user.id
+        ? "deleted_by_receiver"
+        : null
+
+  if (!field) throw new Error("You cannot remove this message.")
+
+  const { error } = await supabase
+    .from("messages")
+    .update({ [field]: true })
+    .eq("id", messageId)
+
+  if (error) throw new Error(error.message)
+}
+
+export async function removeThreadFromInbox(messageIds: number[]): Promise<void> {
+  await Promise.all(messageIds.map((messageId) => removeMessageFromInbox(messageId)))
 }

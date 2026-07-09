@@ -40,6 +40,11 @@ type PublicRFQ = {
 type SortKey = "deadline" | "newest" | "value"
 type DeadlineFilter = "week" | "twoWeeks" | "month"
 type BBBEEFilter = "level1to2" | "level3to4" | "level5to8" | "any"
+type SupplierMatchProfile = {
+  industry: string | null
+  province: string | null
+  provinces: string[] | null
+}
 
 // --- Constants ----------------------------------------------------------------
 
@@ -150,6 +155,38 @@ function getRFQProvince(rfq: PublicRFQ): string {
 
 function getRFQIndustry(rfq: PublicRFQ): string {
   return rfq.industry || rfq.category || "General procurement"
+}
+
+function normalizedProvinceSet(
+  province: string | null | undefined,
+  provinces: string[] | null | undefined,
+): Set<string> {
+  const values = normalizeArray(provinces)
+  if (province) values.push(province)
+
+  return new Set(
+    values.map(normalize).map((value) =>
+      value === "south africa" || value === "all provinces" ? "national" : value,
+    ),
+  )
+}
+
+function opportunityMatchScore(
+  rfq: PublicRFQ,
+  profile: SupplierMatchProfile | null,
+): number {
+  if (!profile) return 0
+
+  const industryMatches =
+    Boolean(normalize(profile.industry)) &&
+    normalize(profile.industry) === normalize(getRFQIndustry(rfq))
+  const supplierProvinces = normalizedProvinceSet(profile.province, profile.provinces)
+  const opportunityProvinces = normalizedProvinceSet(rfq.province, rfq.provinces)
+  const provinceMatches = Array.from(supplierProvinces).some((province) =>
+    opportunityProvinces.has(province),
+  )
+
+  return Number(industryMatches) + Number(provinceMatches)
 }
 
 function getBBBEEReq(rfq: PublicRFQ): string | null {
@@ -588,11 +625,13 @@ function RFQCard({
   rfq,
   idx,
   isAuth,
+  matchesProfile,
   onPreview,
 }: {
   rfq: PublicRFQ
   idx: number
   isAuth: boolean
+  matchesProfile: boolean
   onPreview: (rfq: PublicRFQ) => void
 }) {
   const daysLeft = daysUntil(getClosingDate(rfq))
@@ -613,7 +652,8 @@ function RFQCard({
   return (
     <article
       className={
-        "rounded-md border border-panel bg-card p-5 shadow-panel transition hover:border-accent/30 hover:shadow-md " +
+        "rounded-md border bg-card p-5 shadow-panel transition hover:border-accent/30 hover:shadow-md " +
+        (matchesProfile ? "border-accent/50 bg-accent/5 ring-1 ring-accent/10 " : "border-panel ") +
         borderAccent
       }
     >
@@ -623,6 +663,11 @@ function RFQCard({
             <span className="rounded-full border border-success/30 bg-success-soft px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-success">
               Verified buyer
             </span>
+            {matchesProfile && (
+              <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-accent-strong">
+                Matches your profile
+              </span>
+            )}
             {isNew && (
               <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-sky-700">
                 New
@@ -723,6 +768,7 @@ function RFQCard({
 export default function OpportunitiesPage() {
   const [rfqs, setRfqs] = useState<PublicRFQ[]>([])
   const [isAuth, setIsAuth] = useState(false)
+  const [supplierProfile, setSupplierProfile] = useState<SupplierMatchProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [sort, setSort] = useState<SortKey>("deadline")
@@ -740,7 +786,26 @@ export default function OpportunitiesPage() {
         supabase ? supabase.auth.getUser() : Promise.resolve(null),
       ])
       setRfqs(data)
-      setIsAuth(!!(authResult?.data?.user))
+      const user = authResult?.data?.user
+      setIsAuth(Boolean(user))
+
+      if (supabase && user) {
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("role, industry, province, provinces")
+          .eq("id", user.id)
+          .maybeSingle()
+
+        if (error) {
+          console.error("Opportunity profile matching failed:", error)
+        } else if (normalize(profile?.role) === "supplier") {
+          setSupplierProfile({
+            industry: profile?.industry ?? null,
+            province: profile?.province ?? null,
+            provinces: Array.isArray(profile?.provinces) ? profile.provinces : null,
+          })
+        }
+      }
       setLoading(false)
     }
     load()
@@ -803,6 +868,11 @@ export default function OpportunitiesPage() {
     }
 
     return [...result].sort((a, b) => {
+      const matchDifference =
+        opportunityMatchScore(b, supplierProfile) -
+        opportunityMatchScore(a, supplierProfile)
+      if (matchDifference !== 0) return matchDifference
+
       if (sort === "deadline") {
         const da = daysUntil(getClosingDate(a)) ?? 99999
         const db = daysUntil(getClosingDate(b)) ?? 99999
@@ -815,7 +885,16 @@ export default function OpportunitiesPage() {
       const numB = b.estimated_value_max ?? Number(String(b.budget ?? "0").replace(/[^\d]/g, ""))
       return numB - numA
     })
-  }, [rfqs, search, industryFilters, provinceFilters, deadlineFilters, bbeeFilters, sort])
+  }, [
+    rfqs,
+    search,
+    industryFilters,
+    provinceFilters,
+    deadlineFilters,
+    bbeeFilters,
+    sort,
+    supplierProfile,
+  ])
 
   function resetFilters() {
     setIndustryFilters([])
@@ -1035,6 +1114,7 @@ export default function OpportunitiesPage() {
                         rfq={rfq}
                         idx={idx}
                         isAuth={isAuth}
+                        matchesProfile={opportunityMatchScore(rfq, supplierProfile) > 0}
                         onPreview={setPreviewRFQ}
                       />
                       {!isAuth && idx === 3 && (

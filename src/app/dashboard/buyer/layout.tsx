@@ -105,7 +105,7 @@ const BASE_NAVIGATION: NavGroup[] = [
       { name: "Create RFQ", href: "/dashboard/buyer/rfqs/new", icon: IconPlus },
       { name: "My RFQs", href: "/dashboard/buyer/rfqs", icon: IconFileText },
       { name: "Quotes received", href: "/dashboard/buyer/quotes", icon: IconMessageCircle },
-      { name: "Messages", href: "/dashboard/messages", icon: IconMessageCircle },
+      { name: "Inbox", href: "/dashboard/messages", icon: IconMessageCircle },
       { name: "Purchase orders", href: "/dashboard/buyer/purchase-orders", icon: IconShoppingCart },
       { name: "Spend Analysis", href: "/dashboard/spend-analysis", icon: IconChartBar },
       { name: "Contracts", href: "/dashboard/buyer/contracts", icon: IconFileCertificate },
@@ -156,7 +156,7 @@ export default function BuyerDashboardLayout({
       } = await supabase.auth.getUser()
       if (!user || cancelled) return
 
-      const [profileResult, rfqResult, quoteResult, messageResult] = await Promise.all([
+      const [profileResult, rfqResult, quoteResult, messageResult, notificationResult] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, business_name, email, full_name, preferred_name, role, avatar_url")
@@ -165,6 +165,7 @@ export default function BuyerDashboardLayout({
         supabase.from("rfqs").select("id, status"),
         supabase.from("quotes").select("id, status"),
         supabase.from("messages").select("id, is_read").eq("receiver_id", user.id),
+        supabase.from("notifications").select("id, is_read").eq("user_id", user.id),
       ])
 
       if (cancelled) return
@@ -186,7 +187,11 @@ export default function BuyerDashboardLayout({
       )
 
       const messages = (messageResult.data ?? []) as { is_read: boolean | null }[]
-      setUnreadMessages(messages.filter((message) => !message.is_read).length)
+      const notifications = (notificationResult.data ?? []) as { is_read: boolean | null }[]
+      setUnreadMessages(
+        messages.filter((message) => !message.is_read).length +
+        notifications.filter((notification) => !notification.is_read).length,
+      )
     }
 
     load()

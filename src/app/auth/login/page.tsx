@@ -227,11 +227,10 @@ export default function LoginPage() {
           .eq("id", user.id)
 
         if (profileUpdateError) {
-          console.error(profileUpdateError)
-          setErrorMessage(profileUpdateError.message)
-          setLoading(false)
-          setLoadingMessage("")
-          return
+          console.warn(
+            "Post-login profile hydration failed; continuing to workspace:",
+            profileUpdateError,
+          )
         }
       }
     }

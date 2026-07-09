@@ -33,6 +33,8 @@ import { hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
 import { roleHomeHref } from "@/lib/navigation"
 import { supabase } from "@/lib/supabase"
+import { getInboxMessages } from "@/lib/messages"
+import { getNotifications } from "@/lib/notifications"
 
 type SupplierNavigationName =
   | TranslationKey
@@ -42,7 +44,7 @@ type SupplierNavigationName =
   | "Invoices"
   | "Have Your Say"
   | "Help"
-  | "Messages"
+  | "Inbox"
   | "Payments"
   | "Settings"
   | "Spend Analysis"
@@ -119,9 +121,9 @@ const navigation: {
     section: "Discover",
   },
   {
-    name: "Messages",
+    name: "Inbox",
     href: "/dashboard/messages",
-    section: "Pinned",
+    section: "Top",
   },
   {
     name: "Have Your Say",
@@ -191,7 +193,7 @@ const intelligenceNavigation: { name: string; href: string }[] = [
   { name: "Regional Insights", href: "/dashboard/intelligence/regions" },
 ]
 
-const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Board Pack" | "System Health" | "Production Readiness" | "Demo Mode" | "Demo Story Pack" | "Pilot Requests" | "Pilot Feedback" | "Audit Trail" | "Automation Rules" | "Spend Analysis" | "Compliance Report" | "BBBEE Scorecard" | "Reports" | "Settings" | "Messages" | "WhatsApp Network" | "Contract Renewals" | "Supplier Reviews" | "Compliance Risk" | "Buyer Onboarding" | "RFQ Templates" | "Banking Review" | "Supplier Risk" | "Decision Board" | "Workflow Rules" | "Overrides" | "Approval Matrix" | "Delegation Authority"; href: string }[] = [
+const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Board Pack" | "System Health" | "Production Readiness" | "Demo Mode" | "Demo Story Pack" | "Pilot Requests" | "Pilot Feedback" | "Audit Trail" | "Automation Rules" | "Spend Analysis" | "Compliance Report" | "BBBEE Scorecard" | "Reports" | "Settings" | "Inbox" | "WhatsApp Network" | "Contract Renewals" | "Supplier Reviews" | "Compliance Risk" | "Buyer Onboarding" | "RFQ Templates" | "Banking Review" | "Supplier Risk" | "Decision Board" | "Workflow Rules" | "Overrides" | "Approval Matrix" | "Delegation Authority"; href: string }[] = [
   {
     name: "Executive Command Centre",
     href: "/dashboard/executive",
@@ -201,7 +203,7 @@ const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Bo
     href: "/dashboard/admin/rfqs/new",
   },
   {
-    name: "Messages",
+    name: "Inbox",
     href: "/dashboard/messages",
   },
   {
@@ -328,6 +330,7 @@ export default function DashboardLayout({
   const [profile, setProfile] = useState<AccountMenuProfile | null>(null)
   const [roleChecked, setRoleChecked] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [unreadInbox, setUnreadInbox] = useState(0)
   const [phoneGraceExpiresAt, setPhoneGraceExpiresAt] = useState<string | null>(null)
   const canViewAdminNavigation = role?.trim().toLowerCase() === "admin"
   const homeHref = roleHomeHref(role)
@@ -431,6 +434,31 @@ export default function DashboardLayout({
 
     loadRole()
   }, [router])
+
+  useEffect(() => {
+    if (!roleChecked) return
+    let cancelled = false
+
+    async function loadUnreadInbox() {
+      const [messages, notifications] = await Promise.all([
+        getInboxMessages(),
+        getNotifications(50),
+      ])
+      if (!cancelled) {
+        setUnreadInbox(
+          messages.filter((message) => !message.is_read).length +
+          notifications.filter((notification) => !notification.read).length,
+        )
+      }
+    }
+
+    loadUnreadInbox()
+    const intervalId = window.setInterval(loadUnreadInbox, 30_000)
+    return () => {
+      cancelled = true
+      window.clearInterval(intervalId)
+    }
+  }, [roleChecked])
 
   useEffect(() => {
     if (!roleChecked) return
@@ -570,6 +598,11 @@ export default function DashboardLayout({
                           </span>
                         </span>
                         {active && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8a060]" />}
+                        {item.href === "/dashboard/messages" && unreadInbox > 0 && (
+                          <span className="rounded-full bg-rose-600 px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
+                            {unreadInbox > 99 ? "99+" : unreadInbox}
+                          </span>
+                        )}
                       </Link>
                     )
                   })}
@@ -616,7 +649,7 @@ export default function DashboardLayout({
                 {adminNavigation.map((item) => {
                   const active = pathname === item.href || pathname.startsWith(item.href)
                   const itemLabel =
-                    item.name === "Executive Command Centre" || item.name === "Board Pack" || item.name === "System Health" || item.name === "Production Readiness" || item.name === "Demo Mode" || item.name === "Demo Story Pack" || item.name === "Pilot Requests" || item.name === "Pilot Feedback" || item.name === "Audit Trail" || item.name === "Automation Rules" || item.name === "Spend Analysis" || item.name === "Compliance Report" || item.name === "BBBEE Scorecard" || item.name === "Reports" || item.name === "Settings" || item.name === "Messages" || item.name === "WhatsApp Network" || item.name === "Contract Renewals" || item.name === "Supplier Reviews" || item.name === "Compliance Risk" || item.name === "Buyer Onboarding" || item.name === "RFQ Templates" || item.name === "Banking Review" || item.name === "Supplier Risk" || item.name === "Decision Board" || item.name === "Workflow Rules" || item.name === "Overrides" || item.name === "Approval Matrix" || item.name === "Delegation Authority"
+                    item.name === "Executive Command Centre" || item.name === "Board Pack" || item.name === "System Health" || item.name === "Production Readiness" || item.name === "Demo Mode" || item.name === "Demo Story Pack" || item.name === "Pilot Requests" || item.name === "Pilot Feedback" || item.name === "Audit Trail" || item.name === "Automation Rules" || item.name === "Spend Analysis" || item.name === "Compliance Report" || item.name === "BBBEE Scorecard" || item.name === "Reports" || item.name === "Settings" || item.name === "Inbox" || item.name === "WhatsApp Network" || item.name === "Contract Renewals" || item.name === "Supplier Reviews" || item.name === "Compliance Risk" || item.name === "Buyer Onboarding" || item.name === "RFQ Templates" || item.name === "Banking Review" || item.name === "Supplier Risk" || item.name === "Decision Board" || item.name === "Workflow Rules" || item.name === "Overrides" || item.name === "Approval Matrix" || item.name === "Delegation Authority"
                       ? item.name
                       : t(item.name)
 

@@ -80,17 +80,18 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${playfair.variable} ${sourceSerif.variable} ${libreFranklin.variable} h-full antialiased`}
     >
-      <head />
-      <Script
-        id="theme-script"
-        strategy="beforeInteractive"
-        dangerouslySetInnerHTML={{ __html: themeScript }}
-      />
-      <Script
-        id="accessibility-script"
-        strategy="beforeInteractive"
-        dangerouslySetInnerHTML={{ __html: accessibilityScript }}
-      />
+      <head>
+        <Script
+          id="theme-script"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeScript }}
+        />
+        <Script
+          id="accessibility-script"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: accessibilityScript }}
+        />
+      </head>
       <body className="min-h-full bg-page text-primary font-sans">
         <ThemeProvider>
           <I18nProvider>
