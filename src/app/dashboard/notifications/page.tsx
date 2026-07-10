@@ -39,7 +39,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     async function loadNotifications() {
-      setNotifications(await getNotifications(50))
+      setNotifications(await getNotifications())
       setLoading(false)
     }
 

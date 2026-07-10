@@ -24,6 +24,7 @@ import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
 import { useRequireRole } from "@/hooks/useRequireRole"
 import { usePageTracking } from "@/hooks/useSessionTracking"
+import { getInboxUnreadCounts, subscribeToInboxActivity } from "@/lib/inboxCounts"
 import { supabase } from "@/lib/supabase"
 
 type BuyerProfile = {
@@ -148,6 +149,7 @@ export default function BuyerDashboardLayout({
   useEffect(() => {
     if (loading || !supabase) return
     let cancelled = false
+    let unsubscribe = () => {}
 
     async function load() {
       if (!supabase) return
@@ -156,7 +158,7 @@ export default function BuyerDashboardLayout({
       } = await supabase.auth.getUser()
       if (!user || cancelled) return
 
-      const [profileResult, rfqResult, quoteResult, messageResult, notificationResult] = await Promise.all([
+      const [profileResult, rfqResult, quoteResult, inboxCounts] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, business_name, email, full_name, preferred_name, role, avatar_url")
@@ -164,8 +166,7 @@ export default function BuyerDashboardLayout({
           .maybeSingle(),
         supabase.from("rfqs").select("id, status"),
         supabase.from("quotes").select("id, status"),
-        supabase.from("messages").select("id, is_read").eq("receiver_id", user.id),
-        supabase.from("notifications").select("id, is_read").eq("user_id", user.id),
+        getInboxUnreadCounts(),
       ])
 
       if (cancelled) return
@@ -186,17 +187,24 @@ export default function BuyerDashboardLayout({
         ).length,
       )
 
-      const messages = (messageResult.data ?? []) as { is_read: boolean | null }[]
-      const notifications = (notificationResult.data ?? []) as { is_read: boolean | null }[]
-      setUnreadMessages(
-        messages.filter((message) => !message.is_read).length +
-        notifications.filter((notification) => !notification.is_read).length,
-      )
+      setUnreadMessages(inboxCounts.unreadMessages)
+
+      const refreshUnreadMessages = async () => {
+        const nextCounts = await getInboxUnreadCounts()
+        if (!cancelled) setUnreadMessages(nextCounts.unreadMessages)
+      }
+      const intervalId = window.setInterval(refreshUnreadMessages, 30_000)
+      const unsubscribeActivity = subscribeToInboxActivity(user.id, refreshUnreadMessages)
+      unsubscribe = () => {
+        window.clearInterval(intervalId)
+        unsubscribeActivity()
+      }
     }
 
     load()
     return () => {
       cancelled = true
+      unsubscribe()
     }
   }, [loading])
 

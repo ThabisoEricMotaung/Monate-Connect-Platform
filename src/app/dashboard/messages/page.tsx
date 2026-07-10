@@ -21,10 +21,13 @@ import { FormEvent, KeyboardEvent, type ReactNode, useCallback, useEffect, useMe
 import { useRouter } from "next/navigation"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import {
+  getDeletedMessages,
   getInboxMessages,
   getSentMessages,
+  markMessageUnread,
   markMessageRead,
   removeThreadFromInbox,
+  restoreThreadToInbox,
   sendMessage,
   type ProcurementMessage,
 } from "@/lib/messages"
@@ -36,11 +39,10 @@ import {
 import { getCurrentProfile, getCurrentUser, hasAdminOrBuyerAccess, type AuthProfile } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 
-type ThreadTab = "all" | "unread" | "archived"
 type NotificationTab = "all" | "action" | "updates"
 type ContextType = "RFQ" | "Quote" | "Contract" | "PO"
 type ScreenMode = "threads" | "conversation"
-type InboxTab = "messages" | "sent" | "notifications"
+type InboxTab = "inbox" | "sent" | "archives" | "drafts" | "recentlyDeleted"
 type EmojiPickerTarget = "reply" | "new" | null
 
 type ProfileSummary = {
@@ -103,6 +105,15 @@ type Thread = {
   value: string | null
   deadline: string | null
   messages: ThreadMessage[]
+}
+
+type MessageDraft = {
+  id: string
+  recipientId: string
+  recipientName: string
+  subject: string
+  body: string
+  savedAt: string
 }
 
 function profileName(profile: ProfileSummary | undefined, fallback = "Platform"): string {
@@ -179,7 +190,7 @@ function inferContextType(message: ProcurementMessage): ContextType {
   return "RFQ"
 }
 
-function documentHref(thread: Thread, isAdminOrBuyer: boolean): string {
+function documentHref(thread: Thread, isAdminOrBuyer: boolean): string | null {
   if (thread.rfqId) {
     return isAdminOrBuyer
       ? `/dashboard/admin/rfqs/${thread.rfqId}`
@@ -192,7 +203,18 @@ function documentHref(thread: Thread, isAdminOrBuyer: boolean): string {
       : `/dashboard/quotes`
   }
 
-  return "/dashboard"
+  return null
+}
+
+function documentLabel(thread: Thread): string {
+  if (thread.rfqId) return "View related RFQ"
+  if (thread.quoteId) return "View related quote"
+
+  return "View related document"
+}
+
+function conversationHref(thread: Thread): string {
+  return `/dashboard/messages?thread=${encodeURIComponent(thread.id)}`
 }
 
 function avatarTone(role: string | null, platform: boolean): string {
@@ -333,6 +355,9 @@ function buildThreads({
     .sort((a, b) => new Date(b.timestamp ?? 0).getTime() - new Date(a.timestamp ?? 0).getTime())
 }
 
+// Soft-deleted messages are kept indefinitely for now. A retention purge (for example
+// 30/60/90 days) can be added later once product policy and audit needs are clearer.
+
 function IconButton({
   label,
   children,
@@ -403,21 +428,25 @@ export default function MessagesPage() {
   const [currentUserId, setCurrentUserId] = useState("")
   const [profile, setProfile] = useState<AuthProfile | null>(null)
   const [messages, setMessages] = useState<LocalMessage[]>([])
+  const [deletedMessages, setDeletedMessages] = useState<LocalMessage[]>([])
   const [profiles, setProfiles] = useState<Record<string, ProfileSummary>>({})
   const [rfqs, setRfqs] = useState<Record<number, RfqSummary>>({})
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [activeThreadId, setActiveThreadId] = useState("")
-  const [threadTab, setThreadTab] = useState<ThreadTab>("all")
   const [notificationTab, setNotificationTab] = useState<NotificationTab>("all")
   const [searchTerm, setSearchTerm] = useState("")
   const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set())
+  const [selectedThreadIds, setSelectedThreadIds] = useState<Set<string>>(new Set())
+  const [drafts, setDrafts] = useState<MessageDraft[]>([])
   const [replyText, setReplyText] = useState("")
   const [pendingFiles, setPendingFiles] = useState<MessageAttachment[]>([])
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
   const [showNotifications, setShowNotifications] = useState(false)
-  const [inboxTab, setInboxTab] = useState<InboxTab>("messages")
+  const [inboxTab, setInboxTab] = useState<InboxTab>("inbox")
+  const [restoringThreadIds, setRestoringThreadIds] = useState<Set<string>>(new Set())
+  const [restoringSelected, setRestoringSelected] = useState(false)
   const [showNewMessage, setShowNewMessage] = useState(false)
   const [recipientOptions, setRecipientOptions] = useState<ProfileSummary[]>([])
   const [recipientSearch, setRecipientSearch] = useState("")
@@ -508,23 +537,26 @@ export default function MessagesPage() {
     }
 
     try {
-      const [currentUser, currentProfile, inbox, sent, loadedNotifications] = await Promise.all([
+      const [currentUser, currentProfile, inbox, sent, deleted, loadedNotifications] = await Promise.all([
         getCurrentUser(),
         getCurrentProfile(),
         getInboxMessages(),
         getSentMessages(),
-        getNotifications(50),
+        getDeletedMessages(),
+        getNotifications(),
       ])
 
       const allMessages = [...inbox, ...sent]
+      const contextMessages = [...allMessages, ...deleted]
 
       setCurrentUserId(currentUser?.id ?? "")
       setProfile(currentProfile)
       setMessages(allMessages)
+      setDeletedMessages(deleted)
       setNotifications(loadedNotifications)
       await Promise.all([
-        loadProfilesForMessages(allMessages),
-        loadRfqContext(allMessages),
+        loadProfilesForMessages(contextMessages),
+        loadRfqContext(contextMessages),
       ])
 
       if (supabase && currentUser?.id && currentProfile) {
@@ -563,12 +595,19 @@ export default function MessagesPage() {
   useEffect(() => {
     if (typeof window === "undefined") return
 
+    function openNotificationsPanel() {
+      setShowNotifications(true)
+      setNotificationTab("all")
+    }
+
     const params = new URLSearchParams(window.location.search)
 
     if (params.get("notifications") === "1" || params.get("panel") === "notifications") {
-      setShowNotifications(true)
-      setInboxTab("notifications")
+      openNotificationsPanel()
     }
+
+    window.addEventListener("open-notifications-panel", openNotificationsPanel)
+    return () => window.removeEventListener("open-notifications-panel", openNotificationsPanel)
   }, [])
 
   useEffect(() => {
@@ -653,16 +692,45 @@ export default function MessagesPage() {
     })
   }, [archivedIds, currentUserId, messages, profiles, rfqs])
 
-  const threads = inboxTab === "sent" ? sentThreads : allThreads
+  const deletedThreads = useMemo(() => {
+    if (!currentUserId) return []
+
+    return buildThreads({
+      messages: deletedMessages,
+      currentUserId,
+      profiles,
+      rfqs,
+      archivedIds: new Set(),
+    })
+  }, [currentUserId, deletedMessages, profiles, rfqs])
+
+  const inboxThreads = useMemo(
+    () => allThreads.filter((thread) => !thread.archived && thread.messages.some((message) => !message.mine)),
+    [allThreads],
+  )
+
+  const archivedThreads = useMemo(
+    () => allThreads.filter((thread) => thread.archived),
+    [allThreads],
+  )
+
+  const threads = useMemo(() => {
+    if (inboxTab === "sent") return sentThreads
+    if (inboxTab === "archives") return archivedThreads
+    if (inboxTab === "recentlyDeleted") return deletedThreads
+    if (inboxTab === "drafts") return []
+
+    return inboxThreads
+  }, [archivedThreads, deletedThreads, inboxTab, inboxThreads, sentThreads])
 
   const activeThread = useMemo(
     () => threads.find((thread) => thread.id === activeThreadId) ?? threads[0] ?? null,
     [activeThreadId, threads],
   )
 
-  const unreadThreadCount = useMemo(
-    () => allThreads.filter((thread) => thread.unread && !thread.archived).length,
-    [allThreads],
+  const unreadMessageCount = useMemo(
+    () => messages.filter((message) => message.receiver_id === currentUserId && !message.is_read).length,
+    [currentUserId, messages],
   )
 
   const unreadNotificationCount = useMemo(
@@ -670,14 +738,12 @@ export default function MessagesPage() {
     [notifications],
   )
 
+  const unreadInboxCount = unreadMessageCount
+
   const visibleThreads = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
 
     return threads.filter((thread) => {
-      if (inboxTab === "messages" && threadTab === "unread" && !thread.unread) return false
-      if (inboxTab === "messages" && threadTab === "archived" && !thread.archived) return false
-      if (inboxTab === "messages" && threadTab !== "archived" && thread.archived) return false
-
       if (!normalizedSearch) return true
 
       return [
@@ -691,7 +757,7 @@ export default function MessagesPage() {
         .toLowerCase()
         .includes(normalizedSearch)
     })
-  }, [inboxTab, searchTerm, threadTab, threads])
+  }, [searchTerm, threads])
 
   const visibleNotifications = useMemo(
     () =>
@@ -714,6 +780,20 @@ export default function MessagesPage() {
       setActiveThreadId(visibleThreads[0].id)
     }
   }, [activeThread, threads, visibleThreads])
+
+  useEffect(() => {
+    if (typeof window === "undefined" || allThreads.length === 0) return
+
+    const threadId = new URLSearchParams(window.location.search).get("thread")
+    if (!threadId || activeThreadId) return
+
+    const matchingThread = allThreads.find((thread) => thread.id === threadId)
+    if (matchingThread) {
+      setInboxTab(matchingThread.archived ? "archives" : "inbox")
+      setActiveThreadId(matchingThread.id)
+      setScreenMode("conversation")
+    }
+  }, [activeThreadId, allThreads])
 
   useEffect(() => {
     feedRef.current?.scrollTo({
@@ -775,7 +855,15 @@ export default function MessagesPage() {
     if (!activeThread) return
 
     setArchivedIds((currentIds) => new Set(currentIds).add(activeThread.id))
-    setThreadTab("all")
+    setSelectedThreadIds((currentIds) => {
+      const nextIds = new Set(currentIds)
+      nextIds.delete(activeThread.id)
+      return nextIds
+    })
+    setActiveThreadId("")
+    setScreenMode("threads")
+    setStatusMessage("Conversation moved to Archives.")
+    window.setTimeout(() => setStatusMessage(""), 4_000)
   }
 
   async function deleteActiveThread() {
@@ -789,6 +877,19 @@ export default function MessagesPage() {
       await removeThreadFromInbox(activeThread.messages.filter((message) => message.id > 0).map((message) => message.id))
       const removedIds = new Set(activeThread.messages.map((message) => message.id))
       setMessages((currentMessages) => currentMessages.filter((message) => !removedIds.has(message.id)))
+      setDeletedMessages((currentMessages) => [
+        ...currentMessages.filter((message) => !removedIds.has(message.id)),
+        ...activeThread.messages.map((message) => ({
+          ...message,
+          deleted_by_sender: message.mine ? true : message.deleted_by_sender,
+          deleted_by_receiver: message.mine ? message.deleted_by_receiver : true,
+        })),
+      ])
+      setSelectedThreadIds((currentIds) => {
+        const nextIds = new Set(currentIds)
+        nextIds.delete(activeThread.id)
+        return nextIds
+      })
       setActiveThreadId("")
       setScreenMode("threads")
     } catch (error) {
@@ -796,17 +897,196 @@ export default function MessagesPage() {
     }
   }
 
-  function markActiveUnread() {
+  async function restoreThread(thread: Thread) {
+    if (!thread || thread.platform) return
+
+    setErrorMessage("")
+    setRestoringThreadIds((currentIds) => new Set(currentIds).add(thread.id))
+    try {
+      const messageIds = thread.messages.filter((message) => message.id > 0).map((message) => message.id)
+      await restoreThreadToInbox(messageIds)
+      const restoredIds = new Set(messageIds)
+      const restoredMessages = deletedMessages.filter((message) => restoredIds.has(message.id))
+      setDeletedMessages((currentMessages) => currentMessages.filter((message) => !restoredIds.has(message.id)))
+      setMessages((currentMessages) => {
+        const currentIds = new Set(currentMessages.map((message) => message.id))
+        return [
+          ...currentMessages,
+          ...restoredMessages
+            .filter((message) => !currentIds.has(message.id))
+            .map((message) => ({
+              ...message,
+              deleted_by_sender: message.sender_id === currentUserId ? false : message.deleted_by_sender,
+              deleted_by_receiver: message.receiver_id === currentUserId ? false : message.deleted_by_receiver,
+            })),
+        ]
+      })
+      setSelectedThreadIds((currentIds) => {
+        const nextIds = new Set(currentIds)
+        nextIds.delete(thread.id)
+        return nextIds
+      })
+      setActiveThreadId("")
+      setScreenMode("threads")
+      setStatusMessage("Conversation restored to Inbox.")
+      window.setTimeout(() => setStatusMessage(""), 4_000)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Conversation could not be restored.")
+    } finally {
+      setRestoringThreadIds((currentIds) => {
+        const nextIds = new Set(currentIds)
+        nextIds.delete(thread.id)
+        return nextIds
+      })
+    }
+  }
+
+  async function markActiveUnread() {
     if (!activeThread || activeThread.platform) return
 
     const lastInbound = [...activeThread.messages].reverse().find((message) => !message.mine)
-    if (!lastInbound) return
+    if (!lastInbound) {
+      setStatusMessage("Only received messages can be marked unread.")
+      window.setTimeout(() => setStatusMessage(""), 4_000)
+      return
+    }
 
     setMessages((currentMessages) =>
       currentMessages.map((message) =>
         message.id === lastInbound.id ? { ...message, is_read: false } : message,
       ),
     )
+
+    try {
+      await markMessageUnread(lastInbound.id)
+      setStatusMessage("Conversation marked unread.")
+      window.setTimeout(() => setStatusMessage(""), 4_000)
+    } catch (error) {
+      setMessages((currentMessages) =>
+        currentMessages.map((message) =>
+          message.id === lastInbound.id ? { ...message, is_read: true } : message,
+        ),
+      )
+      setErrorMessage(error instanceof Error ? error.message : "Conversation could not be marked unread.")
+    }
+  }
+
+  function toggleThreadSelection(threadId: string) {
+    setSelectedThreadIds((currentIds) => {
+      const nextIds = new Set(currentIds)
+      if (nextIds.has(threadId)) {
+        nextIds.delete(threadId)
+      } else {
+        nextIds.add(threadId)
+      }
+      return nextIds
+    })
+  }
+
+  function toggleSelectAllVisible() {
+    setSelectedThreadIds((currentIds) => {
+      const selectableIds = visibleThreads.filter((thread) => !thread.platform).map((thread) => thread.id)
+      const allSelected = selectableIds.length > 0 && selectableIds.every((id) => currentIds.has(id))
+      const nextIds = new Set(currentIds)
+
+      selectableIds.forEach((id) => {
+        if (allSelected) {
+          nextIds.delete(id)
+        } else {
+          nextIds.add(id)
+        }
+      })
+
+      return nextIds
+    })
+  }
+
+  async function deleteSelectedThreads() {
+    const selectedThreads = visibleThreads.filter((thread) => selectedThreadIds.has(thread.id) && !thread.platform)
+    if (selectedThreads.length === 0) return
+    if (!window.confirm(`Remove ${selectedThreads.length} selected conversation${selectedThreads.length === 1 ? "" : "s"} from your Inbox? The other participant will keep their copy.`)) {
+      return
+    }
+
+    setErrorMessage("")
+    try {
+      const messageIds = selectedThreads.flatMap((thread) =>
+        thread.messages.filter((message) => message.id > 0).map((message) => message.id),
+      )
+      await removeThreadFromInbox(messageIds)
+      const removedIds = new Set(messageIds)
+      const removedThreadIds = new Set(selectedThreads.map((thread) => thread.id))
+      setMessages((currentMessages) => currentMessages.filter((message) => !removedIds.has(message.id)))
+      setDeletedMessages((currentMessages) => [
+        ...currentMessages.filter((message) => !removedIds.has(message.id)),
+        ...selectedThreads.flatMap((thread) =>
+          thread.messages.map((message) => ({
+            ...message,
+            deleted_by_sender: message.mine ? true : message.deleted_by_sender,
+            deleted_by_receiver: message.mine ? message.deleted_by_receiver : true,
+          })),
+        ),
+      ])
+      setSelectedThreadIds((currentIds) => {
+        const nextIds = new Set(currentIds)
+        removedThreadIds.forEach((id) => nextIds.delete(id))
+        return nextIds
+      })
+      if (activeThread && removedThreadIds.has(activeThread.id)) {
+        setActiveThreadId("")
+        setScreenMode("threads")
+      }
+      setStatusMessage(`${selectedThreads.length} conversation${selectedThreads.length === 1 ? "" : "s"} removed.`)
+      window.setTimeout(() => setStatusMessage(""), 4_000)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Selected conversations could not be removed.")
+    }
+  }
+
+  async function restoreSelectedThreads() {
+    const selectedThreads = deletedThreads.filter((thread) => selectedThreadIds.has(thread.id) && !thread.platform)
+    if (selectedThreads.length === 0) return
+
+    setErrorMessage("")
+    setRestoringSelected(true)
+    try {
+      const messageIds = selectedThreads.flatMap((thread) =>
+        thread.messages.filter((message) => message.id > 0).map((message) => message.id),
+      )
+      await restoreThreadToInbox(messageIds)
+      const restoredIds = new Set(messageIds)
+      const restoredMessages = deletedMessages.filter((message) => restoredIds.has(message.id))
+      const restoredThreadIds = new Set(selectedThreads.map((thread) => thread.id))
+      setDeletedMessages((currentMessages) => currentMessages.filter((message) => !restoredIds.has(message.id)))
+      setMessages((currentMessages) => {
+        const currentIds = new Set(currentMessages.map((message) => message.id))
+        return [
+          ...currentMessages,
+          ...restoredMessages
+            .filter((message) => !currentIds.has(message.id))
+            .map((message) => ({
+              ...message,
+              deleted_by_sender: message.sender_id === currentUserId ? false : message.deleted_by_sender,
+              deleted_by_receiver: message.receiver_id === currentUserId ? false : message.deleted_by_receiver,
+            })),
+        ]
+      })
+      setSelectedThreadIds((currentIds) => {
+        const nextIds = new Set(currentIds)
+        restoredThreadIds.forEach((id) => nextIds.delete(id))
+        return nextIds
+      })
+      if (activeThread && restoredThreadIds.has(activeThread.id)) {
+        setActiveThreadId("")
+        setScreenMode("threads")
+      }
+      setStatusMessage(`${selectedThreads.length} conversation${selectedThreads.length === 1 ? "" : "s"} restored to Inbox.`)
+      window.setTimeout(() => setStatusMessage(""), 4_000)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Selected conversations could not be restored.")
+    } finally {
+      setRestoringSelected(false)
+    }
   }
 
   function handleFiles(files: FileList | null) {
@@ -915,6 +1195,43 @@ export default function MessagesPage() {
     })
   }
 
+  function saveNewMessageDraft() {
+    if (!newRecipientId && !newSubject.trim() && !newBody.trim()) {
+      setShowNewMessage(false)
+      return
+    }
+
+    const recipient = recipientOptions.find((option) => option.id === newRecipientId)
+    setDrafts((currentDrafts) => [
+      {
+        id: crypto.randomUUID(),
+        recipientId: newRecipientId,
+        recipientName: recipient ? profileName(recipient) : recipientSearch || "No recipient selected",
+        subject: newSubject.trim() || "Untitled draft",
+        body: newBody.trim(),
+        savedAt: new Date().toISOString(),
+      },
+      ...currentDrafts,
+    ])
+    setNewRecipientId("")
+    setNewSubject("")
+    setNewBody("")
+    setRecipientSearch("")
+    setShowNewMessage(false)
+    setInboxTab("drafts")
+    setStatusMessage("Draft saved for this session.")
+    window.setTimeout(() => setStatusMessage(""), 4_000)
+  }
+
+  function openDraft(draft: MessageDraft) {
+    setNewRecipientId(draft.recipientId)
+    setRecipientSearch(draft.recipientName)
+    setNewSubject(draft.subject === "Untitled draft" ? "" : draft.subject)
+    setNewBody(draft.body)
+    setDrafts((currentDrafts) => currentDrafts.filter((item) => item.id !== draft.id))
+    setShowNewMessage(true)
+  }
+
   async function handleNewMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setComposerError("")
@@ -942,6 +1259,14 @@ export default function MessagesPage() {
       setRecipientSearch("")
       setShowNewMessage(false)
       setInboxTab("sent")
+      setDrafts((currentDrafts) =>
+        currentDrafts.filter(
+          (draft) =>
+            draft.recipientId !== newRecipientId ||
+            draft.subject !== (newSubject.trim() || "Untitled draft") ||
+            draft.body !== newBody.trim(),
+        ),
+      )
       setStatusMessage("Message sent successfully.")
       window.setTimeout(() => setStatusMessage(""), 4_000)
     } catch (error) {
@@ -1011,6 +1336,12 @@ export default function MessagesPage() {
 
   const deadlineDays = activeThread ? daysUntil(activeThread.deadline) : null
   const showDeadlineWarning = deadlineDays != null && deadlineDays >= 0 && deadlineDays <= 3
+  const relatedDocumentHref = activeThread ? documentHref(activeThread, isAdminOrBuyer) : null
+  const selectableVisibleThreads = visibleThreads.filter((thread) => !thread.platform)
+  const selectedVisibleCount = selectableVisibleThreads.filter((thread) => selectedThreadIds.has(thread.id)).length
+  const allVisibleSelected =
+    selectableVisibleThreads.length > 0 &&
+    selectableVisibleThreads.every((thread) => selectedThreadIds.has(thread.id))
 
   const matchingRecipients = recipientOptions.filter((recipient) =>
     [recipient.business_name, recipient.full_name, recipient.email]
@@ -1022,21 +1353,26 @@ export default function MessagesPage() {
 
   return (
     <div className="relative h-[calc(100vh-9rem)] min-h-[720px] overflow-hidden rounded-md border border-[#d8c79d]/50 bg-[#f8f4ec] shadow-panel">
-      <div className="flex h-16 items-center justify-between border-b border-panel bg-white px-4">
+      <div className="border-b border-panel bg-white px-4 py-3">
         <div>
           <h1 className="text-xl font-semibold text-heading">Inbox</h1>
-          <div className="mt-1 flex gap-5" role="tablist" aria-label="Inbox sections">
+          <div className="mt-2 flex flex-wrap gap-4" role="tablist" aria-label="Inbox sections">
             {([
-              ["messages", "Messages", unreadThreadCount],
+              ["inbox", "All", unreadInboxCount],
               ["sent", "Sent", 0],
-              ["notifications", "Notifications", unreadNotificationCount],
+              ["archives", "Archives", 0],
+              ["drafts", "Drafts", drafts.length],
+              ["recentlyDeleted", "Recently Deleted", deletedThreads.length],
             ] as const).map(([id, label, count]) => (
               <button
                 key={id}
                 type="button"
                 role="tab"
                 aria-selected={inboxTab === id}
-                onClick={() => setInboxTab(id)}
+                onClick={() => {
+                  setInboxTab(id)
+                  setSelectedThreadIds(new Set())
+                }}
                 className={`text-xs font-bold ${inboxTab === id ? "text-accent" : "text-muted"}`}
               >
                 {label}{count > 0 ? ` (${count})` : ""}
@@ -1044,19 +1380,55 @@ export default function MessagesPage() {
             ))}
           </div>
         </div>
-        {inboxTab !== "notifications" && (
-          <button
-            type="button"
-            onClick={() => {
-              setComposerError("")
-              setShowNewMessage(true)
-            }}
-            className="inline-flex items-center gap-2 rounded-md bg-[#1a3a2a] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#244f39]"
-          >
-            <IconPlus aria-hidden="true" className="h-4 w-4" />
-            New message
-          </button>
-        )}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {inboxTab !== "recentlyDeleted" && (
+            <button
+              type="button"
+              onClick={() => {
+                setComposerError("")
+                setShowNewMessage(true)
+              }}
+              className="inline-flex items-center gap-2 rounded-md bg-[#1a3a2a] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#244f39]"
+            >
+              <IconPlus aria-hidden="true" className="h-4 w-4" />
+              New message
+            </button>
+          )}
+          {inboxTab !== "drafts" && (
+            <>
+              <button
+                type="button"
+                onClick={toggleSelectAllVisible}
+                disabled={selectableVisibleThreads.length === 0}
+                className="rounded-md border border-panel bg-panel px-3 py-2 text-sm font-bold text-secondary transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {allVisibleSelected ? "Clear selection" : "Select all"}
+              </button>
+              {inboxTab === "recentlyDeleted" ? (
+                <button
+                  type="button"
+                  onClick={restoreSelectedThreads}
+                  disabled={selectedVisibleCount === 0 || restoringSelected}
+                  className="inline-flex items-center gap-2 rounded-md border border-[#c8a060]/50 bg-[#f8f4ec] px-3 py-2 text-sm font-bold text-[#1a3a2a] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {restoringSelected
+                    ? "Restoring..."
+                    : `Restore selected${selectedVisibleCount > 0 ? ` (${selectedVisibleCount})` : ""}`}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={deleteSelectedThreads}
+                  disabled={selectedVisibleCount === 0}
+                  className="inline-flex items-center gap-2 rounded-md border border-rose-500/25 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <IconTrash aria-hidden="true" className="h-4 w-4" />
+                  Delete selected{selectedVisibleCount > 0 ? ` (${selectedVisibleCount})` : ""}
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {statusMessage && (
@@ -1065,19 +1437,41 @@ export default function MessagesPage() {
         </div>
       )}
 
-      {inboxTab === "notifications" ? (
-        <div className="flex h-[calc(100%-4rem)] flex-col bg-panel">
-          <NotificationsPanel
-            notifications={visibleNotifications}
-            notificationTab={notificationTab}
-            unreadCount={unreadNotificationCount}
-            onTabChange={setNotificationTab}
-            onOpen={handleNotificationClick}
-            onMarkAllRead={markAllNotificationsRead}
-          />
+      {inboxTab === "drafts" ? (
+        <div className="h-[calc(100%-6.75rem)] overflow-y-auto bg-panel p-5">
+          {drafts.length === 0 ? (
+            <div className="rounded-md border border-panel bg-white p-8 text-center">
+              <p className="text-sm font-semibold text-heading">No drafts in this session.</p>
+              <p className="mt-2 text-xs text-muted">Drafts are kept only until you refresh or leave this browser session.</p>
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              {drafts.map((draft) => (
+                <article key={draft.id} className="rounded-md border border-panel bg-white p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent">
+                        To {draft.recipientName}
+                      </p>
+                      <h2 className="mt-1 truncate text-sm font-bold text-heading">{draft.subject}</h2>
+                      <p className="mt-2 line-clamp-2 text-sm text-muted">{draft.body || "No message body yet."}</p>
+                      <p className="mt-2 text-[0.68rem] text-muted">Saved {relativeTime(draft.savedAt)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openDraft(draft)}
+                      className="rounded-md border border-panel bg-panel px-3 py-2 text-sm font-bold text-secondary transition hover:bg-surface"
+                    >
+                      Continue draft
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       ) : (
-      <div className="grid h-[calc(100%-4rem)] min-h-0 grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="grid h-[calc(100%-6.75rem)] min-h-0 grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside
           className={`min-h-0 border-r border-[#254d38] bg-[#1a3a2a] text-[#f8f4ec] ${
             screenMode === "conversation" ? "hidden lg:flex" : "flex"
@@ -1086,7 +1480,13 @@ export default function MessagesPage() {
           <div className="border-b border-white/10 p-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-semibold text-[#f8f4ec]">
-                {inboxTab === "sent" ? "Sent messages" : "Conversations"}
+                {inboxTab === "sent"
+                  ? "Sent messages"
+                  : inboxTab === "archives"
+                    ? "Archived conversations"
+                    : inboxTab === "recentlyDeleted"
+                      ? "Recently deleted"
+                      : "Conversations"}
               </h2>
               <button
                 type="button"
@@ -1107,33 +1507,6 @@ export default function MessagesPage() {
               placeholder="Search conversations..."
               className="mt-4 w-full rounded-md border border-white/15 bg-white/10 px-3 py-2.5 text-sm text-[#f8f4ec] outline-none transition placeholder:text-white/45 focus:border-[#c8a060] focus:ring-1 focus:ring-[#c8a060]/40"
             />
-            {inboxTab === "messages" && (
-            <div className="mt-4 grid grid-cols-3 rounded-md border border-white/10 bg-black/10 p-1">
-              {[
-                { id: "all" as const, label: "All", count: unreadThreadCount },
-                { id: "unread" as const, label: "Unread" },
-                { id: "archived" as const, label: "Archived" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setThreadTab(tab.id)}
-                  className={`rounded px-2 py-2 text-xs font-bold transition ${
-                    threadTab === tab.id
-                      ? "bg-surface text-heading shadow-sm"
-                      : "text-[#f8f4ec]/70 hover:text-[#f8f4ec]"
-                  }`}
-                >
-                  {tab.label}
-                  {tab.count ? (
-                    <span className="ml-1 rounded-full bg-[#c8a060] px-1.5 py-0.5 text-[0.6rem] text-[#1a3a2a]">
-                      {tab.count}
-                    </span>
-                  ) : null}
-                </button>
-              ))}
-            </div>
-            )}
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
@@ -1147,20 +1520,34 @@ export default function MessagesPage() {
               <div className="p-6 text-center">
                 <p className="text-sm font-semibold text-heading">No conversations found.</p>
                 <p className="mt-2 text-xs leading-5 text-muted">
-                  Procurement messages and platform updates will appear here.
+                  {inboxTab === "recentlyDeleted"
+                    ? "Deleted conversations that can be restored will appear here."
+                    : "Procurement messages and platform updates will appear here."}
                 </p>
               </div>
             ) : (
               <div className="divide-y divide-white/10">
                 {visibleThreads.map((thread) => (
-                  <button
+                  <div
                     key={thread.id}
-                    type="button"
-                    onClick={() => openThread(thread)}
-                    className={`flex w-full gap-3 p-4 text-left transition hover:bg-white/10 ${
+                    className={`flex w-full items-start gap-3 p-4 text-left transition hover:bg-white/10 ${
                       activeThread?.id === thread.id ? "bg-white/10" : ""
                     }`}
                   >
+                    {!thread.platform && (
+                      <input
+                        type="checkbox"
+                        checked={selectedThreadIds.has(thread.id)}
+                        onChange={() => toggleThreadSelection(thread.id)}
+                        className="mt-3 h-4 w-4 rounded border-white/30 bg-white/10 accent-[#c8a060]"
+                        aria-label={`Select ${thread.senderName}`}
+                      />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => openThread(thread)}
+                      className="flex min-w-0 flex-1 gap-3 text-left"
+                    >
                     <ThreadAvatar thread={thread} />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center justify-between gap-2">
@@ -1187,7 +1574,18 @@ export default function MessagesPage() {
                       </span>
                     </span>
                     {thread.unread && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#c8a060]" />}
-                  </button>
+                    </button>
+                    {inboxTab === "recentlyDeleted" && !thread.platform && (
+                      <button
+                        type="button"
+                        disabled={restoringThreadIds.has(thread.id)}
+                        onClick={() => restoreThread(thread)}
+                        className="mt-1 rounded-md border border-[#c8a060]/50 bg-[#f8f4ec] px-3 py-2 text-xs font-bold text-[#1a3a2a] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {restoringThreadIds.has(thread.id) ? "Restoring..." : "Restore"}
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
@@ -1228,26 +1626,50 @@ export default function MessagesPage() {
                     </div>
                   </div>
                   <div className="flex shrink-0 gap-2">
+                    {relatedDocumentHref && (
+                      <Link
+                        href={relatedDocumentHref}
+                        target="_blank"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#d8c79d]/50 bg-[#f8f4ec] text-[#1a3a2a] transition hover:border-[#c8a060] hover:bg-white"
+                        aria-label={documentLabel(activeThread)}
+                        title={documentLabel(activeThread)}
+                      >
+                        <IconFile aria-hidden="true" className="h-4 w-4" stroke={1.8} />
+                      </Link>
+                    )}
                     <Link
-                      href={documentHref(activeThread, isAdminOrBuyer)}
+                      href={conversationHref(activeThread)}
                       target="_blank"
                       className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#d8c79d]/50 bg-[#f8f4ec] text-[#1a3a2a] transition hover:border-[#c8a060] hover:bg-white"
-                      aria-label="View document"
-                      title="View document"
+                      aria-label="Open conversation in new tab"
+                      title="Open conversation in new tab"
                     >
                       <IconExternalLink aria-hidden="true" className="h-4 w-4" stroke={1.8} />
                     </Link>
-                    <IconButton label="Archive conversation" onClick={archiveActiveThread}>
-                      <IconArchive aria-hidden="true" className="h-4 w-4" stroke={1.8} />
-                    </IconButton>
-                    {!activeThread.platform && (
-                      <IconButton label="Remove conversation" onClick={deleteActiveThread}>
-                        <IconTrash aria-hidden="true" className="h-4 w-4" stroke={1.8} />
-                      </IconButton>
+                    {inboxTab === "recentlyDeleted" && !activeThread.platform ? (
+                      <button
+                        type="button"
+                        disabled={restoringThreadIds.has(activeThread.id)}
+                        onClick={() => restoreThread(activeThread)}
+                        className="inline-flex h-10 items-center justify-center rounded-md border border-[#c8a060]/50 bg-[#f8f4ec] px-3 text-sm font-bold text-[#1a3a2a] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {restoringThreadIds.has(activeThread.id) ? "Restoring..." : "Restore"}
+                      </button>
+                    ) : (
+                      <>
+                        <IconButton label="Archive conversation" onClick={archiveActiveThread}>
+                          <IconArchive aria-hidden="true" className="h-4 w-4" stroke={1.8} />
+                        </IconButton>
+                        {!activeThread.platform && (
+                          <IconButton label="Remove conversation" onClick={deleteActiveThread}>
+                            <IconTrash aria-hidden="true" className="h-4 w-4" stroke={1.8} />
+                          </IconButton>
+                        )}
+                        <IconButton label="Mark unread" onClick={markActiveUnread}>
+                          <IconMail aria-hidden="true" className="h-4 w-4" stroke={1.8} />
+                        </IconButton>
+                      </>
                     )}
-                    <IconButton label="Mark unread" onClick={markActiveUnread}>
-                      <IconMail aria-hidden="true" className="h-4 w-4" stroke={1.8} />
-                    </IconButton>
                   </div>
                 </div>
 
@@ -1272,12 +1694,14 @@ export default function MessagesPage() {
                             .join(" - ")}
                         </p>
                       </div>
-                      <Link
-                        href={documentHref(activeThread, isAdminOrBuyer)}
-                        className="text-sm font-bold text-accent transition hover:text-accent-strong"
-                      >
-                        View {activeThread.contextType} -&gt;
-                      </Link>
+                      {relatedDocumentHref && (
+                        <Link
+                          href={relatedDocumentHref}
+                          className="text-sm font-bold text-accent transition hover:text-accent-strong"
+                        >
+                          {documentLabel(activeThread)} -&gt;
+                        </Link>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1434,7 +1858,7 @@ export default function MessagesPage() {
       )}
 
       {showNotifications && (
-        <div className="fixed inset-0 z-50 bg-black/40 p-4 xl:hidden" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50 bg-black/40 p-4" role="dialog" aria-modal="true">
           <div className="ml-auto flex h-full w-full max-w-md flex-col overflow-hidden rounded-md border border-panel bg-panel shadow-panel">
             <div className="flex justify-end border-b border-panel p-3">
               <button
@@ -1462,7 +1886,7 @@ export default function MessagesPage() {
           <form onSubmit={handleNewMessage} className="w-full max-w-xl rounded-lg border border-panel bg-white p-6 shadow-panel">
             <div className="flex items-center justify-between">
               <h2 id="new-message-title" className="text-xl font-semibold text-heading">New message</h2>
-              <button type="button" onClick={() => setShowNewMessage(false)} aria-label="Close composer" className="rounded-md p-2 text-muted hover:bg-panel">
+              <button type="button" onClick={saveNewMessageDraft} aria-label="Save draft and close composer" className="rounded-md p-2 text-muted hover:bg-panel">
                 <IconX className="h-5 w-5" />
               </button>
             </div>
@@ -1532,7 +1956,8 @@ export default function MessagesPage() {
               </p>
             )}
             <div className="mt-6 flex justify-end gap-3">
-              <button type="button" onClick={() => setShowNewMessage(false)} className="rounded-md border border-panel px-4 py-2.5 text-sm font-bold text-secondary">Cancel</button>
+              <button type="button" onClick={() => setShowNewMessage(false)} className="rounded-md border border-panel px-4 py-2.5 text-sm font-bold text-secondary">Discard</button>
+              <button type="button" onClick={saveNewMessageDraft} className="rounded-md border border-panel bg-panel px-4 py-2.5 text-sm font-bold text-secondary">Save draft</button>
               <button type="submit" disabled={sending || !newRecipientId || !newSubject.trim() || !newBody.trim()} className="rounded-md bg-[#1a3a2a] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">
                 {sending ? "Sending..." : "Send message"}
               </button>

@@ -33,8 +33,7 @@ import { hasAdminOrBuyerAccess } from "@/lib/auth"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
 import { roleHomeHref } from "@/lib/navigation"
 import { supabase } from "@/lib/supabase"
-import { getInboxMessages } from "@/lib/messages"
-import { getNotifications } from "@/lib/notifications"
+import { getInboxUnreadCounts, subscribeToInboxActivity } from "@/lib/inboxCounts"
 
 type SupplierNavigationName =
   | TranslationKey
@@ -436,27 +435,29 @@ export default function DashboardLayout({
   }, [router])
 
   useEffect(() => {
-    if (!roleChecked) return
+    if (!roleChecked || !supabase) return
     let cancelled = false
+    let unsubscribe = () => {}
 
     async function loadUnreadInbox() {
-      const [messages, notifications] = await Promise.all([
-        getInboxMessages(),
-        getNotifications(50),
-      ])
+      const inboxCounts = await getInboxUnreadCounts()
       if (!cancelled) {
-        setUnreadInbox(
-          messages.filter((message) => !message.is_read).length +
-          notifications.filter((notification) => !notification.read).length,
-        )
+        setUnreadInbox(inboxCounts.unreadMessages)
       }
     }
 
     loadUnreadInbox()
     const intervalId = window.setInterval(loadUnreadInbox, 30_000)
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (cancelled || !data.user) return
+      unsubscribe = subscribeToInboxActivity(data.user.id, loadUnreadInbox)
+    })
+
     return () => {
       cancelled = true
       window.clearInterval(intervalId)
+      unsubscribe()
     }
   }, [roleChecked])
 

@@ -1,6 +1,14 @@
 import { supabase } from "@/lib/supabase"
 import { createNotification } from "@/lib/notifications"
 
+export const inboxChangedEvent = "monate:inbox-changed"
+
+function notifyInboxChanged() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(inboxChangedEvent))
+  }
+}
+
 export type ProcurementMessage = {
   id: number
   sender_id: string
@@ -147,6 +155,8 @@ export async function sendMessage({
     link: `/dashboard/messages?thread_message=${data.id}`,
   })
 
+  notifyInboxChanged()
+
   return {
     ...data,
     deleted_by_sender: false,
@@ -232,6 +242,35 @@ export async function getSentMessages(): Promise<ProcurementMessage[]> {
   return (data ?? []) as ProcurementMessage[]
 }
 
+export async function getDeletedMessages(): Promise<ProcurementMessage[]> {
+  if (!supabase) return []
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) return []
+
+  const { data, error } = await supabase
+    .from("messages")
+    .select(messageSelect)
+    .or(
+      [
+        `and(sender_id.eq.${user.id},deleted_by_sender.eq.true)`,
+        `and(receiver_id.eq.${user.id},deleted_by_receiver.eq.true)`,
+      ].join(","),
+    )
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    console.error("Deleted messages failed to load:", error)
+    return []
+  }
+
+  return (data ?? []) as ProcurementMessage[]
+}
+
 export async function markMessageRead(messageId: number): Promise<void> {
   if (!supabase) return
 
@@ -250,7 +289,34 @@ export async function markMessageRead(messageId: number): Promise<void> {
 
   if (error) {
     console.error("Message read update failed:", error)
+    return
   }
+
+  notifyInboxChanged()
+}
+
+export async function markMessageUnread(messageId: number): Promise<void> {
+  if (!supabase) return
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) return
+
+  const { error } = await supabase
+    .from("messages")
+    .update({ is_read: false })
+    .eq("id", messageId)
+    .eq("receiver_id", user.id)
+
+  if (error) {
+    console.error("Message unread update failed:", error)
+    throw new Error(error.message)
+  }
+
+  notifyInboxChanged()
 }
 
 export async function removeMessageFromInbox(messageId: number): Promise<void> {
@@ -291,5 +357,84 @@ export async function removeMessageFromInbox(messageId: number): Promise<void> {
 }
 
 export async function removeThreadFromInbox(messageIds: number[]): Promise<void> {
-  await Promise.all(messageIds.map((messageId) => removeMessageFromInbox(messageId)))
+  if (!supabase) throw new Error("Supabase environment variables are not configured.")
+
+  const uniqueIds = Array.from(new Set(messageIds)).filter((messageId) => messageId > 0)
+  if (uniqueIds.length === 0) return
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) throw new Error("User not authenticated.")
+
+  const [senderResult, receiverResult] = await Promise.all([
+    supabase
+      .from("messages")
+      .update({ deleted_by_sender: true })
+      .in("id", uniqueIds)
+      .eq("sender_id", user.id)
+      .select("id"),
+    supabase
+      .from("messages")
+      .update({ deleted_by_receiver: true })
+      .in("id", uniqueIds)
+      .eq("receiver_id", user.id)
+      .select("id"),
+  ])
+
+  if (senderResult.error) throw new Error(senderResult.error.message)
+  if (receiverResult.error) throw new Error(receiverResult.error.message)
+
+  // Every id belongs to the user as either sender or receiver, never both, so
+  // the two updates together should touch every id exactly once. Fewer rows
+  // touched than requested means some message could not actually be removed
+  // (for example a missing RLS grant) - surface that instead of reporting
+  // success while a conversation silently stays behind.
+  const updatedCount = (senderResult.data?.length ?? 0) + (receiverResult.data?.length ?? 0)
+  if (updatedCount < uniqueIds.length) {
+    throw new Error("Some messages in this conversation could not be removed. Please try again or contact support.")
+  }
+
+  notifyInboxChanged()
+}
+
+export async function restoreThreadToInbox(messageIds: number[]): Promise<void> {
+  if (!supabase) throw new Error("Supabase environment variables are not configured.")
+
+  const uniqueIds = Array.from(new Set(messageIds)).filter((messageId) => messageId > 0)
+  if (uniqueIds.length === 0) return
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) throw new Error("User not authenticated.")
+
+  const [senderResult, receiverResult] = await Promise.all([
+    supabase
+      .from("messages")
+      .update({ deleted_by_sender: false })
+      .in("id", uniqueIds)
+      .eq("sender_id", user.id)
+      .select("id"),
+    supabase
+      .from("messages")
+      .update({ deleted_by_receiver: false })
+      .in("id", uniqueIds)
+      .eq("receiver_id", user.id)
+      .select("id"),
+  ])
+
+  if (senderResult.error) throw new Error(senderResult.error.message)
+  if (receiverResult.error) throw new Error(receiverResult.error.message)
+
+  const updatedCount = (senderResult.data?.length ?? 0) + (receiverResult.data?.length ?? 0)
+  if (updatedCount < uniqueIds.length) {
+    throw new Error("Some messages in this conversation could not be restored. Please try again or contact support.")
+  }
+
+  notifyInboxChanged()
 }

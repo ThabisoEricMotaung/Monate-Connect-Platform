@@ -1,46 +1,31 @@
 ﻿"use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import {
-  getNotifications,
-  notificationReadEvent,
-  type NotificationReadEventDetail,
-  type Notification,
-} from "@/lib/notifications"
-import { getInboxMessages } from "@/lib/messages"
+import { notificationReadEvent } from "@/lib/notifications"
+import { getInboxUnreadCounts } from "@/lib/inboxCounts"
 import { supabase } from "@/lib/supabase"
 
 export default function NotificationBell() {
   const router = useRouter()
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [unreadMessages, setUnreadMessages] = useState(0)
-
-  const unreadCount = useMemo(
-    () => notifications.filter((notification) => !notification.read).length + unreadMessages,
-    [notifications, unreadMessages],
-  )
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     let cancelled = false
 
-    async function loadNotifications() {
-      const [loadedNotifications, messages] = await Promise.all([
-        getNotifications(20),
-        getInboxMessages(),
-      ])
+    async function loadUnreadCount() {
+      const counts = await getInboxUnreadCounts()
 
       if (!cancelled) {
-        setNotifications(loadedNotifications)
-        setUnreadMessages(messages.filter((message) => !message.is_read).length)
+        setUnreadCount(counts.unreadNotifications)
       }
     }
 
-    loadNotifications()
+    loadUnreadCount()
 
     const intervalId = window.setInterval(() => {
       if (document.visibilityState === "visible") {
-        loadNotifications()
+        loadUnreadCount()
       }
     }, 30_000)
 
@@ -51,15 +36,8 @@ export default function NotificationBell() {
   }, [])
 
   useEffect(() => {
-    function handleNotificationRead(event: Event) {
-      const { id, read } = (event as CustomEvent<NotificationReadEventDetail>).detail
-      setNotifications((current) =>
-        current.map((notification) =>
-          notification.id === id
-            ? { ...notification, read }
-            : notification,
-        ),
-      )
+    function handleNotificationRead() {
+      getInboxUnreadCounts().then((counts) => setUnreadCount(counts.unreadNotifications))
     }
 
     window.addEventListener(notificationReadEvent, handleNotificationRead)
@@ -71,6 +49,7 @@ export default function NotificationBell() {
 
     const client = supabase
     let channel: ReturnType<typeof client.channel> | null = null
+    let messageChannel: ReturnType<typeof client.channel> | null = null
 
     async function subscribe() {
       const {
@@ -78,6 +57,11 @@ export default function NotificationBell() {
       } = await client.auth.getUser()
 
       if (!user) return
+
+      const refreshCount = async () => {
+        const counts = await getInboxUnreadCounts()
+        setUnreadCount(counts.unreadNotifications)
+      }
 
       channel = client
         .channel(`notification-bell-${user.id}`)
@@ -89,11 +73,11 @@ export default function NotificationBell() {
             table: "notifications",
             filter: `user_id=eq.${user.id}`,
           },
-          async () => {
-            setNotifications(await getNotifications(20))
-          },
+          refreshCount,
         )
         .subscribe()
+
+      messageChannel = null
     }
 
     subscribe()
@@ -102,14 +86,20 @@ export default function NotificationBell() {
       if (channel) {
         client.removeChannel(channel)
       }
+      if (messageChannel) {
+        client.removeChannel(messageChannel)
+      }
     }
   }, [])
 
   return (
     <button
       type="button"
-      aria-label={`Inbox${unreadCount ? `, ${unreadCount} unread items` : ""}`}
-      onClick={() => router.push("/dashboard/messages?notifications=1")}
+      aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread items` : ""}`}
+      onClick={() => {
+        window.dispatchEvent(new Event("open-notifications-panel"))
+        router.push("/dashboard/messages?notifications=1")
+      }}
       className="relative inline-flex h-11 w-11 items-center justify-center rounded-md border border-panel bg-panel text-heading shadow-sm transition hover:border-accent hover:bg-surface focus:outline-none focus:ring-2 focus:ring-accent/30"
     >
       <svg

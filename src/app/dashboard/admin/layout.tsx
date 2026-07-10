@@ -31,6 +31,7 @@ import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
 import { usePageTracking } from "@/hooks/useSessionTracking"
 import { getCurrentProfile } from "@/lib/auth"
+import { getInboxUnreadCounts, subscribeToInboxActivity } from "@/lib/inboxCounts"
 import { supabase } from "@/lib/supabase"
 
 type BuyerProfile = {
@@ -192,26 +193,23 @@ export default function AdminDashboardLayout({
   }, [router])
 
   useEffect(() => {
+    if (!supabase || !authorized || !profile?.id) return
     let cancelled = false
 
     async function loadMetrics() {
       if (!supabase || !authorized || !profile?.id) return
 
-      const [rfqResult, quoteResult, savedResult, messageResult, notificationResult] = await Promise.all([
+      const [rfqResult, quoteResult, savedResult, inboxCounts] = await Promise.all([
         supabase.from("rfqs").select("id, status"),
         supabase.from("quotes").select("id, status"),
         supabase.from("saved_suppliers").select("id").eq("user_id", profile.id),
-        supabase.from("messages").select("id, is_read").eq("receiver_id", profile.id),
-        supabase.from("notifications").select("id, is_read").eq("user_id", profile.id),
+        getInboxUnreadCounts(),
       ])
 
       if (cancelled) return
 
       const rfqs = (rfqResult.data ?? []) as { status: string | null }[]
       const quotes = (quoteResult.data ?? []) as { status: string | null }[]
-      const messages = (messageResult.data ?? []) as { is_read: boolean | null }[]
-      const notifications = (notificationResult.data ?? []) as { is_read: boolean | null }[]
-
       setMetrics({
         activeRfqs: rfqs.filter((rfq) =>
           ["open", "evaluation"].includes(String(rfq.status ?? "").toLowerCase()),
@@ -220,16 +218,25 @@ export default function AdminDashboardLayout({
           ["", "pending", "under review"].includes(String(quote.status ?? "").toLowerCase()),
         ).length,
         shortlistedSuppliers: savedResult.data?.length ?? 0,
-        unreadMessages:
-          messages.filter((message) => !message.is_read).length +
-          notifications.filter((notification) => !notification.is_read).length,
+        unreadMessages: inboxCounts.unreadMessages,
       })
     }
 
+    async function refreshUnreadMessages() {
+      const inboxCounts = await getInboxUnreadCounts()
+      if (!cancelled) {
+        setMetrics((current) => ({ ...current, unreadMessages: inboxCounts.unreadMessages }))
+      }
+    }
+
     loadMetrics()
+    const intervalId = window.setInterval(refreshUnreadMessages, 30_000)
+    const unsubscribe = subscribeToInboxActivity(profile.id, refreshUnreadMessages)
 
     return () => {
       cancelled = true
+      window.clearInterval(intervalId)
+      unsubscribe()
     }
   }, [authorized, profile?.id])
 

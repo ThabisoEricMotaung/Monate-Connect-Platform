@@ -61,7 +61,7 @@ export async function createNotification({
   return { ...data, read: data.is_read } as Notification
 }
 
-export async function getNotifications(limit = 20): Promise<Notification[]> {
+export async function getNotifications(limit?: number): Promise<Notification[]> {
   if (!supabase) return []
 
   const {
@@ -71,12 +71,17 @@ export async function getNotifications(limit = 20): Promise<Notification[]> {
 
   if (userError || !user) return []
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("notifications")
     .select("id, user_id, type, title, message, link, is_read, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
-    .limit(limit)
+
+  if (typeof limit === "number") {
+    query = query.limit(limit)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     console.error("Notifications failed to load:", error)
