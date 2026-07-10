@@ -231,7 +231,7 @@ export default function AdminDashboardLayout({
 
     loadMetrics()
     const intervalId = window.setInterval(refreshUnreadMessages, 30_000)
-    const unsubscribe = subscribeToInboxActivity(profile.id, refreshUnreadMessages)
+    const unsubscribe = subscribeToInboxActivity(refreshUnreadMessages)
 
     return () => {
       cancelled = true

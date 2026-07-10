@@ -1,6 +1,5 @@
 import { getInboxMessages, inboxChangedEvent } from "@/lib/messages"
 import { getNotifications, notificationReadEvent } from "@/lib/notifications"
-import { supabase } from "@/lib/supabase"
 
 export type InboxUnreadCounts = {
   unreadMessages: number
@@ -30,52 +29,26 @@ export async function getInboxUnreadCounts(): Promise<InboxUnreadCounts> {
  * page leave every other badge on screen showing a stale count until the
  * next poll tick.
  *
- * The window events (dispatched by messages.ts/notifications.ts right after
- * a mutation succeeds) are the primary signal - they fire in-tab regardless
- * of Supabase project configuration. The postgres_changes subscriptions are
- * best-effort on top of that: this project's "messages" and "notifications"
- * tables are not currently added to the supabase_realtime publication, so
- * those events never arrive today, but subscribing is harmless and picks up
- * automatically (including cross-tab updates) once that's turned on.
+ * This is driven entirely by the window events messages.ts/notifications.ts
+ * dispatch right after a mutation succeeds - they fire in-tab regardless of
+ * Supabase project configuration. An earlier version of this also opened
+ * postgres_changes channels as a "best effort" layer on top, but this
+ * project's "messages" and "notifications" tables were never added to the
+ * supabase_realtime publication, so those channels never delivered a single
+ * event - and because dashboard/layout.tsx and its admin/buyer child layout
+ * both call this for the same user on the same page, they raced to open a
+ * channel with the same name and crashed with "cannot add postgres_changes
+ * callbacks ... after subscribe()". Removed rather than deduped: it did
+ * nothing functional and was actively breaking the page.
  */
-export function subscribeToInboxActivity(userId: string, onChange: () => void): () => void {
-  if (typeof window !== "undefined") {
-    window.addEventListener(inboxChangedEvent, onChange)
-    window.addEventListener(notificationReadEvent, onChange)
-  }
+export function subscribeToInboxActivity(onChange: () => void): () => void {
+  if (typeof window === "undefined") return () => {}
 
-  let removeRealtimeChannels = () => {}
-  if (supabase && userId) {
-    const client = supabase
-    const messagesChannel = client
-      .channel(`inbox-activity-messages-${userId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "messages", filter: `receiver_id=eq.${userId}` },
-        onChange,
-      )
-      .subscribe()
-
-    const notificationsChannel = client
-      .channel(`inbox-activity-notifications-${userId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
-        onChange,
-      )
-      .subscribe()
-
-    removeRealtimeChannels = () => {
-      client.removeChannel(messagesChannel)
-      client.removeChannel(notificationsChannel)
-    }
-  }
+  window.addEventListener(inboxChangedEvent, onChange)
+  window.addEventListener(notificationReadEvent, onChange)
 
   return () => {
-    if (typeof window !== "undefined") {
-      window.removeEventListener(inboxChangedEvent, onChange)
-      window.removeEventListener(notificationReadEvent, onChange)
-    }
-    removeRealtimeChannels()
+    window.removeEventListener(inboxChangedEvent, onChange)
+    window.removeEventListener(notificationReadEvent, onChange)
   }
 }

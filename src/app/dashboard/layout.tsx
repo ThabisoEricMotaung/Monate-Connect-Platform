@@ -435,9 +435,8 @@ export default function DashboardLayout({
   }, [router])
 
   useEffect(() => {
-    if (!roleChecked || !supabase) return
+    if (!roleChecked) return
     let cancelled = false
-    let unsubscribe = () => {}
 
     async function loadUnreadInbox() {
       const inboxCounts = await getInboxUnreadCounts()
@@ -448,11 +447,7 @@ export default function DashboardLayout({
 
     loadUnreadInbox()
     const intervalId = window.setInterval(loadUnreadInbox, 30_000)
-
-    supabase.auth.getUser().then(({ data }) => {
-      if (cancelled || !data.user) return
-      unsubscribe = subscribeToInboxActivity(data.user.id, loadUnreadInbox)
-    })
+    const unsubscribe = subscribeToInboxActivity(loadUnreadInbox)
 
     return () => {
       cancelled = true

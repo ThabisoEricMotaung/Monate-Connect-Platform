@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { notificationReadEvent } from "@/lib/notifications"
 import { getInboxUnreadCounts } from "@/lib/inboxCounts"
-import { supabase } from "@/lib/supabase"
 
 export default function NotificationBell() {
   const router = useRouter()
@@ -42,54 +41,6 @@ export default function NotificationBell() {
 
     window.addEventListener(notificationReadEvent, handleNotificationRead)
     return () => window.removeEventListener(notificationReadEvent, handleNotificationRead)
-  }, [])
-
-  useEffect(() => {
-    if (!supabase) return
-
-    const client = supabase
-    let channel: ReturnType<typeof client.channel> | null = null
-    let messageChannel: ReturnType<typeof client.channel> | null = null
-
-    async function subscribe() {
-      const {
-        data: { user },
-      } = await client.auth.getUser()
-
-      if (!user) return
-
-      const refreshCount = async () => {
-        const counts = await getInboxUnreadCounts()
-        setUnreadCount(counts.unreadNotifications)
-      }
-
-      channel = client
-        .channel(`notification-bell-${user.id}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "notifications",
-            filter: `user_id=eq.${user.id}`,
-          },
-          refreshCount,
-        )
-        .subscribe()
-
-      messageChannel = null
-    }
-
-    subscribe()
-
-    return () => {
-      if (channel) {
-        client.removeChannel(channel)
-      }
-      if (messageChannel) {
-        client.removeChannel(messageChannel)
-      }
-    }
   }, [])
 
   return (

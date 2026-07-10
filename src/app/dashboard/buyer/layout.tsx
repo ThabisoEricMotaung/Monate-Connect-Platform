@@ -194,7 +194,7 @@ export default function BuyerDashboardLayout({
         if (!cancelled) setUnreadMessages(nextCounts.unreadMessages)
       }
       const intervalId = window.setInterval(refreshUnreadMessages, 30_000)
-      const unsubscribeActivity = subscribeToInboxActivity(user.id, refreshUnreadMessages)
+      const unsubscribeActivity = subscribeToInboxActivity(refreshUnreadMessages)
       unsubscribe = () => {
         window.clearInterval(intervalId)
         unsubscribeActivity()
