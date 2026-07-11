@@ -213,14 +213,14 @@ const helpSections: HelpSection[] = [
     },
     icon: IconBolt,
     steps: {
-      en: ["Complete your business profile (20 points).", "Enter your CSD number (20 points).", "Upload tax clearance certificate (15 points).", "Upload BBBEE certificate (15 points).", "Enter banking details (15 points).", "Complete director information (10 points).", "Upload profile photo (5 points)."],
+      en: ["Complete your business profile (20 points).", "Get your CSD registration verified (20 points).", "Get your BBBEE level verified (20 points for Levels 1-4, 10 points for Levels 5-8).", "Get your tax clearance verified (15 points).", "Get your banking details verified (10 points).", "Complete director verification (10 points).", "Upload a company profile or capability statement (5 points)."],
       zu: ["Gcwalisa iphrofayeli yakho yebhizinisi (amapointe angu-20).", "Faka inombolo yakho ye-CSD (amapointe angu-20).", "Layisha isitifiketi sentela esicacile (amapointe angu-15).", "Layisha isitifiketi se-BBBEE (amapointe angu-15).", "Faka imininingwane yebhange (amapointe angu-15).", "Gcwalisa imininingwane yomqondisi (amapointe angu-10).", "Layisha isithombe sephrofayeli (amapointe angu-5)."],
       af: ["Voltooi jou besigheidsprofiel (20 punte).", "Voer jou CSD-nommer in (20 punte).", "Laai belastingklaringsertifikaat op (15 punte).", "Laai BBBEE-sertifikaat op (15 punte).", "Voer bankbesonderhede in (15 punte).", "Voltooi direkteursinligting (10 punte).", "Laai profielfoto op (5 punte)."],
     },
     guidance: {
       en: [
-        { heading: "How it works", body: "SmartScore is a 0-100 rating that shows buyers how complete and trustworthy your supplier profile is. It is calculated automatically when your profile is updated." },
-        { heading: "Score breakdown", body: "Business profile: 20 points. CSD number: 20 points. Tax clearance: 15 points. BBBEE certificate: 15 points. Banking details: 15 points. Director information: 10 points. Profile photo: 5 points." },
+        { heading: "How it works", body: "SmartScore is a 0-100 rating that shows buyers how verified and trustworthy your supplier profile is. It's driven mainly by actual verification — CSD, BBBEE, tax, banking, and director checks — plus a smaller bonus for platform activity over time." },
+        { heading: "Score breakdown", body: "Business profile: 20 points. CSD registration: 20 points. BBBEE verification: 20 points for Levels 1-4 or 10 points for Levels 5-8. Tax clearance: 15 points. Banking details: 10 points. Director verification: 10 points. Company profile or capability statement: 5 points. A smaller capped activity bonus can add to this over time." },
       ],
       zu: [
         { heading: "Isebenza kanjani", body: "I-SmartScore iyisilinganiso esingu-0 kuya ku-100 esibonisa abathengi ukuthi iphrofayeli yakho yomhlinzeki iphelele futhi ithembekile kangakanani. Ibalwa ngokuzenzakalelayo uma iphrofayeli yakho ibuyekezwa." },
@@ -233,7 +233,7 @@ const helpSections: HelpSection[] = [
     },
     faqs: {
       en: [
-        { question: "Why is my SmartScore 0?", answer: "The score is calculated when the profile is saved. Complete your business profile and upload documents to increase it." },
+        { question: "Why is my SmartScore 0?", answer: "Your score is built from real verification, not just uploaded documents. Complete your business profile and get your CSD, BBBEE, tax, banking, and director details verified by an admin to raise your score — simply uploading a document earns a little credit, but verification is what moves it the most." },
         { question: "Do buyers see my SmartScore?", answer: "Yes - your SmartScore is visible on your public supplier profile and in search results." },
       ],
       zu: [
@@ -447,7 +447,7 @@ const helpSections: HelpSection[] = [
       en: [
         { heading: "BBBEE", body: "Broad-Based Black Economic Empowerment. A South African government policy that measures the degree to which companies are owned, managed, and operated by Black South Africans. Suppliers are rated from Level 1 (highest) to Level 8 (lowest), with Level 1 offering the most procurement points to buyers." },
         { heading: "CSD", body: "Central Supplier Database. A national database managed by the South African National Treasury where all suppliers doing business with government must be registered. A valid CSD number is required for verification on AiForm Procure." },
-        { heading: "SmartScore", body: "AiForm Procure's procurement readiness score. It measures how complete and verified your supplier profile is, based on factors like BBBEE level, CSD registration, tax clearance, banking verification, and platform activity. Higher scores improve your visibility to buyers." },
+        { heading: "SmartScore", body: "AiForm Procure's procurement readiness score. It's built mainly from actual verification — CSD registration, BBBEE level, tax clearance, banking details, and director confirmation — each checked and confirmed by an admin, not just self-reported. A smaller bonus reflects genuine platform activity over time. Higher scores improve your visibility to buyers." },
         { heading: "RFQ", body: "Request for Quotation. A formal document issued by a buyer inviting registered suppliers to submit a price and proposal for a specific product or service. Suppliers must be logged in to respond to an RFQ." },
         { heading: "Purchase Order (PO)", body: "A formal document issued by a buyer to a supplier after a quote is awarded. It confirms the scope, amount, and terms of the procurement. POs are tracked through the platform workflow." },
         { heading: "CIPC", body: "Companies and Intellectual Property Commission. The South African body responsible for registering companies. Your CIPC registration number is your company registration number (e.g. 2019/123456/07)." },
@@ -477,7 +477,7 @@ const helpSections: HelpSection[] = [
     },
     faqs: {
       en: [
-        { question: "Is SmartScore the same as a credit score?", answer: "No. SmartScore measures procurement readiness and profile completeness, not creditworthiness. It helps buyers assess supplier reliability." },
+        { question: "Is SmartScore the same as a credit score?", answer: "No. SmartScore measures procurement readiness and verified supplier trust, not creditworthiness. It helps buyers assess supplier reliability." },
         { question: "Do I need a CSD number to register?", answer: "You need a CSD number to complete supplier verification. You can register without one but your profile will remain unverified until it is added." },
         { question: "What is the difference between Level 1 and Level 8 BBBEE?", answer: "Level 1 is the highest BBBEE rating and offers buyers the most procurement recognition points. Level 8 is the lowest rated compliant level. Higher levels improve your chances of being shortlisted." },
         { question: "Where can I get my CSD number?", answer: "Register at the Central Supplier Database portal at csd.gov.za. Once registered, your supplier number will be issued and you can add it to your AiForm Procure profile." },

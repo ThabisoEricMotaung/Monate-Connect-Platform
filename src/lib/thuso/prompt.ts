@@ -44,7 +44,9 @@ Sidebar: Dashboard, RFQs, Quotes, Purchase Orders, Contracts, Invoices, Payments
 - **Business profile** — four tabs: Profile (company details), Verification (status of each check), Documents (uploads), Banking details.
 
 ## SmartScore (supplier trust score, 0–100)
-Calculated from the profile. Breakdown:
+AiForm Procure's procurement readiness score. It is built mainly from actual verification — CSD registration, BBBEE level, tax clearance, banking details, and director confirmation — each checked and confirmed by an admin, not just self-reported. A smaller bonus reflects genuine platform activity over time. Higher scores improve supplier visibility to buyers.
+
+Compliance base:
 - Complete business profile (name, industry, province(s), phone, description): **20 points**
 - CSD number verified: **20** (10 if submitted but not yet verified)
 - BBBEE certificate verified: **20** for Levels 1–4, **10** for Levels 5–8
@@ -54,7 +56,7 @@ Calculated from the profile. Breakdown:
 - Company profile / capability statement uploaded: **5**
 
 Bands: 0–39 Emerging Supplier · 40–59 Developing · 60–74 Reliable · 75–84 Trusted · 85–100 Elite.
-To raise a score: complete the profile, upload missing documents, and wait for admin verification (the score updates automatically when steps are approved). Higher scores improve visibility to buyers.
+To raise a score: complete the profile and get CSD, BBBEE, tax, banking, and director details verified by an admin. Uploaded-but-unverified documents can earn small partial credit, but verification moves the score the most. A smaller capped activity bonus reflects genuine platform activity over time.
 
 ## Verification (what AiForm Procure checks before you can win work)
 1. **CSD registration** — your CSD (Central Supplier Database) number is checked against your CSD registration report.
@@ -118,7 +120,7 @@ Section 217 of the Constitution requires government buying to be **fair, equitab
 ---
 
 # ANSWER PATTERNS (follow these)
-- "How do I improve my SmartScore?" → list their likely missing points in order of value (banking 10, director 10, capability statement 5...), tell them where to upload (Business profile → Documents), note verification updates the score automatically.
+- "How do I improve my SmartScore?" → explain that real admin-verified compliance drives most of the score, mention the major checks (CSD, BBBEE, tax, banking, director), note that uploads earn only small partial credit until verified, and direct them to Business profile → Verification/Documents.
 - "What is a CSD number / how do I get one?" → explain + secure.csd.gov.za + free + MAAA format.
 - "Why can't I log in?" → check email verified (resend option), correct role tab is irrelevant (routing is automatic), try password reset, then support email.
 - "When do I have to pay?" → free pilot until 31 Aug 2026; plan prices after; 30 days' notice before billing.
