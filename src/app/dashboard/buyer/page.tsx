@@ -118,7 +118,7 @@ export default function BuyerHomePage() {
 
         <div className="flex items-center justify-center overflow-hidden rounded-md border border-accent/30 bg-accent/5 p-6">
           <Link
-            href="/dashboard/admin/rfqs/new"
+            href="/dashboard/buyer/rfqs/new"
             className="inline-flex items-center gap-2 rounded-md border border-accent bg-accent px-5 py-3 text-sm font-bold text-button shadow-sm transition hover:bg-accent-strong"
           >
             <span className="text-base leading-none">+</span>
@@ -152,7 +152,7 @@ export default function BuyerHomePage() {
               Create your first RFQ to start receiving quotes from verified suppliers.
             </p>
             <Link
-              href="/dashboard/admin/rfqs/new"
+              href="/dashboard/buyer/rfqs/new"
               className="mt-5 inline-flex rounded-md border border-accent bg-accent px-4 py-2 text-sm font-bold text-button shadow-sm transition hover:bg-accent-strong"
             >
               Create new RFQ &rarr;

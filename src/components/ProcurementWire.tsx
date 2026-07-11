@@ -245,7 +245,7 @@ export default function ProcurementWire({ scope = "public" }: { scope?: Procurem
                 QUICK ACTIONS
               </p>
               <div style={{ display: "grid", gap: 6 }}>
-                <WireAction href="/dashboard/rfqs/new" icon={IconFilePlus} label="New RFQ" />
+                <WireAction href="/dashboard/buyer/rfqs/new" icon={IconFilePlus} label="New RFQ" />
                 <WireAction href="/suppliers" icon={IconSearch} label="Find suppliers" />
                 <WireAction href="/dashboard/spend-analysis" icon={IconChartBar} label="Spend analysis" />
               </div>
