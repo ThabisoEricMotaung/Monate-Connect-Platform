@@ -93,7 +93,7 @@ const faqs = [
 
 function FeatureList({ features }: { features: string[] }) {
   return (
-    <ul className="mt-7 space-y-3">
+    <ul className="mt-6 space-y-2.5">
       {features.map((feature) => (
         <li key={feature} className="flex gap-3 text-sm leading-6 text-[#40554a]">
           <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#5DCAA5]/15 text-[#168567]">
@@ -130,18 +130,18 @@ export default function PricingPage() {
 
       <section className="mx-auto max-w-7xl px-6 py-14 sm:py-20">
         <div className="grid gap-6 lg:grid-cols-3">
-          <article className="flex flex-col rounded-md border border-l-4 border-[#d8cbb8] border-l-[#5DCAA5] bg-white p-6 shadow-[0_0_20px_rgba(93,202,165,0.15)] sm:p-8">
+          <article className="flex flex-col rounded-md border border-l-4 border-[#d8cbb8] border-l-[#5DCAA5] bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <span className="inline-flex rounded-full bg-[#5DCAA5]/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#168567]">
                   For Suppliers
                 </span>
-                <h2 className="mt-5 font-display text-3xl font-semibold text-[#1a3a2a]">
+                <h2 className="mt-4 font-display text-2xl font-semibold text-[#1a3a2a]">
                   Supplier Access
                 </h2>
               </div>
               <div className="text-left sm:text-right">
-                <p className="font-display text-4xl font-semibold text-[#1a3a2a]">R299</p>
+                <p className="font-display text-3xl font-semibold text-[#1a3a2a]">R299</p>
                 <p className="text-sm font-semibold text-[#63766b]">/month</p>
               </div>
             </div>
@@ -151,24 +151,24 @@ export default function PricingPage() {
             <FeatureList features={supplierFeatures} />
             <PayFastCheckoutButton
               tier="supplier"
-              className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#1a3a2a] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#10251b]"
+              className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#1a3a2a] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#10251b]"
             >
               Subscribe as supplier
             </PayFastCheckoutButton>
           </article>
 
-          <article className="flex flex-col rounded-md border-2 border-l-4 border-[#1a3a2a] border-l-[#c8a060] bg-white p-6 shadow-[0_0_20px_rgba(200,160,96,0.15)] sm:p-8">
+          <article className="flex flex-col rounded-md border border-l-4 border-[#1a3a2a] border-l-[#c8a060] bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <span className="inline-flex rounded-full bg-[#1a3a2a] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#c8a060]">
                   For Buyers
                 </span>
-                <h2 className="mt-5 font-display text-3xl font-semibold text-[#1a3a2a]">
+                <h2 className="mt-4 font-display text-2xl font-semibold text-[#1a3a2a]">
                   Buyer Starter
                 </h2>
               </div>
               <div className="text-left sm:text-right">
-                <p className="font-display text-4xl font-semibold text-[#1a3a2a]">R990</p>
+                <p className="font-display text-3xl font-semibold text-[#1a3a2a]">R990</p>
                 <p className="text-sm font-semibold text-[#63766b]">/month</p>
               </div>
             </div>
@@ -178,24 +178,24 @@ export default function PricingPage() {
             <FeatureList features={buyerFeatures} />
             <PayFastCheckoutButton
               tier="buyer_starter"
-              className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#c8a060] px-5 py-3 text-sm font-bold text-[#1a3a2a] transition hover:bg-[#d8b36f]"
+              className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#c8a060] px-5 py-3 text-sm font-bold text-[#1a3a2a] transition hover:bg-[#d8b36f]"
             >
               Subscribe to Starter
             </PayFastCheckoutButton>
           </article>
 
-          <article className="flex flex-col rounded-md border-2 border-l-4 border-[#1a3a2a] border-l-[#c8a060] bg-white p-6 shadow-[0_0_20px_rgba(200,160,96,0.15)] sm:p-8">
+          <article className="flex flex-col rounded-md border border-l-4 border-[#1a3a2a] border-l-[#c8a060] bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <span className="inline-flex rounded-full bg-[#1a3a2a] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#c8a060]">
                   For Buyers
                 </span>
-                <h2 className="mt-5 font-display text-3xl font-semibold text-[#1a3a2a]">
+                <h2 className="mt-4 font-display text-2xl font-semibold text-[#1a3a2a]">
                   Buyer Professional
                 </h2>
               </div>
               <div className="text-left sm:text-right">
-                <p className="font-display text-4xl font-semibold text-[#1a3a2a]">R2,490</p>
+                <p className="font-display text-3xl font-semibold text-[#1a3a2a]">R2,490</p>
                 <p className="text-sm font-semibold text-[#63766b]">/month</p>
               </div>
             </div>
@@ -205,7 +205,7 @@ export default function PricingPage() {
             <FeatureList features={buyerProfessionalFeatures} />
             <PayFastCheckoutButton
               tier="buyer_professional"
-              className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#c8a060] px-5 py-3 text-sm font-bold text-[#1a3a2a] transition hover:bg-[#d8b36f]"
+              className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#c8a060] px-5 py-3 text-sm font-bold text-[#1a3a2a] transition hover:bg-[#d8b36f]"
             >
               Subscribe to Professional
             </PayFastCheckoutButton>

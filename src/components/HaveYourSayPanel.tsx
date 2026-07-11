@@ -27,6 +27,12 @@ type ProfileRow = {
 
 const categories: SuggestionCategory[] = ["Feature idea", "Bug report", "General"]
 
+const categoryTooltips: Record<SuggestionCategory, string> = {
+  "Feature idea": "Suggest something new you'd like to see",
+  "Bug report": "Something isn't working as expected",
+  General: "Anything else you'd like to share",
+}
+
 function displayNameFrom(profile: ProfileRow | null, fallbackEmail?: string | null) {
   return (
     profile?.preferred_name?.trim() ||
@@ -202,20 +208,34 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
 
       <form onSubmit={handleSubmit} onPaste={handlePaste} className="rounded-xl border border-[#1a3a2a]/10 bg-white/60 p-6 shadow-md backdrop-blur">
         <div className="grid gap-4 sm:grid-cols-3">
-          {categories.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setCategory(item)}
-              className={`rounded-xl border px-4 py-3 text-left text-sm font-bold transition ${
-                category === item
-                  ? "border-[#1a3a2a] bg-[#1a3a2a] text-[#c8a060]"
-                  : "border-[#1a3a2a]/10 bg-white/70 text-[#1a3a2a] hover:border-[#c8a060]"
-              }`}
-            >
-              {item}
-            </button>
-          ))}
+          {categories.map((item) => {
+            const tooltip = categoryTooltips[item]
+
+            return (
+              <span key={item} className="group relative">
+                <button
+                  type="button"
+                  onClick={() => setCategory(item)}
+                  title={tooltip}
+                  aria-describedby={`suggestion-category-${item.toLowerCase().replace(/\s+/g, "-")}`}
+                  className={`w-full rounded-xl border px-4 py-3 text-left text-sm font-bold transition ${
+                    category === item
+                      ? "border-[#1a3a2a] bg-[#1a3a2a] text-[#c8a060]"
+                      : "border-[#1a3a2a]/10 bg-white/70 text-[#1a3a2a] hover:border-[#c8a060]"
+                  }`}
+                >
+                  {item}
+                </button>
+                <span
+                  id={`suggestion-category-${item.toLowerCase().replace(/\s+/g, "-")}`}
+                  role="tooltip"
+                  className="pointer-events-none absolute left-0 top-[calc(100%+0.5rem)] z-10 hidden w-56 rounded-md border border-[#1a3a2a]/10 bg-white px-3 py-2 text-xs font-semibold leading-5 text-[#1a3a2a] shadow-md group-focus-within:block group-hover:block"
+                >
+                  {tooltip}
+                </span>
+              </span>
+            )
+          })}
         </div>
 
         <label className="mt-5 block" htmlFor="suggestion-message">
@@ -317,9 +337,17 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
               sortedSuggestions.map((suggestion) => (
                 <article key={suggestion.id} className="rounded-xl border border-[#1a3a2a]/10 bg-white/70 p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="rounded-full border border-[#c8a060]/30 bg-[#faf7f2] px-3 py-1 text-xs font-bold text-[#1a3a2a]">
-                      {suggestion.category ?? "General"}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full border border-[#c8a060]/30 bg-[#faf7f2] px-3 py-1 text-xs font-bold text-[#1a3a2a]">
+                        {suggestion.category ?? "General"}
+                      </span>
+                      {suggestion.admin_reaction && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[#5DCAA5]/30 bg-[#e8f7f2] px-3 py-1 text-xs font-bold text-[#1a3a2a]" title="Admin reaction">
+                          <span aria-hidden>{suggestion.admin_reaction}</span>
+                          <span>Admin reacted</span>
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs font-semibold text-[#53665c]">{new Date(suggestion.created_at).toLocaleDateString()}</span>
                   </div>
                   <p className="mt-3 text-sm leading-7 text-[#1a3a2a]">{suggestion.message}</p>
@@ -329,11 +357,10 @@ export default function HaveYourSayPanel({ showMySuggestions = true }: { showMyS
                       {suggestion.attachment_name} {formatSuggestionAttachmentFileSize(suggestion.attachment_size)}
                     </p>
                   )}
-                  {(suggestion.admin_response || suggestion.admin_reaction || suggestion.admin_rating) && (
+                  {(suggestion.admin_response || suggestion.admin_rating) && (
                     <div className="mt-4 rounded-xl border border-[#5DCAA5]/25 bg-[#e8f7f2] p-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1a3a2a]">Admin response</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1a3a2a]">Admin feedback</p>
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-sm font-bold text-[#1a3a2a]">
-                        {suggestion.admin_reaction && <span>{suggestion.admin_reaction}</span>}
                         {suggestion.admin_rating && <span>{suggestion.admin_rating}/5</span>}
                       </div>
                       {suggestion.admin_response && <p className="mt-2 text-sm leading-6 text-[#1a3a2a]">{suggestion.admin_response}</p>}

@@ -20,6 +20,8 @@ export type ProcurementMessage = {
   is_read: boolean
   deleted_by_sender: boolean | null
   deleted_by_receiver: boolean | null
+  deleted_by_sender_at: string | null
+  deleted_by_receiver_at: string | null
   created_at: string | null
 }
 
@@ -32,7 +34,7 @@ export type SendMessageInput = {
 }
 
 const messageSelect =
-  "id, sender_id, receiver_id, subject, message, rfq_id, quote_id, is_read, deleted_by_sender, deleted_by_receiver, created_at"
+  "id, sender_id, receiver_id, subject, message, rfq_id, quote_id, is_read, deleted_by_sender, deleted_by_receiver, deleted_by_sender_at, deleted_by_receiver_at, created_at"
 const legacyMessageSelect =
   "id, sender_id, receiver_id, subject, message, rfq_id, quote_id, is_read, created_at"
 
@@ -161,6 +163,8 @@ export async function sendMessage({
     ...data,
     deleted_by_sender: false,
     deleted_by_receiver: false,
+    deleted_by_sender_at: null,
+    deleted_by_receiver_at: null,
   } as ProcurementMessage
 }
 
@@ -197,6 +201,8 @@ export async function getInboxMessages(): Promise<ProcurementMessage[]> {
       ...message,
       deleted_by_sender: null,
       deleted_by_receiver: null,
+      deleted_by_sender_at: null,
+      deleted_by_receiver_at: null,
     })) as ProcurementMessage[]
   }
 
@@ -236,6 +242,8 @@ export async function getSentMessages(): Promise<ProcurementMessage[]> {
       ...message,
       deleted_by_sender: null,
       deleted_by_receiver: null,
+      deleted_by_sender_at: null,
+      deleted_by_receiver_at: null,
     })) as ProcurementMessage[]
   }
 
@@ -350,7 +358,7 @@ export async function removeMessageFromInbox(messageId: number): Promise<void> {
 
   const { error } = await supabase
     .from("messages")
-    .update({ [field]: true })
+    .update({ [field]: true, [`${field}_at`]: new Date().toISOString() })
     .eq("id", messageId)
 
   if (error) throw new Error(error.message)
@@ -372,13 +380,13 @@ export async function removeThreadFromInbox(messageIds: number[]): Promise<void>
   const [senderResult, receiverResult] = await Promise.all([
     supabase
       .from("messages")
-      .update({ deleted_by_sender: true })
+      .update({ deleted_by_sender: true, deleted_by_sender_at: new Date().toISOString() })
       .in("id", uniqueIds)
       .eq("sender_id", user.id)
       .select("id"),
     supabase
       .from("messages")
-      .update({ deleted_by_receiver: true })
+      .update({ deleted_by_receiver: true, deleted_by_receiver_at: new Date().toISOString() })
       .in("id", uniqueIds)
       .eq("receiver_id", user.id)
       .select("id"),
@@ -416,13 +424,13 @@ export async function restoreThreadToInbox(messageIds: number[]): Promise<void> 
   const [senderResult, receiverResult] = await Promise.all([
     supabase
       .from("messages")
-      .update({ deleted_by_sender: false })
+      .update({ deleted_by_sender: false, deleted_by_sender_at: null })
       .in("id", uniqueIds)
       .eq("sender_id", user.id)
       .select("id"),
     supabase
       .from("messages")
-      .update({ deleted_by_receiver: false })
+      .update({ deleted_by_receiver: false, deleted_by_receiver_at: null })
       .in("id", uniqueIds)
       .eq("receiver_id", user.id)
       .select("id"),

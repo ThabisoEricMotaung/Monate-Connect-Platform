@@ -355,8 +355,8 @@ function buildThreads({
     .sort((a, b) => new Date(b.timestamp ?? 0).getTime() - new Date(a.timestamp ?? 0).getTime())
 }
 
-// Soft-deleted messages are kept indefinitely for now. A retention purge (for example
-// 30/60/90 days) can be added later once product policy and audit needs are clearer.
+// Soft-deleted messages are permanently purged by the daily message-retention
+// cron only after both participants have deleted the message for 30+ days.
 
 function IconButton({
   label,
@@ -876,13 +876,16 @@ export default function MessagesPage() {
     try {
       await removeThreadFromInbox(activeThread.messages.filter((message) => message.id > 0).map((message) => message.id))
       const removedIds = new Set(activeThread.messages.map((message) => message.id))
+      const deletedAt = new Date().toISOString()
       setMessages((currentMessages) => currentMessages.filter((message) => !removedIds.has(message.id)))
       setDeletedMessages((currentMessages) => [
         ...currentMessages.filter((message) => !removedIds.has(message.id)),
         ...activeThread.messages.map((message) => ({
           ...message,
           deleted_by_sender: message.mine ? true : message.deleted_by_sender,
+          deleted_by_sender_at: message.mine ? deletedAt : message.deleted_by_sender_at,
           deleted_by_receiver: message.mine ? message.deleted_by_receiver : true,
+          deleted_by_receiver_at: message.mine ? message.deleted_by_receiver_at : deletedAt,
         })),
       ])
       setSelectedThreadIds((currentIds) => {
@@ -917,7 +920,9 @@ export default function MessagesPage() {
             .map((message) => ({
               ...message,
               deleted_by_sender: message.sender_id === currentUserId ? false : message.deleted_by_sender,
+              deleted_by_sender_at: message.sender_id === currentUserId ? null : message.deleted_by_sender_at,
               deleted_by_receiver: message.receiver_id === currentUserId ? false : message.deleted_by_receiver,
+              deleted_by_receiver_at: message.receiver_id === currentUserId ? null : message.deleted_by_receiver_at,
             })),
         ]
       })
@@ -1016,6 +1021,7 @@ export default function MessagesPage() {
       await removeThreadFromInbox(messageIds)
       const removedIds = new Set(messageIds)
       const removedThreadIds = new Set(selectedThreads.map((thread) => thread.id))
+      const deletedAt = new Date().toISOString()
       setMessages((currentMessages) => currentMessages.filter((message) => !removedIds.has(message.id)))
       setDeletedMessages((currentMessages) => [
         ...currentMessages.filter((message) => !removedIds.has(message.id)),
@@ -1023,7 +1029,9 @@ export default function MessagesPage() {
           thread.messages.map((message) => ({
             ...message,
             deleted_by_sender: message.mine ? true : message.deleted_by_sender,
+            deleted_by_sender_at: message.mine ? deletedAt : message.deleted_by_sender_at,
             deleted_by_receiver: message.mine ? message.deleted_by_receiver : true,
+            deleted_by_receiver_at: message.mine ? message.deleted_by_receiver_at : deletedAt,
           })),
         ),
       ])
@@ -1067,7 +1075,9 @@ export default function MessagesPage() {
             .map((message) => ({
               ...message,
               deleted_by_sender: message.sender_id === currentUserId ? false : message.deleted_by_sender,
+              deleted_by_sender_at: message.sender_id === currentUserId ? null : message.deleted_by_sender_at,
               deleted_by_receiver: message.receiver_id === currentUserId ? false : message.deleted_by_receiver,
+              deleted_by_receiver_at: message.receiver_id === currentUserId ? null : message.deleted_by_receiver_at,
             })),
         ]
       })
@@ -1122,6 +1132,8 @@ export default function MessagesPage() {
       is_read: true,
       deleted_by_sender: false,
       deleted_by_receiver: false,
+      deleted_by_sender_at: null,
+      deleted_by_receiver_at: null,
       created_at: new Date().toISOString(),
       attachments: optimisticAttachments,
       optimistic: true,
@@ -2004,7 +2016,7 @@ function NotificationsPanel({
             Mark all read
           </button>
         </div>
-        <div className="mt-4 grid grid-cols-3 rounded-md border border-panel bg-card p-1">
+        <div className="mt-4 grid grid-cols-3 gap-1 rounded-md border border-panel bg-card p-1">
           {[
             { id: "all" as const, label: "All" },
             { id: "action" as const, label: "Action needed" },
@@ -2014,10 +2026,10 @@ function NotificationsPanel({
               key={tab.id}
               type="button"
               onClick={() => onTabChange(tab.id)}
-              className={`rounded px-2 py-2 text-[0.68rem] font-bold transition ${
+              className={`rounded-md border px-2 py-2 text-[0.68rem] font-bold transition ${
                 notificationTab === tab.id
-                  ? "bg-surface text-heading shadow-sm"
-                  : "text-secondary hover:text-heading"
+                  ? "border-panel bg-white text-heading shadow-sm"
+                  : "border-transparent bg-transparent text-secondary hover:bg-surface hover:text-heading"
               }`}
             >
               {tab.label}
