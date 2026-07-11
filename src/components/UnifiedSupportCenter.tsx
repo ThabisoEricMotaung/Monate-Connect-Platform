@@ -502,8 +502,28 @@ export default function UnifiedSupportCenter() {
     inputRef.current?.focus()
   }
 
-  function handleAssistantFeedbackYes(id: number) {
+  async function saveThusoFeedback(rating: "helpful" | "not_helpful", detail?: string) {
+    const response = await fetch("/api/thuso-feedback", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ rating, detail }),
+    })
+
+    if (!response.ok) {
+      const data = (await response.json().catch(() => null)) as { error?: string } | null
+      throw new Error(data?.error || "Unable to save feedback.")
+    }
+  }
+
+  async function handleAssistantFeedbackYes(id: number) {
+    setAssistantError("")
     setAssistantFeedback((current) => ({ ...current, [id]: { status: "liked", detail: "" } }))
+    try {
+      await saveThusoFeedback("helpful")
+    } catch (error) {
+      setAssistantFeedback((current) => ({ ...current, [id]: { status: "pending", detail: "" } }))
+      setAssistantError(error instanceof Error ? error.message : "Unable to save feedback.")
+    }
   }
 
   function handleAssistantFeedbackNo(id: number) {
@@ -517,10 +537,15 @@ export default function UnifiedSupportCenter() {
     setAssistantFeedback((current) => ({ ...current, [id]: { ...current[id], detail } }))
   }
 
-  function handleAssistantFeedbackSubmit(id: number) {
+  async function handleAssistantFeedbackSubmit(id: number) {
     const detail = assistantFeedback[id]?.detail ?? ""
-    console.log("[Thuso feedback] negative:", detail)
-    setAssistantFeedback((current) => ({ ...current, [id]: { status: "done", detail } }))
+    setAssistantError("")
+    try {
+      await saveThusoFeedback("not_helpful", detail)
+      setAssistantFeedback((current) => ({ ...current, [id]: { status: "done", detail } }))
+    } catch (error) {
+      setAssistantError(error instanceof Error ? error.message : "Unable to save feedback.")
+    }
   }
 
   function renderAssistantFeedback(id: number) {
@@ -539,10 +564,10 @@ export default function UnifiedSupportCenter() {
             placeholder="What went wrong?"
             className="thuso-feedback-input"
             onKeyDown={(event) => {
-              if (event.key === "Enter") handleAssistantFeedbackSubmit(id)
+              if (event.key === "Enter") void handleAssistantFeedbackSubmit(id)
             }}
           />
-          <button type="button" className="thuso-feedback-send" onClick={() => handleAssistantFeedbackSubmit(id)}>
+          <button type="button" className="thuso-feedback-send" onClick={() => void handleAssistantFeedbackSubmit(id)}>
             Send
           </button>
         </div>
@@ -555,7 +580,7 @@ export default function UnifiedSupportCenter() {
         <button
           type="button"
           className="thuso-feedback-btn"
-          onClick={() => handleAssistantFeedbackYes(id)}
+          onClick={() => void handleAssistantFeedbackYes(id)}
           aria-label="Yes, this was helpful"
         >
           Yes
