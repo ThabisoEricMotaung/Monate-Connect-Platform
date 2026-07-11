@@ -6,7 +6,7 @@ import Link from "next/link"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { getComplianceStatus } from "@/lib/complianceStatus"
 import { displayIndustry } from "@/lib/industries"
-import { getSmartScoreLevel, type SmartScoreResult } from "@/lib/smartScore"
+import { SUPPLIER_SMART_SCORE_PROFILE_SELECT, getSmartScoreLevel, type SmartScoreResult } from "@/lib/smartScore"
 import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
 import { isVerifiedStatus } from "@/lib/supplierStatus"
 import { supabase } from "@/lib/supabase"
@@ -521,12 +521,7 @@ export default function ComplianceRiskPage() {
       const { data, error: fetchError } = await supabase
         .from("profiles")
         .select(
-          "id, business_name, province, industry, phone, email, verification_status, " +
-            "csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, company_registration, cidb_grade, " +
-            "bank_verified, banking_verified, director_verified, " +
-            "csd_document_url, bbbee_document_url, tax_document_url, " +
-            "company_registration_url, cidb_document_url, capability_statement_url, " +
-            "tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date"
+          `${SUPPLIER_SMART_SCORE_PROFILE_SELECT}, cidb_grade, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date`
         )
         .order("business_name", { ascending: true })
 

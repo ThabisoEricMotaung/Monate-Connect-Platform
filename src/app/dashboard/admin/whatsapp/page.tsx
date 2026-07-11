@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import SmartScoreCircle from "@/components/SmartScoreCircle"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { displayIndustry } from "@/lib/industries"
-import { getSmartScoreLevel, type SmartScoreResult } from "@/lib/smartScore"
+import { SUPPLIER_SMART_SCORE_PROFILE_SELECT, getSmartScoreLevel, type SmartScoreResult } from "@/lib/smartScore"
 import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
 import { supabase } from "@/lib/supabase"
 import {
@@ -133,11 +133,7 @@ export default function AdminWhatsAppNetworkPage() {
         supabase
           .from("profiles")
           .select(
-            "id, business_name, province, industry, phone, email, verification_status, " +
-              "csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, company_registration, cidb_grade, " +
-              "bank_verified, banking_verified, director_verified, " +
-              "csd_document_url, bbbee_document_url, tax_document_url, " +
-              "company_registration_url, cidb_document_url, capability_statement_url, updated_at"
+            `${SUPPLIER_SMART_SCORE_PROFILE_SELECT}, cidb_grade`
           )
           .eq("role", "supplier")
           .order("business_name", { ascending: true }),

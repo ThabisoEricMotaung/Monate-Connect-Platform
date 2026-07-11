@@ -10,7 +10,7 @@ import {
 } from "@/lib/supplierPerformance"
 import { useI18n } from "@/lib/i18n"
 import { displayIndustry } from "@/lib/industries"
-import type { SmartScoreResult } from "@/lib/smartScore"
+import { SUPPLIER_SMART_SCORE_PROFILE_SELECT, type SmartScoreResult } from "@/lib/smartScore"
 import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
 import { supabase } from "@/lib/supabase"
 import { hasComplianceWarning } from "@/lib/complianceStatus"
@@ -182,7 +182,7 @@ export default function SuppliersDirectoryPage() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, business_name, province, industry, phone, email, role, verification_status, created_at, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, company_registration, director_verified, bank_verified, banking_verified, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date")
+        .select(`${SUPPLIER_SMART_SCORE_PROFILE_SELECT}, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date`)
         .order("business_name", { ascending: true })
 
       if (error) {

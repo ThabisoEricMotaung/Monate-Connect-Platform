@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
+import { SUPPLIER_SMART_SCORE_PROFILE_SELECT } from "@/lib/smartScore"
 import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
 import { isVerifiedStatus } from "@/lib/supplierStatus"
 import SupplierDirectory, { type PublicSupplierDirectoryRow } from "./SupplierDirectory"
@@ -21,8 +22,7 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
     },
   })
 
-  const baseSelect =
-    "id,business_name,province,provinces,industry,phone,email,verification_status,bbbee_level,cidb_grade,smart_score,csd_number,csd_verified,bbbee_verified,tax_status,tax_verified,company_registration,director_verified,banking_verified,bank_verified,website,description,employee_count,linkedin_url,founded_year,created_at,updated_at,csd_document_url,bbbee_document_url,tax_document_url,company_registration_url,cidb_document_url,capability_statement_url"
+  const baseSelect = `${SUPPLIER_SMART_SCORE_PROFILE_SELECT}, cidb_grade, website, employee_count, linkedin_url, founded_year`
   let { data, error } = await supabase
     .from("profiles")
     .select(`${baseSelect},company_logo_url`)

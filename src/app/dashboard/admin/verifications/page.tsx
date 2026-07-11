@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import type { ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import SignedDocumentLink from "@/components/SignedDocumentLink"
-import type { SmartScoreResult } from "@/lib/smartScore"
+import { SUPPLIER_SMART_SCORE_PROFILE_SELECT, type SmartScoreResult } from "@/lib/smartScore"
 import {
   getCanonicalSupplierSmartScoreBatch,
 } from "@/lib/supplierScoring"
@@ -82,38 +82,10 @@ const VERIFICATION_QUEUE_STATUS_FILTER = [
 ].join(",")
 
 const profileSelect = [
-  "id",
-  "business_name",
+  SUPPLIER_SMART_SCORE_PROFILE_SELECT,
   "full_name",
-  "email",
-  "phone",
-  "description",
-  "industry",
-  "province",
-  "provinces",
-  "verification_status",
-  "csd_number",
-  "csd_verified",
-  "csd_document_url",
-  "bbbee_level",
-  "bbbee_verified",
-  "bbbee_document_url",
   "bbbee_expiry_date",
-  "tax_verified",
-  "tax_status",
-  "tax_clearance_url",
-  "tax_document_url",
   "tax_expiry_date",
-  "bank_verified",
-  "banking_verified",
-  "director_verified",
-  "company_registration",
-  "company_registration_url",
-  "cidb_document_url",
-  "capability_statement_url",
-  "smart_score",
-  "created_at",
-  "updated_at",
   "verification_notes",
   "is_deleted",
   "deleted_at",

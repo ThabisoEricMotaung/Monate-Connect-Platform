@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
-import type { SmartScoreResult, SupplierSmartScoreProfile } from "@/lib/smartScore"
+import {
+  SUPPLIER_SMART_SCORE_PROFILE_SELECT,
+  type SmartScoreResult,
+  type SupplierSmartScoreProfile,
+} from "@/lib/smartScore"
 import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
 import { supabase } from "@/lib/supabase"
 import { applySupplierDocumentsToProfiles, fetchSupplierDocumentsByProfileIds } from "@/lib/supplierDocuments"
@@ -147,6 +151,8 @@ const EMPTY_FILTERS: ReportFilters = {
   supplier: "",
   riskLevel: "",
 }
+
+const PROFILE_REPORT_SELECT = `${SUPPLIER_SMART_SCORE_PROFILE_SELECT}, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date`
 
 const filterClass =
   "w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30"
@@ -350,7 +356,9 @@ export default function AdminReportsPage() {
       setErrorMessage("")
       setFilters(EMPTY_FILTERS)
 
-      let query = supabase.from(config.table).select("*")
+      let query = supabase
+        .from(config.table)
+        .select(config.table === "profiles" ? PROFILE_REPORT_SELECT : "*")
 
       if (config.table === "profiles") {
         query = query.eq("role", "supplier")
@@ -369,7 +377,7 @@ export default function AdminReportsPage() {
         return
       }
 
-      const rawRows = (data ?? []) as ReportRow[]
+      const rawRows = ((data ?? []) as unknown) as ReportRow[]
       const rowsWithDocuments =
         config.table === "profiles"
           ? applySupplierDocumentsToProfiles(

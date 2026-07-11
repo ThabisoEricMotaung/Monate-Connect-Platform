@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import SaveSupplierControl from "@/components/suppliers/SaveSupplierControl"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { getSavedSuppliers, type SavedSupplier } from "@/lib/savedSuppliers"
-import { getSmartScoreLevel, type SmartScoreResult } from "@/lib/smartScore"
+import { SUPPLIER_SMART_SCORE_PROFILE_SELECT, getSmartScoreLevel, type SmartScoreResult } from "@/lib/smartScore"
 import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
 import { supabase } from "@/lib/supabase"
 
@@ -136,7 +136,7 @@ export default function AdminSavedSuppliersPage() {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, business_name, province, industry, verification_status, phone, email, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, company_registration, bank_verified, banking_verified, director_verified, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url")
+      .select(SUPPLIER_SMART_SCORE_PROFILE_SELECT)
       .in("id", supplierIds)
 
     if (error) {
