@@ -90,7 +90,7 @@ function industryMatchScore(
   category: string | null,
   industry: string | null
 ): { score: number; reason: string | null } {
-  const cat = normalise(category)
+  const cat = normalise(displayIndustry(category))
   const ind = normalise(displayIndustry(industry))
 
   if (!cat || !ind) return { score: 0, reason: null }
@@ -279,9 +279,33 @@ export async function getRecommendedSuppliersForRFQ(
     throw new Error(rfqRes.error?.message ?? "RFQ not found")
   }
 
+  if (profileRes.error) {
+    console.error("Supplier matching profile query failed:", profileRes.error)
+    throw new Error(
+      "Couldn't load the supplier list to match against. This is a system issue, not a sign there are no matching suppliers. Try refreshing, and let the team know if it keeps happening."
+    )
+  }
+
+  if (quoteRes.error || contractRes.error || bankRes.error) {
+    console.error("Supplier matching support query failed:", {
+      quoteError: quoteRes.error,
+      contractError: contractRes.error,
+      bankError: bankRes.error,
+    })
+    throw new Error(
+      "Couldn't load the supplier list to match against. This is a system issue, not a sign there are no matching suppliers. Try refreshing, and let the team know if it keeps happening."
+    )
+  }
+
   const rfq = rfqRes.data as RFQForMatching
   const supplierRows = (profileRes.data ?? []) as SupplierForMatching[]
   const documents = await fetchSupplierDocumentsByProfileIds(supplierRows.map((supplier) => supplier.id))
+  if (documents.error) {
+    console.error("Supplier matching document query failed:", documents.error)
+    throw new Error(
+      "Couldn't load the supplier list to match against. This is a system issue, not a sign there are no matching suppliers. Try refreshing, and let the team know if it keeps happening."
+    )
+  }
   const banksBySupplier = groupBySupplierId((bankRes.data ?? []) as SupplierBankScoreRecord[])
   const suppliers = supplierRows.map((supplier) =>
     mergeSupplierScoreInputs({

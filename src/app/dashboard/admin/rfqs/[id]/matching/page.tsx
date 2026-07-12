@@ -6,9 +6,9 @@ import { useParams, usePathname, useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { createMatchAlertDrafts, type MatchAlertResult } from "@/lib/matchAlerts"
 import { sendMatchAlertEmails } from "@/lib/matchAlertEmailClient"
+import { fetchRecommendedSuppliersForRFQ } from "@/lib/rfqMatchClient"
 import { saveSupplier, unsaveSupplier, isSupplierSaved } from "@/lib/savedSuppliers"
 import {
-  getRecommendedSuppliersForRFQ,
   type MatchLabel,
   type RFQForMatching,
   type SupplierMatchResult,
@@ -479,7 +479,7 @@ export default function SupplierMatchingPage() {
       }
       try {
         const { rfq: loadedRfq, results: loadedResults } =
-          await getRecommendedSuppliersForRFQ(rfqId)
+          await fetchRecommendedSuppliersForRFQ(rfqId)
         setRfq(loadedRfq)
         setResults(loadedResults)
       } catch (err) {

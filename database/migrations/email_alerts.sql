@@ -22,24 +22,22 @@ create index if not exists idx_email_alerts_sent_at on public.email_alerts (sent
 
 alter table public.email_alerts enable row level security;
 
-do $$ begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public'
-      and tablename = 'email_alerts'
-      and policyname = 'email_alerts_select'
-  ) then
-    execute 'create policy "email_alerts_select" on public.email_alerts for select using (true)';
-  end if;
-end $$;
+-- Only admin/buyer users may read alert logs (contains supplier email addresses and
+-- message content). Mirrors the admin/buyer read policy on public.supplier_documents.
+-- No insert/update/delete policy exists for anon/authenticated: the only writer is
+-- src/app/api/match-alerts/email/route.ts, which uses supabaseAdmin (service role),
+-- and the service_role Postgres role bypasses RLS entirely regardless of policies.
+drop policy if exists "email_alerts_select" on public.email_alerts;
+drop policy if exists "email_alerts_insert" on public.email_alerts;
 
-do $$ begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public'
-      and tablename = 'email_alerts'
-      and policyname = 'email_alerts_insert'
-  ) then
-    execute 'create policy "email_alerts_insert" on public.email_alerts for insert with check (true)';
-  end if;
-end $$;
+create policy "email_alerts_admin_buyer_select"
+  on public.email_alerts
+  for select
+  using (
+    exists (
+      select 1
+      from public.profiles admin_profile
+      where admin_profile.id = auth.uid()
+        and lower(coalesce(admin_profile.role, '')) in ('admin', 'buyer')
+    )
+  );
