@@ -869,7 +869,15 @@ export default function NewRFQPage() {
       )
       const isBuyer = buyerProfile?.role?.trim().toLowerCase() === "buyer"
       setHasUnsavedChanges(false)
-      router.push(isBuyer ? "/dashboard/buyer/rfqs" : `/dashboard/admin/rfqs/${rfqData?.id}`)
+      if (status === "open" && form.notifyMatchedSuppliers && rfqData?.id) {
+        router.push(
+          isBuyer
+            ? `/dashboard/buyer/rfqs/${rfqData.id}/matching`
+            : `/dashboard/admin/rfqs/${rfqData.id}/matching`,
+        )
+      } else {
+        router.push(isBuyer ? "/dashboard/buyer/rfqs" : `/dashboard/admin/rfqs/${rfqData?.id}`)
+      }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "RFQ creation failed.")
     } finally {

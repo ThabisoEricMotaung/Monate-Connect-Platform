@@ -2,9 +2,10 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, usePathname, useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { createMatchAlertDrafts, type MatchAlertResult } from "@/lib/matchAlerts"
+import { sendMatchAlertEmails } from "@/lib/matchAlertEmailClient"
 import { saveSupplier, unsaveSupplier, isSupplierSaved } from "@/lib/savedSuppliers"
 import {
   getRecommendedSuppliersForRFQ,
@@ -82,13 +83,19 @@ function SupplierCard({
   rfqId,
   rfqTitle,
   selected,
+  emailStatus,
+  emailSending,
   onToggleSelected,
+  onSendEmail,
 }: {
   result: SupplierMatchResult
   rfqId: number
   rfqTitle: string | null
   selected: boolean
+  emailStatus?: { status: "sent" | "failed"; message: string }
+  emailSending: boolean
   onToggleSelected: () => void
+  onSendEmail: () => void
 }) {
   const { supplier, stats, score, label, reasons, scoreBreakdown } = result
   const [saved, setSaved] = useState(false)
@@ -148,7 +155,7 @@ function SupplierCard({
           Select for alert
         </label>
         <span className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted">
-          Draft only
+          Email-ready
         </span>
       </div>
 
@@ -352,6 +359,20 @@ function SupplierCard({
 
         <button
           type="button"
+          onClick={onSendEmail}
+          disabled={emailSending}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-accent bg-accent px-3.5 py-2 text-xs font-bold text-button transition hover:bg-accent-strong disabled:cursor-wait disabled:opacity-60"
+          title={supplier.email ? `Send to ${supplier.email}` : "No supplier email on record"}
+        >
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect width="20" height="16" x="2" y="4" rx="2" />
+            <path d="m22 7-10 6L2 7" />
+          </svg>
+          {emailSending ? "Sending..." : "Send email"}
+        </button>
+
+        <button
+          type="button"
           onClick={toggleSave}
           disabled={saving}
           className={[
@@ -376,6 +397,19 @@ function SupplierCard({
           {saving ? "Saving…" : saved ? "Saved" : "Save Supplier"}
         </button>
       </div>
+
+      {emailStatus && (
+        <div
+          className={[
+            "rounded-lg border px-3.5 py-2 text-xs font-semibold",
+            emailStatus.status === "sent"
+              ? "border-success/30 bg-success-soft text-success"
+              : "border-rose-500/25 bg-rose-500/10 text-rose-700",
+          ].join(" ")}
+        >
+          {emailStatus.message}
+        </div>
+      )}
     </div>
   )
 }
@@ -414,6 +448,7 @@ type FilterTab = "All" | MatchLabel
 
 export default function SupplierMatchingPage() {
   const params = useParams<{ id: string }>()
+  const pathname = usePathname()
   const router = useRouter()
   const rfqId = Number(params.id)
 
@@ -427,6 +462,8 @@ export default function SupplierMatchingPage() {
   const [alerting, setAlerting] = useState(false)
   const [alertSuccess, setAlertSuccess] = useState("")
   const [alertError, setAlertError] = useState("")
+  const [emailingKeys, setEmailingKeys] = useState<string[]>([])
+  const [emailStatuses, setEmailStatuses] = useState<Record<string, { status: "sent" | "failed"; message: string }>>({})
 
   useEffect(() => {
     async function load() {
@@ -486,6 +523,32 @@ export default function SupplierMatchingPage() {
     )
   }
 
+  function setAllFilteredSelected(selected: boolean) {
+    const filteredIds = filtered.map((result) => result.supplier.id)
+    setSelectedSupplierIds((current) => {
+      if (!selected) return current.filter((id) => !filteredIds.includes(id))
+      return Array.from(new Set([...current, ...filteredIds]))
+    })
+  }
+
+  function updateEmailStatuses(
+    targetResults: SupplierMatchResult[],
+    result: Awaited<ReturnType<typeof sendMatchAlertEmails>>,
+  ) {
+    setEmailStatuses((current) => {
+      const next = { ...current }
+      for (const target of targetResults) {
+        const sendResult = result.results.find((item) => item.supplierId === target.supplier.id)
+        if (!sendResult) continue
+        next[target.supplier.id] = {
+          status: sendResult.status,
+          message: sendResult.status === "sent" ? "Email sent." : sendResult.error || "Email failed.",
+        }
+      }
+      return next
+    })
+  }
+
   function summarizeAlertResult(result: MatchAlertResult): string {
     return `${result.notificationsCreated} notification(s) and ${result.whatsappDraftsCreated} WhatsApp draft(s) created.`
   }
@@ -525,13 +588,66 @@ export default function SupplierMatchingPage() {
     }
   }
 
+  async function emailResults(targetResults: SupplierMatchResult[]) {
+    if (!rfq || targetResults.length === 0) {
+      setAlertError("Select at least one supplier match to email.")
+      setAlertSuccess("")
+      return
+    }
+
+    const targetIds = targetResults.map((result) => result.supplier.id)
+    setEmailingKeys((current) => Array.from(new Set([...current, ...targetIds])))
+    setAlertError("")
+    setAlertSuccess("")
+
+    try {
+      const result = await sendMatchAlertEmails(
+        targetResults.map((match) => ({
+          supplier: match.supplier,
+          rfq: {
+            id: rfq.id,
+            title: rfq.title,
+            deadline: rfq.deadline,
+          },
+          matchScore: match.score,
+        }))
+      )
+
+      updateEmailStatuses(targetResults, result)
+      if (result.errors.length > 0) {
+        setAlertError(result.errors.join(" "))
+      }
+      setAlertSuccess(`${result.sent} email(s) sent. ${result.failed} failed. ${result.emailAlertsCreated} alert log row(s) created.`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to send match alert emails."
+      setAlertError(message)
+      setEmailStatuses((current) => {
+        const next = { ...current }
+        for (const target of targetResults) {
+          next[target.supplier.id] = { status: "failed", message }
+        }
+        return next
+      })
+    } finally {
+      setEmailingKeys((current) => current.filter((id) => !targetIds.includes(id)))
+    }
+  }
+
+  const allFilteredSelected =
+    filtered.length > 0 && filtered.every((result) => selectedSupplierIds.includes(result.supplier.id))
+  const backHref = pathname?.includes("/dashboard/rfqs/")
+    ? `/dashboard/rfqs/${rfqId}`
+    : pathname?.includes("/dashboard/buyer/")
+    ? "/dashboard/buyer/rfqs"
+    : `/dashboard/admin/rfqs/${rfqId}/quotes`
+
   return (
     <div>
       {/* Header */}
       <div className="mb-8 border-b border-panel pb-6">
         <div className="mb-3 flex items-center gap-2">
           <Link
-            href={`/dashboard/admin/rfqs/${rfqId}/quotes`}
+            href={backHref}
             className="text-xs font-semibold text-accent transition hover:text-accent-strong"
           >
             ← Back to Quotes
@@ -566,7 +682,7 @@ export default function SupplierMatchingPage() {
 
       {alertSuccess && (
         <div className="mb-6 rounded-md border border-success/30 bg-success-soft px-5 py-4">
-          <p className="text-sm font-semibold text-success">Draft alerts created</p>
+          <p className="text-sm font-semibold text-success">Match alert workflow</p>
           <p className="mt-1 text-xs text-success">{alertSuccess}</p>
         </div>
       )}
@@ -635,9 +751,25 @@ export default function SupplierMatchingPage() {
 
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-md border border-panel bg-card px-4 py-3 shadow-panel">
             <p className="text-xs font-semibold text-secondary">
-              {selectedResults.length} selected &middot; WhatsApp remains draft-only
+              {selectedResults.length} selected &middot; Email sends immediately &middot; WhatsApp remains draft-only
             </p>
             <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setAllFilteredSelected(!allFilteredSelected)}
+                disabled={filtered.length === 0}
+                className="rounded-md border border-panel bg-surface px-3 py-2 text-xs font-bold text-secondary hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {allFilteredSelected ? "Clear visible" : "Select all visible"}
+              </button>
+              <button
+                type="button"
+                onClick={() => emailResults(selectedResults)}
+                disabled={emailingKeys.length > 0 || selectedResults.length === 0}
+                className="rounded-md border border-accent bg-accent px-3 py-2 text-xs font-bold text-button disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {emailingKeys.length > 0 ? "Sending..." : "Send to selected"}
+              </button>
               <button
                 type="button"
                 onClick={() => notifyResults(selectedResults)}
@@ -712,7 +844,10 @@ export default function SupplierMatchingPage() {
                   rfqId={rfqId}
                   rfqTitle={rfq.title}
                   selected={selectedSupplierIds.includes(result.supplier.id)}
+                  emailStatus={emailStatuses[result.supplier.id]}
+                  emailSending={emailingKeys.includes(result.supplier.id)}
                   onToggleSelected={() => toggleSelectedSupplier(result.supplier.id)}
+                  onSendEmail={() => emailResults([result])}
                 />
               ))}
             </div>

@@ -6,6 +6,7 @@ export type MatchAlertSupplier = {
   id: string
   business_name?: string | null
   phone?: string | null
+  email?: string | null
 }
 
 export type MatchAlertRFQ = {
@@ -32,6 +33,25 @@ export type MatchAlertResult = {
   errors: string[]
 }
 
+export type MatchAlertEmail = {
+  subject: string
+  body: string
+}
+
+export type MatchAlertEmailResult = {
+  attempted: number
+  sent: number
+  failed: number
+  emailAlertsCreated: number
+  errors: string[]
+  results: Array<{
+    supplierId: string
+    supplierName: string
+    status: "sent" | "failed"
+    error?: string
+  }>
+}
+
 function formatDeadline(deadline: string | null | undefined): string {
   if (!deadline) return "the published deadline"
   const date = new Date(deadline)
@@ -47,6 +67,28 @@ function formatDeadline(deadline: string | null | undefined): string {
 export function createMatchAlertMessage(input: MatchAlertInput): string {
   const title = input.rfq.title || `RFQ-${input.rfq.id}`
   return `New RFQ matched to your business: ${title}. Match Score: ${input.matchScore}%. Review and submit your quote before ${formatDeadline(input.rfq.deadline)}.`
+}
+
+export function createMatchAlertEmail(input: MatchAlertInput): MatchAlertEmail {
+  const supplierName = input.supplier.business_name || "there"
+  const title = input.rfq.title || `RFQ-${input.rfq.id}`
+  const deadline = formatDeadline(input.rfq.deadline)
+
+  return {
+    subject: `New opportunity match: ${title}`,
+    body: `Hi ${supplierName},
+
+A new opportunity on AiForm Procure looks like a strong match for your supplier profile.
+
+Opportunity: ${title}
+Match score: ${input.matchScore}%
+Closing date: ${deadline}
+
+Log in to AiForm Procure to review the opportunity details and decide whether it is a fit for your business.
+
+Warmly,
+The AiForm Procure team`,
+  }
 }
 
 async function getCurrentActor() {

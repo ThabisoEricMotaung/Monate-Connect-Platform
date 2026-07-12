@@ -281,7 +281,13 @@ export default async function RFQDetailPage({ params }: Props) {
             </h2>
           </div>
           <Link
-            href={`/dashboard/intelligence/matches`}
+            href={`/dashboard/rfqs/${rfq.id}/matching`}
+            className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong"
+          >
+            Notify matched suppliers
+          </Link>
+          <Link
+            href="/dashboard/intelligence/matches"
             className="rounded-md border border-panel bg-surface px-4 py-2 text-sm font-semibold text-secondary transition hover:border-accent hover:text-accent"
           >
             View Matching Engine
@@ -427,6 +433,13 @@ export default async function RFQDetailPage({ params }: Props) {
           className="inline-flex items-center justify-center rounded-md border border-panel bg-surface px-5 py-2.5 text-sm font-semibold text-secondary transition hover:bg-panel"
         >
           Message Buyer/Admin
+        </Link>
+
+        <Link
+          href={`/dashboard/rfqs/${rfq.id}/matching`}
+          className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
+        >
+          Notify matched suppliers
         </Link>
 
         <Link

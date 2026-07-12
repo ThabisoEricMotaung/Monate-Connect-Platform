@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { getCurrentProfile } from "@/lib/auth"
 import { createMatchAlertDrafts, type MatchAlertResult } from "@/lib/matchAlerts"
+import { sendMatchAlertEmails } from "@/lib/matchAlertEmailClient"
 import {
   calculateRFQMatches,
   type MatchLevel,
@@ -32,6 +33,8 @@ export default function SupplierMatchesPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [alerting, setAlerting] = useState(false)
+  const [emailingKeys, setEmailingKeys] = useState<string[]>([])
+  const [emailStatuses, setEmailStatuses] = useState<Record<string, { status: "sent" | "failed"; message: string }>>({})
   const [matches, setMatches] = useState<SupplierMatchResult[]>([])
   const [selectedKeys, setSelectedKeys] = useState<string[]>([])
 
@@ -86,6 +89,14 @@ export default function SupplierMatchesPage() {
     )
   }
 
+  function setAllVisibleSelected(selected: boolean) {
+    const visibleKeys = matches.slice(0, 100).map((match) => `${match.rfq.id}-${match.supplier.id}`)
+    setSelectedKeys((current) => {
+      if (!selected) return current.filter((key) => !visibleKeys.includes(key))
+      return Array.from(new Set([...current, ...visibleKeys]))
+    })
+  }
+
   function summarizeAlertResult(result: MatchAlertResult): string {
     return `${result.notificationsCreated} notification(s) and ${result.whatsappDraftsCreated} WhatsApp draft(s) created.`
   }
@@ -121,6 +132,65 @@ export default function SupplierMatchesPage() {
     }
   }
 
+  async function emailMatches(targetMatches: SupplierMatchResult[]) {
+    if (targetMatches.length === 0) {
+      setError("Select at least one supplier match to email.")
+      setSuccess("")
+      return
+    }
+
+    const targetKeys = targetMatches.map((match) => `${match.rfq.id}-${match.supplier.id}`)
+    setEmailingKeys((current) => Array.from(new Set([...current, ...targetKeys])))
+    setError("")
+    setSuccess("")
+
+    try {
+      const result = await sendMatchAlertEmails(
+        targetMatches.map((match) => ({
+          supplier: match.supplier,
+          rfq: match.rfq,
+          matchScore: match.match_score,
+        }))
+      )
+
+      setEmailStatuses((current) => {
+        const next = { ...current }
+        for (const match of targetMatches) {
+          const key = `${match.rfq.id}-${match.supplier.id}`
+          const sendResult = result.results.find((item) => item.supplierId === match.supplier.id)
+          if (!sendResult) continue
+          next[key] = {
+            status: sendResult.status,
+            message: sendResult.status === "sent" ? "Email sent." : sendResult.error || "Email failed.",
+          }
+        }
+        return next
+      })
+
+      if (result.errors.length > 0) {
+        setError(result.errors.join(" "))
+      }
+      setSuccess(`${result.sent} email(s) sent. ${result.failed} failed. ${result.emailAlertsCreated} alert log row(s) created.`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to send match alert emails."
+      setError(message)
+      setEmailStatuses((current) => {
+        const next = { ...current }
+        for (const match of targetMatches) {
+          next[`${match.rfq.id}-${match.supplier.id}`] = { status: "failed", message }
+        }
+        return next
+      })
+    } finally {
+      setEmailingKeys((current) => current.filter((key) => !targetKeys.includes(key)))
+    }
+  }
+
+  const visibleMatches = matches.slice(0, 100)
+  const visibleKeys = visibleMatches.map((match) => `${match.rfq.id}-${match.supplier.id}`)
+  const allVisibleSelected =
+    visibleKeys.length > 0 && visibleKeys.every((key) => selectedKeys.includes(key))
+
   return (
     <div>
       <div className="mb-8 border-b border-panel pb-6">
@@ -141,7 +211,7 @@ export default function SupplierMatchesPage() {
 
       {success && (
         <div className="mb-6 rounded-md border border-success/30 bg-success-soft px-5 py-4">
-          <p className="text-sm font-semibold text-success">Draft alerts created</p>
+          <p className="text-sm font-semibold text-success">Match alert workflow</p>
           <p className="mt-1 text-xs text-success">{success}</p>
         </div>
       )}
@@ -175,9 +245,25 @@ export default function SupplierMatchesPage() {
         <section className="overflow-hidden rounded-md border border-panel bg-card shadow-panel">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-panel bg-panel px-4 py-3">
             <p className="text-xs font-semibold text-secondary">
-              {selectedMatches.length} selected &middot; WhatsApp remains draft-only
+              {selectedMatches.length} selected &middot; Email sends immediately &middot; WhatsApp remains draft-only
             </p>
             <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setAllVisibleSelected(!allVisibleSelected)}
+                disabled={visibleKeys.length === 0}
+                className="rounded-md border border-panel bg-surface px-3 py-2 text-xs font-bold text-secondary hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {allVisibleSelected ? "Clear visible" : "Select all"}
+              </button>
+              <button
+                type="button"
+                onClick={() => emailMatches(selectedMatches)}
+                disabled={emailingKeys.length > 0 || selectedMatches.length === 0}
+                className="rounded-md border border-accent bg-accent px-3 py-2 text-xs font-bold text-button disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {emailingKeys.length > 0 ? "Sending..." : "Send to selected"}
+              </button>
               <button
                 type="button"
                 onClick={() => notifyMatches(selectedMatches)}
@@ -220,8 +306,9 @@ export default function SupplierMatchesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-panel">
-                {matches.slice(0, 100).map((match) => {
+                {visibleMatches.map((match) => {
                   const matchKey = `${match.rfq.id}-${match.supplier.id}`
+                  const emailStatus = emailStatuses[matchKey]
                   const whatsappMessage = createRFQWhatsAppMessage(
                     match.rfq,
                     match.supplier,
@@ -288,6 +375,15 @@ export default function SupplierMatchesPage() {
                           >
                             Contact Supplier
                           </Link>
+                          <button
+                            type="button"
+                            onClick={() => emailMatches([match])}
+                            disabled={emailingKeys.includes(matchKey)}
+                            className="rounded-md border border-accent bg-accent px-3 py-2 text-xs font-bold text-button hover:bg-accent-strong disabled:cursor-wait disabled:opacity-60"
+                            title={match.supplier.email ? `Send to ${match.supplier.email}` : "No supplier email on record"}
+                          >
+                            {emailingKeys.includes(matchKey) ? "Sending..." : "Send email"}
+                          </button>
                           {whatsappLink ? (
                             <a
                               href={whatsappLink}
@@ -300,6 +396,18 @@ export default function SupplierMatchesPage() {
                           ) : (
                             <span className="rounded-md border border-panel bg-panel px-3 py-2 text-xs font-semibold text-muted">
                               No WhatsApp
+                            </span>
+                          )}
+                          {emailStatus && (
+                            <span
+                              className={[
+                                "rounded-md border px-3 py-2 text-xs font-semibold",
+                                emailStatus.status === "sent"
+                                  ? "border-success/30 bg-success-soft text-success"
+                                  : "border-rose-500/25 bg-rose-500/10 text-rose-700",
+                              ].join(" ")}
+                            >
+                              {emailStatus.message}
                             </span>
                           )}
                         </div>
