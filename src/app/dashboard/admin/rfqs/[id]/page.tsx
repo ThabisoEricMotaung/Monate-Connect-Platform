@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import SignedDocumentLink from "@/components/SignedDocumentLink"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
@@ -51,10 +51,16 @@ function statusClass(status: string | null): string {
 
 export default function AdminRFQDetailPage() {
   const params = useParams<{ id: string }>()
+  const pathname = usePathname()
   const router = useRouter()
   const [rfq, setRfq] = useState<RFQ | null>(null)
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
+  const isBuyerRoute = pathname?.startsWith("/dashboard/buyer/")
+  const rfqBaseHref = isBuyerRoute ? "/dashboard/buyer/rfqs" : "/dashboard/admin/rfqs"
+  const quotesHref = isBuyerRoute
+    ? `/dashboard/buyer/quotes?rfq_id=${params.id}`
+    : `/dashboard/admin/rfqs/${params.id}/quotes`
 
   useEffect(() => {
     let cancelled = false
@@ -113,7 +119,7 @@ export default function AdminRFQDetailPage() {
           </p>
         </div>
         <Link
-          href={`/dashboard/admin/rfqs/${params.id}/quotes`}
+          href={quotesHref}
           className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong"
         >
           View quotes
@@ -130,7 +136,7 @@ export default function AdminRFQDetailPage() {
       ) : !rfq ? (
         <div className="rounded-md border border-panel bg-card p-12 text-center shadow-panel">
           <p className="text-sm font-semibold text-heading">RFQ not found.</p>
-          <Link href="/dashboard/admin" className="mt-4 inline-flex text-sm font-semibold text-accent">
+          <Link href={isBuyerRoute ? "/dashboard/buyer" : "/dashboard/admin"} className="mt-4 inline-flex text-sm font-semibold text-accent">
             Back to overview
           </Link>
         </div>
@@ -167,6 +173,20 @@ export default function AdminRFQDetailPage() {
                   Open attachment
                 </SignedDocumentLink>
               )}
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link
+                  href={`${rfqBaseHref}/${rfq.id}/matching`}
+                  className="inline-flex rounded-md border border-panel bg-surface px-3 py-2 text-xs font-bold text-secondary transition hover:border-accent hover:text-accent"
+                >
+                  Notify matched suppliers
+                </Link>
+                <Link
+                  href={rfqBaseHref}
+                  className="inline-flex rounded-md border border-panel bg-surface px-3 py-2 text-xs font-bold text-secondary transition hover:border-accent hover:text-accent"
+                >
+                  Back to RFQs
+                </Link>
+              </div>
             </section>
           </aside>
         </div>

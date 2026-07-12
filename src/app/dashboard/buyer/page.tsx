@@ -134,7 +134,7 @@ export default function BuyerHomePage() {
             Recent RFQs
           </h2>
           <Link
-            href="/dashboard/admin/rfqs"
+            href="/dashboard/buyer/rfqs"
             className="text-xs font-semibold text-accent transition hover:text-accent-strong"
           >
             View all &rarr;
@@ -195,7 +195,7 @@ export default function BuyerHomePage() {
                     </td>
                     <td className="px-5 py-4 text-right">
                       <Link
-                        href={`/dashboard/admin/rfqs/${rfq.id}`}
+                        href={`/dashboard/buyer/rfqs/${rfq.id}`}
                         className="text-xs font-semibold text-accent transition hover:text-accent-strong"
                       >
                         View &rarr;
