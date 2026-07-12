@@ -635,9 +635,10 @@ export default function SupplierMatchingPage() {
 
   const allFilteredSelected =
     filtered.length > 0 && filtered.every((result) => selectedSupplierIds.includes(result.supplier.id))
+  const isBuyerRoute = pathname?.includes("/dashboard/buyer/")
   const backHref = pathname?.includes("/dashboard/rfqs/")
     ? `/dashboard/rfqs/${rfqId}`
-    : pathname?.includes("/dashboard/buyer/")
+    : isBuyerRoute
     ? "/dashboard/buyer/rfqs"
     : `/dashboard/admin/rfqs/${rfqId}/quotes`
 
@@ -751,7 +752,8 @@ export default function SupplierMatchingPage() {
 
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-md border border-panel bg-card px-4 py-3 shadow-panel">
             <p className="text-xs font-semibold text-secondary">
-              {selectedResults.length} selected &middot; Email sends immediately &middot; WhatsApp remains draft-only
+              {selectedResults.length} selected &middot; Email sends immediately
+              {!isBuyerRoute && " · WhatsApp remains draft-only"}
             </p>
             <div className="flex flex-wrap gap-2">
               <button
@@ -768,32 +770,36 @@ export default function SupplierMatchingPage() {
                 disabled={emailingKeys.length > 0 || selectedResults.length === 0}
                 className="rounded-md border border-accent bg-accent px-3 py-2 text-xs font-bold text-button disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {emailingKeys.length > 0 ? "Sending..." : "Send to selected"}
+                {emailingKeys.length > 0 ? "Sending..." : isBuyerRoute ? "Email selected" : "Send to selected"}
               </button>
-              <button
-                type="button"
-                onClick={() => notifyResults(selectedResults)}
-                disabled={alerting || selectedResults.length === 0}
-                className="rounded-md border border-accent bg-accent px-3 py-2 text-xs font-bold text-button disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Notify Selected
-              </button>
-              <button
-                type="button"
-                onClick={() => notifyResults(strongResults)}
-                disabled={alerting || strongResults.length === 0}
-                className="rounded-md border border-panel bg-surface px-3 py-2 text-xs font-bold text-secondary hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Notify All Strong Matches
-              </button>
-              <button
-                type="button"
-                onClick={() => notifyResults(selectedResults.length > 0 ? selectedResults : strongResults)}
-                disabled={alerting || (selectedResults.length === 0 && strongResults.length === 0)}
-                className="rounded-md border border-success bg-success-soft px-3 py-2 text-xs font-bold text-success disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Create WhatsApp Drafts
-              </button>
+              {!isBuyerRoute && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => notifyResults(selectedResults)}
+                    disabled={alerting || selectedResults.length === 0}
+                    className="rounded-md border border-accent bg-accent px-3 py-2 text-xs font-bold text-button disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Notify Selected
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => notifyResults(strongResults)}
+                    disabled={alerting || strongResults.length === 0}
+                    className="rounded-md border border-panel bg-surface px-3 py-2 text-xs font-bold text-secondary hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Notify All Strong Matches
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => notifyResults(selectedResults.length > 0 ? selectedResults : strongResults)}
+                    disabled={alerting || (selectedResults.length === 0 && strongResults.length === 0)}
+                    className="rounded-md border border-success bg-success-soft px-3 py-2 text-xs font-bold text-success disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Create WhatsApp Drafts
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
