@@ -164,7 +164,7 @@ export default function BuyerDashboardLayout({
           .select("id, business_name, email, full_name, preferred_name, role, avatar_url")
           .eq("id", user.id)
           .maybeSingle(),
-        supabase.from("rfqs").select("id, status"),
+        supabase.from("rfqs").select("id, status").eq("created_by", user.id),
         supabase.from("quotes").select("id, status"),
         getInboxUnreadCounts(),
       ])
@@ -323,4 +323,3 @@ export default function BuyerDashboardLayout({
     </main>
   )
 }
-
