@@ -332,7 +332,7 @@ export default function DashboardLayout({
   const [phoneGraceExpiresAt, setPhoneGraceExpiresAt] = useState<string | null>(null)
   const canViewAdminNavigation = role?.trim().toLowerCase() === "admin"
   const homeHref = roleHomeHref(role)
-  
+
   function closeSidebar() {
     setSidebarOpen(false)
   }
@@ -554,7 +554,10 @@ export default function DashboardLayout({
         <nav className="flex-1 space-y-5">
           {canViewAdminNavigation
             ? adminMirrorNavigation.map((group, groupIndex) => (
-                <div key={group.label ?? `admin-group-${groupIndex}`} className={groupIndex > 0 ? "border-t border-[#ebebeb] pt-5" : ""}>
+                <div
+                  key={group.label ?? `admin-group-${groupIndex}`}
+                  className={groupIndex > 0 ? "border-t border-[#ebebeb] pt-5" : ""}
+                >
                   {group.label && (
                     <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaaaaa]">
                       {group.label}
@@ -600,18 +603,116 @@ export default function DashboardLayout({
                 </div>
               ))
             : supplierNavigationSections.map((section) => {
-            const items = navigation.filter((item) => item.section === section.title)
+                const items = navigation.filter((item) => item.section === section.title)
 
-            return (
-              <div key={section.title}>
-                {section.label && (
-                  <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaaaaa]">
-                    {section.label}
-                  </p>
-                )}
-                <div className="space-y-1.5">
-                  {items.map((item) => {
-                    const itemPath = item.href.split("?")[0]
-                    const active =
-                      pathname === itemPath ||
-                      (itemPath !== "/dash
+                return (
+                  <div key={section.title}>
+                    {section.label && (
+                      <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaaaaa]">
+                        {section.label}
+                      </p>
+                    )}
+                    <div className="space-y-1.5">
+                      {items.map((item) => {
+                        const itemPath = item.href.split("?")[0]
+                        const active =
+                          pathname === itemPath ||
+                          (itemPath !== "/dashboard" && pathname.startsWith(itemPath))
+                        const itemIcon = navigationIcons[item.name] ?? navigationIcons[item.href]
+                        const itemLabel = item.href === "/dashboard" ? "Home dashboard" : supplierNavigationLabel(item.name, t)
+
+                        return (
+                          <Link
+                            key={`${section.title}-${item.href}-${item.name}`}
+                            href={item.href}
+                            onClick={closeSidebar}
+                            className={`flex items-center justify-between gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                              active
+                                ? "border-[#1a3a2a]/20 bg-[#f0f7f3] text-[#1a3a2a]"
+                                : "border-transparent text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
+                            }`}
+                          >
+                            <span className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
+                              {itemIcon && (
+                                <span
+                                  className={`shrink-0 ${
+                                    active ? "text-[#1a3a2a]" : navigationIconColors[item.href] ?? "text-[#c8a060]"
+                                  }`}
+                                >
+                                  {itemIcon}
+                                </span>
+                              )}
+                              <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                {itemLabel}
+                              </span>
+                            </span>
+                            {active && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8a060]" />}
+                            {item.href === "/dashboard/messages" && unreadInbox > 0 && (
+                              <span className="rounded-full bg-rose-600 px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
+                                {unreadInbox > 99 ? "99+" : unreadInbox}
+                              </span>
+                            )}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+        </nav>
+      </aside>
+
+      <section className="w-full min-w-0 flex-1 overflow-x-hidden px-4 py-5 pb-24 md:p-8 md:pb-24">
+        <header className="dashboard-chrome print:hidden -mx-4 -mt-5 mb-6 flex items-center justify-between gap-4 border-b-[0.5px] border-[#ebebeb] bg-white px-5 py-4 md:-mx-8 md:-mt-8">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#ebebeb] bg-white text-[#555555] transition hover:text-[#1a3a2a] md:hidden"
+            aria-label="Open navigation menu"
+          >
+            <IconMenu2 aria-hidden="true" className="h-5 w-5" stroke={1.8} />
+          </button>
+          <Link
+            href={homeHref}
+            className="flex min-w-0 cursor-pointer items-center gap-3 rounded-sm transition hover:text-[#1a3a2a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c8a060]"
+          >
+            <BrandMark className="h-11 w-11" imageClassName="h-7 w-auto" />
+            <span className="sr-only">AiForm Procure home</span>
+            <div className="min-w-0">
+              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-[#aaaaaa]">
+                Procurement workspace
+              </p>
+              <p className="mt-1 truncate text-sm font-semibold text-[#1a3a2a]">
+                AiForm Procure
+              </p>
+            </div>
+          </Link>
+
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+            <AccountMenu profile={profile} />
+          </div>
+        </header>
+
+        <div className="print:hidden mb-6">
+          <Breadcrumbs role={role} />
+        </div>
+
+        {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}
+        {children}
+        <footer className="mt-10 flex flex-col gap-3 border-t border-[#ebebeb] pt-5 text-xs font-semibold text-[#555555] sm:flex-row sm:items-center sm:justify-between">
+          <p>&copy; 2026 AiForm Procure &middot; Procurement Suite</p>
+          <button
+            type="button"
+            onClick={openAccessibility}
+            className="w-fit underline-offset-4 transition hover:text-[#1a3a2a] hover:underline"
+          >
+            Accessibility
+          </button>
+        </footer>
+      </section>
+
+      <ProcurementWire scope="dashboard" />
+    </main>
+  )
+}
