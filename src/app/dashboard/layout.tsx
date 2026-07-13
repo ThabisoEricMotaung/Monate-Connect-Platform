@@ -160,6 +160,15 @@ const navigationIcons: Record<string, ReactNode> = {
   "/dashboard/suggestions": <IconMessageCircle size={16} />,
   Settings: <IconSettings size={16} />,
 }
+// Inactive-state icon color overrides for nav items that otherwise share an
+// icon (Quotes / Inbox / Have Your Say all use IconMessageCircle) so they're
+// visually distinguishable at a glance. Keyed by href; anything not listed
+// keeps the default gold accent color.
+const navigationIconColors: Record<string, string> = {
+  "/dashboard/quotes": "text-sky-600",
+  "/dashboard/suggestions": "text-violet-600",
+}
+
 const supplierNavigationSections: { title: "Top" | "Work" | "Profile" | "Discover" | "Pinned"; label: string | null }[] = [
   { title: "Top", label: null },
   { title: "Work", label: "Work" },
@@ -553,7 +562,12 @@ export default function DashboardLayout({
         </Link>
 
         <nav className="flex-1 space-y-5">
-          {supplierNavigationSections.map((section) => {
+          {supplierNavigationSections
+            .filter(
+              (section) =>
+                !canViewAdminNavigation || !["Work", "Profile", "Discover"].includes(section.title),
+            )
+            .map((section) => {
             const items = navigation.filter((item) => item.section === section.title)
 
             return (
@@ -585,7 +599,11 @@ export default function DashboardLayout({
                       >
                         <span className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
                           {itemIcon && (
-                            <span className={`shrink-0 ${active ? "text-[#1a3a2a]" : "text-[#c8a060]"}`}>
+                            <span
+                              className={`shrink-0 ${
+                                active ? "text-[#1a3a2a]" : navigationIconColors[item.href] ?? "text-[#c8a060]"
+                              }`}
+                            >
                               {itemIcon}
                             </span>
                           )}

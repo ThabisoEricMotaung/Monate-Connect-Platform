@@ -179,7 +179,7 @@ export default function AboutPage() {
             &quot;AiForm Procure was built because I could see that South African suppliers — especially small and emerging businesses — were losing procurement opportunities not because of poor capability, but because of compliance gaps and lack of visibility. This platform is designed to close that gap.&quot;
           </p>
           <footer className="mt-6 text-sm font-bold uppercase tracking-[0.14em] text-[#53665c]">
-            Thabiso Motaung, Founder, AiForm Studio
+            Founder, AiForm Studio
           </footer>
         </blockquote>
       </section>

@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/message-retention-purge",
       "schedule": "30 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-etenders",
+      "schedule": "0 5 * * *"
     }
   ]
 }

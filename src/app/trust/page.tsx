@@ -307,7 +307,7 @@ export default function TrustCentrePage() {
         </section>
 
         {/* Studio section */}
-        <section className="border-t border-panel bg-card px-6 py-16">
+        <section id="who-builds-monate-connect" className="border-t border-panel bg-card px-6 py-16 scroll-mt-24">
           <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-2 lg:items-center">
             <div>
               <Image src="/aiform-mark.png" alt="" width={26} height={32} className="h-8 w-auto" />

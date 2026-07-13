@@ -41,6 +41,7 @@ type NavItem = {
   href: string
   icon: TablerIcon
   badge?: number
+  iconColorClass?: string
 }
 
 type NavGroup = {
@@ -79,7 +80,7 @@ function NavLink({
       <span className="flex min-w-0 flex-1 items-center gap-2">
         <IconComponent
           aria-hidden="true"
-          className={`h-5 w-5 shrink-0 ${active ? "text-[#1a3a2a]" : "text-[#c8a060]"}`}
+          className={`h-5 w-5 shrink-0 ${active ? "text-[#1a3a2a]" : item.iconColorClass ?? "text-[#c8a060]"}`}
           stroke={1.8}
         />
         <span className="min-w-0 flex-1 whitespace-normal break-words leading-tight">{item.name}</span>
@@ -105,7 +106,7 @@ const BASE_NAVIGATION: NavGroup[] = [
     items: [
       { name: "Create RFQ", href: "/dashboard/buyer/rfqs/new", icon: IconPlus },
       { name: "My RFQs", href: "/dashboard/buyer/rfqs", icon: IconFileText },
-      { name: "Quotes received", href: "/dashboard/buyer/quotes", icon: IconMessageCircle },
+      { name: "Quotes received", href: "/dashboard/buyer/quotes", icon: IconMessageCircle, iconColorClass: "text-sky-600" },
       { name: "Inbox", href: "/dashboard/messages", icon: IconMessageCircle },
       { name: "Purchase orders", href: "/dashboard/buyer/purchase-orders", icon: IconShoppingCart },
       { name: "Spend Analysis", href: "/dashboard/spend-analysis", icon: IconChartBar },
@@ -122,7 +123,7 @@ const BASE_NAVIGATION: NavGroup[] = [
     label: "Support",
     divider: true,
     items: [
-      { name: "Have Your Say", href: "/dashboard/suggestions", icon: IconMessageCircle },
+      { name: "Have Your Say", href: "/dashboard/suggestions", icon: IconMessageCircle, iconColorClass: "text-violet-600" },
       { name: "Help", href: "/dashboard/help", icon: IconHelpCircle },
     ],
   },

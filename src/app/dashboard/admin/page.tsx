@@ -255,30 +255,35 @@ export default function AdminOverviewPage() {
           supabase
             .from("rfqs")
             .select("id, title, category, province, region, budget, deadline, status, created_at")
+            .eq("is_demo", false)
             .order("created_at", { ascending: false }),
         ),
         readRows<QuoteRow>(
           supabase
             .from("quotes")
             .select("id, rfq_id, supplier_id, supplier_name, amount, status, created_at")
+            .eq("is_demo", false)
             .order("created_at", { ascending: false }),
         ),
         readRows<ContractRow>(
           supabase
             .from("contracts")
             .select("id, supplier_id, supplier_name, contract_value, end_date, status, created_at")
+            .eq("is_demo", false)
             .order("created_at", { ascending: false }),
         ),
         readRows<PurchaseOrderRow>(
           supabase
             .from("purchase_orders")
             .select("id, rfq_id, quote_id, supplier_id, supplier_name, amount, title, status, generated_at")
+            .eq("is_demo", false)
             .order("generated_at", { ascending: false }),
         ),
         readRows<InvoiceRow>(
           supabase
             .from("invoices")
             .select("id, supplier_id, amount, total_amount, status, created_at")
+            .eq("is_demo", false)
             .order("created_at", { ascending: false }),
         ),
       ])

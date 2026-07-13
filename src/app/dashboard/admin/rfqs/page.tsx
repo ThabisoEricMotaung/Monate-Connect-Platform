@@ -15,7 +15,11 @@ type AdminRFQ = {
   deadline: string | null
   status: string | null
   created_at: string | null
+  is_external_opportunity: boolean | null
+  source_name: string | null
 }
+
+type ListFilter = "all" | "etenders-pending"
 
 function statusBadgeClass(status: string | null): string {
   const value = String(status ?? "").toLowerCase()
@@ -50,6 +54,7 @@ export default function AdminRfqsPage() {
   const [rfqs, setRfqs] = useState<AdminRFQ[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [filter, setFilter] = useState<ListFilter>("all")
 
   useEffect(() => {
     if (!supabase) {
@@ -68,7 +73,9 @@ export default function AdminRfqsPage() {
 
       const { data, error } = await supabase
         .from("rfqs")
-        .select("id, title, category, province, region, budget, deadline, status, created_at")
+        .select(
+          "id, title, category, province, region, budget, deadline, status, created_at, is_external_opportunity, source_name",
+        )
         .order("created_at", { ascending: false })
 
       if (cancelled) return
@@ -98,6 +105,16 @@ export default function AdminRfqsPage() {
     [rfqs],
   )
 
+  const etendersPending = useMemo(
+    () =>
+      rfqs.filter(
+        (rfq) => rfq.is_external_opportunity && String(rfq.status ?? "").toLowerCase() === "draft",
+      ),
+    [rfqs],
+  )
+
+  const visibleRfqs = filter === "etenders-pending" ? etendersPending : rfqs
+
   return (
     <div>
       <div className="mb-8 border-b border-panel pb-6">
@@ -120,7 +137,7 @@ export default function AdminRfqsPage() {
         </div>
       </div>
 
-      <div className="mb-5 grid gap-4 sm:grid-cols-3">
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-md border border-panel bg-card p-5 shadow-panel">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Total RFQs</p>
           <p className="mt-2 text-3xl font-bold text-heading">{loading ? "-" : rfqs.length}</p>
@@ -129,6 +146,23 @@ export default function AdminRfqsPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Active</p>
           <p className="mt-2 text-3xl font-bold text-heading">{loading ? "-" : activeCount}</p>
         </div>
+        <button
+          type="button"
+          onClick={() => setFilter(filter === "etenders-pending" ? "all" : "etenders-pending")}
+          className={`rounded-md border p-5 text-left shadow-panel transition ${
+            filter === "etenders-pending"
+              ? "border-accent bg-accent/10"
+              : "border-panel bg-card hover:border-accent/40"
+          }`}
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+            eTenders pending review
+          </p>
+          <p className="mt-2 text-3xl font-bold text-heading">{loading ? "-" : etendersPending.length}</p>
+          <p className="mt-1 text-xs font-semibold text-accent">
+            {filter === "etenders-pending" ? "Showing pending only ✕" : "Click to filter"}
+          </p>
+        </button>
         <div className="rounded-md border border-panel bg-card p-5 shadow-panel">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Latest</p>
           <p className="mt-2 break-words text-sm font-semibold text-heading">
@@ -148,17 +182,29 @@ export default function AdminRfqsPage() {
         <div className="rounded-md border border-panel bg-card p-8 text-center text-sm text-secondary shadow-panel">
           Loading&hellip;
         </div>
-      ) : rfqs.length === 0 ? (
+      ) : visibleRfqs.length === 0 ? (
         <section className="rounded-md border border-panel bg-card p-10 text-center shadow-panel">
           <p className="text-sm font-semibold text-heading">
-            No RFQs yet. Create the first RFQ to start receiving quotes from verified suppliers.
+            {filter === "etenders-pending"
+              ? "No eTenders drafts waiting for review right now."
+              : "No RFQs yet. Create the first RFQ to start receiving quotes from verified suppliers."}
           </p>
-          <Link
-            href="/dashboard/admin/rfqs/new"
-            className="mt-5 inline-flex rounded-md border border-accent bg-accent px-4 py-2 text-sm font-bold text-button shadow-sm transition hover:bg-accent-strong"
-          >
-            Create new RFQ &rarr;
-          </Link>
+          {filter === "etenders-pending" ? (
+            <button
+              type="button"
+              onClick={() => setFilter("all")}
+              className="mt-5 inline-flex rounded-md border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:border-accent hover:text-accent"
+            >
+              Show all RFQs
+            </button>
+          ) : (
+            <Link
+              href="/dashboard/admin/rfqs/new"
+              className="mt-5 inline-flex rounded-md border border-accent bg-accent px-4 py-2 text-sm font-bold text-button shadow-sm transition hover:bg-accent-strong"
+            >
+              Create new RFQ &rarr;
+            </Link>
+          )}
         </section>
       ) : (
         <div className="overflow-hidden rounded-md border border-panel shadow-panel">
@@ -175,12 +221,22 @@ export default function AdminRfqsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-panel bg-card">
-              {rfqs.map((rfq) => (
+              {visibleRfqs.map((rfq) => (
                 <tr key={rfq.id} className="transition hover:bg-surface">
                   <td className="px-5 py-4">
-                    <p className="line-clamp-2 break-words font-semibold text-primary">
-                      {rfq.title ?? `RFQ-${rfq.id}`}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="line-clamp-2 break-words font-semibold text-primary">
+                        {rfq.title ?? `RFQ-${rfq.id}`}
+                      </p>
+                      {rfq.is_external_opportunity && (
+                        <span
+                          className="inline-flex shrink-0 items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-2 py-0.5 text-[0.65rem] font-semibold text-sky-700"
+                          title={rfq.source_name ? `Sourced from ${rfq.source_name}` : "Externally sourced"}
+                        >
+                          {rfq.source_name ?? "External"}
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-1 break-words text-xs text-secondary md:hidden">
                       {rfq.category ?? "No category"} / {rfq.province ?? rfq.region ?? "No province"}
                     </p>

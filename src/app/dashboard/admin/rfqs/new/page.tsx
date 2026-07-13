@@ -125,7 +125,6 @@ const BBBEE_OPTIONS = [
 
 const SMART_SCORE_OPTIONS = ["Any", "50+", "70+", "80+", "90+"]
 const CERTIFICATIONS = ["ISO 9001", "ISO 14001", "OHSAS 18001", "CIDB registered", "Other"]
-const DRAFT_KEY = "monate-admin-rfq-drafts-v1"
 
 const inputClass =
   "w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30"
@@ -375,25 +374,43 @@ function composeDescription(form: FormState): string {
     .join("\n")
 }
 
-function readStoredDrafts(): StoredDraft[] {
-  try {
-    const raw = window.localStorage.getItem(DRAFT_KEY)
-    return raw ? (JSON.parse(raw) as StoredDraft[]) : []
-  } catch {
-    return []
+async function fetchLatestDraftAutosave(userId: string): Promise<StoredDraft | null> {
+  if (!supabase) return null
+
+  const { data, error } = await supabase
+    .from("rfq_draft_autosaves")
+    .select("draft_id, form, updated_at")
+    .eq("created_by", userId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data) return null
+
+  return {
+    draftId: data.draft_id as string,
+    savedAt: data.updated_at as string,
+    form: data.form as FormState,
   }
 }
 
-function writeStoredDraft(draft: StoredDraft) {
-  const current = readStoredDrafts().filter((item) => item.draftId !== draft.draftId)
-  window.localStorage.setItem(DRAFT_KEY, JSON.stringify([draft, ...current].slice(0, 8)))
+async function upsertDraftAutosave(userId: string, draftId: string, form: FormState) {
+  if (!supabase) return
+
+  await supabase.from("rfq_draft_autosaves").upsert(
+    {
+      draft_id: draftId,
+      created_by: userId,
+      form,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "draft_id" },
+  )
 }
 
-function removeStoredDraft(draftId: string) {
-  window.localStorage.setItem(
-    DRAFT_KEY,
-    JSON.stringify(readStoredDrafts().filter((item) => item.draftId !== draftId)),
-  )
+async function deleteDraftAutosave(draftId: string) {
+  if (!supabase) return
+  await supabase.from("rfq_draft_autosaves").delete().eq("draft_id", draftId)
 }
 
 function ChecklistRow({ done, label }: { done: boolean; label: string }) {
@@ -426,6 +443,7 @@ export default function NewRFQPage() {
   const [successMessage, setSuccessMessage] = useState("")
   const [warningMessage, setWarningMessage] = useState("")
   const [draftId, setDraftId] = useState(() => crypto.randomUUID())
+  const [userId, setUserId] = useState<string | null>(null)
   const [pendingDraft, setPendingDraft] = useState<StoredDraft | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -473,8 +491,13 @@ export default function NewRFQPage() {
         contactEmail: current.contactEmail || buyer?.email || authData.user?.email || "",
       }))
 
-      const drafts = readStoredDrafts()
-      if (drafts.length > 0) setPendingDraft(drafts[0])
+      const resolvedUserId = buyer?.id || profile?.id || authData.user?.id || null
+      setUserId(resolvedUserId)
+
+      if (resolvedUserId) {
+        const latestDraft = await fetchLatestDraftAutosave(resolvedUserId)
+        if (!cancelled && latestDraft) setPendingDraft(latestDraft)
+      }
 
       setCheckingAccess(false)
     }
@@ -487,18 +510,14 @@ export default function NewRFQPage() {
   }, [router])
 
   useEffect(() => {
-    if (checkingAccess) return
+    if (checkingAccess || !userId) return
 
     const timeout = window.setTimeout(() => {
-      writeStoredDraft({
-        draftId,
-        savedAt: new Date().toISOString(),
-        form,
-      })
+      upsertDraftAutosave(userId, draftId, form)
     }, 2500)
 
     return () => window.clearTimeout(timeout)
-  }, [checkingAccess, draftId, form])
+  }, [checkingAccess, draftId, form, userId])
 
   const validation = useMemo(() => {
     const completeLineItems = form.lineItems.filter(
@@ -697,7 +716,7 @@ export default function NewRFQPage() {
 
   function discardDraft() {
     if (!pendingDraft) return
-    removeStoredDraft(pendingDraft.draftId)
+    deleteDraftAutosave(pendingDraft.draftId)
     setPendingDraft(null)
   }
 
@@ -863,7 +882,7 @@ export default function NewRFQPage() {
         }
       }
 
-      removeStoredDraft(draftId)
+      deleteDraftAutosave(draftId)
       setSuccessMessage(
         status === "open" ? "RFQ published successfully." : "RFQ draft saved successfully.",
       )
@@ -883,22 +902,6 @@ export default function NewRFQPage() {
     } finally {
       setSubmitting(false)
     }
-  }
-
-  function saveLocalDraft() {
-    setWarningMessage("")
-    if (!form.title.trim()) {
-      setWarningMessage("Draft saved without a title. Add a title before publishing.")
-    }
-
-    const draft = {
-      draftId,
-      savedAt: new Date().toISOString(),
-      form,
-    }
-    writeStoredDraft(draft)
-    setHasUnsavedChanges(false)
-    setSuccessMessage("Draft saved locally. You can continue editing from this browser.")
   }
 
   function ErrorText({ field }: { field: keyof Errors }) {
@@ -1664,7 +1667,7 @@ export default function NewRFQPage() {
 
         <div className="mt-6 flex flex-col gap-3 rounded-md border border-panel bg-card p-4 shadow-panel sm:flex-row sm:items-center sm:justify-between">
           <div className="text-xs text-muted">
-            Drafts are autosaved locally while you work. Publish only becomes available once required checks pass.
+            Drafts are autosaved to your account while you work. Publish only becomes available once required checks pass.
           </div>
           <div className="flex flex-wrap gap-3">
             {step > 1 && (
@@ -1678,7 +1681,7 @@ export default function NewRFQPage() {
             )}
             <button
               type="button"
-              onClick={step === 3 ? () => createRFQ("draft") : saveLocalDraft}
+              onClick={() => createRFQ("draft")}
               disabled={submitting}
               className="rounded-md border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:border-accent hover:text-accent disabled:opacity-50"
             >
