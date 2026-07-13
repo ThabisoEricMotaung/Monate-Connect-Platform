@@ -19,6 +19,30 @@ import {
   IconSettings,
   IconMenu2,
   IconX,
+  IconActivityHeartbeat,
+  IconClipboardCheck,
+  IconAward,
+  IconAlertTriangle,
+  IconBooks,
+  IconBrandWhatsapp,
+  IconBriefcase,
+  IconChartAreaLine,
+  IconChartPie,
+  IconClipboardList,
+  IconFileCertificate,
+  IconFileSearch,
+  IconHistory,
+  IconMap2,
+  IconMessage2,
+  IconPlayerPlay,
+  IconReportAnalytics,
+  IconRobot,
+  IconRocket,
+  IconStars,
+  IconTargetArrow,
+  IconTemplate,
+  IconUserPlus,
+  type TablerIcon,
 } from "@tabler/icons-react"
 import { usePathname, useRouter } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
@@ -169,6 +193,105 @@ const navigationIconColors: Record<string, string> = {
   "/dashboard/suggestions": "text-violet-600",
 }
 
+// Mirrors the real admin sidebar (src/app/dashboard/admin/layout.tsx) so that
+// admins get the exact same groups/labels on shared routes like /dashboard/messages
+// that live outside the /dashboard/admin/* prefix, instead of a different ad-hoc
+// nav bolted onto the generic supplier sidebar. Keep this in sync with that file
+// if the real admin nav changes.
+type AdminMirrorGroup = {
+  label: string | null
+  items: { name: string; href: string; icon?: TablerIcon }[]
+}
+
+const adminMirrorNavigation: AdminMirrorGroup[] = [
+  { label: null, items: [{ name: "Home dashboard", href: "/dashboard/admin", icon: IconHome }] },
+  {
+    label: "Admin",
+    items: [
+      { name: "Verifications", href: "/dashboard/admin/verifications", icon: IconShieldCheck },
+      { name: "Suggestions", href: "/dashboard/admin/suggestions", icon: IconMessageCircle },
+      { name: "Session monitor", href: "/dashboard/admin/session", icon: IconActivityHeartbeat },
+    ],
+  },
+  {
+    label: "Procurement",
+    items: [
+      { name: "RFQs", href: "/dashboard/admin/rfqs", icon: IconFileText },
+      { name: "Quotes received", href: "/dashboard/admin/quotes", icon: IconMessageCircle },
+      { name: "Inbox", href: "/dashboard/messages", icon: IconMessageCircle },
+      { name: "Purchase orders", href: "/dashboard/admin/purchase-orders", icon: IconShoppingCart },
+    ],
+  },
+  { label: "Suppliers", items: [{ name: "Supplier directory", href: "/suppliers", icon: IconBuildingStore }] },
+  {
+    label: "Reports",
+    items: [
+      { name: "Spend analysis", href: "/dashboard/spend-analysis", icon: IconChartBar },
+      { name: "Compliance report", href: "/dashboard/compliance-report", icon: IconClipboardCheck },
+      { name: "BBBEE scorecard", href: "/dashboard/bbbee-scorecard", icon: IconAward },
+    ],
+  },
+  {
+    label: "Executive",
+    items: [
+      { name: "Executive Command Centre", href: "/dashboard/executive", icon: IconBriefcase },
+      { name: "Reports", href: "/dashboard/admin/reports", icon: IconReportAnalytics },
+      { name: "Analytics", href: "/dashboard/analytics", icon: IconChartBar },
+    ],
+  },
+  {
+    label: "Supplier operations",
+    items: [
+      { name: "Contract Renewals", href: "/dashboard/admin/contract-renewals", icon: IconFileCertificate },
+      { name: "Supplier Reviews", href: "/dashboard/admin/supplier-reviews", icon: IconStars },
+      { name: "Compliance Risk", href: "/dashboard/admin/compliance-risk", icon: IconAlertTriangle },
+      { name: "Supplier Risk", href: "/dashboard/admin/supplier-risk", icon: IconAlertTriangle },
+      { name: "Saved Suppliers", href: "/dashboard/admin/saved-suppliers", icon: IconBookmark },
+      { name: "Buyer Onboarding", href: "/dashboard/admin/onboarding", icon: IconUserPlus },
+      { name: "Banking Review", href: "/dashboard/admin/banking", icon: IconBuildingBank },
+    ],
+  },
+  {
+    label: "Tools & governance",
+    items: [
+      { name: "RFQ Templates", href: "/dashboard/admin/rfq-templates", icon: IconTemplate },
+      { name: "Audit Trail", href: "/dashboard/admin/audit", icon: IconFileSearch },
+      { name: "Activity Log", href: "/dashboard/admin/activity", icon: IconHistory },
+      { name: "Automation Rules", href: "/dashboard/admin/automation", icon: IconRobot },
+      { name: "WhatsApp Network", href: "/dashboard/admin/whatsapp", icon: IconBrandWhatsapp },
+      { name: "System Health", href: "/dashboard/admin/system-health", icon: IconActivityHeartbeat },
+      { name: "Production Readiness", href: "/dashboard/admin/production-readiness", icon: IconRocket },
+    ],
+  },
+  {
+    label: "Pilot & demo",
+    items: [
+      { name: "Demo Mode", href: "/dashboard/admin/demo-mode", icon: IconPlayerPlay },
+      { name: "Demo Story Pack", href: "/dashboard/admin/demo-story", icon: IconBooks },
+      { name: "Pilot Requests", href: "/dashboard/admin/pilot-requests", icon: IconClipboardList },
+      { name: "Pilot Feedback", href: "/dashboard/admin/feedback", icon: IconMessage2 },
+    ],
+  },
+  {
+    label: "Intelligence",
+    items: [
+      { name: "Executive Dashboard", href: "/dashboard/intelligence/executive", icon: IconChartPie },
+      { name: "Opportunity Matching", href: "/dashboard/intelligence/matches", icon: IconTargetArrow },
+      { name: "Supplier Intelligence", href: "/dashboard/intelligence/suppliers", icon: IconStars },
+      { name: "Supplier Performance", href: "/dashboard/intelligence/supplier-performance", icon: IconChartAreaLine },
+      { name: "Procurement Analytics", href: "/dashboard/intelligence/procurement", icon: IconChartBar },
+      { name: "Regional Insights", href: "/dashboard/intelligence/regions", icon: IconMap2 },
+    ],
+  },
+  {
+    label: null,
+    items: [
+      { name: "Help", href: "/dashboard/help", icon: IconHelpCircle },
+      { name: "Settings", href: "/dashboard/admin/settings", icon: IconSettings },
+    ],
+  },
+]
+
 const supplierNavigationSections: { title: "Top" | "Work" | "Profile" | "Discover" | "Pinned"; label: string | null }[] = [
   { title: "Top", label: null },
   { title: "Work", label: "Work" },
@@ -191,139 +314,6 @@ function supplierNavigationLabel(name: SupplierNavigationName, t: (key: Translat
 
   return name
 }
-
-const intelligenceNavigation: { name: string; href: string }[] = [
-  { name: "Executive Dashboard", href: "/dashboard/intelligence/executive" },
-  { name: "Opportunity Matching", href: "/dashboard/intelligence/matches" },
-  { name: "Supplier Intelligence", href: "/dashboard/intelligence/suppliers" },
-  { name: "Supplier Performance", href: "/dashboard/intelligence/supplier-performance" },
-  { name: "Procurement Analytics", href: "/dashboard/intelligence/procurement" },
-  { name: "Regional Insights", href: "/dashboard/intelligence/regions" },
-]
-
-const adminNavigation: { name: TranslationKey | "Executive Command Centre" | "Board Pack" | "System Health" | "Production Readiness" | "Demo Mode" | "Demo Story Pack" | "Pilot Requests" | "Pilot Feedback" | "Audit Trail" | "Automation Rules" | "Spend Analysis" | "Compliance Report" | "BBBEE Scorecard" | "Reports" | "Settings" | "Inbox" | "WhatsApp Network" | "Contract Renewals" | "Supplier Reviews" | "Compliance Risk" | "Buyer Onboarding" | "RFQ Templates" | "Banking Review" | "Supplier Risk" | "Decision Board" | "Workflow Rules" | "Overrides" | "Approval Matrix" | "Delegation Authority"; href: string }[] = [
-  {
-    name: "Executive Command Centre",
-    href: "/dashboard/executive",
-  },
-  {
-    name: "createRFQ",
-    href: "/dashboard/admin/rfqs/new",
-  },
-  {
-    name: "Inbox",
-    href: "/dashboard/messages",
-  },
-  {
-    name: "RFQ Templates",
-    href: "/dashboard/admin/rfq-templates",
-  },
-  {
-    name: "Audit Trail",
-    href: "/dashboard/admin/audit",
-  },
-  {
-    name: "Automation Rules",
-    href: "/dashboard/admin/automation",
-  },
-  {
-    name: "Reports",
-    href: "/dashboard/admin/reports",
-  },
-  {
-    name: "Spend Analysis",
-    href: "/dashboard/spend-analysis",
-  },
-  {
-    name: "Compliance Report",
-    href: "/dashboard/compliance-report",
-  },
-  {
-    name: "BBBEE Scorecard",
-    href: "/dashboard/bbbee-scorecard",
-  },
-  // Governance suite hidden until migrations run.
-  {
-    name: "System Health",
-    href: "/dashboard/admin/system-health",
-  },
-  {
-    name: "Production Readiness",
-    href: "/dashboard/admin/production-readiness",
-  },
-  {
-    name: "Demo Mode",
-    href: "/dashboard/admin/demo-mode",
-  },
-  {
-    name: "Demo Story Pack",
-    href: "/dashboard/admin/demo-story",
-  },
-  {
-    name: "Pilot Requests",
-    href: "/dashboard/admin/pilot-requests",
-  },
-  {
-    name: "Pilot Feedback",
-    href: "/dashboard/admin/feedback",
-  },
-  {
-    name: "Settings",
-    href: "/dashboard/admin/settings",
-  },
-  {
-    name: "WhatsApp Network",
-    href: "/dashboard/admin/whatsapp",
-  },
-  {
-    name: "quoteReview",
-    href: "/dashboard/admin/quotes",
-  },
-  {
-    name: "verificationReview",
-    href: "/dashboard/admin/verifications",
-  },
-  {
-    name: "analytics",
-    href: "/dashboard/analytics",
-  },
-  {
-    name: "purchaseOrders",
-    href: "/dashboard/admin/purchase-orders",
-  },
-  {
-    name: "Contract Renewals",
-    href: "/dashboard/admin/contract-renewals",
-  },
-  {
-    name: "Supplier Reviews",
-    href: "/dashboard/admin/supplier-reviews",
-  },
-  {
-    name: "Compliance Risk",
-    href: "/dashboard/admin/compliance-risk",
-  },
-  {
-    name: "activityLog",
-    href: "/dashboard/admin/activity",
-  },
-  {
-    name: "savedSuppliers",
-    href: "/dashboard/admin/saved-suppliers",
-  },
-  {
-    name: "Buyer Onboarding",
-    href: "/dashboard/admin/onboarding",
-  },
-  {
-    name: "Banking Review",
-    href: "/dashboard/admin/banking",
-  },
-  {
-    name: "Supplier Risk",
-    href: "/dashboard/admin/supplier-risk",
-  },
-]
 
 export default function DashboardLayout({
   children,
@@ -562,12 +552,54 @@ export default function DashboardLayout({
         </Link>
 
         <nav className="flex-1 space-y-5">
-          {supplierNavigationSections
-            .filter(
-              (section) =>
-                !canViewAdminNavigation || !["Work", "Profile", "Discover"].includes(section.title),
-            )
-            .map((section) => {
+          {canViewAdminNavigation
+            ? adminMirrorNavigation.map((group, groupIndex) => (
+                <div key={group.label ?? `admin-group-${groupIndex}`} className={groupIndex > 0 ? "border-t border-[#ebebeb] pt-5" : ""}>
+                  {group.label && (
+                    <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaaaaa]">
+                      {group.label}
+                    </p>
+                  )}
+                  <div className="space-y-1.5">
+                    {group.items.map((item) => {
+                      const active = pathname === item.href || pathname.startsWith(item.href)
+                      const Icon = item.icon
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={closeSidebar}
+                          className={`flex items-center justify-between gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                            active
+                              ? "border-[#1a3a2a]/20 bg-[#f0f7f3] text-[#1a3a2a]"
+                              : "border-transparent text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
+                          }`}
+                        >
+                          <span className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
+                            {Icon && (
+                              <Icon
+                                aria-hidden="true"
+                                className={`h-4 w-4 shrink-0 ${
+                                  active ? "text-[#1a3a2a]" : navigationIconColors[item.href] ?? "text-[#c8a060]"
+                                }`}
+                                stroke={1.8}
+                              />
+                            )}
+                            <span className="overflow-hidden text-ellipsis whitespace-nowrap">{item.name}</span>
+                          </span>
+                          {active && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8a060]" />}
+                          {item.href === "/dashboard/messages" && unreadInbox > 0 && (
+                            <span className="rounded-full bg-rose-600 px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
+                              {unreadInbox > 99 ? "99+" : unreadInbox}
+                            </span>
+                          )}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))
+            : supplierNavigationSections.map((section) => {
             const items = navigation.filter((item) => item.section === section.title)
 
             return (
@@ -582,169 +614,4 @@ export default function DashboardLayout({
                     const itemPath = item.href.split("?")[0]
                     const active =
                       pathname === itemPath ||
-                      (itemPath !== "/dashboard" && pathname.startsWith(itemPath))
-                    const itemIcon = navigationIcons[item.name] ?? navigationIcons[item.href]
-                    const itemLabel = item.href === "/dashboard" ? "Home dashboard" : supplierNavigationLabel(item.name, t)
-
-                    return (
-                      <Link
-                        key={`${section.title}-${item.href}-${item.name}`}
-                        href={item.href}
-                        onClick={closeSidebar}
-                        className={`flex items-center justify-between gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                          active
-                            ? "border-[#1a3a2a]/20 bg-[#f0f7f3] text-[#1a3a2a]"
-                            : "border-transparent text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
-                        }`}
-                      >
-                        <span className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
-                          {itemIcon && (
-                            <span
-                              className={`shrink-0 ${
-                                active ? "text-[#1a3a2a]" : navigationIconColors[item.href] ?? "text-[#c8a060]"
-                              }`}
-                            >
-                              {itemIcon}
-                            </span>
-                          )}
-                          <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                            {itemLabel}
-                          </span>
-                        </span>
-                        {active && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8a060]" />}
-                        {item.href === "/dashboard/messages" && unreadInbox > 0 && (
-                          <span className="rounded-full bg-rose-600 px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
-                            {unreadInbox > 99 ? "99+" : unreadInbox}
-                          </span>
-                        )}
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
-
-          {canViewAdminNavigation && (
-            <div className="border-t border-[#ebebeb] pt-5">
-              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaaaaa]">
-                Intelligence
-              </p>
-              <nav className="space-y-1.5">
-                {intelligenceNavigation.map((item) => {
-                  const active = pathname === item.href || pathname.startsWith(item.href)
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={closeSidebar}
-                      className={`flex items-center justify-between gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                        active
-                          ? "border-[#1a3a2a]/20 bg-[#f0f7f3] text-[#1a3a2a]"
-                          : "border-transparent text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
-                      }`}
-                    >
-                      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{item.name}</span>
-                      {active && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8a060]" />}
-                    </Link>
-                  )
-                })}
-              </nav>
-            </div>
-          )}
-
-          {canViewAdminNavigation && (
-            <div className="border-t border-[#ebebeb] pt-5">
-              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaaaaa]">
-                Admin
-              </p>
-
-              <nav className="space-y-1.5">
-                {adminNavigation.map((item) => {
-                  const active = pathname === item.href || pathname.startsWith(item.href)
-                  const itemLabel =
-                    item.name === "Executive Command Centre" || item.name === "Board Pack" || item.name === "System Health" || item.name === "Production Readiness" || item.name === "Demo Mode" || item.name === "Demo Story Pack" || item.name === "Pilot Requests" || item.name === "Pilot Feedback" || item.name === "Audit Trail" || item.name === "Automation Rules" || item.name === "Spend Analysis" || item.name === "Compliance Report" || item.name === "BBBEE Scorecard" || item.name === "Reports" || item.name === "Settings" || item.name === "Inbox" || item.name === "WhatsApp Network" || item.name === "Contract Renewals" || item.name === "Supplier Reviews" || item.name === "Compliance Risk" || item.name === "Buyer Onboarding" || item.name === "RFQ Templates" || item.name === "Banking Review" || item.name === "Supplier Risk" || item.name === "Decision Board" || item.name === "Workflow Rules" || item.name === "Overrides" || item.name === "Approval Matrix" || item.name === "Delegation Authority"
-                      ? item.name
-                      : t(item.name)
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={closeSidebar}
-                      className={`flex items-center justify-between gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                        active
-                          ? "border-[#1a3a2a]/20 bg-[#f0f7f3] text-[#1a3a2a]"
-                          : "border-transparent text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
-                      }`}
-                    >
-                      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{itemLabel}</span>
-                      {active && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8a060]" />}
-                    </Link>
-                  )
-                })}
-              </nav>
-            </div>
-          )}
-        </nav>
-      </aside>
-
-      <section className="w-full min-w-0 flex-1 overflow-x-hidden px-4 py-5 pb-24 md:p-8 md:pb-24">
-        <header className="dashboard-chrome print:hidden -mx-4 -mt-5 mb-6 flex items-center justify-between gap-4 border-b-[0.5px] border-[#ebebeb] bg-white px-5 py-4 md:-mx-8 md:-mt-8">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(true)}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#ebebeb] bg-white text-[#555555] transition hover:text-[#1a3a2a] md:hidden"
-            aria-label="Open navigation menu"
-          >
-            <IconMenu2 aria-hidden="true" className="h-5 w-5" stroke={1.8} />
-          </button>
-          <Link
-            href={homeHref}
-            className="flex min-w-0 cursor-pointer items-center gap-3 rounded-sm transition hover:text-[#1a3a2a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c8a060]"
-          >
-            <BrandMark className="h-11 w-11" imageClassName="h-7 w-auto" />
-            <span className="sr-only">AiForm Procure home</span>
-            <div className="min-w-0">
-              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-[#aaaaaa]">
-                Procurement workspace
-              </p>
-              <p className="mt-1 truncate text-sm font-semibold text-[#1a3a2a]">
-                AiForm Procure
-              </p>
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <NotificationBell />
-            <AccountMenu profile={profile} />
-          </div>
-        </header>
-
-        <div className="print:hidden mb-6">
-          <Breadcrumbs role={role} />
-        </div>
-
-        {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}
-        {children}
-        <footer className="mt-10 flex flex-col gap-3 border-t border-[#ebebeb] pt-5 text-xs font-semibold text-[#555555] sm:flex-row sm:items-center sm:justify-between">
-          <p>&copy; 2026 AiForm Procure &middot; Procurement Suite</p>
-          <button
-            type="button"
-            onClick={openAccessibility}
-            className="w-fit underline-offset-4 transition hover:text-[#1a3a2a] hover:underline"
-          >
-            Accessibility
-          </button>
-        </footer>
-      </section>
-
-      <ProcurementWire scope="dashboard" />
-    </main>
-  )
-}
-
-
-
-
-
+                      (itemPath !== "/dash
