@@ -2006,7 +2006,11 @@ function DocumentsTab({
           </select>
           {selectedOption.legacyField && !docUrls[selectedOption.legacyField] && <SmartScoreNudge />}
           {selectedOption.hint && (
-            <details className="group mt-2 rounded-md border border-panel bg-surface px-3 py-2">
+            <details
+              key={selectedOption.value}
+              open={!activeDocuments.some((document) => document.document_type === selectedOption.value)}
+              className="group mt-2 rounded-md border border-panel bg-surface px-3 py-2"
+            >
               <summary className="cursor-pointer select-none text-xs font-semibold text-accent transition hover:text-accent-strong">
                 Not sure how to get this?
               </summary>
