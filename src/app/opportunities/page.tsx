@@ -528,9 +528,18 @@ function FilterBody({
 
 // --- Preview modal (unauthenticated) -----------------------------------------
 
-function PreviewModal({ rfq, onClose }: { rfq: PublicRFQ | null; onClose: () => void }) {
+function PreviewModal({
+  rfq,
+  isAuth,
+  onClose,
+}: {
+  rfq: PublicRFQ | null
+  isAuth: boolean
+  onClose: () => void
+}) {
   if (!rfq) return null
   const daysLeft = daysUntil(getClosingDate(rfq))
+  const isExternalOpportunity = Boolean(rfq.is_external_opportunity)
 
   return (
     <div
@@ -563,23 +572,51 @@ function PreviewModal({ rfq, onClose }: { rfq: PublicRFQ | null; onClose: () => 
           )}
           <MetaChip icon={<CalendarIcon />} label={formatDaysLeft(daysLeft)} />
         </div>
-        <div className="rounded-lg border border-accent/20 bg-accent/5 p-4">
-          <p className="mb-1.5 text-sm font-semibold text-heading">
-            Register to respond to this opportunity
-          </p>
-          <p className="mb-4 text-sm text-secondary">
-            Create a free supplier account to submit quotes, track deadlines, and access all
-            active tenders on AiForm Procure.
-          </p>
-          <div className="flex gap-3">
-            <Link href="/auth/signup" className="masthead__btn-primary text-sm">
-              Create free account
-            </Link>
-            <Link href="/auth/login" className="masthead__btn-secondary text-sm">
-              Sign in
-            </Link>
+        {isAuth ? (
+          <div className="rounded-lg border border-accent/20 bg-accent/5 p-4">
+            {isExternalOpportunity && rfq.original_source_url ? (
+              <>
+                <p className="mb-1.5 text-sm font-semibold text-heading">
+                  Externally-sourced opportunity
+                </p>
+                <p className="mb-4 text-sm text-secondary">
+                  Source: {rfq.source_name?.trim() || "External"}. Quotes for this opportunity are
+                  submitted directly with the buyer, not through AiForm Procure.
+                </p>
+                <a
+                  href={rfq.original_source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="masthead__btn-primary text-sm"
+                >
+                  View Original Tender
+                </a>
+              </>
+            ) : (
+              <Link href={"/dashboard/rfqs?open=" + rfq.id} className="masthead__btn-primary text-sm">
+                View &amp; quote
+              </Link>
+            )}
           </div>
-        </div>
+        ) : (
+          <div className="rounded-lg border border-accent/20 bg-accent/5 p-4">
+            <p className="mb-1.5 text-sm font-semibold text-heading">
+              Register to respond to this opportunity
+            </p>
+            <p className="mb-4 text-sm text-secondary">
+              Create a free supplier account to submit quotes, track deadlines, and access all
+              active tenders on AiForm Procure.
+            </p>
+            <div className="flex gap-3">
+              <Link href="/auth/signup" className="masthead__btn-primary text-sm">
+                Create free account
+              </Link>
+              <Link href="/auth/login" className="masthead__btn-secondary text-sm">
+                Sign in
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -716,6 +753,14 @@ function RFQCard({
               Preview opportunity
             </button>
           </div>
+        )}
+        {!blurDesc && rfq.description && rfq.description.length > 140 && (
+          <button
+            onClick={() => onPreview(rfq)}
+            className="mt-1 text-xs font-semibold text-accent transition hover:text-accent-strong"
+          >
+            Read full scope &rarr;
+          </button>
         )}
       </div>
 
@@ -1209,7 +1254,7 @@ export default function OpportunitiesPage() {
         </div>
       )}
 
-      <PreviewModal rfq={previewRFQ} onClose={() => setPreviewRFQ(null)} />
+      <PreviewModal rfq={previewRFQ} isAuth={isAuth} onClose={() => setPreviewRFQ(null)} />
       <PublicFooter />
     </>
   )
