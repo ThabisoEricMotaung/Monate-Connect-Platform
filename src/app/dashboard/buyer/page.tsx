@@ -283,9 +283,12 @@ export default function BuyerHomePage() {
                         <p className="px-1 py-2 text-xs text-muted">No RFQs in this stage</p>
                       )}
                       {rfqsInStage.length > 3 && (
-                        <p className="px-1 pt-1 text-xs font-semibold text-muted">
-                          + {rfqsInStage.length - 3} more
-                        </p>
+                        <Link
+                          href="/dashboard/buyer/rfqs"
+                          className="block px-1 pt-1 text-xs font-semibold text-accent transition hover:text-accent-strong"
+                        >
+                          + {rfqsInStage.length - 3} more &rarr;
+                        </Link>
                       )}
                     </div>
                   </div>

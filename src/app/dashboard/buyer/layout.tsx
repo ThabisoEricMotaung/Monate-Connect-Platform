@@ -105,7 +105,7 @@ const BASE_NAVIGATION: NavGroup[] = [
     label: "Procurement",
     items: [
       { name: "Create RFQ", href: "/dashboard/buyer/rfqs/new", icon: IconPlus },
-      { name: "My RFQs", href: "/dashboard/buyer/rfqs", icon: IconFileText },
+      { name: "RFQs", href: "/dashboard/buyer/rfqs", icon: IconFileText },
       { name: "Quotes received", href: "/dashboard/buyer/quotes", icon: IconMessageCircle, iconColorClass: "text-sky-600" },
       { name: "Inbox", href: "/dashboard/messages", icon: IconMessageCircle },
       { name: "Purchase orders", href: "/dashboard/buyer/purchase-orders", icon: IconShoppingCart },
