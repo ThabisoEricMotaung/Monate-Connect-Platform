@@ -2248,6 +2248,22 @@ function BankingTab({
               <strong>Important:</strong> Submitting incorrect banking details may delay payment. Ensure details exactly match your bank-stamped confirmation letter.{hasExisting && " Editing and resubmitting will reset your verification status."}
             </p>
           </div>
+          <details open={!hasExisting} className="group rounded-md border border-panel bg-surface px-3 py-2">
+            <summary className="cursor-pointer select-none text-xs font-semibold text-accent transition hover:text-accent-strong">
+              Not sure how to get a bank confirmation letter?
+            </summary>
+            <div className="mt-2 text-xs leading-relaxed text-secondary">
+              <p>
+                Ask your bank for an official confirmation-of-banking-details letter. Most South African banks provide
+                this instantly through internet banking, or at a branch. It should be dated within the last 3 months
+                and show the same account holder, bank, and account number you entered above.
+              </p>
+              <p className="mt-2">
+                Once you have it, upload it under the <strong>Documents</strong> tab as your &ldquo;Bank Letter&rdquo; -
+                these fields and that upload are checked separately, so both need to match.
+              </p>
+            </div>
+          </details>
           <div className="flex gap-3 pt-2">
             <button type="submit" disabled={saving} className="rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:opacity-50">
               {saving ? "Saving..." : "Save banking details"}
