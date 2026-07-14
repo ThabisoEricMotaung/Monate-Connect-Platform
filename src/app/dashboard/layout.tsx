@@ -336,6 +336,8 @@ export default function DashboardLayout({
   const [phoneGraceExpiresAt, setPhoneGraceExpiresAt] = useState<string | null>(null)
   const canViewAdminNavigation = role?.trim().toLowerCase() === "admin"
   const homeHref = roleHomeHref(role)
+  const canCreateRfq = hasAdminOrBuyerAccess(role ? { id: "", role } : null)
+  const newRfqHref = canViewAdminNavigation ? "/dashboard/admin/rfqs/new" : "/dashboard/buyer/rfqs/new"
 
   function closeSidebar() {
     setSidebarOpen(false)
@@ -554,6 +556,16 @@ export default function DashboardLayout({
             </h2>
           </div>
         </Link>
+
+        {canCreateRfq && (
+          <Link
+            href={newRfqHref}
+            onClick={closeSidebar}
+            className="mb-5 inline-flex w-full justify-center rounded-md border border-[#1a3a2a] bg-[#1a3a2a] px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#244f39]"
+          >
+            New RFQ
+          </Link>
+        )}
 
         <nav className="flex-1 space-y-5">
           {canViewAdminNavigation
