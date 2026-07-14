@@ -165,7 +165,6 @@ export default function AdminRFQDetailPage() {
     return () => {
       cancelled = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id, router])
 
   function startEditing() {
@@ -504,7 +503,7 @@ export default function AdminRFQDetailPage() {
               <section className="rounded-md border border-panel bg-card p-5 shadow-panel">
                 <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">Draft review</p>
                 <p className="mt-2 text-sm text-secondary">
-                  Publish this RFQ to make it visible to suppliers, or discard it if it's not a fit.
+                  Publish this RFQ to make it visible to suppliers, or discard it if it&apos;s not a fit.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
