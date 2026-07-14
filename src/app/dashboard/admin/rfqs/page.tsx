@@ -344,12 +344,23 @@ export default function AdminRfqsPage() {
               Manage active and draft requests for quotation across the platform.
             </p>
           </div>
-          <Link
-            href="/dashboard/admin/rfqs/new"
-            className="inline-flex w-fit rounded-md border border-accent bg-accent px-4 py-2 text-sm font-bold text-button shadow-sm transition hover:bg-accent-strong"
-          >
-            Create new RFQ &rarr;
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href="/api/admin/weekly-digest-preview"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-fit rounded-md border border-panel bg-card px-4 py-2 text-sm font-semibold text-secondary shadow-sm transition hover:border-accent hover:text-accent"
+              title="Sends a live preview of the weekly supplier digest to your own email"
+            >
+              Preview weekly digest email
+            </a>
+            <Link
+              href="/dashboard/admin/rfqs/new"
+              className="inline-flex w-fit rounded-md border border-accent bg-accent px-4 py-2 text-sm font-bold text-button shadow-sm transition hover:bg-accent-strong"
+            >
+              Create new RFQ &rarr;
+            </Link>
+          </div>
         </div>
       </div>
 
