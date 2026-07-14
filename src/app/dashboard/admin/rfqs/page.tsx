@@ -543,8 +543,8 @@ export default function AdminRfqsPage() {
         </section>
       ) : (
         <>
-          <div className="overflow-hidden rounded-md border border-panel shadow-panel">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-md border border-panel shadow-panel">
+            <table className="w-full min-w-[880px] text-sm">
               <thead>
                 <tr className="border-b border-panel bg-card text-left text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
                   <th className="w-10 px-5 py-3">
