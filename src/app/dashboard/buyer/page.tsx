@@ -66,6 +66,39 @@ function stageForRfq(rfq: RfqRow): PipelineStage {
   return "Open"
 }
 
+// Supabase/PostgREST caps unpaginated responses at a per-project default
+// (1000 rows on this project). rfqs now routinely exceeds that once the
+// eTenders sync has run (406 drafts alone), so plain queries silently
+// truncate — and since they're ordered newest-first, a truncated page can
+// end up all-drafts, making Open/Evaluation/Awarded look empty even when
+// they're not. This pages through with .range() until a page comes back
+// short.
+const FETCH_PAGE_SIZE = 1000
+
+async function readAllRows<T>(
+  buildQuery: (from: number, to: number) => PromiseLike<{ data: unknown; error: { message?: string } | null }>,
+): Promise<T[]> {
+  const allRows: T[] = []
+  let from = 0
+
+  while (true) {
+    const { data, error } = await buildQuery(from, from + FETCH_PAGE_SIZE - 1)
+
+    if (error) {
+      console.warn(error.message)
+      break
+    }
+
+    const rows = (data ?? []) as T[]
+    allRows.push(...rows)
+
+    if (rows.length < FETCH_PAGE_SIZE) break
+    from += FETCH_PAGE_SIZE
+  }
+
+  return allRows
+}
+
 function statusBadgeClass(status: string | null): string {
   const s = (status ?? "").toLowerCase()
   if (s === "open") return "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
@@ -91,25 +124,28 @@ export default function BuyerHomePage() {
     async function load() {
       if (!supabase) return
 
-      const [rfqResult, quoteResult, recentResult, pipelineResult] = await Promise.all([
-        supabase.from("rfqs").select("id, status"),
-        supabase.from("quotes").select("id, status"),
+      const [rfqs, quotes, recentResult, pipelineRows] = await Promise.all([
+        readAllRows<{ status: string | null }>((from, to) =>
+          supabase.from("rfqs").select("id, status").range(from, to),
+        ),
+        readAllRows<{ status: string | null }>((from, to) =>
+          supabase.from("quotes").select("id, status").range(from, to),
+        ),
         supabase
           .from("rfqs")
           .select("id, title, status, created_at")
           .order("created_at", { ascending: false })
           .limit(5),
-        supabase
-          .from("rfqs")
-          .select("id, title, status, category, province, region, budget, deadline, created_at")
-          .order("created_at", { ascending: false })
-          .limit(200),
+        readAllRows<RfqRow>((from, to) =>
+          supabase
+            .from("rfqs")
+            .select("id, title, status, category, province, region, budget, deadline, created_at")
+            .order("created_at", { ascending: false })
+            .range(from, to),
+        ),
       ])
 
       if (cancelled) return
-
-      const rfqs = (rfqResult.data ?? []) as { status: string | null }[]
-      const quotes = (quoteResult.data ?? []) as { status: string | null }[]
 
       setMetrics({
         activeRfqs: rfqs.filter((r) =>
@@ -118,7 +154,7 @@ export default function BuyerHomePage() {
         quotesReceived: quotes.length,
       })
 
-      setPipelineRfqs((pipelineResult.data ?? []) as RfqRow[])
+      setPipelineRfqs(pipelineRows)
 
       setRecentRfqs((recentResult.data ?? []) as RfqRow[])
       setLoading(false)

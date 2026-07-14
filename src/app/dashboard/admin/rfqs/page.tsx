@@ -19,10 +19,60 @@ type AdminRFQ = {
   source_name: string | null
 }
 
+type SupplierMatchProfile = {
+  industry: string | null
+  province: string | null
+  provinces: string[] | null
+}
+
 type ListFilter = "all" | "etenders-pending"
+type SortKey = "newest" | "matches"
 
 const UI_PAGE_SIZE = 50
 const FETCH_PAGE_SIZE = 1000
+
+// --- Supplier matching (mirrors the scoring used on the public
+// /opportunities page, so "strong match" means the same thing for admins
+// prioritizing review as it does for suppliers browsing tenders) --------------
+
+function normalize(value: string | null | undefined): string {
+  return (value ?? "").trim().toLowerCase()
+}
+
+function normalizeArray(value: string[] | null | undefined): string[] {
+  return Array.isArray(value) ? value.filter(Boolean) : []
+}
+
+function normalizedProvinceSet(
+  province: string | null | undefined,
+  provinces: string[] | null | undefined,
+): Set<string> {
+  const values = normalizeArray(provinces)
+  if (province) values.push(province)
+
+  return new Set(
+    values.map(normalize).map((value) =>
+      value === "south africa" || value === "all provinces" ? "national" : value,
+    ),
+  )
+}
+
+function countMatchingSuppliers(rfq: AdminRFQ, suppliers: SupplierMatchProfile[]): number {
+  const rfqIndustry = normalize(rfq.category)
+  const rfqProvinces = normalizedProvinceSet(rfq.province ?? rfq.region, null)
+
+  if (!rfqIndustry) return 0
+
+  return suppliers.filter((supplier) => {
+    const industryMatches = normalize(supplier.industry) === rfqIndustry
+    if (!industryMatches) return false
+
+    if (rfqProvinces.size === 0) return true
+
+    const supplierProvinces = normalizedProvinceSet(supplier.province, supplier.provinces)
+    return Array.from(supplierProvinces).some((province) => rfqProvinces.has(province))
+  }).length
+}
 
 function statusBadgeClass(status: string | null): string {
   const value = String(status ?? "").toLowerCase()
@@ -55,12 +105,14 @@ function formatDate(value: string | null | undefined): string {
 
 export default function AdminRfqsPage() {
   const [rfqs, setRfqs] = useState<AdminRFQ[]>([])
+  const [suppliers, setSuppliers] = useState<SupplierMatchProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [filter, setFilter] = useState<ListFilter>("all")
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [provinceFilter, setProvinceFilter] = useState("all")
+  const [sortBy, setSortBy] = useState<SortKey>("newest")
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [page, setPage] = useState(1)
   const [bulkBusy, setBulkBusy] = useState(false)
@@ -100,6 +152,33 @@ export default function AdminRfqsPage() {
     setLoading(false)
   }
 
+  async function loadSuppliers() {
+    if (!supabase) return
+
+    const allRows: SupplierMatchProfile[] = []
+    let from = 0
+
+    while (true) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("industry, province, provinces")
+        .eq("role", "supplier")
+        .range(from, from + FETCH_PAGE_SIZE - 1)
+
+      if (error) {
+        console.warn("Supplier match fetch failed:", error.message)
+        break
+      }
+
+      const rows = (data ?? []) as SupplierMatchProfile[]
+      allRows.push(...rows)
+      if (rows.length < FETCH_PAGE_SIZE) break
+      from += FETCH_PAGE_SIZE
+    }
+
+    setSuppliers(allRows)
+  }
+
   useEffect(() => {
     if (!supabase) {
       setErrorMessage("Supabase is not configured.")
@@ -108,8 +187,17 @@ export default function AdminRfqsPage() {
     }
 
     loadRFQs()
+    loadSuppliers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const matchCounts = useMemo(() => {
+    const counts = new Map<number, number>()
+    for (const rfq of rfqs) {
+      counts.set(rfq.id, countMatchingSuppliers(rfq, suppliers))
+    }
+    return counts
+  }, [rfqs, suppliers])
 
   const activeCount = useMemo(
     () =>
@@ -146,13 +234,19 @@ export default function AdminRfqsPage() {
   const filteredRfqs = useMemo(() => {
     const term = searchTerm.trim().toLowerCase()
 
-    return baseList.filter((rfq) => {
+    const matched = baseList.filter((rfq) => {
       if (categoryFilter !== "all" && rfq.category?.trim() !== categoryFilter) return false
       if (provinceFilter !== "all" && (rfq.province ?? rfq.region)?.trim() !== provinceFilter) return false
       if (term && !(rfq.title ?? "").toLowerCase().includes(term)) return false
       return true
     })
-  }, [baseList, categoryFilter, provinceFilter, searchTerm])
+
+    if (sortBy === "matches") {
+      return [...matched].sort((a, b) => (matchCounts.get(b.id) ?? 0) - (matchCounts.get(a.id) ?? 0))
+    }
+
+    return matched
+  }, [baseList, categoryFilter, provinceFilter, searchTerm, sortBy, matchCounts])
 
   const totalPages = Math.max(1, Math.ceil(filteredRfqs.length / UI_PAGE_SIZE))
   const pagedRfqs = filteredRfqs.slice((page - 1) * UI_PAGE_SIZE, page * UI_PAGE_SIZE)
@@ -333,6 +427,14 @@ export default function AdminRfqsPage() {
               </option>
             ))}
           </select>
+          <select
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value as SortKey)}
+            className="w-full rounded-md border border-panel bg-page px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none sm:w-auto"
+          >
+            <option value="newest">Newest first</option>
+            <option value="matches">Most matching suppliers</option>
+          </select>
           {(searchTerm || categoryFilter !== "all" || provinceFilter !== "all") && (
             <button
               type="button"
@@ -445,6 +547,9 @@ export default function AdminRfqsPage() {
                   <th className="px-5 py-3">Title</th>
                   <th className="hidden px-5 py-3 md:table-cell">Category</th>
                   <th className="hidden px-5 py-3 lg:table-cell">Budget</th>
+                  <th className="hidden px-5 py-3 lg:table-cell" title="Suppliers on the platform whose industry and province match this RFQ">
+                    Matches
+                  </th>
                   <th className="px-5 py-3">Status</th>
                   <th className="hidden px-5 py-3 sm:table-cell">Deadline</th>
                   <th className="hidden px-5 py-3 xl:table-cell">Created</th>
@@ -490,6 +595,25 @@ export default function AdminRfqsPage() {
                     </td>
                     <td className="hidden px-5 py-4 font-semibold text-heading lg:table-cell">
                       {formatRand(rfq.budget)}
+                    </td>
+                    <td className="hidden px-5 py-4 lg:table-cell">
+                      {(() => {
+                        const count = matchCounts.get(rfq.id) ?? 0
+                        if (count === 0) {
+                          return <span className="text-xs text-muted">No matches</span>
+                        }
+                        return (
+                          <span
+                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.68rem] font-semibold ${
+                              count >= 5
+                                ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-700"
+                                : "border-sky-500/25 bg-sky-500/10 text-sky-700"
+                            }`}
+                          >
+                            {count} supplier{count === 1 ? "" : "s"}
+                          </span>
+                        )
+                      })()}
                     </td>
                     <td className="px-5 py-4">
                       <span
