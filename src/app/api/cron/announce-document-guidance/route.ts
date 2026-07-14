@@ -100,6 +100,7 @@ export async function GET(request: Request) {
         .select("id, email, first_name, full_name, preferred_name, business_name")
         .eq("role", "supplier")
         .not("email", "is", null)
+        .not("email", "ilike", "%@deleted.local")
         .range(from, from + FETCH_PAGE_SIZE - 1)
 
       if (error) {

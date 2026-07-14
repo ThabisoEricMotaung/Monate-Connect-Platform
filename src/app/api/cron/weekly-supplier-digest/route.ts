@@ -99,6 +99,7 @@ export async function GET(request: Request) {
         )
         .eq("role", "supplier")
         .not("email", "is", null)
+        .not("email", "ilike", "%@deleted.local")
         .is("weekly_digest_unsubscribed_at", null)
         .range(from, from + FETCH_PAGE_SIZE - 1)
 

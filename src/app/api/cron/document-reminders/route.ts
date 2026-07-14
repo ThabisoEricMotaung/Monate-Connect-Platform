@@ -240,6 +240,7 @@ export async function GET(request: Request) {
     )
     .eq("role", "supplier")
     .not("email", "is", null)
+    .not("email", "ilike", "%@deleted.local")
     .lte("created_at", signupCutoff)
     .order("created_at", { ascending: true })
     .limit(MAX_PROFILES_PER_RUN)
