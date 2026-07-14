@@ -117,6 +117,7 @@ type DocumentUploadOption = {
   label: string
   storageType: string
   legacyField?: DocumentField
+  hint?: { text: string; linkLabel?: string; linkUrl?: string }
 }
 
 // --- Constants ---
@@ -1694,16 +1695,105 @@ function VerificationTab({
 // --- TAB 3: Documents ---
 
 const DOCUMENT_UPLOAD_OPTIONS: DocumentUploadOption[] = [
-  { value: "cipc", label: supplierDocumentLabels.cipc, storageType: supplierDocumentStorageFolders.cipc, legacyField: "company_registration_url" },
-  { value: "tax_clearance", label: supplierDocumentLabels.tax_clearance, storageType: supplierDocumentStorageFolders.tax_clearance, legacyField: "tax_document_url" },
-  { value: "vat", label: supplierDocumentLabels.vat, storageType: supplierDocumentStorageFolders.vat },
-  { value: "bbbee", label: supplierDocumentLabels.bbbee, storageType: supplierDocumentStorageFolders.bbbee, legacyField: "bbbee_document_url" },
-  { value: "csd", label: supplierDocumentLabels.csd, storageType: supplierDocumentStorageFolders.csd, legacyField: "csd_document_url" },
-  { value: "bank_letter", label: supplierDocumentLabels.bank_letter, storageType: supplierDocumentStorageFolders.bank_letter },
-  { value: "uif", label: supplierDocumentLabels.uif, storageType: supplierDocumentStorageFolders.uif },
-  { value: "coid", label: supplierDocumentLabels.coid, storageType: supplierDocumentStorageFolders.coid },
-  { value: "company_profile", label: supplierDocumentLabels.company_profile, storageType: supplierDocumentStorageFolders.company_profile, legacyField: "capability_statement_url" },
-  { value: "supporting_document", label: supplierDocumentLabels.supporting_document, storageType: supplierDocumentStorageFolders.supporting_document },
+  {
+    value: "cipc",
+    label: supplierDocumentLabels.cipc,
+    storageType: supplierDocumentStorageFolders.cipc,
+    legacyField: "company_registration_url",
+    hint: {
+      text: "Your CIPC Certificate of Compliance (or Disclosure Certificate) confirms your company is registered and up to date with its annual return. Download it from the CIPC e-Services portal using your company registration number.",
+      linkLabel: "Open CIPC e-Services",
+      linkUrl: "https://eservices.cipc.co.za",
+    },
+  },
+  {
+    value: "tax_clearance",
+    label: supplierDocumentLabels.tax_clearance,
+    storageType: supplierDocumentStorageFolders.tax_clearance,
+    legacyField: "tax_document_url",
+    hint: {
+      text: "This is your SARS Tax Compliance Status (TCS) PIN — the modern replacement for the old Tax Clearance Certificate. Log into SARS eFiling, open the 'Tax Compliance Status' tab, activate the service if you haven't already, then request a PIN and choose 'Tender' as the reason. SARS issues a 10-digit PIN plus a PDF you can upload here.",
+      linkLabel: "Open SARS eFiling",
+      linkUrl: "https://www.sarsefiling.co.za",
+    },
+  },
+  {
+    value: "vat",
+    label: supplierDocumentLabels.vat,
+    storageType: supplierDocumentStorageFolders.vat,
+    hint: {
+      text: "Your VAT registration certificate (or most recent VAT notice) is available from SARS eFiling under your tax registration details. If your business isn't VAT registered yet, you can skip this until your turnover crosses the VAT threshold.",
+      linkLabel: "Open SARS eFiling",
+      linkUrl: "https://www.sarsefiling.co.za",
+    },
+  },
+  {
+    value: "bbbee",
+    label: supplierDocumentLabels.bbbee,
+    storageType: supplierDocumentStorageFolders.bbbee,
+    legacyField: "bbbee_document_url",
+    hint: {
+      text: "Get your BBBEE certificate from an accredited verification agency. If your annual turnover is under R10 million (Exempted Micro Enterprise), you can use a sworn affidavit instead — a free template is available from the dtic.",
+      linkLabel: "Visit the dtic",
+      linkUrl: "https://www.thedtic.gov.za",
+    },
+  },
+  {
+    value: "csd",
+    label: supplierDocumentLabels.csd,
+    storageType: supplierDocumentStorageFolders.csd,
+    legacyField: "csd_document_url",
+    hint: {
+      text: "Register on the Central Supplier Database using your CIPC registration number — CSD automatically cross-checks your details against CIPC, SARS, and Home Affairs. Once approved, download your CSD report from your CSD profile.",
+      linkLabel: "Open the CSD portal",
+      linkUrl: "https://secure.csd.gov.za",
+    },
+  },
+  {
+    value: "bank_letter",
+    label: supplierDocumentLabels.bank_letter,
+    storageType: supplierDocumentStorageFolders.bank_letter,
+    hint: {
+      text: "Ask your bank for an official confirmation-of-banking-details letter. Most South African banks provide this instantly through internet banking, or at a branch. It should be dated within the last 3 months.",
+    },
+  },
+  {
+    value: "uif",
+    label: supplierDocumentLabels.uif,
+    storageType: supplierDocumentStorageFolders.uif,
+    hint: {
+      text: "UIF registration is usually handled together with PAYE and COID through the Department of Employment and Labour's BizPortal, or directly via uFiling. If you already employ staff, this should be on file from when you registered as an employer.",
+      linkLabel: "Open BizPortal",
+      linkUrl: "https://www.bizportal.gov.za",
+    },
+  },
+  {
+    value: "coid",
+    label: supplierDocumentLabels.coid,
+    storageType: supplierDocumentStorageFolders.coid,
+    hint: {
+      text: "Your COID Letter of Good Standing is issued by the Compensation Fund once your annual assessment is paid, via the CF Filing system. First-time registrants can also start the process through BizPortal. It's valid for 12 months from issue.",
+      linkLabel: "Open CF Filing",
+      linkUrl: "https://cfonline.labour.gov.za",
+    },
+  },
+  {
+    value: "company_profile",
+    label: supplierDocumentLabels.company_profile,
+    storageType: supplierDocumentStorageFolders.company_profile,
+    legacyField: "capability_statement_url",
+    hint: {
+      text: "This is a short document you create yourself — a one-to-two-page summary of your business, services, and experience. No external portal needed.",
+    },
+  },
+  {
+    value: "supporting_document",
+    label: supplierDocumentLabels.supporting_document,
+    storageType: supplierDocumentStorageFolders.supporting_document,
+    hint: {
+      text: "Use this for anything else that supports your application — a reference letter, project portfolio, or other credential a buyer has asked for.",
+    },
+  },
 ]
 
 async function createSupplierDocumentUpload({
@@ -1915,6 +2005,26 @@ function DocumentsTab({
             ))}
           </select>
           {selectedOption.legacyField && !docUrls[selectedOption.legacyField] && <SmartScoreNudge />}
+          {selectedOption.hint && (
+            <details className="group mt-2 rounded-md border border-panel bg-surface px-3 py-2">
+              <summary className="cursor-pointer select-none text-xs font-semibold text-accent transition hover:text-accent-strong">
+                Not sure how to get this?
+              </summary>
+              <div className="mt-2 text-xs leading-relaxed text-secondary">
+                <p>{selectedOption.hint.text}</p>
+                {selectedOption.hint.linkUrl && (
+                  <a
+                    href={selectedOption.hint.linkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex font-semibold text-accent transition hover:text-accent-strong"
+                  >
+                    {selectedOption.hint.linkLabel ?? "Learn more"} &rarr;
+                  </a>
+                )}
+              </div>
+            </details>
+          )}
         </div>
         <UploadZone id="new-doc-upload" uploading={uploading} onFile={chooseDocumentFile} />
         {selectedFile && (
