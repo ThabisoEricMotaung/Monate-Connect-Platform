@@ -91,6 +91,37 @@ const emptyMetrics: ShellMetrics = {
   unreadMessages: 0,
 }
 
+// Supabase/PostgREST caps unpaginated responses (1000 rows by default on
+// this project). rfqs now routinely exceeds that once the eTenders sync
+// has run a few times, so a plain .select() would silently undercount
+// these sidebar badges. This pages through with .range() until a page
+// comes back short.
+const PAGE_SIZE = 1000
+
+async function readAllRows<T>(
+  buildQuery: (from: number, to: number) => PromiseLike<{ data: unknown; error: { message?: string } | null }>,
+): Promise<T[]> {
+  const allRows: T[] = []
+  let from = 0
+
+  while (true) {
+    const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1)
+
+    if (error) {
+      console.warn(error.message)
+      break
+    }
+
+    const rows = (data ?? []) as T[]
+    allRows.push(...rows)
+
+    if (rows.length < PAGE_SIZE) break
+    from += PAGE_SIZE
+  }
+
+  return allRows
+}
+
 function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || (href !== "/dashboard/admin" && pathname.startsWith(href))
 }
@@ -217,17 +248,18 @@ export default function AdminDashboardLayout({
     async function loadMetrics() {
       if (!supabase || !authorized || !profile?.id) return
 
-      const [rfqResult, quoteResult, savedResult, inboxCounts] = await Promise.all([
-        supabase.from("rfqs").select("id, status").eq("is_demo", false),
-        supabase.from("quotes").select("id, status").eq("is_demo", false),
+      const [rfqs, quotes, savedResult, inboxCounts] = await Promise.all([
+        readAllRows<{ status: string | null }>((from, to) =>
+          supabase.from("rfqs").select("id, status").eq("is_demo", false).range(from, to),
+        ),
+        readAllRows<{ status: string | null }>((from, to) =>
+          supabase.from("quotes").select("id, status").eq("is_demo", false).range(from, to),
+        ),
         supabase.from("saved_suppliers").select("id").eq("user_id", profile.id),
         getInboxUnreadCounts(),
       ])
 
       if (cancelled) return
-
-      const rfqs = (rfqResult.data ?? []) as { status: string | null }[]
-      const quotes = (quoteResult.data ?? []) as { status: string | null }[]
       setMetrics({
         activeRfqs: rfqs.filter((rfq) =>
           ["open", "evaluation"].includes(String(rfq.status ?? "").toLowerCase()),

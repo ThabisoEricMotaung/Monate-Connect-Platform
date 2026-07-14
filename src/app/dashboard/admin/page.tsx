@@ -221,6 +221,36 @@ async function readRows<T>(query: PromiseLike<{ data: unknown; error: { message?
   return (data ?? []) as T[]
 }
 
+// Supabase/PostgREST caps unpaginated responses at a per-project default
+// (200 rows on this project). Tables like rfqs now routinely exceed that
+// (406 eTenders drafts alone), so a plain .select() silently truncates.
+// This pages through with .range() until a page comes back short.
+const PAGE_SIZE = 1000
+
+async function readAllRows<T>(
+  buildQuery: (from: number, to: number) => PromiseLike<{ data: unknown; error: { message?: string } | null }>,
+): Promise<T[]> {
+  const allRows: T[] = []
+  let from = 0
+
+  while (true) {
+    const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1)
+
+    if (error) {
+      console.warn(error.message)
+      break
+    }
+
+    const rows = (data ?? []) as T[]
+    allRows.push(...rows)
+
+    if (rows.length < PAGE_SIZE) break
+    from += PAGE_SIZE
+  }
+
+  return allRows
+}
+
 export default function AdminOverviewPage() {
   const router = useRouter()
   const [dashboardData, setDashboardData] = useState<DashboardData>(emptyData)
@@ -251,40 +281,45 @@ export default function AdminOverviewPage() {
           .eq("id", profile.id)
           .maybeSingle()
           .then((result) => (result.error ? null : (result.data as BuyerProfile | null))),
-        readRows<RfqRow>(
+        readAllRows<RfqRow>((from, to) =>
           supabase
             .from("rfqs")
             .select("id, title, category, province, region, budget, deadline, status, created_at")
             .eq("is_demo", false)
-            .order("created_at", { ascending: false }),
+            .order("created_at", { ascending: false })
+            .range(from, to),
         ),
-        readRows<QuoteRow>(
+        readAllRows<QuoteRow>((from, to) =>
           supabase
             .from("quotes")
             .select("id, rfq_id, supplier_id, supplier_name, amount, status, created_at")
             .eq("is_demo", false)
-            .order("created_at", { ascending: false }),
+            .order("created_at", { ascending: false })
+            .range(from, to),
         ),
-        readRows<ContractRow>(
+        readAllRows<ContractRow>((from, to) =>
           supabase
             .from("contracts")
             .select("id, supplier_id, supplier_name, contract_value, end_date, status, created_at")
             .eq("is_demo", false)
-            .order("created_at", { ascending: false }),
+            .order("created_at", { ascending: false })
+            .range(from, to),
         ),
-        readRows<PurchaseOrderRow>(
+        readAllRows<PurchaseOrderRow>((from, to) =>
           supabase
             .from("purchase_orders")
             .select("id, rfq_id, quote_id, supplier_id, supplier_name, amount, title, status, generated_at")
             .eq("is_demo", false)
-            .order("generated_at", { ascending: false }),
+            .order("generated_at", { ascending: false })
+            .range(from, to),
         ),
-        readRows<InvoiceRow>(
+        readAllRows<InvoiceRow>((from, to) =>
           supabase
             .from("invoices")
             .select("id, supplier_id, amount, total_amount, status, created_at")
             .eq("is_demo", false)
-            .order("created_at", { ascending: false }),
+            .order("created_at", { ascending: false })
+            .range(from, to),
         ),
       ])
 
