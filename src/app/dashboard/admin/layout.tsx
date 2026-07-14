@@ -68,6 +68,7 @@ type NavItem = {
   icon: TablerIcon
   badge?: number
   badgeTone?: BadgeTone
+  iconColorClass?: string
 }
 
 type NavGroup = {
@@ -125,7 +126,7 @@ function NavLink({
       <span className="flex min-w-0 flex-1 items-center gap-2">
         <IconComponent
           aria-hidden="true"
-          className={`h-5 w-5 shrink-0 ${active ? "text-[#1a3a2a]" : "text-[#c8a060]"}`}
+          className={`h-5 w-5 shrink-0 ${active ? "text-[#1a3a2a]" : item.iconColorClass ?? "text-[#c8a060]"}`}
           stroke={1.8}
         />
         <span className="min-w-0 flex-1 whitespace-normal break-words leading-tight">{item.name}</span>
@@ -283,6 +284,7 @@ export default function AdminDashboardLayout({
                   name: "Suggestions",
                   href: "/dashboard/admin/suggestions",
                   icon: IconMessageCircle,
+                  iconColorClass: "text-violet-600",
                 },
                 {
                   name: "Session monitor",
@@ -309,6 +311,7 @@ export default function AdminDashboardLayout({
             icon: IconMessageCircle,
             badge: metrics.unreviewedQuotes,
             badgeTone: "danger",
+            iconColorClass: "text-sky-600",
           },
           {
             name: "Inbox",

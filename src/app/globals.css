@@ -1947,23 +1947,11 @@ html[data-low-data="on"] .news-ticker__track {
   }
 }
 
+/* Logo mark renders standalone — no boxed/background container. */
 .logo-mark {
-  border: 1px solid rgba(var(--accent-rgb), 0.58);
-  background:
-    linear-gradient(145deg, color-mix(in srgb, var(--accent) 74%, #F8F6EF) 0%, var(--accent) 42%, var(--accent-strong) 100%);
-  color: var(--button-text);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
-    0 8px 20px var(--card-shadow);
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.24);
-}
-
-.theme-dark .logo-mark {
-  border-color: rgba(var(--accent-rgb), 0.72);
-  background:
-    linear-gradient(145deg, var(--accent-strong) 0%, var(--accent) 52%, #6F879C 100%);
-  color: #07130D;
+  border: none;
+  background: none;
+  box-shadow: none;
   text-shadow: none;
 }
 

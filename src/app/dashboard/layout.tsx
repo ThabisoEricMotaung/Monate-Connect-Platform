@@ -186,11 +186,15 @@ const navigationIcons: Record<string, ReactNode> = {
 }
 // Inactive-state icon color overrides for nav items that otherwise share an
 // icon (Quotes / Inbox / Have Your Say all use IconMessageCircle) so they're
-// visually distinguishable at a glance. Keyed by href; anything not listed
-// keeps the default gold accent color.
+// visually distinguishable at a glance. Keyed by item name (not href) so this
+// applies consistently whether the item is rendered via the supplier-facing
+// navigation (e.g. "/dashboard/quotes") or the admin mirror navigation (e.g.
+// "/dashboard/admin/quotes") — anything not listed keeps the default gold
+// accent color.
 const navigationIconColors: Record<string, string> = {
-  "/dashboard/quotes": "text-sky-600",
-  "/dashboard/suggestions": "text-violet-600",
+  "Quotes received": "text-sky-600",
+  Suggestions: "text-violet-600",
+  "Have Your Say": "text-violet-600",
 }
 
 // Mirrors the real admin sidebar (src/app/dashboard/admin/layout.tsx) so that
@@ -583,7 +587,7 @@ export default function DashboardLayout({
                               <Icon
                                 aria-hidden="true"
                                 className={`h-4 w-4 shrink-0 ${
-                                  active ? "text-[#1a3a2a]" : navigationIconColors[item.href] ?? "text-[#c8a060]"
+                                  active ? "text-[#1a3a2a]" : navigationIconColors[item.name] ?? "text-[#c8a060]"
                                 }`}
                                 stroke={1.8}
                               />
@@ -636,7 +640,7 @@ export default function DashboardLayout({
                               {itemIcon && (
                                 <span
                                   className={`shrink-0 ${
-                                    active ? "text-[#1a3a2a]" : navigationIconColors[item.href] ?? "text-[#c8a060]"
+                                    active ? "text-[#1a3a2a]" : navigationIconColors[item.name] ?? "text-[#c8a060]"
                                   }`}
                                 >
                                   {itemIcon}

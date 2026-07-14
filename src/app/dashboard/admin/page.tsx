@@ -580,7 +580,7 @@ export default function AdminOverviewPage() {
             <div className="mb-5 flex flex-col items-start gap-3 border-b border-panel pb-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] text-secondary">
-                  Procurement pipeline
+                  RFQ stages
                 </p>
                 <h2 className="mt-2 text-xl font-semibold text-heading">Procurement pipeline</h2>
               </div>

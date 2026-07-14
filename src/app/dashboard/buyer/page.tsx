@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { formatRand } from "@/lib/format"
 import { supabase } from "@/lib/supabase"
 import ProvinceMap from "../intelligence/regions/province-map"
 
@@ -9,12 +10,55 @@ type RfqRow = {
   id: string
   title: string | null
   status: string | null
+  category: string | null
+  province: string | null
+  region: string | null
+  budget: string | number | null
+  deadline: string | null
   created_at: string | null
 }
 
 type Metrics = {
   activeRfqs: number
   quotesReceived: number
+}
+
+type PipelineStage = "Draft" | "Open" | "Evaluation" | "Awarded" | "Closed"
+
+const stageOrder: PipelineStage[] = ["Draft", "Open", "Evaluation", "Awarded", "Closed"]
+
+const stageDescriptions: Record<PipelineStage, string> = {
+  Draft: "Saved but not yet published",
+  Open: "Published, accepting quotes",
+  Evaluation: "Deadline passed, under review",
+  Awarded: "Selected supplier, PO issued",
+  Closed: "Completed or cancelled",
+}
+
+function normalizeStatus(status: string | null): string {
+  return String(status ?? "").trim().toLowerCase()
+}
+
+function daysUntil(value: string | null): number | null {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+}
+
+function stageForRfq(rfq: RfqRow): PipelineStage {
+  const status = normalizeStatus(rfq.status)
+
+  if (["draft"].includes(status)) return "Draft"
+  if (["open", "published", "active"].includes(status)) return "Open"
+  if (["evaluation", "under review", "review"].includes(status)) return "Evaluation"
+  if (["awarded", "po issued"].includes(status)) return "Awarded"
+  if (["closed", "completed", "cancelled", "canceled"].includes(status)) return "Closed"
+
+  const remaining = daysUntil(rfq.deadline)
+  if (remaining != null && remaining < 0) return "Evaluation"
+
+  return "Open"
 }
 
 function statusBadgeClass(status: string | null): string {
@@ -29,6 +73,7 @@ function statusBadgeClass(status: string | null): string {
 export default function BuyerHomePage() {
   const [metrics, setMetrics] = useState<Metrics>({ activeRfqs: 0, quotesReceived: 0 })
   const [recentRfqs, setRecentRfqs] = useState<RfqRow[]>([])
+  const [pipelineRfqs, setPipelineRfqs] = useState<RfqRow[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -41,7 +86,7 @@ export default function BuyerHomePage() {
     async function load() {
       if (!supabase) return
 
-      const [rfqResult, quoteResult, recentResult] = await Promise.all([
+      const [rfqResult, quoteResult, recentResult, pipelineResult] = await Promise.all([
         supabase.from("rfqs").select("id, status"),
         supabase.from("quotes").select("id, status"),
         supabase
@@ -49,6 +94,11 @@ export default function BuyerHomePage() {
           .select("id, title, status, created_at")
           .order("created_at", { ascending: false })
           .limit(5),
+        supabase
+          .from("rfqs")
+          .select("id, title, status, category, province, region, budget, deadline, created_at")
+          .order("created_at", { ascending: false })
+          .limit(200),
       ])
 
       if (cancelled) return
@@ -62,6 +112,8 @@ export default function BuyerHomePage() {
         ).length,
         quotesReceived: quotes.length,
       })
+
+      setPipelineRfqs((pipelineResult.data ?? []) as RfqRow[])
 
       setRecentRfqs((recentResult.data ?? []) as RfqRow[])
       setLoading(false)
@@ -126,6 +178,82 @@ export default function BuyerHomePage() {
           </Link>
         </div>
       </div>
+
+      {/* Procurement pipeline */}
+      <section className="mb-8 overflow-hidden rounded-md border border-panel bg-card p-5 shadow-panel">
+        <div className="mb-5 flex flex-col items-start gap-3 border-b border-panel pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.24em] text-secondary">RFQ stages</p>
+            <h2 className="mt-2 text-xl font-semibold text-heading">Procurement pipeline</h2>
+          </div>
+          <Link href="/dashboard/buyer/rfqs" className="text-sm font-semibold text-accent transition hover:text-accent-strong">
+            View all
+          </Link>
+        </div>
+
+        {loading ? (
+          <p className="text-sm text-secondary">Loading&hellip;</p>
+        ) : (
+          <div className="pb-2 md:overflow-x-auto">
+            <div className="flex w-full flex-col gap-3 md:min-w-[1040px] md:flex-row">
+              {stageOrder.map((stage) => {
+                const rfqsInStage = pipelineRfqs.filter((rfq) => stageForRfq(rfq) === stage)
+                return (
+                  <div key={stage} className="w-full overflow-hidden rounded-md border border-panel bg-panel p-3 md:flex-1">
+                    <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-heading">{stage}</p>
+                        <p className="mt-1 break-words text-[0.68rem] leading-5 text-muted">
+                          {stageDescriptions[stage]}
+                        </p>
+                      </div>
+                      <span className="rounded-full border border-panel bg-card px-2 py-0.5 text-xs font-bold text-secondary">
+                        {rfqsInStage.length}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2">
+                      {rfqsInStage.slice(0, 3).map((rfq) => {
+                        const remaining = daysUntil(rfq.deadline)
+                        return (
+                          <Link
+                            key={rfq.id}
+                            href={`/dashboard/buyer/rfqs/${rfq.id}`}
+                            className="block overflow-hidden rounded-md border border-panel bg-card p-3 transition hover:border-accent/50"
+                          >
+                            <p className="break-words text-sm font-semibold leading-5 text-heading">
+                              {rfq.title ?? `RFQ-${rfq.id}`}
+                            </p>
+                            <p className="mt-2 break-words text-[0.68rem] text-secondary">
+                              {rfq.category ?? "No industry"} · {rfq.province ?? rfq.region ?? "No province"}
+                            </p>
+                            <p className="mt-2 break-words text-xs font-semibold text-heading">
+                              {formatRand(rfq.budget)}
+                            </p>
+                            {stage === "Open" && remaining != null && (
+                              <p className={`mt-1 text-[0.68rem] font-semibold ${remaining <= 3 ? "text-warning" : "text-muted"}`}>
+                                {remaining >= 0 ? `${remaining} days left` : "Deadline passed"}
+                              </p>
+                            )}
+                          </Link>
+                        )
+                      })}
+                      {rfqsInStage.length === 0 && (
+                        <p className="px-1 py-2 text-xs text-muted">No RFQs in this stage</p>
+                      )}
+                      {rfqsInStage.length > 3 && (
+                        <p className="px-1 pt-1 text-xs font-semibold text-muted">
+                          + {rfqsInStage.length - 3} more
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Recent RFQs */}
       <section>
