@@ -21,6 +21,9 @@ type AdminRFQ = {
 
 type ListFilter = "all" | "etenders-pending"
 
+const UI_PAGE_SIZE = 50
+const FETCH_PAGE_SIZE = 1000
+
 function statusBadgeClass(status: string | null): string {
   const value = String(status ?? "").toLowerCase()
   if (["open", "published", "active"].includes(value)) {
@@ -55,6 +58,47 @@ export default function AdminRfqsPage() {
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [filter, setFilter] = useState<ListFilter>("all")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState("all")
+  const [provinceFilter, setProvinceFilter] = useState("all")
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [page, setPage] = useState(1)
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkMessage, setBulkMessage] = useState<string | null>(null)
+
+  async function loadRFQs() {
+    if (!supabase) return
+
+    setLoading(true)
+    setErrorMessage(null)
+
+    const allRows: AdminRFQ[] = []
+    let from = 0
+
+    while (true) {
+      const { data, error } = await supabase
+        .from("rfqs")
+        .select(
+          "id, title, category, province, region, budget, deadline, status, created_at, is_external_opportunity, source_name",
+        )
+        .order("created_at", { ascending: false })
+        .range(from, from + FETCH_PAGE_SIZE - 1)
+
+      if (error) {
+        setErrorMessage(error.message)
+        setLoading(false)
+        return
+      }
+
+      const rows = (data ?? []) as AdminRFQ[]
+      allRows.push(...rows)
+      if (rows.length < FETCH_PAGE_SIZE) break
+      from += FETCH_PAGE_SIZE
+    }
+
+    setRfqs(allRows)
+    setLoading(false)
+  }
 
   useEffect(() => {
     if (!supabase) {
@@ -63,38 +107,8 @@ export default function AdminRfqsPage() {
       return
     }
 
-    let cancelled = false
-
-    async function loadRFQs() {
-      if (!supabase) return
-
-      setLoading(true)
-      setErrorMessage(null)
-
-      const { data, error } = await supabase
-        .from("rfqs")
-        .select(
-          "id, title, category, province, region, budget, deadline, status, created_at, is_external_opportunity, source_name",
-        )
-        .order("created_at", { ascending: false })
-
-      if (cancelled) return
-
-      if (error) {
-        setErrorMessage(error.message)
-        setLoading(false)
-        return
-      }
-
-      setRfqs((data ?? []) as AdminRFQ[])
-      setLoading(false)
-    }
-
     loadRFQs()
-
-    return () => {
-      cancelled = true
-    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const activeCount = useMemo(
@@ -113,7 +127,115 @@ export default function AdminRfqsPage() {
     [rfqs],
   )
 
-  const visibleRfqs = filter === "etenders-pending" ? etendersPending : rfqs
+  const baseList = filter === "etenders-pending" ? etendersPending : rfqs
+
+  const categoryOptions = useMemo(
+    () =>
+      Array.from(new Set(baseList.map((rfq) => rfq.category?.trim()).filter(Boolean) as string[])).sort(),
+    [baseList],
+  )
+
+  const provinceOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(baseList.map((rfq) => (rfq.province ?? rfq.region)?.trim()).filter(Boolean) as string[]),
+      ).sort(),
+    [baseList],
+  )
+
+  const filteredRfqs = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase()
+
+    return baseList.filter((rfq) => {
+      if (categoryFilter !== "all" && rfq.category?.trim() !== categoryFilter) return false
+      if (provinceFilter !== "all" && (rfq.province ?? rfq.region)?.trim() !== provinceFilter) return false
+      if (term && !(rfq.title ?? "").toLowerCase().includes(term)) return false
+      return true
+    })
+  }, [baseList, categoryFilter, provinceFilter, searchTerm])
+
+  const totalPages = Math.max(1, Math.ceil(filteredRfqs.length / UI_PAGE_SIZE))
+  const pagedRfqs = filteredRfqs.slice((page - 1) * UI_PAGE_SIZE, page * UI_PAGE_SIZE)
+
+  // Reset to page 1 and clear selection whenever the visible set changes shape,
+  // so bulk actions never silently apply to a stale selection.
+  useEffect(() => {
+    setPage(1)
+    setSelectedIds(new Set())
+  }, [filter, searchTerm, categoryFilter, provinceFilter])
+
+  const pageAllSelected = pagedRfqs.length > 0 && pagedRfqs.every((rfq) => selectedIds.has(rfq.id))
+
+  function toggleRow(id: number) {
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function togglePage() {
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      if (pageAllSelected) {
+        for (const rfq of pagedRfqs) next.delete(rfq.id)
+      } else {
+        for (const rfq of pagedRfqs) next.add(rfq.id)
+      }
+      return next
+    })
+  }
+
+  function selectAllMatching() {
+    setSelectedIds(new Set(filteredRfqs.map((rfq) => rfq.id)))
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
+  async function publishSelected() {
+    if (!supabase || selectedIds.size === 0) return
+    setBulkBusy(true)
+    setBulkMessage(null)
+
+    const ids = Array.from(selectedIds)
+    const { error } = await supabase.from("rfqs").update({ status: "open" }).in("id", ids)
+
+    setBulkBusy(false)
+    if (error) {
+      setBulkMessage(`Publish failed: ${error.message}`)
+      return
+    }
+
+    setBulkMessage(`Published ${ids.length} RFQ${ids.length === 1 ? "" : "s"}.`)
+    clearSelection()
+    await loadRFQs()
+  }
+
+  async function discardSelected() {
+    if (!supabase || selectedIds.size === 0) return
+    if (!window.confirm(`Discard ${selectedIds.size} draft${selectedIds.size === 1 ? "" : "s"}? This can't be undone.`)) {
+      return
+    }
+
+    setBulkBusy(true)
+    setBulkMessage(null)
+
+    const ids = Array.from(selectedIds)
+    const { error } = await supabase.from("rfqs").delete().in("id", ids)
+
+    setBulkBusy(false)
+    if (error) {
+      setBulkMessage(`Discard failed: ${error.message}`)
+      return
+    }
+
+    setBulkMessage(`Discarded ${ids.length} draft${ids.length === 1 ? "" : "s"}.`)
+    clearSelection()
+    await loadRFQs()
+  }
 
   return (
     <div>
@@ -178,15 +300,115 @@ export default function AdminRfqsPage() {
         </div>
       )}
 
+      {!loading && baseList.length > 0 && (
+        <div className="mb-4 flex flex-col gap-3 rounded-md border border-panel bg-card p-4 shadow-panel sm:flex-row sm:flex-wrap sm:items-center">
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search by title..."
+            className="w-full rounded-md border border-panel bg-page px-3 py-2 text-sm text-primary placeholder:text-muted focus:border-accent focus:outline-none sm:max-w-xs"
+          />
+          <select
+            value={categoryFilter}
+            onChange={(event) => setCategoryFilter(event.target.value)}
+            className="w-full rounded-md border border-panel bg-page px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none sm:w-auto"
+          >
+            <option value="all">All categories</option>
+            {categoryOptions.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+          <select
+            value={provinceFilter}
+            onChange={(event) => setProvinceFilter(event.target.value)}
+            className="w-full rounded-md border border-panel bg-page px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none sm:w-auto"
+          >
+            <option value="all">All provinces</option>
+            {provinceOptions.map((province) => (
+              <option key={province} value={province}>
+                {province}
+              </option>
+            ))}
+          </select>
+          {(searchTerm || categoryFilter !== "all" || provinceFilter !== "all") && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm("")
+                setCategoryFilter("all")
+                setProvinceFilter("all")
+              }}
+              className="text-xs font-semibold text-accent transition hover:text-accent-strong"
+            >
+              Clear filters
+            </button>
+          )}
+          <p className="text-xs text-muted sm:ml-auto">
+            {filteredRfqs.length} matching
+          </p>
+        </div>
+      )}
+
+      {selectedIds.size > 0 && (
+        <div className="sticky top-2 z-10 mb-4 flex flex-col gap-3 rounded-md border border-accent/40 bg-accent/10 p-4 shadow-panel sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-heading">
+            {selectedIds.size} selected
+            {selectedIds.size < filteredRfqs.length && (
+              <button
+                type="button"
+                onClick={selectAllMatching}
+                className="ml-2 text-xs font-semibold text-accent underline transition hover:text-accent-strong"
+              >
+                Select all {filteredRfqs.length} matching
+              </button>
+            )}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={bulkBusy}
+              onClick={publishSelected}
+              className="rounded-md border border-accent bg-accent px-4 py-2 text-xs font-bold text-button shadow-sm transition hover:bg-accent-strong disabled:opacity-60"
+            >
+              Publish selected
+            </button>
+            <button
+              type="button"
+              disabled={bulkBusy}
+              onClick={discardSelected}
+              className="rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-500/20 disabled:opacity-60"
+            >
+              Discard selected
+            </button>
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="text-xs font-semibold text-secondary transition hover:text-heading"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
+      {bulkMessage && (
+        <div className="mb-4 rounded-md border border-panel bg-card px-4 py-3 text-xs font-semibold text-secondary shadow-panel">
+          {bulkMessage}
+        </div>
+      )}
+
       {loading ? (
         <div className="rounded-md border border-panel bg-card p-8 text-center text-sm text-secondary shadow-panel">
           Loading&hellip;
         </div>
-      ) : visibleRfqs.length === 0 ? (
+      ) : filteredRfqs.length === 0 ? (
         <section className="rounded-md border border-panel bg-card p-10 text-center shadow-panel">
           <p className="text-sm font-semibold text-heading">
             {filter === "etenders-pending"
-              ? "No eTenders drafts waiting for review right now."
+              ? "No eTenders drafts match right now."
               : "No RFQs yet. Create the first RFQ to start receiving quotes from verified suppliers."}
           </p>
           {filter === "etenders-pending" ? (
@@ -207,76 +429,121 @@ export default function AdminRfqsPage() {
           )}
         </section>
       ) : (
-        <div className="overflow-hidden rounded-md border border-panel shadow-panel">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-panel bg-card text-left text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
-                <th className="px-5 py-3">Title</th>
-                <th className="hidden px-5 py-3 md:table-cell">Category</th>
-                <th className="hidden px-5 py-3 lg:table-cell">Budget</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="hidden px-5 py-3 sm:table-cell">Deadline</th>
-                <th className="hidden px-5 py-3 xl:table-cell">Created</th>
-                <th className="px-5 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-panel bg-card">
-              {visibleRfqs.map((rfq) => (
-                <tr key={rfq.id} className="transition hover:bg-surface">
-                  <td className="px-5 py-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="line-clamp-2 break-words font-semibold text-primary">
-                        {rfq.title ?? `RFQ-${rfq.id}`}
-                      </p>
-                      {rfq.is_external_opportunity && (
-                        <span
-                          className="inline-flex shrink-0 items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-2 py-0.5 text-[0.65rem] font-semibold text-sky-700"
-                          title={rfq.source_name ? `Sourced from ${rfq.source_name}` : "Externally sourced"}
-                        >
-                          {rfq.source_name ?? "External"}
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-1 break-words text-xs text-secondary md:hidden">
-                      {rfq.category ?? "No category"} / {rfq.province ?? rfq.region ?? "No province"}
-                    </p>
-                  </td>
-                  <td className="hidden px-5 py-4 text-secondary md:table-cell">
-                    <span className="line-clamp-2 break-words">
-                      {rfq.category ?? "No category"} / {rfq.province ?? rfq.region ?? "No province"}
-                    </span>
-                  </td>
-                  <td className="hidden px-5 py-4 font-semibold text-heading lg:table-cell">
-                    {formatRand(rfq.budget)}
-                  </td>
-                  <td className="px-5 py-4">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.68rem] font-semibold capitalize ${statusBadgeClass(
-                        rfq.status,
-                      )}`}
-                    >
-                      {rfq.status ?? "Draft"}
-                    </span>
-                  </td>
-                  <td className="hidden px-5 py-4 text-secondary sm:table-cell">
-                    {formatDate(rfq.deadline)}
-                  </td>
-                  <td className="hidden px-5 py-4 text-secondary xl:table-cell">
-                    {formatDate(rfq.created_at)}
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    <Link
-                      href={`/dashboard/admin/rfqs/${rfq.id}`}
-                      className="text-xs font-semibold text-accent transition hover:text-accent-strong"
-                    >
-                      View &rarr;
-                    </Link>
-                  </td>
+        <>
+          <div className="overflow-hidden rounded-md border border-panel shadow-panel">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-panel bg-card text-left text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+                  <th className="w-10 px-5 py-3">
+                    <input
+                      type="checkbox"
+                      checked={pageAllSelected}
+                      onChange={togglePage}
+                      aria-label="Select all on this page"
+                    />
+                  </th>
+                  <th className="px-5 py-3">Title</th>
+                  <th className="hidden px-5 py-3 md:table-cell">Category</th>
+                  <th className="hidden px-5 py-3 lg:table-cell">Budget</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="hidden px-5 py-3 sm:table-cell">Deadline</th>
+                  <th className="hidden px-5 py-3 xl:table-cell">Created</th>
+                  <th className="px-5 py-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-panel bg-card">
+                {pagedRfqs.map((rfq) => (
+                  <tr
+                    key={rfq.id}
+                    className={`transition hover:bg-surface ${selectedIds.has(rfq.id) ? "bg-accent/5" : ""}`}
+                  >
+                    <td className="px-5 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(rfq.id)}
+                        onChange={() => toggleRow(rfq.id)}
+                        aria-label={`Select ${rfq.title ?? `RFQ-${rfq.id}`}`}
+                      />
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="line-clamp-2 break-words font-semibold text-primary">
+                          {rfq.title ?? `RFQ-${rfq.id}`}
+                        </p>
+                        {rfq.is_external_opportunity && (
+                          <span
+                            className="inline-flex shrink-0 items-center rounded-full border border-sky-500/25 bg-sky-500/10 px-2 py-0.5 text-[0.65rem] font-semibold text-sky-700"
+                            title={rfq.source_name ? `Sourced from ${rfq.source_name}` : "Externally sourced"}
+                          >
+                            {rfq.source_name ?? "External"}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 break-words text-xs text-secondary md:hidden">
+                        {rfq.category ?? "No category"} / {rfq.province ?? rfq.region ?? "No province"}
+                      </p>
+                    </td>
+                    <td className="hidden px-5 py-4 text-secondary md:table-cell">
+                      <span className="line-clamp-2 break-words">
+                        {rfq.category ?? "No category"} / {rfq.province ?? rfq.region ?? "No province"}
+                      </span>
+                    </td>
+                    <td className="hidden px-5 py-4 font-semibold text-heading lg:table-cell">
+                      {formatRand(rfq.budget)}
+                    </td>
+                    <td className="px-5 py-4">
+                      <span
+                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.68rem] font-semibold capitalize ${statusBadgeClass(
+                          rfq.status,
+                        )}`}
+                      >
+                        {rfq.status ?? "Draft"}
+                      </span>
+                    </td>
+                    <td className="hidden px-5 py-4 text-secondary sm:table-cell">
+                      {formatDate(rfq.deadline)}
+                    </td>
+                    <td className="hidden px-5 py-4 text-secondary xl:table-cell">
+                      {formatDate(rfq.created_at)}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <Link
+                        href={`/dashboard/admin/rfqs/${rfq.id}`}
+                        className="text-xs font-semibold text-accent transition hover:text-accent-strong"
+                      >
+                        View &rarr;
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-between text-sm">
+              <button
+                type="button"
+                disabled={page === 1}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                className="rounded-md border border-panel bg-card px-3 py-2 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent disabled:opacity-40"
+              >
+                &larr; Previous
+              </button>
+              <p className="text-xs font-semibold text-secondary">
+                Page {page} of {totalPages}
+              </p>
+              <button
+                type="button"
+                disabled={page === totalPages}
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                className="rounded-md border border-panel bg-card px-3 py-2 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent disabled:opacity-40"
+              >
+                Next &rarr;
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

@@ -167,13 +167,18 @@ function stageForRfq(rfq: RfqRow): PipelineStage {
   const status = normalizeStatus(rfq.status)
 
   if (["draft"].includes(status)) return "Draft"
-  if (["open", "published", "active"].includes(status)) return "Open"
-  if (["evaluation", "under review", "review"].includes(status)) return "Evaluation"
   if (["awarded", "po issued"].includes(status)) return "Awarded"
   if (["closed", "completed", "cancelled", "canceled"].includes(status)) return "Closed"
+  if (["evaluation", "under review", "review"].includes(status)) return "Evaluation"
 
+  // Status alone isn't authoritative for "open" rows: nothing automatically
+  // moves an RFQ out of "open" once its closing date passes, so a deadline
+  // check here catches RFQs still marked open in the database that have
+  // genuinely stopped accepting quotes.
   const remaining = daysUntil(rfq.deadline)
   if (remaining != null && remaining < 0) return "Evaluation"
+
+  if (["open", "published", "active"].includes(status)) return "Open"
 
   return "Open"
 }
@@ -685,9 +690,12 @@ export default function AdminOverviewPage() {
                         )
                       })}
                       {rfqs.length > 3 && (
-                        <p className="px-1 pt-1 text-xs font-semibold text-muted">
-                          + {rfqs.length - 3} more
-                        </p>
+                        <Link
+                          href="/dashboard/admin/rfqs"
+                          className="block px-1 pt-1 text-xs font-semibold text-accent transition hover:text-accent-strong"
+                        >
+                          + {rfqs.length - 3} more &rarr;
+                        </Link>
                       )}
                     </div>
                   </div>
