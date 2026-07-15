@@ -164,6 +164,7 @@ export default function ContactPage() {
       .single()
     setSubmitting(false)
     if (insertError) { setError(insertError.message); return }
+    let emailFailed = false
     try {
       const emailResponse = await fetch("/api/contact", {
         method: "POST",
@@ -177,15 +178,21 @@ export default function ContactPage() {
         }),
       })
       if (!emailResponse.ok) {
+        emailFailed = true
         console.error("Pilot request saved, but confirmation email failed:", await emailResponse.text())
       }
     } catch (emailError) {
+      emailFailed = true
       console.error("Pilot request saved, but confirmation email failed:", emailError)
     }
     setForm(initialForm)
     setSelectedIntent("")
     try { sessionStorage.removeItem(STORAGE_KEY) } catch {}
-    setSuccess("Thank you. AiForm Procure will contact you soon.")
+    setSuccess(
+      emailFailed
+        ? "Thank you. Your request was received, but the confirmation email couldn't be sent — we'll still follow up."
+        : "Thank you. AiForm Procure will contact you soon."
+    )
   }
 
   const trustItems = [

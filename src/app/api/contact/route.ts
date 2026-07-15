@@ -189,23 +189,42 @@ export async function POST(request: Request) {
   const templateBody = template.body.replace(/\n\nAiForm Procure Team\s*$/, "")
 
   try {
-    await resend.emails.send({
+    // resend.emails.send() does NOT throw on API-level failures (invalid
+    // domain, unverified sender, rate limits, bad recipient, etc.) — it
+    // resolves normally with an `error` field. Previously that field was
+    // never checked, so a failed send still returned { ok: true } here and
+    // the client reported success even though nothing was ever delivered.
+    const { error: replyError } = await resend.emails.send({
       from: "AiForm Procure <noreply@aiformprocure.co.za>",
       to: email,
       subject: template.subject,
       text: `Hi ${name},\n\n${templateBody}\n\n${emailSignatureText()}`,
     })
 
-    await resend.emails.send({
+    if (replyError) {
+      console.error("Resend error (auto-reply):", replyError)
+      return NextResponse.json(
+        { ok: false, error: "Could not send the confirmation email. Please try again shortly." },
+        { status: 502 }
+      )
+    }
+
+    const { error: notifyError } = await resend.emails.send({
       from: "AiForm Procure <noreply@aiformprocure.co.za>",
       to: "aiformstudio@gmail.com",
       subject: `New pilot request: ${request_type} - ${organisation || name}`,
       text: `New contact form submission:\n\nName: ${name}\nOrganisation: ${organisation || "-"}\nEmail: ${email}\nRequest type: ${request_type}\n\nFull details are in the pilot_requests table in Supabase.`,
     })
 
+    if (notifyError) {
+      // The person's own confirmation already went out successfully — don't
+      // fail their request over the internal copy, but log it so it's visible.
+      console.error("Resend error (internal notification):", notifyError)
+    }
+
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error("Resend error:", err)
-    return NextResponse.json({ ok: false }, { status: 500 })
+    return NextResponse.json({ ok: false, error: "Something went wrong sending the email." }, { status: 500 })
   }
 }
