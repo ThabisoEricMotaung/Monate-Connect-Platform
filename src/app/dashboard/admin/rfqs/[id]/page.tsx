@@ -3,8 +3,9 @@
 import Link from "next/link"
 import SignedDocumentLink from "@/components/SignedDocumentLink"
 import { useParams, usePathname, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { requireAdminOrBuyer } from "@/lib/auth"
+import { qualityTierBadgeClass, qualityTierDotClass, qualityTierLabel, scoreRFQDraft } from "@/lib/rfqQualityScore"
 import { supabase } from "@/lib/supabase"
 
 type RFQ = {
@@ -14,6 +15,7 @@ type RFQ = {
   province: string | null
   category: string | null
   budget: string | null
+  estimated_value_min: number | null
   deadline: string | null
   status: string | null
   attachment_url: string | null
@@ -83,10 +85,11 @@ function toDateInputValue(value: string | null | undefined): string {
   return date.toISOString().slice(0, 10)
 }
 
-function formatBudget(value: string | null): string {
-  if (!value) return "Not disclosed"
-  const numeric = Number(String(value).replace(/[^\d]/g, ""))
-  if (!Number.isFinite(numeric) || numeric <= 0) return value
+function formatBudget(value: string | null, fallback?: number | null): string {
+  const raw = value ?? (fallback != null ? String(fallback) : null)
+  if (!raw) return "Not disclosed"
+  const numeric = Number(String(raw).replace(/[^\d]/g, ""))
+  if (!Number.isFinite(numeric) || numeric <= 0) return raw
 
   return `R ${numeric.toLocaleString("en-ZA")}`
 }
@@ -123,7 +126,7 @@ export default function AdminRFQDetailPage() {
   const [actionError, setActionError] = useState("")
 
   const rfqSelect =
-    "id, title, description, province, category, budget, deadline, status, attachment_url, created_at, is_external_opportunity, source_name, original_source_url"
+    "id, title, description, province, category, budget, estimated_value_min, deadline, status, attachment_url, created_at, is_external_opportunity, source_name, original_source_url"
 
   useEffect(() => {
     let cancelled = false
@@ -174,7 +177,11 @@ export default function AdminRFQDetailPage() {
       description: rfq.description ?? "",
       province: rfq.province ?? "",
       category: rfq.category ?? "",
-      budget: rfq.budget ? String(rfq.budget).replace(/[^\d]/g, "") : "",
+      budget: rfq.budget
+        ? String(rfq.budget).replace(/[^\d]/g, "")
+        : rfq.estimated_value_min
+          ? String(rfq.estimated_value_min).replace(/[^\d]/g, "")
+          : "",
       deadline: toDateInputValue(rfq.deadline),
     })
     setSaveError("")
@@ -271,6 +278,19 @@ export default function AdminRFQDetailPage() {
 
   const isDraft = String(rfq?.status ?? "").toLowerCase() === "draft"
 
+  const quality = useMemo(() => {
+    if (!rfq) return null
+    return scoreRFQDraft({
+      category: rfq.category,
+      province: rfq.province,
+      description: rfq.description,
+      original_source_url: rfq.original_source_url,
+      budget: rfq.budget,
+      estimated_value_min: rfq.estimated_value_min,
+      deadline: rfq.deadline,
+    })
+  }, [rfq])
+
   return (
     <div>
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4 border-b border-panel pb-6">
@@ -362,7 +382,7 @@ export default function AdminRFQDetailPage() {
               <div className="mt-5 rounded-md border border-accent/30 bg-surface p-4 text-xs text-secondary">
                 <p className="font-semibold text-heading">Externally-sourced opportunity</p>
                 <p className="mt-1">Source: {rfq.source_name || "Unknown"}</p>
-                {rfq.original_source_url && (
+                {rfq.original_source_url ? (
                   <a
                     href={rfq.original_source_url}
                     target="_blank"
@@ -371,7 +391,40 @@ export default function AdminRFQDetailPage() {
                   >
                     Open original listing &rarr;
                   </a>
+                ) : (
+                  <p className="mt-1 font-semibold text-rose-700">
+                    No original document link was captured for this listing — there&apos;s nothing to cross-check the parsed fields against.
+                  </p>
                 )}
+              </div>
+            )}
+
+            {rfq.is_external_opportunity && quality && (
+              <div className="mt-4 rounded-md border border-panel bg-card p-4 text-xs">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-semibold text-heading">Data quality</p>
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[0.68rem] font-semibold ${qualityTierBadgeClass(quality.tier)}`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${qualityTierDotClass(quality.tier)}`} aria-hidden="true" />
+                    {quality.score} &middot; {qualityTierLabel(quality.tier)}
+                  </span>
+                </div>
+                <ul className="mt-3 space-y-2">
+                  {quality.flags.map((flag) => (
+                    <li key={flag.key} className="flex items-start gap-2">
+                      <span
+                        className={`mt-0.5 font-bold ${flag.passed ? "text-success" : flag.weight > 0 ? "text-rose-600" : "text-amber-600"}`}
+                        aria-hidden="true"
+                      >
+                        {flag.passed ? "✓" : "✕"}
+                      </span>
+                      <span className="text-secondary">
+                        <span className="font-semibold text-heading">{flag.label}:</span> {flag.detail}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
@@ -471,7 +524,7 @@ export default function AdminRFQDetailPage() {
                 <div className="mt-5 space-y-3 text-sm text-secondary">
                   <p><span className="font-semibold text-heading">Category:</span> {rfq.category || "-"}</p>
                   <p><span className="font-semibold text-heading">Province:</span> {rfq.province || "-"}</p>
-                  <p><span className="font-semibold text-heading">Budget:</span> {formatBudget(rfq.budget)}</p>
+                  <p><span className="font-semibold text-heading">Budget:</span> {formatBudget(rfq.budget, rfq.estimated_value_min)}</p>
                   <p><span className="font-semibold text-heading">Deadline:</span> {formatDate(rfq.deadline)}</p>
                   <p><span className="font-semibold text-heading">Created:</span> {formatDate(rfq.created_at)}</p>
                 </div>

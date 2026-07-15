@@ -98,6 +98,7 @@ type RfqUpsertPayload = {
   original_source_url: string | null
   estimated_value_min: number | null
   estimated_value_max: number | null
+  budget: string | null
 }
 
 function cronAuthorized(request: Request): boolean {
@@ -178,8 +179,12 @@ function toRfqPayload(release: OcdsRelease): RfqUpsertPayload | null {
     is_public: true,
     source_name: SOURCE_NAME,
     original_source_url: resolveSourceUrl(tender),
+    // estimated_value_min/max are the numeric source of truth. `budget` is a
+    // separate TEXT column the admin UI actually renders — write both so a
+    // disclosed OCDS value doesn't silently show as "Not disclosed" there.
     estimated_value_min: tender.value?.amount ?? null,
     estimated_value_max: tender.value?.amount ?? null,
+    budget: tender.value?.amount != null ? String(tender.value.amount) : null,
   }
 }
 

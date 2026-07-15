@@ -1,22 +1,27 @@
 "use client"
 
+import { IconFile, IconMapPin, IconMessage2, IconTag } from "@tabler/icons-react"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { formatRand } from "@/lib/format"
+import { qualityTierBadgeClass, qualityTierDotClass, qualityTierLabel, scoreRFQDraft } from "@/lib/rfqQualityScore"
 import { supabase } from "@/lib/supabase"
 
 type AdminRFQ = {
   id: number
   title: string | null
+  description: string | null
   category: string | null
   province: string | null
   region: string | null
   budget: string | number | null
+  estimated_value_min: number | null
   deadline: string | null
   status: string | null
   created_at: string | null
   is_external_opportunity: boolean | null
   source_name: string | null
+  original_source_url: string | null
 }
 
 type SupplierMatchProfile = {
@@ -26,7 +31,13 @@ type SupplierMatchProfile = {
 }
 
 type ListFilter = "all" | "etenders-pending"
-type SortKey = "newest" | "matches"
+type SortKey = "newest" | "matches" | "attention"
+
+function displayBudget(rfq: Pick<AdminRFQ, "budget" | "estimated_value_min">): string {
+  const raw = rfq.budget ?? rfq.estimated_value_min
+  if (raw == null || raw === "") return "Not disclosed"
+  return formatRand(raw)
+}
 
 const UI_PAGE_SIZE = 50
 const FETCH_PAGE_SIZE = 1000
@@ -131,7 +142,7 @@ export default function AdminRfqsPage() {
       const { data, error } = await supabase
         .from("rfqs")
         .select(
-          "id, title, category, province, region, budget, deadline, status, created_at, is_external_opportunity, source_name",
+          "id, title, description, category, province, region, budget, estimated_value_min, deadline, status, created_at, is_external_opportunity, source_name, original_source_url",
         )
         .order("created_at", { ascending: false })
         .range(from, from + FETCH_PAGE_SIZE - 1)
@@ -199,6 +210,28 @@ export default function AdminRfqsPage() {
     return counts
   }, [rfqs, suppliers])
 
+  // Quality score is mainly useful for eTenders-sourced drafts (the parser
+  // can leave fields incomplete), but it's computed for every row so
+  // manually-created RFQs simply show as "Looks good" across the board.
+  const qualityResults = useMemo(() => {
+    const results = new Map<number, ReturnType<typeof scoreRFQDraft>>()
+    for (const rfq of rfqs) {
+      results.set(
+        rfq.id,
+        scoreRFQDraft({
+          category: rfq.category,
+          province: rfq.province ?? rfq.region,
+          description: rfq.description,
+          original_source_url: rfq.original_source_url,
+          budget: rfq.budget,
+          estimated_value_min: rfq.estimated_value_min,
+          deadline: rfq.deadline,
+        }),
+      )
+    }
+    return results
+  }, [rfqs])
+
   const activeCount = useMemo(
     () =>
       rfqs.filter((rfq) =>
@@ -245,8 +278,14 @@ export default function AdminRfqsPage() {
       return [...matched].sort((a, b) => (matchCounts.get(b.id) ?? 0) - (matchCounts.get(a.id) ?? 0))
     }
 
+    if (sortBy === "attention") {
+      return [...matched].sort(
+        (a, b) => (qualityResults.get(a.id)?.score ?? 100) - (qualityResults.get(b.id)?.score ?? 100),
+      )
+    }
+
     return matched
-  }, [baseList, categoryFilter, provinceFilter, searchTerm, sortBy, matchCounts])
+  }, [baseList, categoryFilter, provinceFilter, searchTerm, sortBy, matchCounts, qualityResults])
 
   const totalPages = Math.max(1, Math.ceil(filteredRfqs.length / UI_PAGE_SIZE))
   const pagedRfqs = filteredRfqs.slice((page - 1) * UI_PAGE_SIZE, page * UI_PAGE_SIZE)
@@ -445,6 +484,7 @@ export default function AdminRfqsPage() {
           >
             <option value="newest">Newest first</option>
             <option value="matches">Most matching suppliers</option>
+            <option value="attention">Needs attention first</option>
           </select>
           {(searchTerm || categoryFilter !== "all" || provinceFilter !== "all") && (
             <button
@@ -556,6 +596,12 @@ export default function AdminRfqsPage() {
                     />
                   </th>
                   <th className="px-5 py-3">Title</th>
+                  <th
+                    className="px-5 py-3"
+                    title="How complete the parsed data looks — low scores are worth a closer look before publishing"
+                  >
+                    Quality
+                  </th>
                   <th className="hidden px-5 py-3 md:table-cell">Category</th>
                   <th className="hidden px-5 py-3 lg:table-cell">Budget</th>
                   <th className="hidden px-5 py-3 lg:table-cell" title="Suppliers on the platform whose industry and province match this RFQ">
@@ -599,13 +645,44 @@ export default function AdminRfqsPage() {
                         {rfq.category ?? "No category"} / {rfq.province ?? rfq.region ?? "No province"}
                       </p>
                     </td>
+                    <td className="px-5 py-4">
+                      {(() => {
+                        const quality = qualityResults.get(rfq.id)
+                        if (!quality) return null
+                        const failedChecks = quality.flags.filter((flag) => !flag.passed && flag.weight > 0)
+                        const urgentFlag = quality.flags.find((flag) => flag.key === "deadline")
+
+                        return (
+                          <div
+                            className="flex flex-col gap-1"
+                            title={quality.flags.map((flag) => `${flag.passed ? "✓" : "✕"} ${flag.label}: ${flag.detail}`).join("\n")}
+                          >
+                            <span
+                              className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-2 py-0.5 text-[0.68rem] font-semibold ${qualityTierBadgeClass(quality.tier)}`}
+                            >
+                              <span className={`h-1.5 w-1.5 rounded-full ${qualityTierDotClass(quality.tier)}`} aria-hidden="true" />
+                              {quality.score} &middot; {qualityTierLabel(quality.tier)}
+                            </span>
+                            {(failedChecks.length > 0 || urgentFlag) && (
+                              <span className="flex items-center gap-1.5 text-rose-600">
+                                {failedChecks.some((f) => f.key === "source_url") && <IconFile className="h-3.5 w-3.5" stroke={1.8} aria-label="Missing original document" />}
+                                {failedChecks.some((f) => f.key === "category") && <IconTag className="h-3.5 w-3.5" stroke={1.8} aria-label="Unclassified category" />}
+                                {failedChecks.some((f) => f.key === "province") && <IconMapPin className="h-3.5 w-3.5" stroke={1.8} aria-label="Missing province" />}
+                                {failedChecks.some((f) => f.key === "description") && <IconMessage2 className="h-3.5 w-3.5" stroke={1.8} aria-label="Thin description" />}
+                                {urgentFlag && <span className="text-[0.65rem] font-semibold">⏰</span>}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })()}
+                    </td>
                     <td className="hidden px-5 py-4 text-secondary md:table-cell">
                       <span className="line-clamp-2 break-words">
                         {rfq.category ?? "No category"} / {rfq.province ?? rfq.region ?? "No province"}
                       </span>
                     </td>
                     <td className="hidden px-5 py-4 font-semibold text-heading lg:table-cell">
-                      {formatRand(rfq.budget)}
+                      {displayBudget(rfq)}
                     </td>
                     <td className="hidden px-5 py-4 lg:table-cell">
                       {(() => {
