@@ -140,7 +140,11 @@ export async function POST(request: Request) {
   } catch { /* ignore */ }
 
   if (emailForRateLimit) {
-    const cutoff = new Date(Date.now() - 20 * 60 * 1000).toISOString()
+    // 2 minutes is enough to stop a bot/script hammering the endpoint, but
+    // short enough that a person submitting a couple of genuine enquiries
+    // close together (or just testing the form) doesn't get silently
+    // blocked the way a 20-minute window did.
+    const cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString()
     // The client already inserted this submission's own pilot_requests row
     // before calling this route, so without excluding that row's own id,
     // this check always finds "a recent row" (the one just created for this
