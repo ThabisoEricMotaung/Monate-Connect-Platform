@@ -1575,6 +1575,24 @@ export default function AdminVerificationQueuePage() {
                         <DetailLine label="Bank" value={bank?.bank_name} />
                         <DetailLine label="Account number" value={maskAccountNumber(bank?.account_number ?? null)} />
                         <DetailLine label="Bank record status" value={bank?.verification_status} />
+                        <div className="sm:col-span-2">
+                          <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted">
+                            Bank confirmation letter
+                          </p>
+                          <div className="mt-1">
+                            {(() => {
+                              const letterUrl =
+                                latestSupplierDocuments(documentsBySupplier[profile.id]).bank_letter?.file_url ?? null
+                              return (
+                                documentLink(letterUrl) ?? (
+                                  <span className="inline-flex items-center rounded-md border border-warning bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning">
+                                    Not uploaded
+                                  </span>
+                                )
+                              )
+                            })()}
+                          </div>
+                        </div>
                       </>
                     ))}
 
