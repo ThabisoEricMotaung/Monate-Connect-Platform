@@ -30,7 +30,7 @@ type SupplierMatchProfile = {
   provinces: string[] | null
 }
 
-type ListFilter = "all" | "etenders-pending"
+type ListFilter = "all" | "etenders-pending" | "needs-attention"
 type SortKey = "newest" | "matches" | "attention"
 
 function displayBudget(rfq: Pick<AdminRFQ, "budget" | "estimated_value_min">): string {
@@ -248,7 +248,24 @@ export default function AdminRfqsPage() {
     [rfqs],
   )
 
-  const baseList = filter === "etenders-pending" ? etendersPending : rfqs
+  // Quality flags apply regardless of status, so an eTenders-sourced RFQ
+  // that's already published (not just still a draft) shows up here too if
+  // it scored medium/low — the automation can leave a listing incomplete
+  // whether or not a human already clicked publish on it.
+  const externalNeedsAttention = useMemo(
+    () =>
+      rfqs.filter(
+        (rfq) => rfq.is_external_opportunity && (qualityResults.get(rfq.id)?.tier ?? "high") !== "high",
+      ),
+    [rfqs, qualityResults],
+  )
+
+  const baseList =
+    filter === "etenders-pending"
+      ? etendersPending
+      : filter === "needs-attention"
+        ? externalNeedsAttention
+        : rfqs
 
   const categoryOptions = useMemo(
     () =>
@@ -403,7 +420,7 @@ export default function AdminRfqsPage() {
         </div>
       </div>
 
-      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <div className="rounded-md border border-panel bg-card p-5 shadow-panel">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Total RFQs</p>
           <p className="mt-2 text-3xl font-bold text-heading">{loading ? "-" : rfqs.length}</p>
@@ -427,6 +444,24 @@ export default function AdminRfqsPage() {
           <p className="mt-2 text-3xl font-bold text-heading">{loading ? "-" : etendersPending.length}</p>
           <p className="mt-1 text-xs font-semibold text-accent">
             {filter === "etenders-pending" ? "Showing pending only ✕" : "Click to filter"}
+          </p>
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilter(filter === "needs-attention" ? "all" : "needs-attention")}
+          title="eTenders-sourced RFQs scoring medium or low on data quality — draft or already published"
+          className={`rounded-md border p-5 text-left shadow-panel transition ${
+            filter === "needs-attention"
+              ? "border-accent bg-accent/10"
+              : "border-panel bg-card hover:border-accent/40"
+          }`}
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+            eTenders needs attention
+          </p>
+          <p className="mt-2 text-3xl font-bold text-heading">{loading ? "-" : externalNeedsAttention.length}</p>
+          <p className="mt-1 text-xs font-semibold text-accent">
+            {filter === "needs-attention" ? "Showing flagged only ✕" : "Any status — click to filter"}
           </p>
         </button>
         <div className="rounded-md border border-panel bg-card p-5 shadow-panel">
@@ -562,9 +597,11 @@ export default function AdminRfqsPage() {
           <p className="text-sm font-semibold text-heading">
             {filter === "etenders-pending"
               ? "No eTenders drafts match right now."
-              : "No RFQs yet. Create the first RFQ to start receiving quotes from verified suppliers."}
+              : filter === "needs-attention"
+                ? "Nothing flagged right now — every eTenders-sourced RFQ is scoring high on data quality."
+                : "No RFQs yet. Create the first RFQ to start receiving quotes from verified suppliers."}
           </p>
-          {filter === "etenders-pending" ? (
+          {filter === "etenders-pending" || filter === "needs-attention" ? (
             <button
               type="button"
               onClick={() => setFilter("all")}

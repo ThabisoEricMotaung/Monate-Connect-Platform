@@ -73,6 +73,21 @@ const buyerTrustCards = [
   { title: "Dispute resolution", body: "If a supplier believes an RFQ was handled unfairly, they can raise a dispute through the platform. Disputes are reviewed within 5 business days." },
 ]
 
+const opportunitySourcingSteps = [
+  {
+    title: "Sourced from public government data",
+    body: "Some opportunities on AiForm Procure are submitted directly by registered buyer organisations. Others are pulled automatically from National Treasury's eTenders open-data feed — the Office of the Chief Procurement Officer's public Open Contracting Data Standard (OCDS) release of government tender adverts — so suppliers can discover them in one place instead of checking multiple portals.",
+  },
+  {
+    title: "Reviewed by a human curator before publishing",
+    body: "Every automatically-sourced listing lands as a draft first, not a live opportunity. Our team reviews each one — checking classification, location, scope, and closing date look right — before it's published. Listings that look incomplete or inconsistent are held back and corrected or discarded rather than published as-is.",
+  },
+  {
+    title: "Traceable back to the original listing",
+    body: "Where the government data includes a link to the original tender document, that link is carried through to the opportunity on AiForm Procure, so you can always verify the details against the primary source yourself.",
+  },
+]
+
 const faqs = [
   { question: "How long does verification take?", answer: "CSD, BBBEE, tax clearance, and banking verification are all reviewed manually by our compliance team. Most suppliers are fully verified within 48 hours of submitting complete documentation." },
   { question: "What if my CSD registration is pending?", answer: "You can create a profile and complete all other verification steps while your CSD registration is being processed. You won't be able to respond to RFQs until CSD verification passes, but your profile will be ready to activate the moment it does." },
@@ -251,6 +266,31 @@ export default function TrustCentrePage() {
                 </article>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Opportunity sourcing */}
+        <section className="border-b border-panel px-6 py-16">
+          <div className="mx-auto max-w-7xl">
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-accent">Opportunity sourcing</p>
+            <h2 className="mt-3 font-display text-3xl font-semibold text-heading">Where opportunities come from</h2>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-secondary">
+              Not every RFQ on the platform is submitted directly by a buyer, and we want that to be visible rather than assumed. Here&apos;s exactly how the rest get here.
+            </p>
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {opportunitySourcingSteps.map((step, index) => (
+                <article key={step.title} className="rounded-md border border-panel bg-card p-6 shadow-panel">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-xs font-bold text-accent">
+                    {index + 1}
+                  </div>
+                  <h3 className="mt-4 font-display text-lg font-semibold text-heading">{step.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-secondary">{step.body}</p>
+                </article>
+              ))}
+            </div>
+            <p className="mt-6 max-w-2xl text-xs leading-6 text-muted">
+              Externally-sourced opportunities carry a visible &ldquo;source&rdquo; badge on their listing so it&apos;s always clear where they came from.
+            </p>
           </div>
         </section>
 
