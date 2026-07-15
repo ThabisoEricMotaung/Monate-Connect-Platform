@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { Resend } from "resend"
+import { reviewCopyEmail, SUPPLIER_EMAIL_REVIEW_RECIPIENT } from "@/lib/emailSignature"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 import {
   buildDigestEmail,
@@ -144,6 +145,7 @@ export async function GET(request: Request) {
   let skippedAlreadySent = 0
   let errors = 0
   const failureDetails: string[] = []
+  let reviewCopy: { subject: string; html: string; text: string } | null = null
 
   for (const supplier of suppliers) {
     if (alreadySent.has(supplier.id)) {
@@ -178,6 +180,15 @@ export async function GET(request: Request) {
       if (sendResponse.error) throw new Error(sendResponse.error.message)
 
       sent += 1
+      if (!reviewCopy) {
+        reviewCopy = reviewCopyEmail({
+          subject,
+          html,
+          text,
+          sourceLabel: supplier.business_name ?? profileName(supplier),
+          runLabel: "Weekly Digest",
+        })
+      }
       await supabaseAdmin.from("email_alerts").insert([
         {
           supplier_id: supplier.id,
@@ -243,6 +254,20 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     console.error("Weekly digest internal summary email failed:", error)
+  }
+
+  if (reviewCopy) {
+    try {
+      await resend.emails.send({
+        from: "AiForm Procure <noreply@aiformprocure.co.za>",
+        to: SUPPLIER_EMAIL_REVIEW_RECIPIENT,
+        subject: reviewCopy.subject,
+        html: reviewCopy.html,
+        text: reviewCopy.text,
+      })
+    } catch (error) {
+      console.error("Weekly digest review copy email failed:", error)
+    }
   }
 
   return NextResponse.json({ ok: errors === 0, ...summary })

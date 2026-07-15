@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { Resend } from "resend"
+import { emailSignatureHtml, emailSignatureText, reviewCopyEmail, SUPPLIER_EMAIL_REVIEW_RECIPIENT } from "@/lib/emailSignature"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 
 type SupplierProfile = {
@@ -162,7 +163,7 @@ function emailHtml(profile: SupplierProfile, missing: string[], profileLink: str
       <p style="font-size:14px;line-height:1.7;margin:0 0 12px;">
         If you are not sure which file to upload, just reply to this email and we will help you through it.
       </p>
-      <p style="font-size:14px;line-height:1.7;margin:0;">Warmly,<br />Thabiso and the AiForm Procure team</p>
+      ${emailSignatureHtml()}
     </div>
   `
 }
@@ -179,8 +180,7 @@ ${profileLink}
 
 If you are not sure which file to upload, just reply to this email and we will help you through it.
 
-Warmly,
-Thabiso and the AiForm Procure team`
+${emailSignatureText()}`
 }
 
 async function upsertReminderLog({
@@ -289,6 +289,7 @@ export async function GET(request: Request) {
   let skippedNotDue = 0
   let completed = 0
   let errors = 0
+  let reviewCopy: { subject: string; html: string; text: string } | null = null
 
   for (const profile of profiles) {
     const missing = missingDocuments(profile, documentsMap.get(profile.id) ?? [])
@@ -322,15 +323,28 @@ export async function GET(request: Request) {
     }
 
     try {
+      const subject = "A quick nudge to complete your supplier documents"
+      const html = emailHtml(profile, missing, profileLink)
+      const text = emailText(profile, missing, profileLink)
+
       await resend.emails.send({
         from: "AiForm Procure <noreply@aiformprocure.co.za>",
         to: profile.email!,
-        subject: "A quick nudge to complete your supplier documents",
-        html: emailHtml(profile, missing, profileLink),
-        text: emailText(profile, missing, profileLink),
+        subject,
+        html,
+        text,
       })
 
       sent += 1
+      if (!reviewCopy) {
+        reviewCopy = reviewCopyEmail({
+          subject,
+          html,
+          text,
+          sourceLabel: profile.business_name ?? profileName(profile),
+          runLabel: "Document Reminder",
+        })
+      }
       await upsertReminderLog({
         profileId: profile.id,
         missing,
@@ -362,6 +376,20 @@ export async function GET(request: Request) {
     errors,
   }
   console.log("Document reminders run", summary)
+
+  if (reviewCopy) {
+    try {
+      await resend.emails.send({
+        from: "AiForm Procure <noreply@aiformprocure.co.za>",
+        to: SUPPLIER_EMAIL_REVIEW_RECIPIENT,
+        subject: reviewCopy.subject,
+        html: reviewCopy.html,
+        text: reviewCopy.text,
+      })
+    } catch (error) {
+      console.error("Document reminder review copy email failed:", error)
+    }
+  }
 
   return NextResponse.json({ ok: errors === 0, ...summary })
 }

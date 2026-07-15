@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { Resend } from "resend"
+import { reviewCopyEmail, SUPPLIER_EMAIL_REVIEW_RECIPIENT } from "@/lib/emailSignature"
 import { createMatchAlertEmail, type MatchAlertEmailResult, type MatchAlertInput } from "@/lib/matchAlerts"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
@@ -155,6 +156,7 @@ export async function POST(request: Request) {
     userId: user.id,
     userEmail: user.email ?? actorProfile?.email ?? null,
   }
+  let reviewCopy: { subject: string; html: string; text: string } | null = null
 
   for (const alert of alerts) {
     const supplierId = alert.supplier?.id
@@ -212,15 +214,26 @@ export async function POST(request: Request) {
         throw new Error("Supplier has no email address on file.")
       }
 
+      const html = emailHtml(message, rfq.id)
       const sendResponse = await resend.emails.send({
         from: "AiForm Procure <noreply@aiformprocure.co.za>",
         to: supplier.email,
         subject,
-        html: emailHtml(message, rfq.id),
+        html,
         text: message,
       })
       if (sendResponse.error) {
         throw new Error(sendResponse.error.message)
+      }
+
+      if (!reviewCopy) {
+        reviewCopy = reviewCopyEmail({
+          subject,
+          html,
+          text: message,
+          sourceLabel: supplier.business_name ?? "Supplier",
+          runLabel: "RFQ Match Alert",
+        })
       }
 
       const logged = await logEmailAlert({
@@ -283,6 +296,20 @@ export async function POST(request: Request) {
         status: "failed",
         error: errorMessage,
       })
+    }
+  }
+
+  if (reviewCopy) {
+    try {
+      await resend.emails.send({
+        from: "AiForm Procure <noreply@aiformprocure.co.za>",
+        to: SUPPLIER_EMAIL_REVIEW_RECIPIENT,
+        subject: reviewCopy.subject,
+        html: reviewCopy.html,
+        text: reviewCopy.text,
+      })
+    } catch (error) {
+      console.error("Match alert review copy email failed:", error)
     }
   }
 

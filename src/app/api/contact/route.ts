@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { Resend } from "resend"
 import { createClient } from "@supabase/supabase-js"
+import { emailSignatureText } from "@/lib/emailSignature"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -171,13 +172,16 @@ export async function POST(request: Request) {
   }
 
   const template = AUTO_REPLY_TEMPLATES[request_type] ?? DEFAULT_TEMPLATE
+  // Templates each end with a plain "AiForm Procure Team" sign-off; strip it
+  // so the shared signature block below is the only sign-off, not both.
+  const templateBody = template.body.replace(/\n\nAiForm Procure Team\s*$/, "")
 
   try {
     await resend.emails.send({
       from: "AiForm Procure <noreply@aiformprocure.co.za>",
       to: email,
       subject: template.subject,
-      text: `Hi ${name},\n\n${template.body}`,
+      text: `Hi ${name},\n\n${templateBody}\n\n${emailSignatureText()}`,
     })
 
     await resend.emails.send({

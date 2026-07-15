@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { Resend } from "resend"
+import { emailSignatureHtml, emailSignatureText, reviewCopyEmail, SUPPLIER_EMAIL_REVIEW_RECIPIENT } from "@/lib/emailSignature"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 import { siteUrl } from "@/lib/weeklyDigest"
 
@@ -55,8 +56,7 @@ Update your documents: ${profileUrl}
 
 We added this because a few suppliers reached out unsure where to start, and we wanted no-cost, always-available help for everyone on the platform - not just the people who happen to ask.
 
-Thanks,
-AiForm Procure Team`
+${emailSignatureText()}`
 
   const html = `
     <div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; color: #1a3a2a; max-width: 560px; margin: 0 auto;">
@@ -67,7 +67,7 @@ AiForm Procure Team`
         <a href="${profileUrl}" style="background: #1a3a2a; color: #f8f4ec; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: 600;">Update your documents</a>
       </p>
       <p>We added this because a few suppliers reached out unsure where to start, and we wanted no-cost, always-available help for everyone on the platform &mdash; not just the people who happen to ask.</p>
-      <p>Thanks,<br />AiForm Procure Team</p>
+      ${emailSignatureHtml()}
     </div>
   `
 
@@ -141,6 +141,7 @@ export async function GET(request: Request) {
   let skippedAlreadySent = 0
   let errors = 0
   const failureDetails: string[] = []
+  let reviewCopy: { subject: string; html: string; text: string } | null = null
 
   for (const supplier of suppliers) {
     if (alreadySent.has(supplier.id)) {
@@ -162,6 +163,15 @@ export async function GET(request: Request) {
       if (sendResponse.error) throw new Error(sendResponse.error.message)
 
       sent += 1
+      if (!reviewCopy) {
+        reviewCopy = reviewCopyEmail({
+          subject,
+          html,
+          text,
+          sourceLabel: supplier.business_name ?? supplierFirstName(supplier),
+          runLabel: ALERT_TYPE,
+        })
+      }
       await supabaseAdmin.from("email_alerts").insert([
         {
           supplier_id: supplier.id,
@@ -216,6 +226,20 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     console.error("Document guidance announcement internal summary email failed:", error)
+  }
+
+  if (reviewCopy) {
+    try {
+      await resend.emails.send({
+        from: "AiForm Procure <noreply@aiformprocure.co.za>",
+        to: SUPPLIER_EMAIL_REVIEW_RECIPIENT,
+        subject: reviewCopy.subject,
+        html: reviewCopy.html,
+        text: reviewCopy.text,
+      })
+    } catch (error) {
+      console.error("Document guidance announcement review copy email failed:", error)
+    }
   }
 
   return NextResponse.json({ ok: errors === 0, ...summary })

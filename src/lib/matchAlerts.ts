@@ -1,3 +1,4 @@
+import { emailSignatureText } from "./emailSignature"
 import { createNotification } from "./notifications"
 import { createWhatsAppLink, formatSouthAfricanPhone } from "./whatsapp"
 import { supabase } from "./supabase"
@@ -86,8 +87,7 @@ Closing date: ${deadline}
 
 Log in to AiForm Procure to review the opportunity details and decide whether it is a fit for your business.
 
-Warmly,
-The AiForm Procure team`,
+${emailSignatureText()}`,
   }
 }
 

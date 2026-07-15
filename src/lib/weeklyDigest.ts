@@ -4,6 +4,8 @@
 // email content an admin previews is guaranteed to match what actually
 // gets sent.
 
+import { emailSignatureHtml, emailSignatureText } from "./emailSignature"
+
 export type DigestSupplierProfile = {
   id: string
   email: string | null
@@ -154,8 +156,8 @@ export function buildDigestEmail({
       <p style="font-size:14px;line-height:1.7;margin:0 0 12px;">
         The more complete your profile (industry, province, BBBEE level, documents), the more precisely we can tell you when something fits.
       </p>
-      <p style="font-size:14px;line-height:1.7;margin:0 0 24px;">Warmly,<br />Thabiso and the AiForm Procure team</p>
-      <p style="font-size:11px;line-height:1.6;margin:0;color:#8a9089;">
+      ${emailSignatureHtml()}
+      <p style="font-size:11px;line-height:1.6;margin:12px 0 0;color:#8a9089;">
         You're receiving this because you're a registered supplier on AiForm Procure.
         <a href="${unsubscribeUrl}" style="color:#8a9089;text-decoration:underline;">Unsubscribe from this weekly email</a>.
       </p>
@@ -170,8 +172,7 @@ ${matchCount > 0 ? `${matchCount} open ${matchCount === 1 ? "opportunity matches
 Browse open opportunities: ${opportunitiesUrl}
 ${profileIncomplete ? `Complete your profile: ${profileUrl}` : ""}
 
-Warmly,
-Thabiso and the AiForm Procure team
+${emailSignatureText()}
 
 Unsubscribe from this weekly email: ${unsubscribeUrl}`
 

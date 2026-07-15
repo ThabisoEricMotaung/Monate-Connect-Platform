@@ -1,5 +1,6 @@
 import { Resend } from "resend"
 import { NextResponse } from "next/server"
+import { emailSignatureHtml } from "@/lib/emailSignature"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 import {
@@ -123,6 +124,7 @@ export async function POST(request: Request) {
             <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#1a3a2a;">${otp}</span>
           </div>
           <p style="color:#888;font-size:12px;">Do not share this code with anyone. If you did not request this, you can ignore this email.</p>
+          ${emailSignatureHtml()}
         </div>
       `,
     })
