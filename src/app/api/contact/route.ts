@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { Resend } from "resend"
 import { createClient } from "@supabase/supabase-js"
-import { emailSignatureText } from "@/lib/emailSignature"
+import { emailSignatureText, MARKETING_SITE_URL } from "@/lib/emailSignature"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -213,11 +213,12 @@ export async function POST(request: Request) {
       )
     }
 
+    const pilotRequestsUrl = `${MARKETING_SITE_URL}/dashboard/admin/pilot-requests`
     const { error: notifyError } = await resend.emails.send({
       from: "AiForm Procure <noreply@aiformprocure.co.za>",
       to: "aiformstudio@gmail.com",
       subject: `New pilot request: ${request_type} - ${organisation || name}`,
-      text: `New contact form submission:\n\nName: ${name}\nOrganisation: ${organisation || "-"}\nEmail: ${email}\nRequest type: ${request_type}\n\nFull details are in the pilot_requests table in Supabase.`,
+      text: `New contact form submission:\n\nName: ${name}\nOrganisation: ${organisation || "-"}\nEmail: ${email}\nRequest type: ${request_type}\n\nView and manage it here:\n${pilotRequestsUrl}\n\n${emailSignatureText()}`,
     })
 
     if (notifyError) {
