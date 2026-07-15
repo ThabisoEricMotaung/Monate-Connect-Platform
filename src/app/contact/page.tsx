@@ -43,6 +43,18 @@ const INTENT_CHIPS = [
   { label: "Just exploring for now", icon: "explore" },
 ]
 
+// Short starter text dropped into the "Tell us more" textarea when a chip is
+// clicked, so people have less to type. Only applied when the textarea is
+// still empty or still holds a previous chip's starter text — never
+// overwrites something the person has actually typed themselves.
+const INTENT_STARTER_MESSAGES: Record<string, string> = {
+  "Joining as a supplier": "I'd like to register as a supplier. A bit about my business: ",
+  "Sourcing as a buyer": "I'm looking to source suppliers for: ",
+  "Onboarding a supplier network": "I manage a network of suppliers and would like to explore bulk onboarding. Roughly how many suppliers: ",
+  "Partnership or integration": "I'm interested in exploring a partnership or integration with AiForm Procure. A bit about what I have in mind: ",
+  "Just exploring for now": "",
+}
+
 const initialForm = {
   name: "",
   organisation: "",
@@ -117,6 +129,12 @@ export default function ContactPage() {
   function selectIntent(label: string) {
     setSelectedIntent(label)
     updateField("request_type", label)
+    const starter = INTENT_STARTER_MESSAGES[label] ?? ""
+    const messageUntouched =
+      !form.message.trim() || Object.values(INTENT_STARTER_MESSAGES).includes(form.message)
+    if (starter && messageUntouched) {
+      updateField("message", starter)
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
