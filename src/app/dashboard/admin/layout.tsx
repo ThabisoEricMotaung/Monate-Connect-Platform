@@ -1,41 +1,9 @@
 "use client"
 
 import {
-  IconActivityHeartbeat,
-  IconAlertTriangle,
-  IconAward,
-  IconBookmark,
-  IconBooks,
-  IconBrandWhatsapp,
-  IconBriefcase,
-  IconBuildingBank,
-  IconBuildingStore,
-  IconChartAreaLine,
-  IconChartBar,
-  IconChartPie,
-  IconClipboardCheck,
-  IconClipboardList,
-  IconFileCertificate,
-  IconFileSearch,
-  IconFileText,
-  IconHistory,
-  IconHome,
   IconHelpCircle,
-  IconMap2,
   IconMenu2,
-  IconMessage2,
-  IconMessageCircle,
-  IconPlayerPlay,
-  IconReportAnalytics,
-  IconRobot,
-  IconRocket,
   IconSettings,
-  IconShieldCheck,
-  IconShoppingCart,
-  IconStars,
-  IconTargetArrow,
-  IconTemplate,
-  IconUserPlus,
   IconX,
   type TablerIcon,
 } from "@tabler/icons-react"
@@ -48,6 +16,7 @@ import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
 import { usePageTracking } from "@/hooks/useSessionTracking"
 import { getCurrentProfile } from "@/lib/auth"
+import { getAdminNavGroups } from "@/lib/dashboardNavigation"
 import { getInboxUnreadCounts, subscribeToInboxActivity } from "@/lib/inboxCounts"
 import { supabase } from "@/lib/supabase"
 
@@ -290,167 +259,29 @@ export default function AdminDashboardLayout({
     }
   }, [authorized, profile?.id])
 
-  const navigation = useMemo<NavGroup[]>(
-    () => [
-      {
-        items: [
-          {
-            name: "Home dashboard",
-            href: "/dashboard/admin",
-            icon: IconHome,
-          },
-        ],
-      },
-      ...(profile?.role === "admin"
-        ? [
-            {
-              label: "ADMIN",
-              divider: true,
-              items: [
-                {
-                  name: "Verifications",
-                  href: "/dashboard/admin/verifications",
-                  icon: IconShieldCheck,
-                },
-                {
-                  name: "Suggestions",
-                  href: "/dashboard/admin/suggestions",
-                  icon: IconMessageCircle,
-                  iconColorClass: "text-violet-600",
-                },
-                {
-                  name: "Session monitor",
-                  href: "/dashboard/admin/session",
-                  icon: IconActivityHeartbeat,
-                },
-              ],
-            },
-          ]
-        : []),
-      {
-        label: "Procurement",
-        items: [
-          {
-            name: "RFQs",
-            href: "/dashboard/admin/rfqs",
-            icon: IconFileText,
-            badge: metrics.activeRfqs,
-            badgeTone: "info",
-          },
-          {
-            name: "Quotes received",
-            href: "/dashboard/admin/quotes",
-            icon: IconMessageCircle,
-            badge: metrics.unreviewedQuotes,
-            badgeTone: "danger",
-            iconColorClass: "text-sky-600",
-          },
-          {
-            name: "Inbox",
-            href: "/dashboard/messages",
-            icon: IconMessageCircle,
-            badge: metrics.unreadMessages,
-            badgeTone: "danger",
-          },
-          {
-            name: "Purchase orders",
-            href: "/dashboard/admin/purchase-orders",
-            icon: IconShoppingCart,
-          },
-        ],
-      },
-      {
-        label: "Suppliers",
-        divider: true,
-        items: [
-          {
-            name: "Supplier directory",
-            href: "/suppliers",
-            icon: IconBuildingStore,
-          },
-        ],
-      },
-      {
-        label: "Reports",
-        divider: true,
-        items: [
-          {
-            name: "Spend analysis",
-            href: "/dashboard/spend-analysis",
-            icon: IconChartBar,
-          },
-          {
-            name: "Compliance report",
-            href: "/dashboard/compliance-report",
-            icon: IconClipboardCheck,
-          },
-          {
-            name: "BBBEE scorecard",
-            href: "/dashboard/bbbee-scorecard",
-            icon: IconAward,
-          },
-        ],
-      },
-      {
-        label: "Executive",
-        divider: true,
-        items: [
-          { name: "Executive Command Centre", href: "/dashboard/executive", icon: IconBriefcase },
-          { name: "Reports", href: "/dashboard/admin/reports", icon: IconReportAnalytics },
-          { name: "Analytics", href: "/dashboard/analytics", icon: IconChartBar },
-        ],
-      },
-      {
-        label: "Supplier operations",
-        divider: true,
-        items: [
-          { name: "Contract Renewals", href: "/dashboard/admin/contract-renewals", icon: IconFileCertificate },
-          { name: "Supplier Reviews", href: "/dashboard/admin/supplier-reviews", icon: IconStars },
-          { name: "Compliance Risk", href: "/dashboard/admin/compliance-risk", icon: IconAlertTriangle },
-          { name: "Supplier Risk", href: "/dashboard/admin/supplier-risk", icon: IconAlertTriangle },
-          { name: "Saved Suppliers", href: "/dashboard/admin/saved-suppliers", icon: IconBookmark },
-          { name: "Buyer Onboarding", href: "/dashboard/admin/onboarding", icon: IconUserPlus },
-          { name: "Banking Review", href: "/dashboard/admin/banking", icon: IconBuildingBank },
-        ],
-      },
-      {
-        label: "Tools & governance",
-        divider: true,
-        items: [
-          { name: "RFQ Templates", href: "/dashboard/admin/rfq-templates", icon: IconTemplate },
-          { name: "Audit Trail", href: "/dashboard/admin/audit", icon: IconFileSearch },
-          { name: "Activity Log", href: "/dashboard/admin/activity", icon: IconHistory },
-          { name: "Automation Rules", href: "/dashboard/admin/automation", icon: IconRobot },
-          { name: "WhatsApp Network", href: "/dashboard/admin/whatsapp", icon: IconBrandWhatsapp },
-          { name: "System Health", href: "/dashboard/admin/system-health", icon: IconActivityHeartbeat },
-          { name: "Production Readiness", href: "/dashboard/admin/production-readiness", icon: IconRocket },
-        ],
-      },
-      {
-        label: "Pilot & demo",
-        divider: true,
-        items: [
-          { name: "Demo Mode", href: "/dashboard/admin/demo-mode", icon: IconPlayerPlay },
-          { name: "Demo Story Pack", href: "/dashboard/admin/demo-story", icon: IconBooks },
-          { name: "Pilot Requests", href: "/dashboard/admin/pilot-requests", icon: IconClipboardList },
-          { name: "Pilot Feedback", href: "/dashboard/admin/feedback", icon: IconMessage2 },
-        ],
-      },
-      {
-        label: "Intelligence",
-        divider: true,
-        items: [
-          { name: "Executive Dashboard", href: "/dashboard/intelligence/executive", icon: IconChartPie },
-          { name: "Opportunity Matching", href: "/dashboard/intelligence/matches", icon: IconTargetArrow },
-          { name: "Supplier Intelligence", href: "/dashboard/intelligence/suppliers", icon: IconStars },
-          { name: "Supplier Performance", href: "/dashboard/intelligence/supplier-performance", icon: IconChartAreaLine },
-          { name: "Procurement Analytics", href: "/dashboard/intelligence/procurement", icon: IconChartBar },
-          { name: "Regional Insights", href: "/dashboard/intelligence/regions", icon: IconMap2 },
-        ],
-      },
-    ],
-    [metrics, profile?.role],
-  )
+  // Structure (labels/items/hrefs/icons) comes from the single shared source
+  // in src/lib/dashboardNavigation.ts, also used by the mirror of this sidebar
+  // shown on shared routes like /dashboard/messages. Only badge *counts* are
+  // added here, since those depend on this layout's own live queries.
+  const navigation = useMemo<NavGroup[]>(() => {
+    const baseGroups = getAdminNavGroups(profile?.role === "admin")
+
+    return baseGroups.map((group) => ({
+      ...group,
+      items: group.items.map((item) => {
+        if (item.href === "/dashboard/admin/rfqs") {
+          return { ...item, badge: metrics.activeRfqs, badgeTone: "info" as const }
+        }
+        if (item.href === "/dashboard/admin/quotes") {
+          return { ...item, badge: metrics.unreviewedQuotes, badgeTone: "danger" as const }
+        }
+        if (item.href === "/dashboard/messages") {
+          return { ...item, badge: metrics.unreadMessages, badgeTone: "danger" as const }
+        }
+        return item
+      }),
+    }))
+  }, [metrics, profile?.role])
 
   if (checkingAccess) {
     return (

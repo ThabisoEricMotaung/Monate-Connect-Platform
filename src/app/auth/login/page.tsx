@@ -440,7 +440,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50"
             >
-              {loading ? loadingMessage : "Log in"}
+              {loading ? "Please wait..." : "Log in"}
             </button>
 
             {loading && (

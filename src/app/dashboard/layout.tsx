@@ -19,30 +19,6 @@ import {
   IconSettings,
   IconMenu2,
   IconX,
-  IconActivityHeartbeat,
-  IconClipboardCheck,
-  IconAward,
-  IconAlertTriangle,
-  IconBooks,
-  IconBrandWhatsapp,
-  IconBriefcase,
-  IconChartAreaLine,
-  IconChartPie,
-  IconClipboardList,
-  IconFileCertificate,
-  IconFileSearch,
-  IconHistory,
-  IconMap2,
-  IconMessage2,
-  IconPlayerPlay,
-  IconReportAnalytics,
-  IconRobot,
-  IconRocket,
-  IconStars,
-  IconTargetArrow,
-  IconTemplate,
-  IconUserPlus,
-  type TablerIcon,
 } from "@tabler/icons-react"
 import { usePathname, useRouter } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
@@ -54,6 +30,7 @@ import PhoneVerificationBanner from "@/components/PhoneVerificationBanner"
 import ProcurementWire from "@/components/ProcurementWire"
 import { usePageTracking } from "@/hooks/useSessionTracking"
 import { hasAdminOrBuyerAccess } from "@/lib/auth"
+import { getAdminNavGroups, getBuyerNavGroups } from "@/lib/dashboardNavigation"
 import { useI18n, type TranslationKey } from "@/lib/i18n"
 import { roleHomeHref } from "@/lib/navigation"
 import { supabase } from "@/lib/supabase"
@@ -197,104 +174,14 @@ const navigationIconColors: Record<string, string> = {
   "Have Your Say": "text-violet-600",
 }
 
-// Mirrors the real admin sidebar (src/app/dashboard/admin/layout.tsx) so that
-// admins get the exact same groups/labels on shared routes like /dashboard/messages
-// that live outside the /dashboard/admin/* prefix, instead of a different ad-hoc
-// nav bolted onto the generic supplier sidebar. Keep this in sync with that file
-// if the real admin nav changes.
-type AdminMirrorGroup = {
-  label: string | null
-  items: { name: string; href: string; icon?: TablerIcon }[]
-}
-
-const adminMirrorNavigation: AdminMirrorGroup[] = [
-  { label: null, items: [{ name: "Home dashboard", href: "/dashboard/admin", icon: IconHome }] },
-  {
-    label: "Admin",
-    items: [
-      { name: "Verifications", href: "/dashboard/admin/verifications", icon: IconShieldCheck },
-      { name: "Suggestions", href: "/dashboard/admin/suggestions", icon: IconMessageCircle },
-      { name: "Session monitor", href: "/dashboard/admin/session", icon: IconActivityHeartbeat },
-    ],
-  },
-  {
-    label: "Procurement",
-    items: [
-      { name: "RFQs", href: "/dashboard/admin/rfqs", icon: IconFileText },
-      { name: "Quotes received", href: "/dashboard/admin/quotes", icon: IconMessageCircle },
-      { name: "Inbox", href: "/dashboard/messages", icon: IconMessageCircle },
-      { name: "Purchase orders", href: "/dashboard/admin/purchase-orders", icon: IconShoppingCart },
-    ],
-  },
-  { label: "Suppliers", items: [{ name: "Supplier directory", href: "/suppliers", icon: IconBuildingStore }] },
-  {
-    label: "Reports",
-    items: [
-      { name: "Spend analysis", href: "/dashboard/spend-analysis", icon: IconChartBar },
-      { name: "Compliance report", href: "/dashboard/compliance-report", icon: IconClipboardCheck },
-      { name: "BBBEE scorecard", href: "/dashboard/bbbee-scorecard", icon: IconAward },
-    ],
-  },
-  {
-    label: "Executive",
-    items: [
-      { name: "Executive Command Centre", href: "/dashboard/executive", icon: IconBriefcase },
-      { name: "Reports", href: "/dashboard/admin/reports", icon: IconReportAnalytics },
-      { name: "Analytics", href: "/dashboard/analytics", icon: IconChartBar },
-    ],
-  },
-  {
-    label: "Supplier operations",
-    items: [
-      { name: "Contract Renewals", href: "/dashboard/admin/contract-renewals", icon: IconFileCertificate },
-      { name: "Supplier Reviews", href: "/dashboard/admin/supplier-reviews", icon: IconStars },
-      { name: "Compliance Risk", href: "/dashboard/admin/compliance-risk", icon: IconAlertTriangle },
-      { name: "Supplier Risk", href: "/dashboard/admin/supplier-risk", icon: IconAlertTriangle },
-      { name: "Saved Suppliers", href: "/dashboard/admin/saved-suppliers", icon: IconBookmark },
-      { name: "Buyer Onboarding", href: "/dashboard/admin/onboarding", icon: IconUserPlus },
-      { name: "Banking Review", href: "/dashboard/admin/banking", icon: IconBuildingBank },
-    ],
-  },
-  {
-    label: "Tools & governance",
-    items: [
-      { name: "RFQ Templates", href: "/dashboard/admin/rfq-templates", icon: IconTemplate },
-      { name: "Audit Trail", href: "/dashboard/admin/audit", icon: IconFileSearch },
-      { name: "Activity Log", href: "/dashboard/admin/activity", icon: IconHistory },
-      { name: "Automation Rules", href: "/dashboard/admin/automation", icon: IconRobot },
-      { name: "WhatsApp Network", href: "/dashboard/admin/whatsapp", icon: IconBrandWhatsapp },
-      { name: "System Health", href: "/dashboard/admin/system-health", icon: IconActivityHeartbeat },
-      { name: "Production Readiness", href: "/dashboard/admin/production-readiness", icon: IconRocket },
-    ],
-  },
-  {
-    label: "Pilot & demo",
-    items: [
-      { name: "Demo Mode", href: "/dashboard/admin/demo-mode", icon: IconPlayerPlay },
-      { name: "Demo Story Pack", href: "/dashboard/admin/demo-story", icon: IconBooks },
-      { name: "Pilot Requests", href: "/dashboard/admin/pilot-requests", icon: IconClipboardList },
-      { name: "Pilot Feedback", href: "/dashboard/admin/feedback", icon: IconMessage2 },
-    ],
-  },
-  {
-    label: "Intelligence",
-    items: [
-      { name: "Executive Dashboard", href: "/dashboard/intelligence/executive", icon: IconChartPie },
-      { name: "Opportunity Matching", href: "/dashboard/intelligence/matches", icon: IconTargetArrow },
-      { name: "Supplier Intelligence", href: "/dashboard/intelligence/suppliers", icon: IconStars },
-      { name: "Supplier Performance", href: "/dashboard/intelligence/supplier-performance", icon: IconChartAreaLine },
-      { name: "Procurement Analytics", href: "/dashboard/intelligence/procurement", icon: IconChartBar },
-      { name: "Regional Insights", href: "/dashboard/intelligence/regions", icon: IconMap2 },
-    ],
-  },
-  {
-    label: null,
-    items: [
-      { name: "Help", href: "/dashboard/help", icon: IconHelpCircle },
-      { name: "Settings", href: "/dashboard/admin/settings", icon: IconSettings },
-    ],
-  },
-]
+// Structure for the admin and buyer sidebar mirrors shown here (on shared
+// routes like /dashboard/messages, /dashboard/suggestions, /dashboard/help)
+// comes from the single shared source in src/lib/dashboardNavigation.ts -
+// the same one the real /dashboard/admin/* and /dashboard/buyer/* layouts
+// use. Previously this was a hand-copied, buyer-less array that silently
+// drifted from the real admin sidebar and rendered the generic supplier nav
+// for buyers entirely - that's what caused the sidebar to visibly change
+// shape depending on which route was clicked.
 
 const supplierNavigationSections: { title: "Top" | "Work" | "Profile" | "Discover" | "Pinned"; label: string | null }[] = [
   { title: "Top", label: null },
@@ -335,9 +222,15 @@ export default function DashboardLayout({
   const [unreadInbox, setUnreadInbox] = useState(0)
   const [phoneGraceExpiresAt, setPhoneGraceExpiresAt] = useState<string | null>(null)
   const canViewAdminNavigation = role?.trim().toLowerCase() === "admin"
+  const canViewBuyerNavigation = role?.trim().toLowerCase() === "buyer"
   const homeHref = roleHomeHref(role)
   const canCreateRfq = hasAdminOrBuyerAccess(role ? { id: "", role } : null)
   const newRfqHref = canViewAdminNavigation ? "/dashboard/admin/rfqs/new" : "/dashboard/buyer/rfqs/new"
+  const mirrorNavGroups = canViewAdminNavigation
+    ? getAdminNavGroups(true)
+    : canViewBuyerNavigation
+      ? getBuyerNavGroups()
+      : null
 
   function closeSidebar() {
     setSidebarOpen(false)
@@ -568,8 +461,8 @@ export default function DashboardLayout({
         )}
 
         <nav className="flex-1 space-y-5">
-          {canViewAdminNavigation
-            ? adminMirrorNavigation.map((group, groupIndex) => (
+          {mirrorNavGroups
+            ? mirrorNavGroups.map((group, groupIndex) => (
                 <div
                   key={group.label ?? `admin-group-${groupIndex}`}
                   className={groupIndex > 0 ? "border-t border-[#ebebeb] pt-5" : ""}

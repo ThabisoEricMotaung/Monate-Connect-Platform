@@ -1,20 +1,6 @@
 "use client"
 
-import {
-  IconBuildingStore,
-  IconChartBar,
-  IconFileCertificate,
-  IconFileText,
-  IconHome,
-  IconHelpCircle,
-  IconMenu2,
-  IconMessageCircle,
-  IconPlus,
-  IconReceipt,
-  IconShoppingCart,
-  IconX,
-  type TablerIcon,
-} from "@tabler/icons-react"
+import { IconMenu2, IconX, type TablerIcon } from "@tabler/icons-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
@@ -24,6 +10,7 @@ import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
 import { useRequireRole } from "@/hooks/useRequireRole"
 import { usePageTracking } from "@/hooks/useSessionTracking"
+import { getBuyerNavGroups } from "@/lib/dashboardNavigation"
 import { getInboxUnreadCounts, subscribeToInboxActivity } from "@/lib/inboxCounts"
 import { supabase } from "@/lib/supabase"
 
@@ -97,37 +84,10 @@ function NavLink({
   )
 }
 
-const BASE_NAVIGATION: NavGroup[] = [
-  {
-    items: [{ name: "Home dashboard", href: "/dashboard/buyer", icon: IconHome }],
-  },
-  {
-    label: "Procurement",
-    items: [
-      { name: "Create RFQ", href: "/dashboard/buyer/rfqs/new", icon: IconPlus },
-      { name: "RFQs", href: "/dashboard/buyer/rfqs", icon: IconFileText },
-      { name: "Quotes received", href: "/dashboard/buyer/quotes", icon: IconMessageCircle, iconColorClass: "text-sky-600" },
-      { name: "Inbox", href: "/dashboard/messages", icon: IconMessageCircle },
-      { name: "Purchase orders", href: "/dashboard/buyer/purchase-orders", icon: IconShoppingCart },
-      { name: "Spend Analysis", href: "/dashboard/spend-analysis", icon: IconChartBar },
-      { name: "Contracts", href: "/dashboard/buyer/contracts", icon: IconFileCertificate },
-      { name: "Invoices", href: "/dashboard/buyer/invoices", icon: IconReceipt },
-    ],
-  },
-  {
-    label: "Suppliers",
-    divider: true,
-    items: [{ name: "Supplier directory", href: "/suppliers", icon: IconBuildingStore }],
-  },
-  {
-    label: "Support",
-    divider: true,
-    items: [
-      { name: "Have Your Say", href: "/dashboard/suggestions", icon: IconMessageCircle, iconColorClass: "text-violet-600" },
-      { name: "Help", href: "/dashboard/help", icon: IconHelpCircle },
-    ],
-  },
-]
+// Structure (labels/items/hrefs/icons) comes from the single shared source in
+// src/lib/dashboardNavigation.ts, also used by the mirror of this sidebar
+// shown on shared routes like /dashboard/messages, so both stay in sync.
+const BASE_NAVIGATION: NavGroup[] = getBuyerNavGroups()
 
 export default function BuyerDashboardLayout({
   children,
