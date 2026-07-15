@@ -132,18 +132,30 @@ export async function POST(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
   let emailForRateLimit: string | null = null
+  let requestIdForRateLimit: number | null = null
   try {
     const raw = await request.clone().json()
     emailForRateLimit = typeof raw.email === "string" ? raw.email.trim().toLowerCase() : null
+    requestIdForRateLimit = typeof raw.requestId === "number" ? raw.requestId : null
   } catch { /* ignore */ }
 
   if (emailForRateLimit) {
     const cutoff = new Date(Date.now() - 20 * 60 * 1000).toISOString()
-    const { count } = await rateLimitClient
+    // The client already inserted this submission's own pilot_requests row
+    // before calling this route, so without excluding that row's own id,
+    // this check always finds "a recent row" (the one just created for this
+    // very request) and blocks every single submission, not just repeats.
+    let query = rateLimitClient
       .from("pilot_requests")
       .select("id", { count: "exact", head: true })
       .eq("email", emailForRateLimit)
       .gte("created_at", cutoff)
+
+    if (requestIdForRateLimit != null) {
+      query = query.neq("id", requestIdForRateLimit)
+    }
+
+    const { count } = await query
 
     if ((count ?? 0) > 0) {
       return NextResponse.json({ ok: false, error: "Too many requests. Please wait before submitting again." }, { status: 429 })

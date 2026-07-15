@@ -139,16 +139,31 @@ export default function ContactPage() {
       message: form.message.trim() || null,
       status: "New",
     }
-    const { error: insertError } = await supabase.from("pilot_requests").insert([payload])
+    const { data: insertData, error: insertError } = await supabase
+      .from("pilot_requests")
+      .insert([payload])
+      .select("id")
+      .single()
     setSubmitting(false)
     if (insertError) { setError(insertError.message); return }
     try {
-      await fetch("/api/contact", {
+      const emailResponse = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: payload.name, email: payload.email, request_type: payload.request_type, organisation: payload.organisation }),
+        body: JSON.stringify({
+          name: payload.name,
+          email: payload.email,
+          request_type: payload.request_type,
+          organisation: payload.organisation,
+          requestId: insertData?.id ?? null,
+        }),
       })
-    } catch {}
+      if (!emailResponse.ok) {
+        console.error("Pilot request saved, but confirmation email failed:", await emailResponse.text())
+      }
+    } catch (emailError) {
+      console.error("Pilot request saved, but confirmation email failed:", emailError)
+    }
     setForm(initialForm)
     setSelectedIntent("")
     try { sessionStorage.removeItem(STORAGE_KEY) } catch {}

@@ -49,7 +49,7 @@ const comparisons = [
     label: "B-BBEE verification EME annual",
     value: "R3,000-R8,000/year",
     source: "Law Guide SA, B-BBEE Requirements Guide, 2024",
-    sourceUrl: "https://www.thedti.gov.za/economic_empowerment/bee.jsp",
+    sourceUrl: "https://www.bbbeecommission.co.za/",
   },
   {
     icon: IconUsers,
