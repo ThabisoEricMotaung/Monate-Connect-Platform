@@ -465,10 +465,10 @@ export default function DashboardLayout({
             ? mirrorNavGroups.map((group, groupIndex) => (
                 <div
                   key={group.label ?? `admin-group-${groupIndex}`}
-                  className={groupIndex > 0 ? "border-t border-[#ebebeb] pt-5" : ""}
+                  className={group.divider ? "border-t border-[#ebebeb] pt-5" : ""}
                 >
                   {group.label && (
-                    <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaaaaa]">
+                    <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#aaaaaa]">
                       {group.label}
                     </p>
                   )}
@@ -481,30 +481,32 @@ export default function DashboardLayout({
                           key={item.href}
                           href={item.href}
                           onClick={closeSidebar}
-                          className={`flex items-center justify-between gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                          className={`flex items-center justify-between gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition-colors ${
                             active
-                              ? "border-[#1a3a2a]/20 bg-[#f0f7f3] text-[#1a3a2a]"
-                              : "border-transparent text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
+                              ? "bg-[#f0f7f3] text-[#1a3a2a]"
+                              : "bg-white text-[#555555] hover:bg-[#f8f8f6] hover:text-[#1a3a2a]"
                           }`}
                         >
-                          <span className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
+                          <span className="flex min-w-0 flex-1 items-center gap-2">
                             {Icon && (
                               <Icon
                                 aria-hidden="true"
-                                className={`h-4 w-4 shrink-0 ${
+                                className={`h-5 w-5 shrink-0 ${
                                   active ? "text-[#1a3a2a]" : navigationIconColors[item.name] ?? "text-[#c8a060]"
                                 }`}
                                 stroke={1.8}
                               />
                             )}
-                            <span className="overflow-hidden text-ellipsis whitespace-nowrap">{item.name}</span>
+                            <span className="min-w-0 flex-1 whitespace-normal break-words leading-tight">{item.name}</span>
                           </span>
-                          {active && <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8a060]" />}
-                          {item.href === "/dashboard/messages" && unreadInbox > 0 && (
-                            <span className="rounded-full bg-rose-600 px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
-                              {unreadInbox > 99 ? "99+" : unreadInbox}
-                            </span>
-                          )}
+                          <span className="flex shrink-0 items-center gap-2">
+                            {item.href === "/dashboard/messages" && unreadInbox > 0 && (
+                              <span className="inline-flex min-w-7 items-center justify-center rounded-full border border-rose-500/20 bg-rose-50 px-2 py-0.5 text-[0.62rem] font-bold tabular-nums text-rose-700">
+                                {unreadInbox > 99 ? "99+" : unreadInbox}
+                              </span>
+                            )}
+                            {active && <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#c8a060]" />}
+                          </span>
                         </Link>
                       )
                     })}
