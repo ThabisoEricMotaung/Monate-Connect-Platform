@@ -1066,29 +1066,35 @@ export default function OpportunitiesPage() {
         {/* Body: sidebar + card list */}
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           {!loading && !isAuth && (
-            <div className="mb-6 flex flex-col gap-3 rounded-md border border-accent/20 bg-accent/10 p-4 text-sm text-secondary sm:flex-row sm:items-center sm:justify-between">
-              <p>
-                You&apos;re browsing as a guest. Register free to submit quotes and get matched RFQs.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href="/auth/signup"
-                  className="rounded-md bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-button transition hover:bg-accent-strong"
-                >
-                  Register free
-                </Link>
-                <Link
-                  href="/auth/login"
-                  className="rounded-md border border-panel bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-secondary transition hover:text-accent"
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/auth/login?role=buyer"
-                  className="rounded-md border border-[#1a3a2a] bg-[#1a3a2a] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#c8a060] transition hover:bg-[#123020]"
-                >
-                  I&apos;m a Buyer
-                </Link>
+            <div className="mb-6 rounded-md border border-accent/20 bg-accent/10 p-4 text-sm text-secondary">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p>
+                  You&apos;re browsing as a guest. Register free to submit quotes and get matched RFQs.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    href="/auth/signup"
+                    className="rounded-md bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-button transition hover:bg-accent-strong"
+                  >
+                    Register free
+                  </Link>
+                  <Link
+                    href="/auth/login"
+                    className="rounded-md border border-panel bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-secondary transition hover:text-accent"
+                  >
+                    Log in
+                  </Link>
+                  <Link
+                    href="/auth/login?role=buyer"
+                    className="rounded-md border border-[#1a3a2a] bg-[#1a3a2a] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#c8a060] transition hover:bg-[#123020]"
+                  >
+                    I&apos;m a Buyer
+                  </Link>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-col gap-1.5 border-t border-accent/20 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs text-secondary">Not ready yet? Just get this list emailed to you weekly, no account needed:</p>
+                <DigestSignupForm />
               </div>
             </div>
           )}
