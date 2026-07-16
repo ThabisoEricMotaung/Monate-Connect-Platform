@@ -6,6 +6,9 @@ import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import { useEffect, useMemo, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import CopyLinkButton from "./[id]/CopyLinkButton"
+
+const SITE_URL = "https://www.aiformprocure.co.za"
 
 // --- Types --------------------------------------------------------------------
 
@@ -722,7 +725,9 @@ function RFQCard({
             )}
           </div>
           <h3 className="font-bold text-heading line-clamp-2">
-            {rfq.title ?? "Untitled opportunity"}
+            <Link href={`/opportunities/${rfq.id}`} className="hover:text-accent-strong hover:underline">
+              {rfq.title ?? "Untitled opportunity"}
+            </Link>
           </h3>
           <p className="mt-0.5 text-sm text-secondary">{getBuyerName(rfq)}</p>
         </div>
@@ -775,8 +780,11 @@ function RFQCard({
       </div>
 
       {/* Action row */}
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-panel pt-3">
-        <p className="text-xs text-muted">Closes {formatDate(getClosingDate(rfq))}</p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-panel pt-3">
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-muted">Closes {formatDate(getClosingDate(rfq))}</p>
+          <CopyLinkButton url={`${SITE_URL}/opportunities/${rfq.id}`} />
+        </div>
         {isAuth ? (
           isExternalOpportunity && rfq.original_source_url ? (
             <a
