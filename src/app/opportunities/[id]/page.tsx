@@ -181,6 +181,14 @@ export default async function OpportunityDetailPage({ params }: Props) {
                 {rfq.source_name?.trim() || "External"}
               </span>
             )}
+            {isExternal && (
+              <span
+                title="A member of our team checked this listing before it was published — see the Trust Center for how opportunity sourcing works."
+                className="rounded-full border border-panel bg-surface px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-secondary"
+              >
+                Team-reviewed
+              </span>
+            )}
             {isClosed ? (
               <span className="rounded-full border border-panel bg-surface px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-muted">
                 Closed
