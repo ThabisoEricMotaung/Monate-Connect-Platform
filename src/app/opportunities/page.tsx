@@ -298,6 +298,60 @@ function CloseIcon() {
   )
 }
 
+function PersonIcon() {
+  return (
+    <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M4.5 20a7.5 7.5 0 0 1 15 0" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  )
+}
+
+function SendIcon() {
+  return (
+    <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+      <path d="M21 3 3 10.5l7 2.5 2.5 7L21 3Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M12.5 13 21 3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  )
+}
+
+function BadgeCheckIcon() {
+  return (
+    <svg aria-hidden="true" className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24">
+      <path d="M12 3 5.5 5.5v5.8c0 4 2.6 7.6 6.5 9.1 3.9-1.5 6.5-5.1 6.5-9.1V5.5L12 3Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M9.5 12.2l1.8 1.8 3.2-3.8" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  )
+}
+
+function TargetIcon() {
+  return (
+    <svg aria-hidden="true" className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="12" cy="12" r="3.2" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  )
+}
+
+function BellIcon() {
+  return (
+    <svg aria-hidden="true" className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24">
+      <path d="M6 9a6 6 0 1 1 12 0c0 3 1 4.5 1.5 5.5H4.5C5 13.5 6 12 6 9Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M10 18a2 2 0 0 0 4 0" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  )
+}
+
+function LockIcon() {
+  return (
+    <svg aria-hidden="true" className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24">
+      <rect x="5" y="10.5" width="14" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8 10.5V7.5a4 4 0 1 1 8 0v3" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+    </svg>
+  )
+}
+
 // --- Small shared components --------------------------------------------------
 
 function MetaChip({ icon, label }: { icon: React.ReactNode; label: string }) {
@@ -1066,12 +1120,21 @@ export default function OpportunitiesPage() {
         {/* Body: sidebar + card list */}
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           {!loading && !isAuth && (
-            <div className="mb-6 rounded-md border border-accent/20 bg-accent/10 p-4 text-sm text-secondary">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p>
-                  You&apos;re browsing as a guest. Register free to submit quotes and get matched RFQs.
-                </p>
-                <div className="flex flex-wrap gap-2">
+            <div className="mb-6 overflow-hidden rounded-xl border border-panel bg-card shadow-panel">
+              {/* Register / log in */}
+              <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface text-secondary">
+                    <PersonIcon />
+                  </span>
+                  <div>
+                    <p className="font-bold text-heading">You&apos;re browsing as a guest</p>
+                    <p className="mt-0.5 text-sm text-secondary">
+                      Create a free account to submit quotes and get matched RFQs.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 sm:shrink-0">
                   <Link
                     href="/auth/signup"
                     className="rounded-md bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-button transition hover:bg-accent-strong"
@@ -1092,9 +1155,42 @@ export default function OpportunitiesPage() {
                   </Link>
                 </div>
               </div>
-              <div className="mt-3 flex flex-col gap-1.5 border-t border-accent/20 pt-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-secondary">Not ready yet? Just get this list emailed to you weekly, no account needed:</p>
-                <DigestSignupForm />
+
+              {/* Trust strip */}
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-panel bg-surface/60 px-5 py-3">
+                <span className="inline-flex items-center gap-1.5 text-xs text-secondary">
+                  <BadgeCheckIcon />
+                  <span><strong className="font-semibold text-heading">Free to join</strong> &middot; no cost during our pilot</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-xs text-secondary">
+                  <TargetIcon />
+                  <span><strong className="font-semibold text-heading">Verified RFQs</strong> &middot; from real buyer organisations</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-xs text-secondary">
+                  <BellIcon />
+                  <span><strong className="font-semibold text-heading">Weekly updates</strong> &middot; never miss an opportunity</span>
+                </span>
+              </div>
+
+              {/* Lower-commitment path: email only, no account */}
+              <div className="flex flex-col gap-3 border-t border-panel bg-accent/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent-strong">
+                    <SendIcon />
+                  </span>
+                  <div>
+                    <p className="font-bold text-heading">Not ready yet?</p>
+                    <p className="mt-0.5 text-sm text-secondary">
+                      Get this list emailed to you weekly, no account needed.
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <DigestSignupForm />
+                  <p className="mt-1.5 flex items-center gap-1 text-xs text-muted">
+                    <LockIcon /> We respect your privacy. Unsubscribe anytime.
+                  </p>
+                </div>
               </div>
             </div>
           )}
