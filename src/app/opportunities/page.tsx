@@ -783,7 +783,7 @@ function RFQCard({
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-panel pt-3">
         <div className="flex items-center gap-3">
           <p className="text-xs text-muted">Closes {formatDate(getClosingDate(rfq))}</p>
-          <CopyLinkButton url={`${SITE_URL}/opportunities/${rfq.id}`} />
+          <CopyLinkButton url={`${SITE_URL}/opportunities/${rfq.id}`} title={rfq.title ?? undefined} />
         </div>
         {isAuth ? (
           isExternalOpportunity && rfq.original_source_url ? (

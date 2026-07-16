@@ -259,7 +259,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
 
           <div className="flex flex-wrap items-center gap-3 border-t border-panel pt-5">
             <p className="text-xs text-muted">Know a supplier who&apos;d want this one?</p>
-            <CopyLinkButton url={shareUrl} />
+            <CopyLinkButton url={shareUrl} title={rfq.title ?? undefined} />
             <Link href="/opportunities" className="text-xs font-semibold text-accent hover:underline">
               Browse all open opportunities &rarr;
             </Link>
