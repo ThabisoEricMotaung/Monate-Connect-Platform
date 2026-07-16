@@ -7,6 +7,7 @@ import PublicHeader from "@/components/PublicHeader"
 import { useEffect, useMemo, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import CopyLinkButton from "./[id]/CopyLinkButton"
+import DigestSignupForm from "./DigestSignupForm"
 
 const SITE_URL = "https://www.aiformprocure.co.za"
 
@@ -1221,19 +1222,25 @@ export default function OpportunitiesPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/auth/signup"
-                  className="rounded-md bg-[#c8a060] px-5 py-2.5 text-sm font-semibold text-[#1a3a2a] transition hover:bg-[#b8902e]"
-                >
-                  Register as Supplier
-                </Link>
-                <Link
-                  href="/auth/login?role=buyer"
-                  className="rounded-md border border-[#f8f4ec]/20 px-5 py-2.5 text-sm font-semibold text-[#f8f4ec] transition hover:border-[#f8f4ec]/40"
-                >
-                  I&apos;m a Buyer
-                </Link>
+              <div className="flex flex-col items-start gap-3 sm:items-end">
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    href="/auth/signup"
+                    className="rounded-md bg-[#c8a060] px-5 py-2.5 text-sm font-semibold text-[#1a3a2a] transition hover:bg-[#b8902e]"
+                  >
+                    Register as Supplier
+                  </Link>
+                  <Link
+                    href="/auth/login?role=buyer"
+                    className="rounded-md border border-[#f8f4ec]/20 px-5 py-2.5 text-sm font-semibold text-[#f8f4ec] transition hover:border-[#f8f4ec]/40"
+                  >
+                    I&apos;m a Buyer
+                  </Link>
+                </div>
+                <div className="sm:text-right">
+                  <p className="mb-1.5 text-xs text-[#f8f4ec]/60">Not ready yet? Just get this list weekly:</p>
+                  <DigestSignupForm dark />
+                </div>
               </div>
             </div>
           </section>
