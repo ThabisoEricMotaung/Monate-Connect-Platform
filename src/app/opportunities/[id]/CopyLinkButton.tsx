@@ -22,7 +22,9 @@ export default function CopyLinkButton({ url, title }: { url: string; title?: st
     }
   }
 
-  const shareText = title ? `${title} — ${url}` : url
+  const shareText = title
+    ? `📢 Worth a look — ${title}\n\n${url}`
+    : `📢 Check out this opportunity on AiForm Procure:\n\n${url}`
   const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`
   const linkedinHref = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
 
