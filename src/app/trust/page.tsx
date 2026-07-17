@@ -6,6 +6,7 @@ import { useState } from "react"
 import BackLink from "@/components/BackLink"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
+import ComplianceReminderForm from "./ComplianceReminderForm"
 
 const stats = [
   { value: "100%", label: "CSD-verified suppliers", icon: "M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" },
@@ -192,6 +193,32 @@ export default function TrustCentrePage() {
                   </div>
                 </article>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Compliance reminder lead magnet */}
+        <section className="border-b border-panel px-6 py-16">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-accent">Never miss a deadline</p>
+                <h2 className="mt-3 font-display text-3xl font-semibold text-heading">
+                  Get reminded before your B-BBEE certificate expires
+                </h2>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-secondary">
+                  You don&apos;t need an account for this. Tell us the expiry date on your certificate and
+                  we&apos;ll email you 30 days before it lapses — the same window we already notify our
+                  registered suppliers with.
+                </p>
+                <p className="mt-2 max-w-2xl text-xs leading-6 text-muted">
+                  This is just a reminder based on the date you give us — we don&apos;t verify or check
+                  certificates through this form.
+                </p>
+              </div>
+              <div className="rounded-md border border-panel bg-card p-5 shadow-panel">
+                <ComplianceReminderForm />
+              </div>
             </div>
           </div>
         </section>
