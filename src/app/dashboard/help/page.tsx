@@ -97,17 +97,17 @@ const helpSections: HelpSection[] = [
     faqs: {
       en: [
         { question: "I didn't receive my OTP. What do I do?", answer: "Wait 60 seconds and click Resend code. Check that your number is in +27 format. If the issue persists, contact support." },
-        { question: "Can I sign up with Google or Microsoft?", answer: "Yes. Click Continue with Google or Continue with Microsoft on the login page. Phone verification is not required for OAuth sign-ins." },
+        { question: "Can I sign up with Google, Microsoft, or LinkedIn?", answer: "Yes. Click Continue with Google, Continue with Microsoft, or Continue with LinkedIn on the login page. Phone verification is not required for OAuth sign-ins." },
         { question: "I forgot my password. How do I reset it?", answer: "Click Forgot password on the login page. A reset link will be sent to your email." },
       ],
       zu: [
         { question: "Angiyitholanga i-OTP yami. Ngenzeni?", answer: "Linda imizuzwana engu-60 bese uchofoza Thumela ikhodi futhi. Hlola ukuthi inombolo yakho isefomethini ethi +27. Uma inkinga iqhubeka, xhumana ne-support." },
-        { question: "Ngingabhalisa nge-Google noma Microsoft?", answer: "Yebo. Chofoza Continue with Google noma Continue with Microsoft ekhasini lokungena. Ukuqinisekiswa kocingo akudingeki uma ungena nge-OAuth." },
+        { question: "Ngingabhalisa nge-Google, Microsoft, noma LinkedIn?", answer: "Yebo. Chofoza Continue with Google, Continue with Microsoft, noma Continue with LinkedIn ekhasini lokungena. Ukuqinisekiswa kocingo akudingeki uma ungena nge-OAuth." },
         { question: "Ngikhohlwe iphasiwedi yami. Ngiyisetha kanjani kabusha?", answer: "Chofoza Forgot password ekhasini lokungena. Isixhumanisi sokusetha kabusha sizothunyelwa ku-imeyili yakho." },
       ],
       af: [
         { question: "Ek het nie my OTP ontvang nie. Wat doen ek?", answer: "Wag 60 sekondes en klik Stuur kode weer. Maak seker jou nommer is in +27-formaat. Kontak ondersteuning as die probleem voortduur." },
-        { question: "Kan ek met Google of Microsoft registreer?", answer: "Ja. Klik Continue with Google of Continue with Microsoft op die aanmeldblad. Telefoonverifikasie is nie nodig vir OAuth-aanmeldings nie." },
+        { question: "Kan ek met Google, Microsoft of LinkedIn registreer?", answer: "Ja. Klik Continue with Google, Continue with Microsoft of Continue with LinkedIn op die aanmeldblad. Telefoonverifikasie is nie nodig vir OAuth-aanmeldings nie." },
         { question: "Ek het my wagwoord vergeet. Hoe stel ek dit terug?", answer: "Klik Forgot password op die aanmeldblad. 'n Herstelskakel sal na jou e-pos gestuur word." },
       ],
     },

@@ -122,7 +122,7 @@ export default function PostOAuthPage() {
       const isMicrosoftOAuthProvider =
         providersList.includes("azure") || providersList.includes("microsoft")
       const isKnownOAuthProvider = providersList.some((item) =>
-        ["google", "azure", "microsoft"].includes(item)
+        ["google", "azure", "microsoft", "linkedin_oidc", "linkedin"].includes(item)
       )
 
       console.log("Post OAuth session user", session.user)
