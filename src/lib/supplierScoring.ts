@@ -54,12 +54,13 @@ export async function getCanonicalSupplierSmartScoreBatch({
   banks,
 }: {
   supplierIds: string[]
-  client?: SupabaseLike
+  client?: SupabaseLike | null
   profiles?: Array<SupplierSmartScoreProfile & { id: string }>
   banks?: SupplierBankScoreRecord[]
 }): Promise<Record<string, CanonicalSupplierScoreRecord>> {
   const ids = Array.from(new Set(supplierIds.filter(Boolean)))
   if (ids.length === 0) return {}
+  if (!client) throw new Error("Supabase is not configured.")
 
   const profilePromise = profiles
     ? Promise.resolve({ data: supplierOnly(profiles).filter((profile) => ids.includes(profile.id)), error: null })
@@ -141,7 +142,7 @@ export async function getCanonicalSupplierSmartScoreBatch({
 
 export async function getCanonicalSupplierSmartScore(
   supplierId: string,
-  client: SupabaseLike = defaultSupabase
+  client: SupabaseLike | null = defaultSupabase
 ): Promise<CanonicalSupplierScoreRecord | null> {
   const scores = await getCanonicalSupplierSmartScoreBatch({ supplierIds: [supplierId], client })
   return scores[supplierId] ?? null

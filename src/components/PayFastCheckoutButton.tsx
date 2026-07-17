@@ -26,6 +26,10 @@ export default function PayFastCheckoutButton({
     setError("")
 
     try {
+      if (!supabase) {
+        throw new Error("Supabase is not configured.")
+      }
+
       const {
         data: { session },
       } = await supabase.auth.getSession()

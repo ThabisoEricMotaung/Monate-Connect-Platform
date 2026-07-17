@@ -123,21 +123,22 @@ export default function BuyerHomePage() {
 
     async function load() {
       if (!supabase) return
+      const client = supabase
 
       const [rfqs, quotes, recentResult, pipelineRows] = await Promise.all([
         readAllRows<{ status: string | null }>((from, to) =>
-          supabase.from("rfqs").select("id, status").range(from, to),
+          client.from("rfqs").select("id, status").range(from, to),
         ),
         readAllRows<{ status: string | null }>((from, to) =>
-          supabase.from("quotes").select("id, status").range(from, to),
+          client.from("quotes").select("id, status").range(from, to),
         ),
-        supabase
+        client
           .from("rfqs")
           .select("id, title, status, created_at")
           .order("created_at", { ascending: false })
           .limit(5),
         readAllRows<RfqRow>((from, to) =>
-          supabase
+          client
             .from("rfqs")
             .select("id, title, status, category, province, region, budget, deadline, created_at")
             .order("created_at", { ascending: false })

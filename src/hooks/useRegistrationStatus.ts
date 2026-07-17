@@ -21,6 +21,11 @@ export function useRegistrationStatus(): RegistrationStatus {
     let cancelled = false
 
     async function loadStatus() {
+      if (!supabase) {
+        if (!cancelled) setStatus({ dashboardHref: null, state: "signed-out" })
+        return
+      }
+
       const {
         data: { session },
       } = await supabase.auth.getSession()

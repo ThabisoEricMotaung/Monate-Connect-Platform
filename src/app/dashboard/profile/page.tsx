@@ -2474,11 +2474,12 @@ function ProfilePageInner() {
   }, [])
 
   useEffect(() => {
-    if (!deleteScheduled) return
+    if (!deleteScheduled || !supabase) return
+    const client = supabase
 
     const signOutTimer = window.setTimeout(() => {
       void (async () => {
-        await supabase.auth.signOut()
+        await client.auth.signOut()
         router.replace("/")
       })()
     }, 3000)

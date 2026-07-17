@@ -100,6 +100,7 @@ export default function ProcurementWire({ scope = "public" }: { scope?: Procurem
     let cancelled = false
 
     async function loadWireData() {
+      if (!supabase) return
       const {
         data: { session },
       } = await supabase.auth.getSession()

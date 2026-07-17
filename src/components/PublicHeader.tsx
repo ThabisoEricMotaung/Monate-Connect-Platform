@@ -37,11 +37,19 @@ export default function PublicHeader() {
   }, [pathname])
 
   async function handleLogout() {
+    if (!supabase) {
+      window.location.assign("/?signedout=1")
+      return
+    }
     await supabase.auth.signOut()
     window.location.assign("/?signedout=1")
   }
 
   async function handleIncompleteSignOut() {
+    if (!supabase) {
+      window.location.assign("/")
+      return
+    }
     await supabase.auth.signOut()
     window.location.assign("/")
   }

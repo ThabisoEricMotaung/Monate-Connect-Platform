@@ -278,16 +278,17 @@ export default function AdminOverviewPage() {
         setLoading(false)
         return
       }
+      const client = supabase
 
       const [buyer, rfqs, quotes, contracts, purchaseOrders, invoices] = await Promise.all([
-        supabase
+        client
           .from("profiles")
           .select("id, business_name, full_name, preferred_name, email")
           .eq("id", profile.id)
           .maybeSingle()
           .then((result) => (result.error ? null : (result.data as BuyerProfile | null))),
         readAllRows<RfqRow>((from, to) =>
-          supabase
+          client
             .from("rfqs")
             .select("id, title, category, province, region, budget, deadline, status, created_at")
             .eq("is_demo", false)
@@ -295,7 +296,7 @@ export default function AdminOverviewPage() {
             .range(from, to),
         ),
         readAllRows<QuoteRow>((from, to) =>
-          supabase
+          client
             .from("quotes")
             .select("id, rfq_id, supplier_id, supplier_name, amount, status, created_at")
             .eq("is_demo", false)
@@ -303,7 +304,7 @@ export default function AdminOverviewPage() {
             .range(from, to),
         ),
         readAllRows<ContractRow>((from, to) =>
-          supabase
+          client
             .from("contracts")
             .select("id, supplier_id, supplier_name, contract_value, end_date, status, created_at")
             .eq("is_demo", false)
@@ -311,7 +312,7 @@ export default function AdminOverviewPage() {
             .range(from, to),
         ),
         readAllRows<PurchaseOrderRow>((from, to) =>
-          supabase
+          client
             .from("purchase_orders")
             .select("id, rfq_id, quote_id, supplier_id, supplier_name, amount, title, status, generated_at")
             .eq("is_demo", false)
@@ -319,7 +320,7 @@ export default function AdminOverviewPage() {
             .range(from, to),
         ),
         readAllRows<InvoiceRow>((from, to) =>
-          supabase
+          client
             .from("invoices")
             .select("id, supplier_id, amount, total_amount, status, created_at")
             .eq("is_demo", false)
@@ -342,7 +343,7 @@ export default function AdminOverviewPage() {
       const suppliers =
         supplierIds.length > 0
           ? await readRows<SupplierProfile>(
-              supabase
+              client
                 .from("profiles")
                 .select("id, business_name, industry, bbbee_level, verification_status, company_logo_url")
                 .in("id", supplierIds),

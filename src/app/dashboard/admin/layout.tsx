@@ -216,15 +216,16 @@ export default function AdminDashboardLayout({
 
     async function loadMetrics() {
       if (!supabase || !authorized || !profile?.id) return
+      const client = supabase
 
       const [rfqs, quotes, savedResult, inboxCounts] = await Promise.all([
         readAllRows<{ status: string | null }>((from, to) =>
-          supabase.from("rfqs").select("id, status").eq("is_demo", false).range(from, to),
+          client.from("rfqs").select("id, status").eq("is_demo", false).range(from, to),
         ),
         readAllRows<{ status: string | null }>((from, to) =>
-          supabase.from("quotes").select("id, status").eq("is_demo", false).range(from, to),
+          client.from("quotes").select("id, status").eq("is_demo", false).range(from, to),
         ),
-        supabase.from("saved_suppliers").select("id").eq("user_id", profile.id),
+        client.from("saved_suppliers").select("id").eq("user_id", profile.id),
         getInboxUnreadCounts(),
       ])
 

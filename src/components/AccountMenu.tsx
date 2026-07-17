@@ -68,6 +68,10 @@ export default function AccountMenu({
   }, [open])
 
   async function handleLogout() {
+    if (!supabase) {
+      window.location.assign("/?signedout=1")
+      return
+    }
     await supabase.auth.signOut()
     window.location.assign("/?signedout=1")
   }
