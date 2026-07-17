@@ -37,12 +37,13 @@ export default function PostOAuthPage() {
 
     async function waitForSession(maxAttempts = 10, delayMs = 500) {
       if (!supabase) return null
+      const client = supabase
 
       for (let i = 0; i < maxAttempts; i++) {
         const {
           data: { session },
           error: sessionError,
-        } = await supabase.auth.getSession()
+        } = await client.auth.getSession()
 
         if (sessionError) {
           console.error("Post OAuth session lookup failed", sessionError)
@@ -59,6 +60,7 @@ export default function PostOAuthPage() {
 
     function waitForSignedInEvent(timeoutMs = 5000) {
       if (!supabase) return Promise.resolve(null)
+      const client = supabase
 
       return new Promise<Session | null>((resolve) => {
         let settled = false
@@ -79,7 +81,7 @@ export default function PostOAuthPage() {
 
         const {
           data: { subscription: authSubscription },
-        } = supabase.auth.onAuthStateChange((event, session) => {
+        } = client.auth.onAuthStateChange((event, session) => {
           if (event === "SIGNED_IN" && session) {
             finish(session)
           }
@@ -92,6 +94,7 @@ export default function PostOAuthPage() {
 
     const completePostOAuth = async () => {
       if (!supabase || !isMounted) return
+      const client = supabase
 
       let session = await waitForSession()
 
@@ -137,7 +140,7 @@ export default function PostOAuthPage() {
       if (!isMounted) return
 
       const lookupProfile = () =>
-        supabase
+        client
           .from("profiles")
           .select("id, role")
           .eq("id", session.user.id)
