@@ -53,7 +53,7 @@ Two updates worth knowing about.
 
 You can now share any opportunity directly. Every listing has its own link, plus one-tap WhatsApp and LinkedIn buttons — so if you spot a tender that's a better fit for someone else in your network, you can send it across in a couple of taps instead of copying and pasting.
 
-We've also added more detail to the Trust Center on where opportunities come from, including a "Team-reviewed" badge on listings sourced from eTenders.gov.za, so it's clear which ones someone on our side has actually checked before they went live.
+We've also added more detail to the Trust Center on where opportunities come from, including a "Team-reviewed" badge on listings sourced from eTenders.gov.za (https://www.etenders.gov.za), so it's clear which ones someone on our side has actually checked before they went live.
 
 Browse open opportunities: ${opportunitiesUrl}
 See how sourcing works: ${trustUrl}
@@ -65,7 +65,7 @@ ${emailSignatureText()}`
       <p>Hi ${name},</p>
       <p>Two updates worth knowing about.</p>
       <p>You can now share any opportunity directly. Every listing has its own link, plus one-tap WhatsApp and LinkedIn buttons &mdash; so if you spot a tender that's a better fit for someone else in your network, you can send it across in a couple of taps instead of copying and pasting.</p>
-      <p>We've also added more detail to the Trust Center on where opportunities come from, including a <strong>&ldquo;Team-reviewed&rdquo;</strong> badge on listings sourced from eTenders.gov.za, so it's clear which ones someone on our side has actually checked before they went live.</p>
+      <p>We've also added more detail to the Trust Center on where opportunities come from, including a <strong>&ldquo;Team-reviewed&rdquo;</strong> badge on listings sourced from <a href="https://www.etenders.gov.za" style="color: #1a3a2a;">eTenders.gov.za</a>, so it's clear which ones someone on our side has actually checked before they went live.</p>
       <p style="margin: 24px 0;">
         <a href="${opportunitiesUrl}" style="background: #1a3a2a; color: #f8f4ec; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; margin-right: 12px;">Browse open opportunities</a>
       </p>
