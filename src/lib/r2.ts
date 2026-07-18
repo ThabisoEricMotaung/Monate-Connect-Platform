@@ -55,10 +55,20 @@ export async function r2Put(
   contentType = "application/json",
 ): Promise<void> {
   const signer = client(config)
+  // R2 rejects PUTs that arrive without a Content-Length header (it doesn't
+  // accept chunked transfer encoding for plain object uploads). Some fetch
+  // implementations don't reliably set this automatically for string
+  // bodies, so it's computed and set explicitly here — and needs to be a
+  // Uint8Array (not a raw string) for the byte length and the signed
+  // payload to agree.
+  const payload = new TextEncoder().encode(body)
   const response = await signer.fetch(objectUrl(config, key), {
     method: "PUT",
-    body,
-    headers: { "content-type": contentType },
+    body: payload,
+    headers: {
+      "content-type": contentType,
+      "content-length": String(payload.byteLength),
+    },
   })
   if (!response.ok) {
     const text = await response.text().catch(() => "")
