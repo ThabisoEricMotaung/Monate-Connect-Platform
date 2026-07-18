@@ -26,6 +26,7 @@ type VerificationStep = "csd" | "bbbee" | "tax" | "banking" | "director"
 type BulkAction = "verify" | "reject" | "pending"
 type PendingAction = { supplierId: string; key: string }
 type InlineFeedback = { message: string; type: "success" | "error" }
+type ProvisionalForm = { missingDocument: string; deadline: string }
 
 type SupplierProfile = {
   id: string
@@ -62,6 +63,8 @@ type SupplierProfile = {
   created_at: string | null
   updated_at?: string | null
   verification_notes: string | null
+  provisional_missing_document: string | null
+  provisional_deadline: string | null
   is_deleted?: boolean | null
   deleted_at?: string | null
 }
@@ -82,6 +85,18 @@ const VERIFICATION_QUEUE_STATUS_FILTER = [
 ].join(",")
 
 const profileSelect = [
+  SUPPLIER_SMART_SCORE_PROFILE_SELECT,
+  "full_name",
+  "bbbee_expiry_date",
+  "tax_expiry_date",
+  "verification_notes",
+  "provisional_missing_document",
+  "provisional_deadline",
+  "is_deleted",
+  "deleted_at",
+].join(", ")
+
+const profileSelectWithoutProvisional = [
   SUPPLIER_SMART_SCORE_PROFILE_SELECT,
   "full_name",
   "bbbee_expiry_date",
@@ -480,6 +495,7 @@ export default function AdminVerificationQueuePage() {
   const [documentsBySupplier, setDocumentsBySupplier] = useState<Record<string, SupplierDocument[]>>({})
   const [banksBySupplier, setBanksBySupplier] = useState<Record<string, BankDetails>>({})
   const [notesBySupplier, setNotesBySupplier] = useState<Record<string, string>>({})
+  const [provisionalBySupplier, setProvisionalBySupplier] = useState<Record<string, ProvisionalForm>>({})
   const [supplierNotesBySupplier, setSupplierNotesBySupplier] = useState<Record<string, string>>({})
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<FilterMode>("all")
@@ -494,6 +510,7 @@ export default function AdminVerificationQueuePage() {
   const [deletePending, setDeletePending] = useState(false)
   const [checklistState, setChecklistState] = useState<Record<string, boolean>>({})
   const [checklistOpen, setChecklistOpen] = useState<Record<string, boolean>>({})
+  const [provisionalFieldsAvailable, setProvisionalFieldsAvailable] = useState(true)
 
   useEffect(() => {
     let cancelled = false
@@ -526,12 +543,31 @@ export default function AdminVerificationQueuePage() {
         return
       }
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from("profiles")
         .select(profileSelect)
         .eq("role", "supplier")
         .or(VERIFICATION_QUEUE_STATUS_FILTER)
         .order("created_at", { ascending: false })
+
+      if (error?.code === "42703") {
+        const retry = await supabase
+          .from("profiles")
+          .select(profileSelectWithoutProvisional)
+          .eq("role", "supplier")
+          .or(VERIFICATION_QUEUE_STATUS_FILTER)
+          .order("created_at", { ascending: false })
+
+        data = (retry.data?.map((profile) => ({
+          ...(profile as unknown as Record<string, unknown>),
+          provisional_missing_document: null,
+          provisional_deadline: null,
+        })) ?? null) as typeof data
+        error = retry.error
+        if (!cancelled) setProvisionalFieldsAvailable(false)
+      } else if (!cancelled) {
+        setProvisionalFieldsAvailable(true)
+      }
 
       if (error) {
         if (!cancelled) {
@@ -622,6 +658,15 @@ export default function AdminVerificationQueuePage() {
           supplierProfiles.reduce<Record<string, string>>((notes, profile) => {
             notes[profile.id] = profile.verification_notes ?? ""
             return notes
+          }, {}),
+        )
+        setProvisionalBySupplier(
+          supplierProfiles.reduce<Record<string, ProvisionalForm>>((forms, profile) => {
+            forms[profile.id] = {
+              missingDocument: profile.provisional_missing_document ?? "",
+              deadline: profile.provisional_deadline ?? "",
+            }
+            return forms
           }, {}),
         )
         setLoading(false)
@@ -935,6 +980,73 @@ export default function AdminVerificationQueuePage() {
       ),
     )
     setActionFeedback(profile.id, pendingKey, { message: "Note saved", type: "success" })
+  }
+
+  async function saveProvisionalStatus(profile: SupplierProfile, clear = false) {
+    if (!supabase) return
+
+    if (!provisionalFieldsAvailable) {
+      setActionFeedback(profile.id, "provisional-save", {
+        message: "Run the provisional fields migration first",
+        type: "error",
+      })
+      return
+    }
+
+    const form = provisionalBySupplier[profile.id] ?? { missingDocument: "", deadline: "" }
+    const missingDocument = clear ? null : form.missingDocument.trim()
+    const deadline = clear ? null : form.deadline
+    const pendingKey = clear ? "provisional-clear" : "provisional-save"
+
+    if (!clear && (!missingDocument || !deadline)) {
+      setActionFeedback(profile.id, pendingKey, {
+        message: "Add the document and due date before saving",
+        type: "error",
+      })
+      return
+    }
+
+    setPendingAction({ supplierId: profile.id, key: pendingKey })
+    setErrorMessage("")
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        provisional_missing_document: missingDocument,
+        provisional_deadline: deadline,
+      })
+      .eq("id", profile.id)
+
+    setPendingAction(null)
+
+    if (error) {
+      setErrorMessage(error.message)
+      setActionFeedback(profile.id, pendingKey, { message: "Provisional status save failed", type: "error" })
+      return
+    }
+
+    setProfiles((current) =>
+      current.map((item) =>
+        item.id === profile.id
+          ? {
+              ...item,
+              provisional_missing_document: missingDocument,
+              provisional_deadline: deadline,
+            }
+          : item,
+      ),
+    )
+    setProvisionalBySupplier((current) => ({
+      ...current,
+      [profile.id]: {
+        missingDocument: missingDocument ?? "",
+        deadline: deadline ?? "",
+      },
+    }))
+    setActionFeedback(profile.id, pendingKey, {
+      message: clear ? "Provisional status cleared" : "Provisional status saved",
+      type: "success",
+    })
   }
 
   async function sendSupplierNote(profile: SupplierProfile) {
@@ -1339,8 +1451,13 @@ export default function AdminVerificationQueuePage() {
               pendingAction?.supplierId === profile.id && pendingAction.key === "notes"
             const supplierNotePending =
               pendingAction?.supplierId === profile.id && pendingAction.key === "supplier-note"
+            const provisionalSavePending =
+              pendingAction?.supplierId === profile.id && pendingAction.key === "provisional-save"
+            const provisionalClearPending =
+              pendingAction?.supplierId === profile.id && pendingAction.key === "provisional-clear"
             const scoreFlashing = Boolean(scoreHighlight[profile.id])
             const isDeleted = profile.is_deleted === true
+            const provisionalForm = provisionalBySupplier[profile.id] ?? { missingDocument: "", deadline: "" }
 
             return (
               <article
@@ -1471,6 +1588,107 @@ export default function AdminVerificationQueuePage() {
                               inlineFeedback[`${profile.id}:bulk-verify`] ??
                               inlineFeedback[`${profile.id}:bulk-reject`] ??
                               inlineFeedback[`${profile.id}:bulk-pending`]
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-4 border-t border-panel pt-4">
+                        <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted">
+                          Provisional verification
+                        </p>
+                        <p className="mt-1 text-sm text-secondary">
+                          Manual status layer for a supplier with one outstanding document. This does not change verification status or SmartScore.
+                        </p>
+                        {!provisionalFieldsAvailable && (
+                          <p className="mt-2 rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-xs font-semibold text-warning">
+                            Run the provisional verification migration before using this control.
+                          </p>
+                        )}
+                        <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_auto] lg:items-end">
+                          <div>
+                            <label
+                              htmlFor={`provisional-document-${profile.id}`}
+                              className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted"
+                            >
+                              Outstanding document
+                            </label>
+                            <input
+                              id={`provisional-document-${profile.id}`}
+                              type="text"
+                              value={provisionalForm.missingDocument}
+                              onChange={(event) =>
+                                setProvisionalBySupplier((current) => ({
+                                  ...current,
+                                  [profile.id]: {
+                                    ...(current[profile.id] ?? { missingDocument: "", deadline: "" }),
+                                    missingDocument: event.target.value,
+                                  },
+                                }))
+                              }
+                              disabled={isDeleted || !provisionalFieldsAvailable || provisionalSavePending || provisionalClearPending}
+                              placeholder="Tax Clearance"
+                              className="mt-2 w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-60"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              htmlFor={`provisional-deadline-${profile.id}`}
+                              className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted"
+                            >
+                              Due date
+                            </label>
+                            <input
+                              id={`provisional-deadline-${profile.id}`}
+                              type="date"
+                              value={provisionalForm.deadline}
+                              onChange={(event) =>
+                                setProvisionalBySupplier((current) => ({
+                                  ...current,
+                                  [profile.id]: {
+                                    ...(current[profile.id] ?? { missingDocument: "", deadline: "" }),
+                                    deadline: event.target.value,
+                                  },
+                                }))
+                              }
+                              disabled={isDeleted || !provisionalFieldsAvailable || provisionalSavePending || provisionalClearPending}
+                              className="mt-2 w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition focus:border-accent focus:ring-1 focus:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-60"
+                            />
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              disabled={isDeleted || !provisionalFieldsAvailable || provisionalSavePending || provisionalClearPending}
+                              onClick={() => saveProvisionalStatus(profile)}
+                              className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {provisionalSavePending ? "Saving..." : "Save"}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={
+                                isDeleted ||
+                                !provisionalFieldsAvailable ||
+                                provisionalSavePending ||
+                                provisionalClearPending ||
+                                (!profile.provisional_missing_document && !profile.provisional_deadline)
+                              }
+                              onClick={() => saveProvisionalStatus(profile, true)}
+                              className="rounded-md border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {provisionalClearPending ? "Clearing..." : "Clear"}
+                            </button>
+                          </div>
+                        </div>
+                        {(profile.provisional_missing_document || profile.provisional_deadline) && (
+                          <p className="mt-2 text-xs font-semibold text-warning">
+                            Active: {profile.provisional_missing_document ?? "Outstanding document"} due {formatDate(profile.provisional_deadline)}
+                          </p>
+                        )}
+                        <div className="mt-2 flex flex-wrap gap-3">
+                          <InlineFeedbackBadge
+                            feedback={
+                              inlineFeedback[`${profile.id}:provisional-save`] ??
+                              inlineFeedback[`${profile.id}:provisional-clear`]
                             }
                           />
                         </div>

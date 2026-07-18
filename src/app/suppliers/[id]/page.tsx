@@ -19,6 +19,7 @@ type PublicSupplierProfile = {
   province: string | null
   provinces: string[] | null
   industry: string | null
+  verification_status: string | null
   bbbee_level: string | null
   cidb_grade: string | null
   smart_score: number | string | null
@@ -28,6 +29,8 @@ type PublicSupplierProfile = {
   banking_verified: boolean | null
   bank_verified: boolean | null
   director_verified: boolean | null
+  provisional_missing_document: string | null
+  provisional_deadline: string | null
   website: string | null
   description: string | null
   employee_count: number | string | null
@@ -49,11 +52,11 @@ const COVER_GRADIENTS = [
 
 async function getSupplier(id: string): Promise<PublicSupplierProfile> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (!supabaseUrl || !supabaseAnonKey) notFound()
+  if (!supabaseUrl || !supabaseKey) notFound()
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: {
       autoRefreshToken: false,
       detectSessionInUrl: false,
@@ -61,21 +64,46 @@ async function getSupplier(id: string): Promise<PublicSupplierProfile> {
     },
   })
 
-  const baseSelect =
-    "id,full_name,preferred_name,email,business_name,province,provinces,industry,bbbee_level,cidb_grade,smart_score,csd_verified,bbbee_verified,tax_verified,banking_verified,bank_verified,director_verified,website,description,employee_count,linkedin_url,founded_year,created_at"
+  const coreSelect =
+    "id,full_name,preferred_name,email,business_name,province,provinces,industry,verification_status,bbbee_level,cidb_grade,smart_score,csd_verified,bbbee_verified,tax_verified,banking_verified,bank_verified,director_verified,website,description,employee_count,linkedin_url,founded_year,created_at"
+  const provisionalSelect = "provisional_missing_document,provisional_deadline"
   let { data, error } = await supabase
     .from("profiles")
-    .select(`${baseSelect},avatar_url,company_logo_url`)
+    .select(`${coreSelect},${provisionalSelect},avatar_url,company_logo_url`)
     .eq("id", id)
     .maybeSingle()
 
   if (error?.code === "42703") {
     const retry = await supabase
       .from("profiles")
-      .select(baseSelect)
+      .select(`${coreSelect},avatar_url,company_logo_url`)
       .eq("id", id)
       .maybeSingle()
-    data = retry.data ? { ...retry.data, avatar_url: null, company_logo_url: null } : null
+    data = retry.data
+      ? {
+          ...retry.data,
+          provisional_missing_document: null,
+          provisional_deadline: null,
+        }
+      : null
+    error = retry.error
+  }
+
+  if (error?.code === "42703") {
+    const retry = await supabase
+      .from("profiles")
+      .select(coreSelect)
+      .eq("id", id)
+      .maybeSingle()
+    data = retry.data
+      ? {
+          ...retry.data,
+          avatar_url: null,
+          company_logo_url: null,
+          provisional_missing_document: null,
+          provisional_deadline: null,
+        }
+      : null
     error = retry.error
   }
 
@@ -95,6 +123,30 @@ function formatScore(value: number | string | null | undefined): string {
   const score = asNumber(value)
   if (score === null) return "-"
   return String(Math.round(Math.min(100, Math.max(0, score))))
+}
+
+function isVerifiedSupplier(status: string | null | undefined): boolean {
+  return status?.trim() === "Verified"
+}
+
+function statusLabel(status: string | null | undefined): string {
+  return status?.trim() || "Pending Review"
+}
+
+function displayScore(value: number | string | null | undefined, verified: boolean, provisional: boolean): string {
+  if (!verified || provisional) return "In review"
+  return formatScore(value)
+}
+
+function formatDueDate(value: string | null | undefined): string {
+  if (!value) return "No due date"
+  const date = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString("en-ZA", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
 }
 
 function coverGradient(name: string | null | undefined): string {
@@ -177,6 +229,10 @@ export default async function SupplierProfilePage({ params }: Props) {
   const supplier = await getSupplier(id)
   const websiteHref = externalHref(supplier.website)
   const linkedinHref = externalHref(supplier.linkedin_url)
+  const verifiedSupplier = isVerifiedSupplier(supplier.verification_status)
+  const provisionalDocument = supplier.provisional_missing_document?.trim() ?? ""
+  const provisionallyVerified = Boolean(provisionalDocument)
+  const supplierStatus = statusLabel(supplier.verification_status)
   const bankVerified = Boolean(supplier.banking_verified || supplier.bank_verified)
   const supplierName = supplier.business_name?.trim() || "Supplier profile"
   const contactName =
@@ -226,8 +282,24 @@ export default async function SupplierProfilePage({ params }: Props) {
             <div className="px-6 pb-6 pt-14">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <p className="text-[0.72rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
-                    <span aria-hidden="true">&#10003;</span> Verified Supplier
+                  <p
+                    className="text-[0.72rem] font-bold uppercase tracking-[0.18em]"
+                    style={{ color: provisionallyVerified || verifiedSupplier ? GOLD : "#8a6a2f" }}
+                    title={
+                      provisionallyVerified
+                        ? `${provisionalDocument} due ${formatDueDate(supplier.provisional_deadline)}`
+                        : undefined
+                    }
+                  >
+                    {provisionallyVerified ? (
+                      "Provisionally Verified"
+                    ) : verifiedSupplier ? (
+                      <>
+                        <span aria-hidden="true">&#10003;</span> Verified Supplier
+                      </>
+                    ) : (
+                      supplierStatus
+                    )}
                   </p>
                   <h1 className="mt-2 font-display text-[28px] font-medium leading-tight text-[#1a3a2a] sm:text-4xl">
                     {supplierName}
@@ -235,10 +307,15 @@ export default async function SupplierProfilePage({ params }: Props) {
                   <p className="mt-2 text-sm text-stone-600">
                     {[supplier.industry, primaryProvince(supplier)].filter(Boolean).join(" | ")}
                   </p>
+                  {provisionallyVerified && (
+                    <p className="mt-2 max-w-xl text-sm font-medium text-[#8a6a2f]">
+                      Outstanding: {provisionalDocument}. Due {formatDueDate(supplier.provisional_deadline)}.
+                    </p>
+                  )}
                 </div>
                 <div className="w-fit rounded-lg border bg-white px-4 py-3 text-center" style={{ borderColor: GOLD }}>
                   <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>SmartScore</p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-[#1a3a2a]">{formatScore(supplier.smart_score)}</p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums text-[#1a3a2a]">{displayScore(supplier.smart_score, verifiedSupplier, provisionallyVerified)}</p>
                 </div>
               </div>
 
@@ -309,8 +386,14 @@ export default async function SupplierProfilePage({ params }: Props) {
             <p className="text-[0.7rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
               SmartScore
             </p>
-            <p className="mt-3 font-display text-6xl font-medium leading-none text-[#1a3a2a]">{formatScore(supplier.smart_score)}</p>
-            <p className="mt-3 text-sm leading-6 text-stone-600">Independently verified by AiForm Procure</p>
+            <p className="mt-3 font-display text-5xl font-medium leading-none text-[#1a3a2a]">{displayScore(supplier.smart_score, verifiedSupplier, provisionallyVerified)}</p>
+            <p className="mt-3 text-sm leading-6 text-stone-600">
+              {provisionallyVerified
+                ? `Provisionally verified pending ${provisionalDocument} by ${formatDueDate(supplier.provisional_deadline)}`
+                : verifiedSupplier
+                  ? "Independently verified by AiForm Procure"
+                  : `Supplier status: ${supplierStatus}`}
+            </p>
           </div>
 
           <div className="rounded-lg border border-stone-200 bg-white p-5">
