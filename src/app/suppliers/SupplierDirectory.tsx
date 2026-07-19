@@ -15,6 +15,8 @@ export type PublicSupplierDirectoryRow = {
   provinces: string[] | null
   industry: string | null
   verification_status: string | null
+  provisional_missing_document: string | null
+  provisional_deadline: string | null
   bbbee_level: string | null
   cidb_grade: string | null
   smart_score: number | string | null
@@ -91,6 +93,14 @@ function isPublicVerifiedSupplier(supplier: PublicSupplierDirectoryRow): boolean
   return isVerifiedStatus(supplier.verification_status)
 }
 
+function isProvisionallyVerifiedSupplier(supplier: PublicSupplierDirectoryRow): boolean {
+  return supplier.verification_status?.trim() === "Pending Review" && Boolean(supplier.provisional_missing_document?.trim())
+}
+
+function isDirectoryVisibleSupplier(supplier: PublicSupplierDirectoryRow): boolean {
+  return isPublicVerifiedSupplier(supplier) || isProvisionallyVerifiedSupplier(supplier)
+}
+
 function BuildingStoreIcon({ className = "h-12 w-12" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -142,11 +152,11 @@ function InfoPill({ children, tint = "neutral" }: { children: React.ReactNode; t
   )
 }
 
-function ScoreBadge({ score }: { score: number | string | null }) {
+function ScoreBadge({ score, muted = false }: { score: number | string | null; muted?: boolean }) {
   return (
     <div className="min-w-[68px] rounded-lg border bg-white px-3 py-2 text-center" style={{ borderColor: GOLD }}>
       <p className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>Score</p>
-      <p className="mt-0.5 text-[19px] font-medium leading-none text-[#1f2f28] tabular-nums">{formatScore(score)}</p>
+      <p className="mt-0.5 text-[19px] font-medium leading-none text-[#1f2f28] tabular-nums">{muted ? "In review" : formatScore(score)}</p>
     </div>
   )
 }
@@ -154,6 +164,7 @@ function ScoreBadge({ score }: { score: number | string | null }) {
 function SupplierCard({ supplier }: { supplier: PublicSupplierDirectoryRow }) {
   const province = primaryProvince(supplier)
   const bbbee = levelValue(supplier.bbbee_level)
+  const provisional = isProvisionallyVerifiedSupplier(supplier)
 
   return (
     <article className="flex min-h-[248px] flex-col rounded-lg border border-stone-200 bg-white p-5">
@@ -168,15 +179,17 @@ function SupplierCard({ supplier }: { supplier: PublicSupplierDirectoryRow }) {
             seedName={supplier.business_name}
           />
           <div className="min-w-0">
-            {isPublicVerifiedSupplier(supplier) && (
+            {provisional ? (
+              <p className="mb-1 text-[0.68rem] font-semibold" style={{ color: GOLD }}>Provisionally Approved</p>
+            ) : isPublicVerifiedSupplier(supplier) ? (
               <p className="mb-1 text-[0.68rem] font-semibold" style={{ color: TEAL }}>&#10003; Verified</p>
-            )}
+            ) : null}
             <h2 className="font-display text-[15px] font-medium leading-snug text-[#1f2f28]">
               {supplier.business_name || "Verified supplier"}
             </h2>
           </div>
         </div>
-        <ScoreBadge score={supplier.smart_score} />
+        <ScoreBadge score={supplier.smart_score} muted={provisional} />
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -226,6 +239,11 @@ function SupplierList({ suppliers }: { suppliers: PublicSupplierDirectoryRow[] }
                 seedName={supplier.business_name}
               />
               <div className="min-w-0">
+                {isProvisionallyVerifiedSupplier(supplier) ? (
+                  <p className="mb-1 text-[0.68rem] font-semibold" style={{ color: GOLD }}>Provisionally Approved</p>
+                ) : isPublicVerifiedSupplier(supplier) ? (
+                  <p className="mb-1 text-[0.68rem] font-semibold" style={{ color: TEAL }}>&#10003; Verified</p>
+                ) : null}
                 <h3 className="font-display text-[14px] font-medium leading-snug text-[#1f2f28]">
                   {supplier.business_name || "Verified supplier"}
                 </h3>
@@ -241,7 +259,9 @@ function SupplierList({ suppliers }: { suppliers: PublicSupplierDirectoryRow[] }
             </div>
             <div className="flex items-center justify-between gap-3 md:justify-end">
               <div className="text-center">
-                <p className="text-lg font-medium tabular-nums text-[#1f2f28]">{formatScore(supplier.smart_score)}</p>
+                <p className="text-lg font-medium tabular-nums text-[#1f2f28]">
+                  {isProvisionallyVerifiedSupplier(supplier) ? "In review" : formatScore(supplier.smart_score)}
+                </p>
                 <p className="text-[8px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>Score</p>
               </div>
               <Link href={`/suppliers/${supplier.id}`} className="rounded-md border border-stone-300 px-3 py-2 text-xs font-semibold text-[#1a3a2a] hover:border-[#c8a060] hover:text-[#8c6a2f]">
@@ -339,7 +359,7 @@ export default function SupplierDirectory({
     const search = normalize(query)
 
     return suppliers.filter((supplier) => {
-      if (!isPublicVerifiedSupplier(supplier)) return false
+      if (!isDirectoryVisibleSupplier(supplier)) return false
       const searchHit =
         !search ||
         normalize(supplier.business_name).includes(search) ||

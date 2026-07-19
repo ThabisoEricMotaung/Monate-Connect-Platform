@@ -22,10 +22,11 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
     },
   })
 
-  const baseSelect = `${SUPPLIER_SMART_SCORE_PROFILE_SELECT}, cidb_grade, website, employee_count, linkedin_url, founded_year`
+  const coreSelect = `${SUPPLIER_SMART_SCORE_PROFILE_SELECT}, cidb_grade, website, employee_count, linkedin_url, founded_year`
+  const provisionalSelect = "provisional_missing_document, provisional_deadline"
   let { data, error } = await supabase
     .from("profiles")
-    .select(`${baseSelect},company_logo_url`)
+    .select(`${coreSelect}, ${provisionalSelect}, company_logo_url`)
     .eq("role", "supplier")
     .order("smart_score", { ascending: false, nullsFirst: false })
     .order("business_name", { ascending: true })
@@ -33,12 +34,33 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
   if (error?.code === "42703") {
     const retry = await supabase
       .from("profiles")
-      .select(baseSelect)
+      .select(`${coreSelect}, company_logo_url`)
       .eq("role", "supplier")
       .order("smart_score", { ascending: false, nullsFirst: false })
       .order("business_name", { ascending: true })
-    data = retry.data?.map((supplier) => ({ ...supplier, company_logo_url: null })) ?? null
+    data = retry.data?.map((supplier) => ({
+      ...(supplier as unknown as Record<string, unknown>),
+      provisional_missing_document: null,
+      provisional_deadline: null,
+    })) as typeof data
     error = retry.error
+
+    if (error?.code === "42703") {
+      const legacyRetry = await supabase
+        .from("profiles")
+        .select(coreSelect)
+        .eq("role", "supplier")
+        .order("smart_score", { ascending: false, nullsFirst: false })
+        .order("business_name", { ascending: true })
+
+      data = legacyRetry.data?.map((supplier) => ({
+        ...(supplier as unknown as Record<string, unknown>),
+        company_logo_url: null,
+        provisional_missing_document: null,
+        provisional_deadline: null,
+      })) as typeof data
+      error = legacyRetry.error
+    }
   }
 
   if (error) {
@@ -60,17 +82,22 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
     cidb_document_url?: string | null
     capability_statement_url?: string | null
   }>
-  const verifiedRows = rows.filter((supplier) => isVerifiedStatus(supplier.verification_status))
-  const supplierIds = verifiedRows.map((supplier) => supplier.id)
+  const directoryRows = rows.filter(
+    (supplier) =>
+      isVerifiedStatus(supplier.verification_status) ||
+      (supplier.verification_status?.trim() === "Pending Review" &&
+        Boolean(supplier.provisional_missing_document?.trim())),
+  )
+  const supplierIds = directoryRows.map((supplier) => supplier.id)
   if (supplierIds.length === 0) return []
 
   const canonicalScores = await getCanonicalSupplierSmartScoreBatch({
     supplierIds,
     client: supabase,
-    profiles: verifiedRows,
+    profiles: directoryRows,
   })
 
-  return verifiedRows
+  return directoryRows
     .map((supplier) => {
       const canonical = canonicalScores[supplier.id]
 
@@ -81,6 +108,8 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
         provinces: supplier.provinces,
         industry: supplier.industry,
         verification_status: supplier.verification_status,
+        provisional_missing_document: supplier.provisional_missing_document,
+        provisional_deadline: supplier.provisional_deadline,
         bbbee_level: supplier.bbbee_level,
         cidb_grade: supplier.cidb_grade,
         smart_score: canonical?.result.score ?? supplier.smart_score,

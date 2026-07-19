@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { Resend } from "resend"
 import { emailSignatureHtml, emailSignatureText, reviewCopyEmail, SUPPLIER_EMAIL_REVIEW_RECIPIENT } from "@/lib/emailSignature"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
+import { missingRequiredSupplierDocuments } from "@/lib/supplierDocuments"
 
 type SupplierProfile = {
   id: string
@@ -33,29 +34,6 @@ type ReminderLogRow = {
   reminder_count: number | null
 }
 
-const REQUIRED_DOCUMENTS = [
-  {
-    type: "csd",
-    label: "CSD document",
-    legacyFields: ["csd_document_url"] as const,
-  },
-  {
-    type: "bbbee",
-    label: "BBBEE Certificate",
-    legacyFields: ["bbbee_document_url"] as const,
-  },
-  {
-    type: "tax_clearance",
-    label: "Tax Clearance",
-    legacyFields: ["tax_clearance_url", "tax_document_url"] as const,
-  },
-  {
-    type: "cipc",
-    label: "CIPC / company registration document",
-    legacyFields: ["company_registration_url"] as const,
-  },
-] as const
-
 const DAY_MS = 24 * 60 * 60 * 1000
 const FIRST_REMINDER_AFTER_MS = DAY_MS
 const FOLLOW_UP_AFTER_MS = 7 * DAY_MS
@@ -70,10 +48,6 @@ function cronAuthorized(request: Request): boolean {
   const cronHeader = request.headers.get("x-cron-secret")
 
   return authHeader === `Bearer ${secret}` || cronHeader === secret
-}
-
-function hasValue(value: string | null | undefined): boolean {
-  return Boolean(value?.trim())
 }
 
 function profileName(profile: SupplierProfile): string {
@@ -114,27 +88,15 @@ function documentsByProfile(documents: SupplierDocumentRow[]): Map<string, Suppl
   return grouped
 }
 
-function hasDocument(
-  profile: SupplierProfile,
-  documents: SupplierDocumentRow[],
-  requirement: (typeof REQUIRED_DOCUMENTS)[number],
-): boolean {
-  const activeDocument = documents.some(
-    (document) =>
-      document.document_type === requirement.type &&
-      document.status !== "superseded" &&
-      hasValue(document.file_url),
-  )
-
-  if (activeDocument) return true
-
-  return requirement.legacyFields.some((field) => hasValue(profile[field]))
-}
-
 function missingDocuments(profile: SupplierProfile, documents: SupplierDocumentRow[]): string[] {
-  return REQUIRED_DOCUMENTS
-    .filter((requirement) => !hasDocument(profile, documents, requirement))
-    .map((requirement) => requirement.label)
+  // SupplierDocumentRow only carries the fields this route needs (profile_id,
+  // document_type, file_url, status), which is a subset of the full
+  // SupplierDocument type — cast is safe since missingRequiredSupplierDocuments
+  // only reads those same fields.
+  return missingRequiredSupplierDocuments(
+    profile as unknown as Record<string, unknown>,
+    documents as unknown as Parameters<typeof missingRequiredSupplierDocuments>[1],
+  ).map((requirement) => requirement.label)
 }
 
 function formatDateForEmail(value: string): string {

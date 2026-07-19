@@ -292,7 +292,7 @@ export default async function SupplierProfilePage({ params }: Props) {
                     }
                   >
                     {provisionallyVerified ? (
-                      "Provisionally Verified"
+                      "Provisionally Approved"
                     ) : verifiedSupplier ? (
                       <>
                         <span aria-hidden="true">&#10003;</span> Verified Supplier
@@ -389,7 +389,7 @@ export default async function SupplierProfilePage({ params }: Props) {
             <p className="mt-3 font-display text-5xl font-medium leading-none text-[#1a3a2a]">{displayScore(supplier.smart_score, verifiedSupplier, provisionallyVerified)}</p>
             <p className="mt-3 text-sm leading-6 text-stone-600">
               {provisionallyVerified
-                ? `Provisionally verified pending ${provisionalDocument} by ${formatDueDate(supplier.provisional_deadline)}`
+                ? `Provisionally approved pending ${provisionalDocument} by ${formatDueDate(supplier.provisional_deadline)}`
                 : verifiedSupplier
                   ? "Independently verified by AiForm Procure"
                   : `Supplier status: ${supplierStatus}`}

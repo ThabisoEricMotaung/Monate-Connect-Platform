@@ -5,6 +5,10 @@
       "schedule": "0 1 * * *"
     },
     {
+      "path": "/api/cron/provisional-verification",
+      "schedule": "45 6 * * *"
+    },
+    {
       "path": "/api/cron/document-reminders",
       "schedule": "0 7 * * *"
     },

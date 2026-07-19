@@ -157,3 +157,54 @@ export function hasActiveSupplierDocument(
   return Boolean(latestSupplierDocuments(documents)[documentType]?.file_url?.trim())
 }
 
+// Canonical set of documents a supplier must have on file before their profile
+// can be fully verified. Used both by the document-reminders cron (nudge emails)
+// and the provisional-verification cron (auto provisional-approval + revert).
+// Keeping this in one place avoids the two crons silently disagreeing about
+// what "required" means.
+export type RequiredSupplierDocument = {
+  type: SupplierDocumentType
+  label: string
+  // Legacy profile columns that predate the supplier_documents table. A
+  // non-empty value in any of these still counts as "has the document".
+  legacyFields?: readonly string[]
+}
+
+export const REQUIRED_SUPPLIER_DOCUMENTS: readonly RequiredSupplierDocument[] = [
+  { type: "csd", label: "CSD document", legacyFields: ["csd_document_url"] },
+  { type: "bbbee", label: "BBBEE Certificate", legacyFields: ["bbbee_document_url"] },
+  { type: "tax_clearance", label: "Tax Clearance", legacyFields: ["tax_clearance_url", "tax_document_url"] },
+  { type: "cipc", label: "CIPC / company registration document", legacyFields: ["company_registration_url"] },
+  { type: "bank_letter", label: "Bank Confirmation Letter" },
+]
+
+function hasValueString(value: unknown): boolean {
+  return typeof value === "string" && value.trim().length > 0
+}
+
+export function hasRequiredSupplierDocument(
+  profile: Record<string, unknown>,
+  documents: SupplierDocument[] | null | undefined,
+  requirement: RequiredSupplierDocument,
+): boolean {
+  const activeDocument = (documents ?? []).some(
+    (document) =>
+      document.document_type === requirement.type &&
+      document.status !== "superseded" &&
+      hasValueString(document.file_url),
+  )
+
+  if (activeDocument) return true
+
+  return (requirement.legacyFields ?? []).some((field) => hasValueString(profile[field]))
+}
+
+export function missingRequiredSupplierDocuments(
+  profile: Record<string, unknown>,
+  documents: SupplierDocument[] | null | undefined,
+): RequiredSupplierDocument[] {
+  return REQUIRED_SUPPLIER_DOCUMENTS.filter(
+    (requirement) => !hasRequiredSupplierDocument(profile, documents, requirement),
+  )
+}
+
