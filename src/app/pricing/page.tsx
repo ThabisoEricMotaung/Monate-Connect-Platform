@@ -93,11 +93,11 @@ const faqs = [
 
 function FeatureList({ features }: { features: string[] }) {
   return (
-    <ul className="mt-6 space-y-2.5">
+    <ul className="mt-4 space-y-1.5">
       {features.map((feature) => (
-        <li key={feature} className="flex gap-3 text-sm leading-6 text-[#40554a]">
-          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#5DCAA5]/15 text-[#168567]">
-            <IconChecklist className="h-3.5 w-3.5" stroke={2.4} aria-hidden />
+        <li key={feature} className="flex gap-2.5 text-[0.8rem] leading-5 text-[#40554a]">
+          <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#5DCAA5]/15 text-[#168567]">
+            <IconChecklist className="h-2.5 w-2.5" stroke={2.6} aria-hidden />
           </span>
           <span>{feature}</span>
         </li>
@@ -128,84 +128,84 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-14 sm:py-20">
-        <div className="grid gap-6 lg:grid-cols-3">
-          <article className="flex flex-col rounded-md border border-l-4 border-[#d8cbb8] border-l-[#5DCAA5] bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+      <section className="mx-auto max-w-5xl px-6 py-10 sm:py-14">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <article className="flex flex-col rounded-md border border-l-4 border-[#e3d8c5] border-l-[#5DCAA5] bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <span className="inline-flex rounded-full bg-[#5DCAA5]/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#168567]">
+                <span className="inline-flex rounded-full bg-[#5DCAA5]/15 px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#168567]">
                   For Suppliers
                 </span>
-                <h2 className="mt-4 font-display text-2xl font-semibold text-[#1a3a2a]">
+                <h2 className="mt-2.5 font-display text-lg font-semibold text-[#1a3a2a]">
                   Supplier Access
                 </h2>
               </div>
               <div className="text-left sm:text-right">
-                <p className="font-display text-3xl font-semibold text-[#1a3a2a]">R299</p>
-                <p className="text-sm font-semibold text-[#63766b]">/month</p>
+                <p className="font-display text-xl font-semibold text-[#1a3a2a]">R299</p>
+                <p className="text-xs font-semibold text-[#63766b]">/month</p>
               </div>
             </div>
-            <p className="mt-4 rounded-md bg-[#f0ebe0] px-4 py-3 text-sm font-semibold text-[#1a3a2a]">
+            <p className="mt-2.5 text-[0.7rem] font-semibold text-[#63766b]">
               Free until October 2026 during the pilot.
             </p>
             <FeatureList features={supplierFeatures} />
             <PayFastCheckoutButton
               tier="supplier"
-              className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#1a3a2a] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#10251b]"
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#1a3a2a] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#10251b]"
             >
               Subscribe as supplier
             </PayFastCheckoutButton>
           </article>
 
-          <article className="flex flex-col rounded-md border border-l-4 border-[#1a3a2a] border-l-[#c8a060] bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+          <article className="flex flex-col rounded-md border border-l-4 border-[#e3d8c5] border-l-[#c8a060] bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <span className="inline-flex rounded-full bg-[#1a3a2a] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#c8a060]">
+                <span className="inline-flex rounded-full bg-[#1a3a2a] px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#c8a060]">
                   For Buyers
                 </span>
-                <h2 className="mt-4 font-display text-2xl font-semibold text-[#1a3a2a]">
+                <h2 className="mt-2.5 font-display text-lg font-semibold text-[#1a3a2a]">
                   Buyer Starter
                 </h2>
               </div>
               <div className="text-left sm:text-right">
-                <p className="font-display text-3xl font-semibold text-[#1a3a2a]">R990</p>
-                <p className="text-sm font-semibold text-[#63766b]">/month</p>
+                <p className="font-display text-xl font-semibold text-[#1a3a2a]">R990</p>
+                <p className="text-xs font-semibold text-[#63766b]">/month</p>
               </div>
             </div>
-            <p className="mt-4 rounded-md bg-[#c8a060]/15 px-4 py-3 text-sm font-semibold text-[#1a3a2a]">
+            <p className="mt-2.5 text-[0.7rem] font-semibold text-[#63766b]">
               Free until October 2026 during the pilot.
             </p>
             <FeatureList features={buyerFeatures} />
             <PayFastCheckoutButton
               tier="buyer_starter"
-              className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#c8a060] px-5 py-3 text-sm font-bold text-[#1a3a2a] transition hover:bg-[#d8b36f]"
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#c8a060] px-4 py-2 text-xs font-bold text-[#1a3a2a] transition hover:bg-[#d8b36f]"
             >
               Subscribe to Starter
             </PayFastCheckoutButton>
           </article>
 
-          <article className="flex flex-col rounded-md border border-l-4 border-[#1a3a2a] border-l-[#c8a060] bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+          <article className="flex flex-col rounded-md border border-l-4 border-[#e3d8c5] border-l-[#c8a060] bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <span className="inline-flex rounded-full bg-[#1a3a2a] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#c8a060]">
+                <span className="inline-flex rounded-full bg-[#1a3a2a] px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#c8a060]">
                   For Buyers
                 </span>
-                <h2 className="mt-4 font-display text-2xl font-semibold text-[#1a3a2a]">
+                <h2 className="mt-2.5 font-display text-lg font-semibold text-[#1a3a2a]">
                   Buyer Professional
                 </h2>
               </div>
               <div className="text-left sm:text-right">
-                <p className="font-display text-3xl font-semibold text-[#1a3a2a]">R2,490</p>
-                <p className="text-sm font-semibold text-[#63766b]">/month</p>
+                <p className="font-display text-xl font-semibold text-[#1a3a2a]">R2,490</p>
+                <p className="text-xs font-semibold text-[#63766b]">/month</p>
               </div>
             </div>
-            <p className="mt-4 rounded-md bg-[#c8a060]/15 px-4 py-3 text-sm font-semibold text-[#1a3a2a]">
+            <p className="mt-2.5 text-[0.7rem] font-semibold text-[#63766b]">
               Free until October 2026 during the pilot.
             </p>
             <FeatureList features={buyerProfessionalFeatures} />
             <PayFastCheckoutButton
               tier="buyer_professional"
-              className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#c8a060] px-5 py-3 text-sm font-bold text-[#1a3a2a] transition hover:bg-[#d8b36f]"
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#c8a060] px-4 py-2 text-xs font-bold text-[#1a3a2a] transition hover:bg-[#d8b36f]"
             >
               Subscribe to Professional
             </PayFastCheckoutButton>
