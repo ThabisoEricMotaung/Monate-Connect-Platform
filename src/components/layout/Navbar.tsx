@@ -68,11 +68,17 @@ export default function Navbar() {
     )
   }
 
-  // Return null on all public pages, auth routes, and dashboard
+  // Return null on all public pages, auth routes, and dashboard.
+  // publicRoutes only lists exact top-level paths, so dynamic detail pages
+  // under them (e.g. /suppliers/[id], /opportunities/[id]) need an explicit
+  // prefix check too — otherwise this masthead renders a second, duplicate
+  // nav bar on top of that page's own header.
   if (
     publicRoutes.has(pathname) ||
     pathname.startsWith("/auth/") ||
-    pathname.startsWith("/dashboard")
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/suppliers/") ||
+    pathname.startsWith("/opportunities/")
   ) {
     return null
   }
