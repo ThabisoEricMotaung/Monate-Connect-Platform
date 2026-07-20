@@ -287,7 +287,7 @@ export default async function SupplierProfilePage({ params }: Props) {
                     style={{ color: provisionallyVerified || verifiedSupplier ? GOLD : "#8a6a2f" }}
                     title={
                       provisionallyVerified
-                        ? `${provisionalDocument} due ${formatDueDate(supplier.provisional_deadline)}`
+                        ? `Verification review due ${formatDueDate(supplier.provisional_deadline)}`
                         : undefined
                     }
                   >
@@ -309,7 +309,7 @@ export default async function SupplierProfilePage({ params }: Props) {
                   </p>
                   {provisionallyVerified && (
                     <p className="mt-2 max-w-xl text-sm font-medium text-[#8a6a2f]">
-                      Outstanding: {provisionalDocument}. Due {formatDueDate(supplier.provisional_deadline)}.
+                      Verification review due {formatDueDate(supplier.provisional_deadline)}.
                     </p>
                   )}
                 </div>
@@ -389,7 +389,7 @@ export default async function SupplierProfilePage({ params }: Props) {
             <p className="mt-3 font-display text-5xl font-medium leading-none text-[#1a3a2a]">{displayScore(supplier.smart_score, verifiedSupplier, provisionallyVerified)}</p>
             <p className="mt-3 text-sm leading-6 text-stone-600">
               {provisionallyVerified
-                ? `Provisionally approved pending ${provisionalDocument} by ${formatDueDate(supplier.provisional_deadline)}`
+                ? `Provisionally approved — verification review due ${formatDueDate(supplier.provisional_deadline)}`
                 : verifiedSupplier
                   ? "Independently verified by AiForm Procure"
                   : `Supplier status: ${supplierStatus}`}
