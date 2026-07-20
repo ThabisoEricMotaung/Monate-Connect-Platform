@@ -57,3 +57,10 @@ ocpo-outreach-email-draft.md
 opportunities-batch-13jul2026.md
 tshoarelo-social-media-starting-point.md
 tshoarelo-workflow-update.md
+
+# local-only: real user PII snapshots, business docs, and one-off scripts
+# with hardcoded personal data - useful on this machine, must never enter
+# permanent shareable git history
+/backups/
+/notes/
+scripts/delete-listed-accounts.mjs
