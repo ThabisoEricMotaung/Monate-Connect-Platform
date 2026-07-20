@@ -61,17 +61,17 @@ const smartScoreRows = [
 ]
 
 const scoreBands = [
-  { score: "90 – 100", label: "Excellent", color: "text-success", bar: "bg-success", items: ["All verifications complete", "Priority placement on RFQs", "Visible to all buyers"] },
-  { score: "75 – 89", label: "Good Standing", color: "text-sky-700", bar: "bg-sky-500", items: ["Core verifications done", "Eligible for all RFQs", "1-2 optional items missing"] },
-  { score: "50 – 74", label: "Building Trust", color: "text-warning", bar: "bg-warning", items: ["CSD verified", "Tax or banking pending", "Lower visibility on RFQs"] },
-  { score: "0 – 49", label: "Low Trust", color: "text-rose-700", bar: "bg-rose-500", items: ["Incomplete documents", "Not visible to buyers", "Verification required"] },
+  { score: "90 – 100", label: "Excellent", color: "text-success", bar: "bg-success", pct: 100, items: ["All verifications complete", "Priority placement on RFQs", "Visible to all buyers"] },
+  { score: "75 – 89", label: "Good Standing", color: "text-sky-700", bar: "bg-sky-500", pct: 78, items: ["Core verifications done", "Eligible for all RFQs", "1-2 optional items missing"] },
+  { score: "50 – 74", label: "Building Trust", color: "text-warning", bar: "bg-warning", pct: 55, items: ["CSD verified", "Tax or banking pending", "Lower visibility on RFQs"] },
+  { score: "0 – 49", label: "Low Trust", color: "text-rose-700", bar: "bg-rose-500", pct: 28, items: ["Incomplete documents", "Not visible to buyers", "Verification required"] },
 ]
 
 const buyerTrustCards = [
-  { title: "Buyer organisation verification", body: "Buyer organisations complete a registration process and are reviewed by our team before being permitted to post RFQs." },
-  { title: "Procurement officer validation", body: "Buyer accounts are reviewed during onboarding. We recommend using a work email address that matches your organisation." },
-  { title: "No ghost RFQs", body: "RFQs that receive no quotes are flagged for review. Buyers are expected to close or award RFQs within a reasonable timeframe." },
-  { title: "Dispute resolution", body: "If a supplier believes an RFQ was handled unfairly, they can raise a dispute through the platform. Disputes are reviewed within 5 business days." },
+  { title: "Buyer organisation verification", body: "Buyer organisations complete a registration process and are reviewed by our team before being permitted to post RFQs.", icon: "M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" },
+  { title: "Procurement officer validation", body: "Buyer accounts are reviewed during onboarding. We recommend using a work email address that matches your organisation.", icon: "M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" },
+  { title: "No ghost RFQs", body: "RFQs that receive no quotes are flagged for review. Buyers are expected to close or award RFQs within a reasonable timeframe.", icon: "M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" },
+  { title: "Dispute resolution", body: "If a supplier believes an RFQ was handled unfairly, they can raise a dispute through the platform. Disputes are reviewed within 5 business days.", icon: "M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971z" },
 ]
 
 const opportunitySourcingSteps = [
@@ -232,11 +232,11 @@ export default function TrustCentrePage() {
               SmartScore is a 0–100 trust rating that tells buyers at a glance how complete, verified, and active a supplier is on the platform. Calculated from objective compliance data — not reviews or self-reported information.
             </p>
 
-            <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
-              <div className="overflow-hidden rounded-md border border-panel bg-page shadow-panel">
+            <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
+              <div className="overflow-hidden rounded-2xl border border-[#eee5d4] bg-white shadow-sm">
                 {smartScoreRows.map((row) => (
-                  <div key={row.name} className="grid gap-4 border-b border-panel p-4 last:border-b-0 sm:grid-cols-[auto_1fr_auto] sm:items-center">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-full ${row.badgeClassName}`}>
+                  <div key={row.name} className="grid gap-4 border-b border-[#f0ece2] p-4 last:border-b-0 sm:grid-cols-[auto_1fr_auto] sm:items-center">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${row.badgeClassName}`}>
                       <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" d={row.icon} />
                       </svg>
@@ -251,27 +251,45 @@ export default function TrustCentrePage() {
               </div>
 
               <div className="space-y-3">
-                {scoreBands.map((band) => (
-                  <div key={band.score} className="rounded-md border border-panel bg-page p-4 shadow-panel">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className={`text-xs font-bold tabular-nums ${band.color}`}>{band.score}</p>
-                      <p className={`text-xs font-bold ${band.color}`}>{band.label}</p>
+                {scoreBands.map((band) => {
+                  const radius = 22
+                  const circumference = 2 * Math.PI * radius
+                  const offset = circumference * (1 - band.pct / 100)
+                  return (
+                    <div key={band.score} className="flex gap-4 rounded-2xl border border-[#eee5d4] bg-white p-4 shadow-sm">
+                      <svg className={`h-14 w-14 shrink-0 -rotate-90 ${band.color}`} viewBox="0 0 52 52" aria-hidden="true">
+                        <circle cx="26" cy="26" r={radius} fill="none" stroke="currentColor" strokeOpacity={0.15} strokeWidth={5} />
+                        <circle
+                          cx="26"
+                          cy="26"
+                          r={radius}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={5}
+                          strokeLinecap="round"
+                          strokeDasharray={circumference}
+                          strokeDashoffset={offset}
+                        />
+                      </svg>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-baseline gap-2">
+                          <p className={`text-xs font-bold tabular-nums ${band.color}`}>{band.score}</p>
+                          <p className={`text-xs font-bold ${band.color}`}>{band.label}</p>
+                        </div>
+                        <div className="mt-2 space-y-1">
+                          {band.items.map((item) => (
+                            <p key={item} className="flex items-center gap-1.5 text-xs text-secondary">
+                              <svg className={`h-3.5 w-3.5 shrink-0 ${band.color}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                              </svg>
+                              {item}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-panel">
-                      <div className={`h-full rounded-full ${band.bar}`} style={{ width: band.score.startsWith("90") ? "95%" : band.score.startsWith("75") ? "80%" : band.score.startsWith("50") ? "60%" : "30%" }} />
-                    </div>
-                    <div className="mt-3 space-y-1">
-                      {band.items.map((item) => (
-                        <p key={item} className="flex items-center gap-1.5 text-xs text-secondary">
-                          <svg className={`h-3.5 w-3.5 shrink-0 ${band.color}`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                          </svg>
-                          {item}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -287,9 +305,14 @@ export default function TrustCentrePage() {
             </p>
             <div className="mt-8 grid gap-4 md:grid-cols-2">
               {buyerTrustCards.map((card) => (
-                <article key={card.title} className="rounded-md border border-panel bg-card p-6 shadow-panel">
-                  <h3 className="font-display text-lg font-semibold text-heading">{card.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-secondary">{card.body}</p>
+                <article key={card.title} className="rounded-2xl border border-[#eee5d4] bg-white p-6 shadow-sm">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#5DCAA5]/12 text-[#168567]">
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d={card.icon} />
+                    </svg>
+                  </span>
+                  <h3 className="mt-4 font-display text-lg font-semibold text-heading">{card.title}</h3>
+                  <p className="mt-2 text-sm leading-7 text-secondary">{card.body}</p>
                 </article>
               ))}
             </div>
