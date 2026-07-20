@@ -3,6 +3,7 @@ import { Resend } from "resend"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 import { buildComplianceSubscribeConfirmationEmail } from "@/lib/complianceReminder"
 import { siteUrl } from "@/lib/weeklyDigest"
+import { reviewCopyEmail, SUPPLIER_EMAIL_REVIEW_RECIPIENT } from "@/lib/emailSignature"
 
 // Public, no-account signup for the B-BBEE expiry reminder — a lead magnet
 // for people who found the Trust Center but aren't ready to register.
@@ -117,6 +118,25 @@ export async function POST(request: Request) {
       if (sendError) console.error("Compliance reminder confirmation email failed:", sendError)
     } catch (error) {
       console.error("Compliance reminder confirmation email failed:", error)
+    }
+
+    try {
+      const reviewCopy = reviewCopyEmail({
+        subject,
+        html,
+        text,
+        sourceLabel: email,
+        runLabel: "Compliance Reminder Subscribe Confirmation",
+      })
+      await resend.emails.send({
+        from: "AiForm Procure <noreply@aiformprocure.co.za>",
+        to: SUPPLIER_EMAIL_REVIEW_RECIPIENT,
+        subject: reviewCopy.subject,
+        html: reviewCopy.html,
+        text: reviewCopy.text,
+      })
+    } catch (error) {
+      console.error("Compliance reminder confirmation review copy failed:", error)
     }
   }
 

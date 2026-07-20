@@ -3,6 +3,7 @@ import { Resend } from "resend"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 import { buildSubscribeConfirmationEmail } from "@/lib/publicOpportunityDigest"
 import { siteUrl } from "@/lib/weeklyDigest"
+import { reviewCopyEmail, SUPPLIER_EMAIL_REVIEW_RECIPIENT } from "@/lib/emailSignature"
 
 // Public, no-account signup for the weekly "open opportunities" email —
 // the lower-commitment alternative to full registration, offered on the
@@ -90,6 +91,25 @@ export async function POST(request: Request) {
       // Subscription itself already succeeded — a failed confirmation email
       // isn't worth failing the request over, just log it.
       console.error("Opportunity digest confirmation email failed:", error)
+    }
+
+    try {
+      const reviewCopy = reviewCopyEmail({
+        subject,
+        html,
+        text,
+        sourceLabel: email,
+        runLabel: "Opportunity Digest Subscribe Confirmation",
+      })
+      await resend.emails.send({
+        from: "AiForm Procure <noreply@aiformprocure.co.za>",
+        to: SUPPLIER_EMAIL_REVIEW_RECIPIENT,
+        subject: reviewCopy.subject,
+        html: reviewCopy.html,
+        text: reviewCopy.text,
+      })
+    } catch (error) {
+      console.error("Opportunity digest confirmation review copy failed:", error)
     }
   }
 

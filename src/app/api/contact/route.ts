@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { Resend } from "resend"
 import { createClient } from "@supabase/supabase-js"
-import { emailSignatureText, MARKETING_SITE_URL } from "@/lib/emailSignature"
+import { emailSignatureText, MARKETING_SITE_URL, reviewCopyEmail, SUPPLIER_EMAIL_REVIEW_RECIPIENT } from "@/lib/emailSignature"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -198,11 +198,12 @@ export async function POST(request: Request) {
     // resolves normally with an `error` field. Previously that field was
     // never checked, so a failed send still returned { ok: true } here and
     // the client reported success even though nothing was ever delivered.
+    const autoReplyText = `Hi ${name},\n\n${templateBody}\n\n${emailSignatureText()}`
     const { error: replyError } = await resend.emails.send({
       from: "AiForm Procure <noreply@aiformprocure.co.za>",
       to: email,
       subject: template.subject,
-      text: `Hi ${name},\n\n${templateBody}\n\n${emailSignatureText()}`,
+      text: autoReplyText,
     })
 
     if (replyError) {
@@ -211,6 +212,24 @@ export async function POST(request: Request) {
         { ok: false, error: "Could not send the confirmation email. Please try again shortly." },
         { status: 502 }
       )
+    }
+
+    try {
+      const reviewCopy = reviewCopyEmail({
+        subject: template.subject,
+        html: "",
+        text: autoReplyText,
+        sourceLabel: `${name} <${email}>`,
+        runLabel: "Contact Form Auto-Reply",
+      })
+      await resend.emails.send({
+        from: "AiForm Procure <noreply@aiformprocure.co.za>",
+        to: SUPPLIER_EMAIL_REVIEW_RECIPIENT,
+        subject: reviewCopy.subject,
+        text: reviewCopy.text,
+      })
+    } catch (error) {
+      console.error("Contact form auto-reply review copy failed:", error)
     }
 
     const pilotRequestsUrl = `${MARKETING_SITE_URL}/dashboard/admin/pilot-requests`
