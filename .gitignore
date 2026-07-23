@@ -64,3 +64,6 @@ tshoarelo-workflow-update.md
 /backups/
 /notes/
 scripts/delete-listed-accounts.mjs
+
+*.log
+.next-dev-backup*
