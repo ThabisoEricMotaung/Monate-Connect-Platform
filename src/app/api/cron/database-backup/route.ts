@@ -21,7 +21,7 @@ import { getR2Config, r2Delete, r2List, r2Put } from "@/lib/r2"
 //
 // This job never touches any other Supabase project — it only reads from
 // the production database (via supabaseAdmin) and writes to R2. Restoring
-// a backup is a separate, manually-run script (scripts/restore-backup.mjs)
+// a backup is a separate, manually-run script (scripts/restore-backup.mts)
 // that targets a different, explicitly non-production project.
 
 const CORE_TABLES = [
@@ -75,6 +75,9 @@ async function fetchAllRows(table: CoreTable): Promise<Record<string, unknown>[]
   return rows
 }
 
+// Nulls out live OTP secrets before a profile row is ever written to a backup
+// file. This is deliberate, not an oversight: a backup must never carry a
+// usable login OTP, even one restricted to a non-production restore target.
 function scrubProfile(row: Record<string, unknown>): Record<string, unknown> {
   const scrubbed = { ...row }
   for (const field of OTP_FIELDS) {

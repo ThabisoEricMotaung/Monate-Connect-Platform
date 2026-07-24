@@ -54,6 +54,16 @@ alter table public.profiles
   add column if not exists account_number text,
   add column if not exists banking_verification_status text,
   add column if not exists bank_verification_status text,
+  -- bank_verified is authoritative for banking verification. banking_verified
+  -- is redundant, not legacy/unused: it's still actively read at five
+  -- app-layer sites (smartScore.ts, supplierScoreAssembly.ts,
+  -- suppliers/[id]/page.tsx, SupplierDirectory.tsx,
+  -- dashboard/onboarding/page.tsx) and by the smartscore_trigger.sql Postgres
+  -- trigger, always as `banking_verified || bank_verified`. Across all real
+  -- supplier rows it has never once been true while bank_verified was false,
+  -- so it has never changed a real outcome — but it still executes on every
+  -- read. Removing it means updating all five call sites plus the trigger,
+  -- not just dropping the column.
   add column if not exists bank_verified boolean default false,
   add column if not exists banking_verified boolean default false,
   add column if not exists bbbee_verified boolean default false,

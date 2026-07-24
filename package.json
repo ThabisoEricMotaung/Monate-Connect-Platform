@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "restore:backup": "tsx scripts/restore-backup.mts"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.62.0",

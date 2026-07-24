@@ -20,6 +20,20 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Backup, restore, and RLS
+
+- `src/app/api/cron/database-backup/route.ts` runs daily, reads the core
+  production tables (profiles, supplier_documents, rfqs, quotes,
+  supplier_bank_details, subscriptions), and writes a JSON backup to
+  Cloudflare R2.
+- `scripts/restore-backup.mts` is a manually-run script that restores one of
+  those backups into a separate, non-production Supabase project. It refuses
+  to run against production.
+- After a `--confirm` restore, it automatically applies
+  `database/migrations/restore_test_apply_production_rls.sql`, which mirrors
+  production's live RLS policies onto the restore-test project so that
+  project's access rules match production, not just its data.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
