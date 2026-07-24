@@ -134,6 +134,11 @@ function statusLabel(status: string | null | undefined): string {
 }
 
 function displayScore(value: number | string | null | undefined, verified: boolean, provisional: boolean): string {
+  // Deliberately suppress the numeric SmartScore whenever a document is
+  // still outstanding (provisional) or the supplier isn't fully verified —
+  // do not "simplify" this back to always showing the stored score. This is
+  // the exact bug we fixed: a supplier previously showed a SmartScore of 100
+  // while their tax clearance was still unverified.
   if (!verified || provisional) return "In review"
   return formatScore(value)
 }
