@@ -13,7 +13,14 @@ Sentry.init({
   // Enable logs to be sent to Sentry
   enableLogs: true,
 
-  // Enable sending user PII (Personally Identifiable Information)
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
-  sendDefaultPii: true,
+  // Use the supported dataCollection migration path from @sentry/nextjs 10.62.0.
+  // This preserves the existing collection categories while disabling user-info/IP inference.
+  dataCollection: {
+    userInfo: false,
+    cookies: true,
+    httpHeaders: { request: true, response: true },
+    httpBodies: ["incomingRequest", "outgoingRequest", "incomingResponse", "outgoingResponse"],
+    queryParams: true,
+    genAI: { inputs: true, outputs: true },
+  },
 });
