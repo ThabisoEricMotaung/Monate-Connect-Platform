@@ -11,7 +11,6 @@ import {
   IconPhoneCheck,
   IconShieldCheck,
   IconSparkles,
-  IconUserCheck,
 } from "@tabler/icons-react"
 import Link from "next/link"
 
@@ -37,11 +36,6 @@ const trustCards = [
     icon: IconFileCertificate,
     title: "SA compliance built in",
     body: "B-BBEE, CSD, CIPC, SARS, and VAT are core supplier fields rather than afterthoughts.",
-  },
-  {
-    icon: IconUserCheck,
-    title: "Developed with UP Business Enterprise",
-    body: "POPIA guidance from legal advisors helped shape the platform's data protection posture.",
   },
 ]
 
