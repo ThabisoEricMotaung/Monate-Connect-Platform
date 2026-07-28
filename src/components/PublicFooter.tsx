@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useState, type CSSProperties } from "react"
+import { type CSSProperties } from "react"
 
 const footerSections = [
   {
@@ -166,15 +166,8 @@ function CardPattern() {
 }
 
 export default function PublicFooter() {
-  const [socialNotice, setSocialNotice] = useState("")
-
   function openAccessibility() {
     window.dispatchEvent(new Event("monate:open-accessibility"))
-  }
-
-  function showSocialComingSoon(platform: string) {
-    setSocialNotice(`${platform} coming soon`)
-    window.setTimeout(() => setSocialNotice(""), 2000)
   }
 
   return (
@@ -258,21 +251,42 @@ export default function PublicFooter() {
             </div>
           </div>
           <div className="relative flex items-center gap-2 lg:justify-end">
-            {socialNotice && (
-              <span className="absolute -top-8 right-0 whitespace-nowrap rounded-full border border-[#123c2b]/12 bg-white/80 px-3 py-1 text-xs font-bold text-[#123c2b] shadow-sm">
-                {socialNotice}
-              </span>
-            )}
-            <button type="button" onClick={() => showSocialComingSoon("LinkedIn")} className="footer-social-button" aria-label="LinkedIn" title="Coming soon">
+            <a
+              href="https://linkedin.com/company/aiform-procure/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-social-button"
+              aria-label="Follow AiForm Procure on LinkedIn"
+              title="LinkedIn"
+            >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M6.5 8.75H3.25v11H6.5v-11zM4.88 7.25a1.88 1.88 0 100-3.76 1.88 1.88 0 000 3.76zM20.75 13.41c0-2.95-1.57-4.91-4.13-4.91a3.56 3.56 0 00-3.21 1.77V8.75h-3.12v11h3.25v-5.44c0-1.44.27-2.83 2.05-2.83 1.76 0 1.78 1.64 1.78 2.92v5.35h3.25l.13-6.34z" />
               </svg>
-            </button>
-            <button type="button" onClick={() => showSocialComingSoon("Facebook")} className="footer-social-button" aria-label="Facebook" title="Coming soon">
+            </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61592730084230"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-social-button"
+              aria-label="Follow AiForm Procure on Facebook"
+              title="Facebook"
+            >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M14.2 21v-7.3h2.45l.37-2.84H14.2V9.05c0-.82.23-1.38 1.41-1.38h1.5V5.13A20.03 20.03 0 0014.92 5c-2.16 0-3.64 1.32-3.64 3.74v2.12H8.84v2.84h2.44V21h2.92z" />
               </svg>
-            </button>
+            </a>
+            <a
+              href="https://aiformprocure.substack.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-social-button"
+              aria-label="Subscribe to AiForm Procure on Substack"
+              title="Substack"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M4 4h16v2.25H4V4zm0 4h16v2.25H4V8zm0 4h16v8l-8-4.5L4 20v-8z" />
+              </svg>
+            </a>
             <button
               type="button"
               onClick={openAccessibility}

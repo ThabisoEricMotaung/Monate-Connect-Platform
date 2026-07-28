@@ -1,12 +1,13 @@
 import {
   IconBrandNextjs,
+  IconBrandFacebook,
+  IconBrandLinkedin,
   IconBrandOpenai,
   IconBrandSupabase,
   IconBrandVercel,
   IconCheck,
   IconDatabase,
   IconFileCertificate,
-  IconLanguage,
   IconMail,
   IconPhoneCheck,
   IconShieldCheck,
@@ -75,6 +76,31 @@ const infrastructure = [
   { label: "Africa's Talking OTP", icon: IconPhoneCheck },
   { label: "Resend email", icon: IconMail },
 ]
+
+const socialChannels = [
+  {
+    name: "LinkedIn",
+    description: "Company updates, partnerships, and procurement insights.",
+    href: "https://linkedin.com/company/aiform-procure/",
+    icon: IconBrandLinkedin,
+    iconClassName: "bg-[#0a66c2]/10 text-[#0a66c2]",
+  },
+  {
+    name: "Facebook",
+    description: "Community news and updates for South African suppliers.",
+    href: "https://www.facebook.com/profile.php?id=61592730084230",
+    icon: IconBrandFacebook,
+    iconClassName: "bg-[#1877f2]/10 text-[#1877f2]",
+  },
+]
+
+function SubstackIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M4 4h16v2.25H4V4zm0 4h16v2.25H4V8zm0 4h16v8l-8-4.5L4 20v-8z" />
+    </svg>
+  )
+}
 
 export default function AboutPage() {
   return (
@@ -176,6 +202,60 @@ export default function AboutPage() {
             Founder, AiForm Studio
           </footer>
         </blockquote>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 py-10">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#c8a060]">Connect with us</p>
+        <h2 className="mt-3 font-display text-3xl font-semibold text-[#1a3a2a]">Follow AiForm Procure</h2>
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-[#53665c]">
+          Follow product updates, procurement insights, and news from across our growing supplier network.
+        </p>
+        <div className="mt-7 grid gap-4 md:grid-cols-3">
+          {socialChannels.map((channel) => {
+            const Icon = channel.icon
+            return (
+              <a
+                key={channel.name}
+                href={channel.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Follow AiForm Procure on ${channel.name}`}
+                className="group flex items-start gap-4 rounded-md border border-[#e3d8c5] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-[#c8a060]/60 hover:shadow-md"
+              >
+                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-md ${channel.iconClassName}`}>
+                  <Icon className="h-6 w-6" stroke={1.8} aria-hidden />
+                </span>
+                <span>
+                  <span className="flex items-center gap-2 font-display text-xl font-semibold text-[#1a3a2a]">
+                    {channel.name}
+                    <span aria-hidden="true" className="text-base text-[#c8a060] transition group-hover:translate-x-1">↗</span>
+                  </span>
+                  <span className="mt-2 block text-sm leading-6 text-[#53665c]">{channel.description}</span>
+                </span>
+              </a>
+            )
+          })}
+          <a
+            href="https://aiformprocure.substack.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Subscribe to AiForm Procure on Substack"
+            className="group flex items-start gap-4 rounded-md border border-[#e3d8c5] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-[#c8a060]/60 hover:shadow-md"
+          >
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[#ff6719]/10 text-[#ff6719]">
+              <SubstackIcon className="h-6 w-6" />
+            </span>
+            <span>
+              <span className="flex items-center gap-2 font-display text-xl font-semibold text-[#1a3a2a]">
+                Substack
+                <span aria-hidden="true" className="text-base text-[#c8a060] transition group-hover:translate-x-1">↗</span>
+              </span>
+              <span className="mt-2 block text-sm leading-6 text-[#53665c]">
+                Subscribe for newsletter editions and procurement analysis.
+              </span>
+            </span>
+          </a>
+        </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-10">
