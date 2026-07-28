@@ -14,24 +14,36 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin"
 
 export const runtime = "nodejs"
 
-type ValidationStatus = "received" | "accepted" | "rejected" | "error"
+type ValidationStatus = "received" | "accepted" | "duplicate" | "rejected" | "error"
 
 async function logItn(input: {
   status: ValidationStatus
   errors: string[]
   payload: Record<string, string>
   requestIp: string
-}) {
-  if (!supabaseAdmin) return
+}): Promise<string> {
+  if (!supabaseAdmin) {
+    throw new Error("Supabase service role is not configured")
+  }
 
-  await supabaseAdmin.from("payfast_itn_logs").insert({
-    merchant_payment_id: input.payload.m_payment_id ?? null,
-    payfast_payment_id: input.payload.pf_payment_id ?? null,
-    request_ip: input.requestIp || null,
-    validation_status: input.status,
-    validation_errors: input.errors,
-    payload: input.payload,
-  })
+  const { data, error } = await supabaseAdmin
+    .from("payfast_itn_logs")
+    .insert({
+      merchant_payment_id: input.payload.m_payment_id ?? null,
+      payfast_payment_id: input.payload.pf_payment_id ?? null,
+      request_ip: input.requestIp || null,
+      validation_status: input.status,
+      validation_errors: input.errors,
+      payload: input.payload,
+    })
+    .select("id")
+    .single()
+
+  if (error) {
+    throw new Error(`PayFast ITN log insert failed (${error.code}): ${error.message}`)
+  }
+
+  return data.id
 }
 
 function amountMatches(expected: number, fields: Record<string, string>): boolean {
@@ -39,6 +51,64 @@ function amountMatches(expected: number, fields: Record<string, string>): boolea
   const paidAmount = Number(rawAmount)
 
   return Number.isFinite(paidAmount) && Math.abs(expected - paidAmount) <= 0.01
+}
+
+type ItnClaim =
+  | { claimed: true; id: string }
+  | { claimed: false }
+
+async function claimAcceptedItn(
+  payload: Record<string, string>,
+  requestIp: string
+): Promise<ItnClaim> {
+  if (!supabaseAdmin) {
+    throw new Error("Supabase service role is not configured")
+  }
+
+  if (!payload.pf_payment_id && !payload.m_payment_id) {
+    throw new Error("PayFast ITN has no transaction identifier")
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("payfast_itn_logs")
+    .insert({
+      merchant_payment_id: payload.m_payment_id ?? null,
+      payfast_payment_id: payload.pf_payment_id ?? null,
+      request_ip: requestIp || null,
+      validation_status: "accepted",
+      validation_errors: [],
+      payload,
+    })
+    .select("id")
+    .single()
+
+  if (!error) {
+    return { claimed: true, id: data.id }
+  }
+
+  if (error.code === "23505") {
+    return { claimed: false }
+  }
+
+  throw new Error(`PayFast processing claim failed (${error.code}): ${error.message}`)
+}
+
+async function markClaimFailed(claimId: string, message: string): Promise<void> {
+  if (!supabaseAdmin) {
+    throw new Error("Supabase service role is not configured")
+  }
+
+  const { error } = await supabaseAdmin
+    .from("payfast_itn_logs")
+    .update({
+      validation_status: "error",
+      validation_errors: [message],
+    })
+    .eq("id", claimId)
+
+  if (error) {
+    throw new Error(`PayFast claim recovery failed (${error.code}): ${error.message}`)
+  }
 }
 
 export async function POST(request: Request) {
@@ -102,6 +172,18 @@ export async function POST(request: Request) {
       return new Response(null, { status: 200 })
     }
 
+    const claim = await claimAcceptedItn(payload, requestIp)
+
+    if (!claim.claimed) {
+      await logItn({
+        status: "duplicate",
+        errors: ["PayFast transaction has already been accepted"],
+        payload,
+        requestIp,
+      })
+      return new Response(null, { status: 200 })
+    }
+
     const plan = payfastPlans[tier]
     const status = statusFromPayFast(payload.payment_status, payload.type)
     const nextBillingDate = nextBillingDateFromPayload(payload, tier)
@@ -125,21 +207,22 @@ export async function POST(request: Request) {
       )
 
     if (upsertError) {
-      await logItn({
-        status: "error",
-        errors: [upsertError.message],
-        payload,
-        requestIp,
-      })
-      return new Response(null, { status: 200 })
+      await markClaimFailed(claim.id, upsertError.message)
+      throw new Error(`PayFast subscription update failed: ${upsertError.message}`)
     }
 
-    await logItn({ status: "accepted", errors: [], payload, requestIp })
     return new Response(null, { status: 200 })
   } catch (error) {
-    errors.push(error instanceof Error ? error.message : "Unknown PayFast ITN error")
-    await logItn({ status: "error", errors, payload, requestIp })
-    return new Response(null, { status: 200 })
+    const message = error instanceof Error ? error.message : "Unknown PayFast ITN error"
+    errors.push(message)
+
+    try {
+      await logItn({ status: "error", errors, payload, requestIp })
+    } catch (logError) {
+      console.error("PayFast ITN error logging failed:", logError)
+    }
+
+    return new Response(null, { status: 500 })
   }
 }
 

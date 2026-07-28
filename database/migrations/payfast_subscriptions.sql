@@ -59,7 +59,7 @@ create table if not exists public.payfast_itn_logs (
   merchant_payment_id text,
   payfast_payment_id text,
   request_ip text,
-  validation_status text not null check (validation_status in ('received', 'accepted', 'rejected', 'error')),
+  validation_status text not null check (validation_status in ('received', 'accepted', 'duplicate', 'rejected', 'error')),
   validation_errors text[] not null default '{}',
   payload jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default timezone('utc', now())
@@ -67,6 +67,15 @@ create table if not exists public.payfast_itn_logs (
 
 create index if not exists payfast_itn_logs_created_at_idx on public.payfast_itn_logs (created_at desc);
 create index if not exists payfast_itn_logs_merchant_payment_id_idx on public.payfast_itn_logs (merchant_payment_id);
+create unique index if not exists payfast_itn_logs_one_accepted_pf_payment_id_idx
+  on public.payfast_itn_logs (payfast_payment_id)
+  where validation_status = 'accepted'
+    and payfast_payment_id is not null;
+create unique index if not exists payfast_itn_logs_one_accepted_merchant_fallback_idx
+  on public.payfast_itn_logs (merchant_payment_id)
+  where validation_status = 'accepted'
+    and payfast_payment_id is null
+    and merchant_payment_id is not null;
 
 alter table public.payfast_itn_logs enable row level security;
 
