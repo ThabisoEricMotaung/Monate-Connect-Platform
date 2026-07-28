@@ -17,6 +17,7 @@ export type NotificationType =
   | "Clarification Response"
   | "Message Received"
   | "Compliance Expiry Warning"
+  | "Platform Update"
 
 export type Notification = {
   id: number
