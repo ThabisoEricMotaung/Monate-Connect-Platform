@@ -4,6 +4,7 @@ import {
   IconBrandLinkedin,
   IconBrandOpenai,
   IconBrandSupabase,
+  IconBrandTiktok,
   IconBrandVercel,
   IconCheck,
   IconDatabase,
@@ -210,7 +211,7 @@ export default function AboutPage() {
         <p className="mt-3 max-w-2xl text-sm leading-7 text-[#53665c]">
           Follow product updates, procurement insights, and news from across our growing supplier network.
         </p>
-        <div className="mt-7 grid gap-4 md:grid-cols-3">
+        <div className="mt-7 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {socialChannels.map((channel) => {
             const Icon = channel.icon
             return (
@@ -252,6 +253,26 @@ export default function AboutPage() {
               </span>
               <span className="mt-2 block text-sm leading-6 text-[#53665c]">
                 Subscribe for newsletter editions and procurement analysis.
+              </span>
+            </span>
+          </a>
+          <a
+            href="https://www.tiktok.com/@aiformprocure"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Follow AiForm Procure on TikTok"
+            className="group flex items-start gap-4 rounded-md border border-[#e3d8c5] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-[#c8a060]/60 hover:shadow-md"
+          >
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[#1a3a2a]/10 text-[#1a3a2a]">
+              <IconBrandTiktok className="h-6 w-6" stroke={1.8} aria-hidden />
+            </span>
+            <span>
+              <span className="flex items-center gap-2 font-display text-xl font-semibold text-[#1a3a2a]">
+                TikTok
+                <span aria-hidden="true" className="text-base text-[#c8a060] transition group-hover:translate-x-1">↗</span>
+              </span>
+              <span className="mt-2 block text-sm leading-6 text-[#53665c]">
+                Short platform updates, procurement tips, and community highlights.
               </span>
             </span>
           </a>

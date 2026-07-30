@@ -1,5 +1,6 @@
 "use client"
 
+import { IconBrandTiktok } from "@tabler/icons-react"
 import Image from "next/image"
 import Link from "next/link"
 import { type CSSProperties } from "react"
@@ -286,6 +287,16 @@ export default function PublicFooter() {
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M4 4h16v2.25H4V4zm0 4h16v2.25H4V8zm0 4h16v8l-8-4.5L4 20v-8z" />
               </svg>
+            </a>
+            <a
+              href="https://www.tiktok.com/@aiformprocure"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-social-button"
+              aria-label="Follow AiForm Procure on TikTok"
+              title="TikTok"
+            >
+              <IconBrandTiktok className="h-4 w-4" stroke={2} aria-hidden />
             </a>
             <button
               type="button"
