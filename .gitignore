@@ -69,3 +69,4 @@ scripts/delete-listed-accounts.mjs
 .next-dev-backup*
 .vercel
 /.agents/
+/output/
