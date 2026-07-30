@@ -3,6 +3,16 @@
 export const notificationReadEvent = "monate:notification-read"
 export type NotificationReadEventDetail = { id: number; read: boolean }
 
+export type NotificationDestination = "dashboard" | "new-tab" | "none"
+
+export function classifyNotificationDestination(
+  link: string | null | undefined,
+): NotificationDestination {
+  if (!link) return "none"
+
+  return /^\/dashboard(?:[/?#]|$)/.test(link) ? "dashboard" : "new-tab"
+}
+
 export type NotificationType =
   | "RFQ Match"
   | "RFQ Deadline"

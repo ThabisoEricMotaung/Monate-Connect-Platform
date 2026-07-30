@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
+  classifyNotificationDestination,
   getNotifications,
   markNotificationRead,
   type Notification,
@@ -47,6 +48,12 @@ export default function NotificationsPage() {
   }, [])
 
   async function handleOpen(notification: Notification) {
+    const destination = classifyNotificationDestination(notification.link)
+
+    if (destination === "new-tab" && notification.link) {
+      window.open(notification.link, "_blank", "noopener,noreferrer")
+    }
+
     if (!notification.read) {
       setNotifications((currentNotifications) =>
         currentNotifications.map((currentNotification) =>
@@ -68,7 +75,7 @@ export default function NotificationsPage() {
       }
     }
 
-    if (notification.link) {
+    if (destination === "dashboard" && notification.link) {
       router.push(notification.link)
     }
   }

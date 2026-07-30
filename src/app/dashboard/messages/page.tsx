@@ -32,6 +32,7 @@ import {
   type ProcurementMessage,
 } from "@/lib/messages"
 import {
+  classifyNotificationDestination,
   getNotifications,
   markNotificationRead,
   type Notification,
@@ -1298,6 +1299,19 @@ export default function MessagesPage() {
   }
 
   async function handleNotificationClick(notification: Notification) {
+    const linkedThread = threads.find(
+      (thread) =>
+        !thread.platform &&
+        (notification.link?.includes(`/dashboard/messages`) ||
+          (thread.rfqId != null && notification.link?.includes(String(thread.rfqId))) ||
+          notification.title.toLowerCase().includes(thread.senderName.toLowerCase())),
+    )
+    const destination = classifyNotificationDestination(notification.link)
+
+    if (!linkedThread && destination === "new-tab" && notification.link) {
+      window.open(notification.link, "_blank", "noopener,noreferrer")
+    }
+
     if (!notification.read) {
       setNotifications((currentNotifications) =>
         currentNotifications.map((item) =>
@@ -1315,20 +1329,12 @@ export default function MessagesPage() {
       }
     }
 
-    const linkedThread = threads.find(
-      (thread) =>
-        !thread.platform &&
-        (notification.link?.includes(`/dashboard/messages`) ||
-          (thread.rfqId != null && notification.link?.includes(String(thread.rfqId))) ||
-          notification.title.toLowerCase().includes(thread.senderName.toLowerCase())),
-    )
-
     if (linkedThread) {
       openThread(linkedThread)
       return
     }
 
-    if (notification.link) {
+    if (destination === "dashboard" && notification.link) {
       router.push(notification.link)
     }
   }
