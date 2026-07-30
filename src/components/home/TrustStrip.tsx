@@ -36,8 +36,8 @@ const TRUST_ITEMS = [
     ),
   },
   {
-    title: 'BBBEE-Targeted Matching',
-    subtitle: 'Every RFQ is matched to the correct BBBEE level, sector, and province.',
+    title: 'Industry & Province Matching',
+    subtitle: 'Open opportunities are matched to supplier profiles by registered industry and province.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="10" />
