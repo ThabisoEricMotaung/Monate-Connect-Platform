@@ -253,7 +253,7 @@ export default function HeroSection() {
         {/* Left — headline */}
         <div>
           <p style={{ display: "inline-block", fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#1a3a2a", margin: "0 0 14px", fontWeight: 800, padding: "5px 16px", border: "1.5px solid #c8a060", borderRadius: "30px", background: "rgba(200,160,96,0.15)" }}>
-            South Africa&#39;s Verified Procurement Network
+            South African Procurement Opportunities
           </p>
           <h1 style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 900, lineHeight: 1.08, color: "#1a2e1a", margin: 0 }}>
             Where SA Suppliers
@@ -265,14 +265,14 @@ export default function HeroSection() {
             <div aria-hidden="true" style={{ height: 3, background: "linear-gradient(90deg, transparent, #c8a060 20%, #c8a060 80%, transparent)", marginTop: 6 }} />
           </div>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: "#3a4a3a", maxWidth: 480, margin: "0 0 18px" }}>
-            Verified RFQs from Eskom, municipalities &amp; parastatals &mdash; matched to your BBBEE level and province.
+            Browse curator-reviewed public tenders and RFQs by industry, province and closing date&mdash;with links to original sources.
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a8a7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
             </svg>
             <span style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7a8a7a" }}>
-              &mdash; Procurement Correspondent &middot; AiForm Procure Gazette
+              Public opportunities sourced from official procurement listings.
             </span>
           </div>
         </div>

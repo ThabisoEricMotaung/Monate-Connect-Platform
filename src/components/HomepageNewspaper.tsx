@@ -262,7 +262,7 @@ export default function HomepageNewspaper() {
             — ✦ —
           </div>
           <div style={{ fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3a2e1a', marginTop: 4 }}>
-            South Africa&#39;s Verified Procurement Network · Pilot Edition
+            South African Procurement Opportunities
           </div>
         </div>
 
@@ -279,11 +279,11 @@ export default function HomepageNewspaper() {
               Where SA Suppliers<br /><em style={{ color: '#9FE1CB' }}>Meet Real Procurement.</em>
             </h2>
             <p className="font-display" style={{ fontStyle: 'italic', fontSize: 13, color: '#9FE1CB', lineHeight: 1.5, margin: 0 }}>
-              Verified RFQs from Eskom, municipalities &amp; parastatals — matched to your BBBEE level and province.
+              Browse curator-reviewed public tenders and RFQs by industry, province and closing date&mdash;with links to original sources.
             </p>
           </div>
           <p style={{ fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#5a4a2a', marginTop: 4 }}>
-            — Procurement Correspondent · AiForm Procure Gazette
+            Public opportunities sourced from official procurement listings.
           </p>
         </div>
 
