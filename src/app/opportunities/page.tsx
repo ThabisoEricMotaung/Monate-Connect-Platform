@@ -149,7 +149,7 @@ function getPublishedDate(rfq: PublicRFQ): string | null {
 }
 
 function getBuyerName(rfq: PublicRFQ): string {
-  return rfq.buyer_org || rfq.buyer_name || rfq.buyer || rfq.organization_name || "Verified buyer"
+  return rfq.buyer_org || rfq.buyer_name || rfq.buyer || rfq.organization_name || "Buyer not specified"
 }
 
 function getRFQProvince(rfq: PublicRFQ): string {
@@ -756,7 +756,7 @@ function RFQCard({
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-success/30 bg-success-soft px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-success">
-              Verified buyer
+              Public opportunity
             </span>
             {matchesProfile && (
               <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-accent-strong">
@@ -1109,8 +1109,8 @@ export default function OpportunitiesPage() {
                   )}
                 </div>
                 <p className="mt-3 text-xs text-muted">
-                  Opportunities are sourced from public procurement notices and verified
-                  buyer organisations. Data is updated regularly during the pilot period.
+                  Opportunities are sourced from public procurement notices and
+                  platform-posted RFQs. Data is updated regularly during the pilot period.
                 </p>
               </>
             )}
@@ -1164,7 +1164,7 @@ export default function OpportunitiesPage() {
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-xs text-secondary">
                   <TargetIcon />
-                  <span><strong className="font-semibold text-heading">Verified RFQs</strong> &middot; from real buyer organisations</span>
+                  <span><strong className="font-semibold text-heading">Public RFQs</strong> &middot; sourced from official procurement listings</span>
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-xs text-secondary">
                   <BellIcon />
