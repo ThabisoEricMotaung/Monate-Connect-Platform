@@ -1,6 +1,6 @@
 "use client"
 
-import { IconBrandTiktok } from "@tabler/icons-react"
+import { IconAccessible, IconBrandReddit, IconBrandTiktok, IconBrandX } from "@tabler/icons-react"
 import Image from "next/image"
 import Link from "next/link"
 import { type CSSProperties } from "react"
@@ -251,12 +251,13 @@ export default function PublicFooter() {
               <span>A product of AiForm Studio</span>
             </div>
           </div>
-          <div className="relative flex items-center gap-2 lg:justify-end">
+          <div className="relative flex items-center lg:justify-end">
+            <div className="flex flex-nowrap items-center gap-1 sm:gap-2" role="group" aria-label="AiForm Procure social channels and accessibility">
             <a
               href="https://linkedin.com/company/aiform-procure/"
               target="_blank"
               rel="noopener noreferrer"
-              className="footer-social-button"
+              className="footer-social-button footer-social-link"
               aria-label="Follow AiForm Procure on LinkedIn"
               title="LinkedIn"
             >
@@ -268,7 +269,7 @@ export default function PublicFooter() {
               href="https://www.facebook.com/profile.php?id=61592730084230"
               target="_blank"
               rel="noopener noreferrer"
-              className="footer-social-button"
+              className="footer-social-button footer-social-link"
               aria-label="Follow AiForm Procure on Facebook"
               title="Facebook"
             >
@@ -280,7 +281,7 @@ export default function PublicFooter() {
               href="https://aiformprocure.substack.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="footer-social-button"
+              className="footer-social-button footer-social-link"
               aria-label="Subscribe to AiForm Procure on Substack"
               title="Substack"
             >
@@ -292,23 +293,42 @@ export default function PublicFooter() {
               href="https://www.tiktok.com/@aiformprocure"
               target="_blank"
               rel="noopener noreferrer"
-              className="footer-social-button"
+              className="footer-social-button footer-social-link"
               aria-label="Follow AiForm Procure on TikTok"
               title="TikTok"
             >
               <IconBrandTiktok className="h-4 w-4" stroke={2} aria-hidden />
             </a>
+            <a
+              href="https://x.com/aiformprocure"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-social-button footer-social-link"
+              aria-label="Follow AiForm Procure on X"
+              title="X"
+            >
+              <IconBrandX className="h-4 w-4" stroke={2} aria-hidden />
+            </a>
+            <a
+              href="https://www.reddit.com/user/AiForm-Procure/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-social-button footer-social-link"
+              aria-label="Follow AiForm Procure on Reddit"
+              title="Reddit"
+            >
+              <IconBrandReddit className="h-4 w-4" stroke={2} aria-hidden />
+            </a>
             <button
               type="button"
               onClick={openAccessibility}
-              className="footer-social-button footer-access-button"
+              className="footer-social-button footer-social-link footer-access-button shrink-0"
               aria-label="Accessibility"
+              title="Accessibility"
             >
-              <svg className="h-4 w-4 sm:hidden" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 4.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM4.5 7.5h15M12 7.5v13.5m-4.5 0L12 12l4.5 9" />
-              </svg>
-              <span className="hidden sm:inline">Accessibility</span>
+              <IconAccessible className="h-4 w-4" stroke={2} aria-hidden />
             </button>
+            </div>
           </div>
         </div>
 
@@ -510,6 +530,19 @@ export default function PublicFooter() {
           border-color: rgba(201, 161, 59, 0.34);
           background: rgba(255, 255, 255, 0.68);
           color: var(--procure-gold);
+        }
+
+        .footer-social-link {
+          border-color: #1a2535;
+          background: #1a2535;
+          color: #fff8ea;
+          box-shadow: none;
+        }
+
+        .footer-social-link:hover {
+          border-color: #c9a84c;
+          background: #c9a84c;
+          color: #1a2535;
         }
 
         .footer-access-button {
