@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react"
+import { useEffect, useRef, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { IconArrowLeft } from "@tabler/icons-react"
@@ -62,8 +62,6 @@ type SignupForm = {
   industry: string
   provinces: string[]
   csdNumber: string
-  csdDocumentFile: File | null
-  csdDocumentPath: string
   taxReference: string
   bbeeLevel: string
   vatNumber: string
@@ -78,10 +76,9 @@ type PasswordRule = {
   met: boolean
 }
 
-type MissingComplianceItem = "csdCertificate" | "taxReference" | "vatNumber" | "bbbeeCertificate"
+type MissingComplianceItem = "taxReference" | "vatNumber" | "bbbeeCertificate"
 
 const complianceWarningCopy: Record<MissingComplianceItem, { documentName: string; fieldLabel: string }> = {
-  csdCertificate: { documentName: "CSD Certificate", fieldLabel: "CSD Certificate" },
   taxReference: { documentName: "Tax Reference Number", fieldLabel: "Tax Reference Number" },
   vatNumber: { documentName: "VAT Registration Number", fieldLabel: "VAT Registration Number" },
   bbbeeCertificate: { documentName: "BBBEE Certificate", fieldLabel: "BBBEE level" },
@@ -106,8 +103,6 @@ const initialForm: SignupForm = {
   industry: "",
   provinces: [],
   csdNumber: "",
-  csdDocumentFile: null,
-  csdDocumentPath: "",
   taxReference: "",
   bbeeLevel: "",
   vatNumber: "",
@@ -117,10 +112,6 @@ const initialForm: SignupForm = {
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
-}
-
-function cleanFileName(name: string) {
-  return name.trim().replace(/[^a-zA-Z0-9._-]/g, "-").replace(/-+/g, "-")
 }
 
 function preferredFirstName(value: string) {
@@ -337,7 +328,6 @@ export default function SignupPage() {
   const [showOauthRegistrationNotice, setShowOauthRegistrationNotice] = useState(false)
   const [complianceWarnings, setComplianceWarnings] = useState<MissingComplianceItem[]>([])
   const [acknowledgedComplianceWarnings, setAcknowledgedComplianceWarnings] = useState(false)
-  const csdUploadRef = useRef<HTMLInputElement>(null)
   const taxReferenceRef = useRef<HTMLInputElement>(null)
   const vatNumberRef = useRef<HTMLInputElement>(null)
   const bbbeeLevelRef = useRef<HTMLSelectElement>(null)
@@ -386,6 +376,16 @@ export default function SignupPage() {
             firstName: current.firstName || metadataFirstName || "",
             lastName: current.lastName || metadataLastName || "",
           }))
+          void supabase
+            ?.from("profiles")
+            .select("intended_role")
+            .eq("id", user.id)
+            .maybeSingle()
+            .then(({ data }) => {
+              if (data?.intended_role === "buyer" || data?.intended_role === "supplier") {
+                setForm((current) => ({ ...current, role: data.intended_role }))
+              }
+            })
         })
       }
     }
@@ -395,10 +395,9 @@ export default function SignupPage() {
   const updateField = <K extends keyof SignupForm>(field: K, value: SignupForm[K]) => {
     setForm((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: undefined, submit: undefined }))
-    if (field === "csdDocumentFile" || field === "taxReference" || field === "vatNumber" || field === "bbeeLevel") {
+    if (field === "taxReference" || field === "vatNumber" || field === "bbeeLevel") {
       setAcknowledgedComplianceWarnings(false)
       setComplianceWarnings((current) => current.filter((item) => {
-        if (field === "csdDocumentFile") return item !== "csdCertificate"
         if (field === "taxReference") return item !== "taxReference"
         if (field === "vatNumber") return item !== "vatNumber"
         if (field === "bbeeLevel") return item !== "bbbeeCertificate"
@@ -431,17 +430,8 @@ export default function SignupPage() {
     updateField("provinces", checked ? [NATIONAL_PROVINCE_VALUE] : [])
   }
 
-  const handleCsdDocumentChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null
-    setForm((current) => ({ ...current, csdDocumentFile: file, csdDocumentPath: file ? "" : current.csdDocumentPath }))
-    setErrors((current) => ({ ...current, csdDocumentFile: undefined, submit: undefined }))
-    setAcknowledgedComplianceWarnings(false)
-    if (file) setComplianceWarnings((current) => current.filter((item) => item !== "csdCertificate"))
-  }
-
   function missingComplianceItems(): MissingComplianceItem[] {
     const missing: MissingComplianceItem[] = []
-    if (!form.csdDocumentFile && !form.csdDocumentPath) missing.push("csdCertificate")
     if (!form.taxReference.trim()) missing.push("taxReference")
     if (!form.vatNumber.trim()) missing.push("vatNumber")
     missing.push("bbbeeCertificate")
@@ -449,7 +439,6 @@ export default function SignupPage() {
   }
 
   function focusComplianceField(item: MissingComplianceItem) {
-    if (item === "csdCertificate") csdUploadRef.current?.focus()
     if (item === "taxReference") taxReferenceRef.current?.focus()
     if (item === "vatNumber") vatNumberRef.current?.focus()
     if (item === "bbbeeCertificate") bbbeeLevelRef.current?.focus()
@@ -457,47 +446,6 @@ export default function SignupPage() {
 
   function dismissComplianceWarning(item: MissingComplianceItem) {
     setComplianceWarnings((current) => current.filter((warning) => warning !== item))
-  }
-
-  const uploadCsdDocumentIfNeeded = async () => {
-    if (!form.csdDocumentFile || form.csdDocumentPath) return form.csdDocumentPath || null
-    if (!supabase || !userId) throw new Error("Session expired — please reload and start over.")
-
-    const file = form.csdDocumentFile
-    const path = `${userId}/csd-certificate/${Date.now()}-${cleanFileName(file.name)}`
-    const { error } = await supabase.storage
-      .from("supplier-documents")
-      .upload(path, file, { upsert: true })
-
-    if (error) throw new Error(error.message)
-
-    const { data: document, error: documentError } = await supabase
-      .from("supplier_documents")
-      .insert({
-        profile_id: userId,
-        document_type: "csd",
-        file_url: path,
-        storage_path: path,
-        original_filename: file.name,
-        content_type: file.type || null,
-        file_size: file.size,
-        status: "under_review",
-      })
-      .select("id")
-      .single()
-
-    if (documentError) throw new Error(documentError.message)
-
-    const { error: supersedeError } = await supabase.rpc("supersede_supplier_documents", {
-      p_profile_id: userId,
-      p_document_type: "csd",
-      p_keep_document_id: document.id,
-    })
-
-    if (supersedeError) throw new Error(supersedeError.message)
-
-    setForm((current) => ({ ...current, csdDocumentPath: path, csdDocumentFile: null }))
-    return path
   }
 
   const validateStep = (targetStep: number) => {
@@ -518,15 +466,19 @@ export default function SignupPage() {
     }
 
     if (targetStep === 2) {
-      if (!form.businessName.trim()) nextErrors.businessName = "Registered business name is required."
-      if (!form.registrationNumber.trim()) nextErrors.registrationNumber = "Company registration number is required."
+      if (!form.businessName.trim()) nextErrors.businessName = form.role === "buyer" ? "Organisation name is required." : "Registered business name is required."
+      if (form.role === "supplier" && !form.registrationNumber.trim()) nextErrors.registrationNumber = "Company registration number is required."
       if (!form.phone.trim()) nextErrors.phone = "Phone number is required."
       else if (!validateSAPhone(form.phone)) nextErrors.phone = SA_PHONE_ERROR
-      if (!form.industry) nextErrors.industry = "Industry is required."
+      if (!form.industry) nextErrors.industry = form.role === "buyer" ? "Organisation or industry type is required." : "Industry is required."
       if (form.provinces.length === 0) nextErrors.provinces = "Select at least one province."
     }
 
     if (targetStep === 3) {
+      if (form.role === "buyer") {
+        setErrors(nextErrors)
+        return true
+      }
       if (!form.csdNumber.trim()) nextErrors.csdNumber = "CSD supplier number is required."
       else if (!validateCsdNumber(form.csdNumber)) nextErrors.csdNumber = "Enter a valid CSD number in MAAA-XXXXXXXX format."
       if (form.taxReference.trim() && !validateTaxNumber(form.taxReference)) nextErrors.taxReference = "Tax number must be exactly 10 digits."
@@ -599,6 +551,18 @@ export default function SignupPage() {
       return
     }
 
+    const intentResponse = await fetch("/api/auth/oauth-intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider: "email", intendedRole: form.role }),
+    })
+    if (!intentResponse.ok) {
+      const result = await intentResponse.json().catch(() => ({})) as { error?: string }
+      setErrors({ submit: result.error || "Could not secure your selected account role." })
+      setLoading(false)
+      return
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email: normalizedEmail,
       password: form.password,
@@ -630,26 +594,13 @@ export default function SignupPage() {
     router.replace(`/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}`)
   }
 
-  // STEP 2: save business details (non-fatal if RLS blocks before email verify)
+  // Steps collect locally; the final server operation persists everything atomically.
   const handleStep2Save = async () => {
     if (!validateStep(2)) return
     setLoading(true)
 
-    if (supabase && userId) {
-      await supabase.from("profiles").upsert({
-        id: userId,
-        business_name: form.businessName,
-        company_registration: form.registrationNumber,
-        phone: form.phone,
-        industry: form.industry,
-        provinces: form.provinces,
-        province: displayProvinceList(form.provinces),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "id" })
-    }
-
     setLoading(false)
-    setStep(3)
+    setStep(form.role === "buyer" ? 4 : 3)
   }
 
   // STEP 3: save compliance info (non-fatal)
@@ -665,24 +616,6 @@ export default function SignupPage() {
     setAcknowledgedComplianceWarnings(false)
     setLoading(true)
     setErrors({})
-
-    if (supabase && userId) {
-      try {
-        await uploadCsdDocumentIfNeeded()
-      } catch (error) {
-        setErrors({ csdDocumentFile: error instanceof Error ? error.message : "CSD certificate upload failed." })
-        setLoading(false)
-        return
-      }
-      await supabase.from("profiles").upsert({
-        id: userId,
-        csd_number: form.csdNumber,
-        tax_reference: form.taxReference,
-        bbbee_level: form.bbeeLevel,
-        vat_number: form.vatNumber || null,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "id" })
-    }
 
     setLoading(false)
     setStep(4)
@@ -720,49 +653,40 @@ export default function SignupPage() {
       return
     }
 
-    const normalizedEmail = form.email.trim().toLowerCase()
-    const fullName = fullNameFromParts(form.firstName, form.lastName)
-
     try {
-      await uploadCsdDocumentIfNeeded()
-    } catch (error) {
-      setErrors({ csdDocumentFile: error instanceof Error ? error.message : "CSD certificate upload failed." })
+      const response = await fetch("/api/registration/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role: form.role, firstName: form.firstName, lastName: form.lastName,
+          businessName: form.businessName, registrationNumber: form.registrationNumber,
+          phone: form.phone.replace(/\s/g, ""), industry: form.industry, provinces: form.provinces,
+          csdNumber: form.csdNumber, bbeeLevel: form.bbeeLevel, taxReference: form.taxReference,
+          vatNumber: form.vatNumber, termsAccepted: form.termsAccepted,
+        }),
+      })
+      const result = await response.json().catch(() => ({})) as { error?: string }
+      if (!response.ok) {
+        setErrors({ submit: result.error || "Registration could not be completed. Please review your details and try again." })
+        setLoading(false)
+        return
+      }
+    } catch {
+      setErrors({ submit: "Registration could not be saved. Check your connection and try again." })
       setLoading(false)
       return
     }
 
-    const { error: profileError } = await supabase.from("profiles").upsert({
-      id: userId,
-      email: normalizedEmail,
-      first_name: form.firstName.trim(),
-      last_name: form.lastName.trim(),
-      full_name: fullName,
-      preferred_name: form.firstName.trim(),
-      business_name: form.businessName,
-      company_registration: form.registrationNumber,
-      phone: form.phone,
-      industry: form.industry,
-      provinces: form.provinces,
-      province: displayProvinceList(form.provinces),
-      csd_number: form.csdNumber,
-      tax_reference: form.taxReference,
-      bbbee_level: form.bbeeLevel,
-      vat_number: form.vatNumber || null,
-      verification_status: "Pending Review",
-      registration_complete: true,
-      role: form.role,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "id" })
-
-    if (profileError) {
-      console.error("Profile save:", profileError.message)
-    }
-
     setLoading(false)
-    router.replace(`/auth/verify-phone?phone=${encodeURIComponent(form.phone)}`)
+    const onboardingTarget = "/dashboard/onboarding?source=registration-complete"
+    router.replace(
+      form.role === "buyer"
+        ? "/dashboard/buyer"
+        : `/auth/verify-phone?phone=${encodeURIComponent(form.phone)}&next=${encodeURIComponent(onboardingTarget)}`,
+    )
   }
 
-  const handleGoogleSignIn = async () => {
+  const beginOAuth = async (provider: "google" | "azure" | "linkedin_oidc", scopes?: string) => {
     setErrors({})
 
     if (!supabase) {
@@ -770,10 +694,17 @@ export default function SignupPage() {
       return
     }
 
+    const intentResponse = await fetch("/api/auth/oauth-intent", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider, intendedRole: form.role }) })
+    if (!intentResponse.ok) {
+      const result = await intentResponse.json().catch(() => ({})) as { error?: string }
+      setErrors({ submit: result.error || "Could not start secure sign in." })
+      return
+    }
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        ...(scopes ? { scopes } : {}),
       },
     })
 
@@ -782,47 +713,11 @@ export default function SignupPage() {
     }
   }
 
-  const handleMicrosoftSignIn = async () => {
-    setErrors({})
+  const handleGoogleSignIn = () => beginOAuth("google")
 
-    if (!supabase) {
-      setErrors({ submit: "Supabase environment variables are not configured." })
-      return
-    }
+  const handleMicrosoftSignIn = () => beginOAuth("azure", "email profile")
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "azure",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        scopes: "email profile",
-      },
-    })
-
-    if (error) {
-      setErrors({ submit: error.message })
-    }
-  }
-
-  const handleLinkedInSignIn = async () => {
-    setErrors({})
-
-    if (!supabase) {
-      setErrors({ submit: "Supabase environment variables are not configured." })
-      return
-    }
-
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "linkedin_oidc",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        scopes: "openid profile email",
-      },
-    })
-
-    if (error) {
-      setErrors({ submit: error.message })
-    }
-  }
+  const handleLinkedInSignIn = () => beginOAuth("linkedin_oidc", "openid profile email")
   return (
     <div className="relative min-h-screen bg-[#f8f4ec]">
       <div className="relative z-10 px-8 py-6">
@@ -967,6 +862,7 @@ export default function SignupPage() {
                       key={r}
                       type="button"
                       onClick={() => updateField("role", r)}
+                      disabled={isOauthSignup}
                       className={`flex flex-col items-start rounded-2xl border p-4 text-left transition ${
                         form.role === r
                           ? "border-accent bg-accent/5 ring-2 ring-accent/20"
@@ -1065,22 +961,22 @@ export default function SignupPage() {
           {step === 2 && (
             <section>
               <div className="mb-8 text-center">
-                <p className="text-xs uppercase tracking-[0.24em] text-accent">Supplier onboarding</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-accent">{form.role === "buyer" ? "Buyer registration" : "Supplier onboarding"}</p>
                 <h1 className="mt-3 text-4xl font-semibold text-primary">Tell us about your business</h1>
                 <p className="mt-3 text-sm leading-6 text-secondary">This is what procurement teams will see when they find your profile.</p>
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-secondary">Registered business name <span className="text-rose-500">*</span></label>
-                  <input type="text" placeholder="As registered with CIPC" value={form.businessName} onChange={(e) => updateField("businessName", e.target.value)} className={inputClass} />
+                  <label className="block text-sm font-medium text-secondary">{form.role === "buyer" ? "Organisation name" : "Registered business name"} <span className="text-rose-500">*</span></label>
+                  <input type="text" placeholder={form.role === "buyer" ? "Organisation name" : "As registered with CIPC"} value={form.businessName} onChange={(e) => updateField("businessName", e.target.value)} className={inputClass} />
                   <FieldError message={errors.businessName} />
                 </div>
-                <div>
+                {form.role === "supplier" && <div>
                   <label className="block text-sm font-medium text-secondary">Company registration number <span className="text-rose-500">*</span></label>
                   <input type="text" placeholder="e.g. 2019/123456/07" value={form.registrationNumber} onChange={(e) => updateField("registrationNumber", e.target.value)} className={inputClass} />
                   <FieldError message={errors.registrationNumber} />
-                </div>
+                </div>}
               </div>
 
               <div className="mt-5 grid gap-5 md:grid-cols-2">
@@ -1098,7 +994,7 @@ export default function SignupPage() {
                   <FieldError message={errors.phone} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary">Industry <span className="text-rose-500">*</span></label>
+                  <label className="block text-sm font-medium text-secondary">{form.role === "buyer" ? "Organisation / industry type" : "Industry"} <span className="text-rose-500">*</span></label>
                   <select value={form.industry} onChange={(e) => updateField("industry", e.target.value)} className={selectClass}>
                     <option value="">Select industry</option>
                     {OFFICIAL_INDUSTRY_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
@@ -1108,7 +1004,7 @@ export default function SignupPage() {
               </div>
 
               <div className="mt-5">
-                <label className="block text-sm font-medium text-secondary">Province(s) you operate in <span className="text-rose-500">*</span></label>
+                <label className="block text-sm font-medium text-secondary">{form.role === "buyer" ? "Province / operating area" : "Province(s) you operate in"} <span className="text-rose-500">*</span></label>
                 <p className="mt-2 text-xs leading-5 text-muted">Select all provinces where you can fulfil contracts.</p>
                 <label className="mt-3 flex items-center gap-3 rounded-2xl border border-panel bg-surface px-4 py-3 text-sm font-semibold text-secondary">
                   <input
@@ -1208,24 +1104,6 @@ export default function SignupPage() {
                   <p className="mt-2 text-xs leading-5 text-muted">Central Supplier Database</p>
                   <FieldError message={errors.csdNumber} />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-secondary">CSD Certificate</label>
-                  <label className="mt-2 flex min-h-[58px] cursor-pointer items-center justify-between gap-3 rounded-2xl border border-panel bg-surface px-5 py-4 text-sm text-secondary transition hover:border-accent hover:text-accent">
-                    <span className="min-w-0 flex-1 truncate">
-                      {form.csdDocumentFile?.name || (form.csdDocumentPath ? "CSD certificate uploaded" : "Upload PDF, JPG or PNG")}
-                    </span>
-                    <span className="shrink-0 text-xs font-semibold text-accent">Browse</span>
-                    <input
-                      ref={csdUploadRef}
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      className="sr-only"
-                      onChange={handleCsdDocumentChange}
-                    />
-                  </label>
-                  <p className="mt-2 text-xs leading-5 text-muted">Upload your latest CSD registration document.</p>
-                  <FieldError message={errors.csdDocumentFile} />
-                </div>
               </div>
 
               <div className="mt-5 grid gap-5 md:grid-cols-2">
@@ -1277,7 +1155,7 @@ export default function SignupPage() {
           {step === 4 && (
             <section>
               <div className="mb-8 text-center">
-                <p className="text-xs uppercase tracking-[0.24em] text-accent">Supplier onboarding</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-accent">{form.role === "buyer" ? "Buyer registration" : "Supplier onboarding"}</p>
                 <h1 className="mt-3 text-4xl font-semibold text-primary">You&apos;re almost there</h1>
                 <p className="mt-3 text-sm leading-6 text-secondary">Review your details before submitting. You can edit any section.</p>
               </div>
@@ -1295,7 +1173,7 @@ export default function SignupPage() {
                     detail: `${form.csdNumber} — ${form.bbeeLevel}${form.vatNumber ? ` — VAT ${form.vatNumber}` : ""}`,
                     editStep: 3,
                   },
-                ].map((row) => (
+                ].filter((row) => form.role === "supplier" || row.editStep !== 3).map((row) => (
                   <details key={row.title} className="border-b border-panel last:border-b-0" open>
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
                       <span className="text-sm font-bold text-heading">{row.title}</span>
@@ -1333,7 +1211,7 @@ export default function SignupPage() {
                   className="w-full rounded-2xl bg-accent py-4 font-semibold text-button transition duration-200 hover:bg-accent-strong disabled:opacity-50">
                   {loading ? "Submitting registration—" : "Submit registration"}
                 </button>
-                <button type="button" onClick={goBack} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
+                <button type="button" onClick={() => form.role === "buyer" ? setStep(2) : goBack()} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-panel bg-panel py-4 font-semibold text-secondary transition duration-200 hover:border-accent hover:bg-accent/10 hover:text-accent">
                   <IconArrowLeft className="h-4 w-4" stroke={2} aria-hidden />
                   <span>Back</span>
                 </button>

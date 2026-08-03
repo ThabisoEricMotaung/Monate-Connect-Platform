@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { roleHomeHref } from "@/lib/navigation"
 import { supabase } from "@/lib/supabase"
+import { hasCompletedRegistration } from "@/lib/registration"
 
 type RegistrationState = "loading" | "signed-out" | "complete" | "incomplete"
 
@@ -37,7 +38,7 @@ export function useRegistrationStatus(): RegistrationStatus {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, role")
+        .select("id, role, registration_status")
         .eq("id", session.user.id)
         .maybeSingle()
 
@@ -45,7 +46,7 @@ export function useRegistrationStatus(): RegistrationStatus {
 
       if (error) {
         console.error("Homepage registration status check failed:", error)
-        setStatus({ dashboardHref: "/dashboard", state: "complete" })
+        setStatus({ dashboardHref: null, state: "incomplete" })
         return
       }
 
@@ -54,10 +55,11 @@ export function useRegistrationStatus(): RegistrationStatus {
         return
       }
 
-      setStatus({
-        dashboardHref: roleHomeHref((data as { role?: string | null }).role),
-        state: "complete",
-      })
+      if (!hasCompletedRegistration(data)) {
+        setStatus({ dashboardHref: null, state: "incomplete" })
+      } else {
+        setStatus({ dashboardHref: roleHomeHref(data.role), state: "complete" })
+      }
     }
 
     loadStatus()

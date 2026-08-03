@@ -4,15 +4,7 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { Session } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabase"
-
-function getPostOAuthPath(role?: string | null): string | null {
-  const normalizedRole = role?.trim().toLowerCase()
-  if (!normalizedRole) return null
-  if (normalizedRole === "admin") return "/dashboard/admin"
-  if (normalizedRole === "buyer") return "/dashboard/buyer"
-  if (normalizedRole === "supplier") return "/dashboard"
-  return "/dashboard"
-}
+import { registrationDestination } from "@/lib/registration"
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -142,7 +134,7 @@ export default function PostOAuthPage() {
       const lookupProfile = () =>
         client
           .from("profiles")
-          .select("id, role")
+          .select("id, role, intended_role, registration_status")
           .eq("id", session.user.id)
           .limit(1)
           .maybeSingle()
@@ -181,17 +173,7 @@ export default function PostOAuthPage() {
         return
       }
 
-      const role = profile?.role?.trim()
-      console.log("Post OAuth profile role", role ?? null)
-
-      if (!role) {
-        const redirectTarget = `/auth/signup?oauth=true&email=${encodeURIComponent(session.user.email ?? "")}`
-        console.log("Redirecting to:", redirectTarget)
-        router.replace(redirectTarget)
-        return
-      }
-
-      const redirectTarget = getPostOAuthPath(role) ?? "/dashboard"
+      const redirectTarget = registrationDestination(profile)
       console.log("Redirecting to:", redirectTarget)
       router.replace(redirectTarget)
     }

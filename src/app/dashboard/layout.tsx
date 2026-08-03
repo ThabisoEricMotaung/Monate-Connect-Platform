@@ -35,6 +35,7 @@ import { useI18n, type TranslationKey } from "@/lib/i18n"
 import { roleHomeHref } from "@/lib/navigation"
 import { supabase } from "@/lib/supabase"
 import { getInboxUnreadCounts, subscribeToInboxActivity } from "@/lib/inboxCounts"
+import { hasCompletedRegistration } from "@/lib/registration"
 
 type SupplierNavigationName =
   | TranslationKey
@@ -262,7 +263,7 @@ export default function DashboardLayout({
 
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, business_name, email, full_name, preferred_name, role, avatar_url, created_at, phone_verified_at")
+          .select("id, business_name, email, full_name, preferred_name, role, avatar_url, created_at, phone_verified_at, registration_status")
           .eq("id", session.user.id)
           .maybeSingle()
 
@@ -272,7 +273,7 @@ export default function DashboardLayout({
           return
         }
 
-        if (!data) {
+        if (!data || !hasCompletedRegistration(data)) {
           router.replace("/register?source=oauth")
           return
         }
@@ -299,11 +300,6 @@ export default function DashboardLayout({
         const createdAt = (data as { created_at?: string | null }).created_at
         const normalizedRole = (data as { role?: string | null } | null)?.role?.trim().toLowerCase()
         const isAdminUser = normalizedRole === "admin"
-        const searchParams = new URLSearchParams(window.location.search)
-        const phoneSkipped =
-          searchParams.get("phone_skipped") === "true" ||
-          (typeof window !== "undefined" && sessionStorage.getItem("phone_skipped") === "true")
-
         if (isAdminUser) {
           setPhoneGraceExpiresAt(null)
         } else if (!isOAuthUser && !phoneVerifiedAt) {
