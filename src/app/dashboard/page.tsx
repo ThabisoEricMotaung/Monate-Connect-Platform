@@ -13,6 +13,11 @@ import {
 } from "@/lib/smartScore"
 import { getCanonicalSupplierSmartScore } from "@/lib/supplierScoring"
 import { supabase } from "@/lib/supabase"
+import {
+  requiredSupplierDocumentProgress,
+  type RequiredSupplierDocumentProgress,
+} from "@/lib/supplierDocuments"
+import { isRegistrationExemptAccount } from "@/lib/registration"
 
 function formatDeadline(dateStr: string | null | undefined): string {
   if (!dateStr) return "-"
@@ -68,6 +73,7 @@ export default function DashboardPage() {
   const [smartScoreLoading, setSmartScoreLoading] = useState(true)
   const [smartScoreError, setSmartScoreError] = useState("")
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false)
+  const [documentProgress, setDocumentProgress] = useState<RequiredSupplierDocumentProgress[]>([])
 
   // Load greeting + real stat values
   useEffect(() => {
@@ -174,8 +180,15 @@ export default function DashboardPage() {
         }
 
         const displayScore = canonicalScore.result.score
+        const requiredDocuments = isRegistrationExemptAccount(canonicalScore.input.email)
+          ? []
+          : requiredSupplierDocumentProgress(
+              canonicalScore.input as unknown as Record<string, unknown>,
+              canonicalScore.input.supplier_documents ?? [],
+            )
 
         setSmartScore(displayScore)
+        setDocumentProgress(requiredDocuments)
         setSmartScoreError("")
 
         if (displayScore !== Number(canonicalScore.input.smart_score ?? 0)) {
@@ -242,6 +255,9 @@ export default function DashboardPage() {
       ? "Building trust"
       : "Complete your profile"
   const smartScoreTone = getSmartScoreColour(smartScore ?? 0)
+  const outstandingDocuments = documentProgress.filter((item) => item.status !== "approved")
+  const notUploadedCount = outstandingDocuments.filter((item) => item.status === "not_uploaded").length
+  const underReviewCount = outstandingDocuments.filter((item) => item.status === "under_review").length
   const smartScoreTextClass =
     smartScoreTone === "success" ? "text-success" : smartScoreTone === "warning" ? "text-warning" : "text-rose-700"
   const smartScoreBgClass =
@@ -266,6 +282,27 @@ export default function DashboardPage() {
 
   return (
     <div>
+      {outstandingDocuments.length > 0 && (
+        <div className="mb-6 flex flex-col gap-4 rounded-md border border-warning/40 bg-warning-soft p-5 text-sm text-secondary sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-heading">
+              Your registration is complete, but {outstandingDocuments.length} verification document{outstandingDocuments.length === 1 ? " is" : "s are"} still outstanding.
+            </p>
+            <p className="mt-1 text-xs leading-5 text-secondary">
+              {notUploadedCount > 0 ? `${notUploadedCount} not uploaded` : ""}
+              {notUploadedCount > 0 && underReviewCount > 0 ? " · " : ""}
+              {underReviewCount > 0 ? `${underReviewCount} under review` : ""}
+            </p>
+          </div>
+          <Link
+            href="/dashboard/profile?tab=documents"
+            className="inline-flex w-fit shrink-0 rounded-md border border-accent bg-accent px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-button transition hover:bg-accent-strong"
+          >
+            Upload documents
+          </Link>
+        </div>
+      )}
+
       {showWelcomeBanner && firstName && (
         <div className="mb-6 flex flex-col gap-4 rounded-md border border-accent/25 bg-accent/10 p-4 text-sm text-secondary sm:flex-row sm:items-center sm:justify-between">
           <p>
@@ -319,9 +356,17 @@ export default function DashboardPage() {
                 </span>
               </div>
               <div>
-                <p className={`text-sm font-semibold ${smartScoreTextClass}`}>{smartScoreLabel}</p>
+                {outstandingDocuments.length > 0 ? (
+                  <Link href="/dashboard/profile?tab=documents" className={`text-sm font-semibold underline decoration-current/40 underline-offset-4 ${smartScoreTextClass}`}>
+                    {smartScoreLabel}
+                  </Link>
+                ) : (
+                  <p className={`text-sm font-semibold ${smartScoreTextClass}`}>{smartScoreLabel}</p>
+                )}
                 <p className="mt-1 text-xs leading-5 text-secondary">
-                  Stored score is refreshed in the background when your profile changes.
+                  {outstandingDocuments.length > 0
+                    ? `${outstandingDocuments.length} required document${outstandingDocuments.length === 1 ? "" : "s"} still need attention.`
+                    : "Stored score is refreshed in the background when your profile changes."}
                 </p>
                 {smartScoreError && (
                   <p className="mt-2 text-xs font-semibold leading-5 text-warning">{smartScoreError}</p>

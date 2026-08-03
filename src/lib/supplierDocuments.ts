@@ -15,7 +15,19 @@ export const SUPPLIER_DOCUMENT_TYPES = [
 ] as const
 
 export type SupplierDocumentType = (typeof SUPPLIER_DOCUMENT_TYPES)[number]
-export type SupplierDocumentStatus = "under_review" | "verified" | "rejected" | "expired" | "superseded"
+export type SupplierDocumentStatus = "under_review" | "verified" | "approved" | "rejected" | "expired" | "superseded"
+export type CanonicalSupplierDocumentStatus = "under_review" | "approved" | "rejected" | "expired" | "superseded"
+
+export function normalizeSupplierDocumentStatus(
+  status: SupplierDocumentStatus | string | null | undefined,
+): CanonicalSupplierDocumentStatus {
+  const normalized = String(status ?? "under_review").trim().toLowerCase()
+  if (normalized === "verified" || normalized === "approved") return "approved"
+  if (normalized === "rejected") return "rejected"
+  if (normalized === "expired") return "expired"
+  if (normalized === "superseded") return "superseded"
+  return "under_review"
+}
 
 export type SupplierDocument = {
   id: string
@@ -178,6 +190,33 @@ export const REQUIRED_SUPPLIER_DOCUMENTS: readonly RequiredSupplierDocument[] = 
   { type: "bank_letter", label: "Bank Confirmation Letter" },
 ]
 
+export type RequiredSupplierDocumentProgressStatus = "not_uploaded" | "under_review" | "approved"
+
+export type RequiredSupplierDocumentProgress = RequiredSupplierDocument & {
+  status: RequiredSupplierDocumentProgressStatus
+}
+
+export function requiredSupplierDocumentProgress(
+  profile: Record<string, unknown>,
+  documents: SupplierDocument[] | null | undefined,
+): RequiredSupplierDocumentProgress[] {
+  const latest = latestSupplierDocuments(documents)
+
+  return REQUIRED_SUPPLIER_DOCUMENTS.map((requirement) => {
+    const document = latest[requirement.type]
+    if (document?.file_url?.trim()) {
+      const status = normalizeSupplierDocumentStatus(document.status)
+      if (status === "approved") return { ...requirement, status: "approved" }
+      if (status === "under_review") return { ...requirement, status: "under_review" }
+    }
+
+    // Legacy URL-only evidence has no review status. Keep it visible as under
+    // review rather than presenting it as approved without a canonical record.
+    const hasLegacyEvidence = (requirement.legacyFields ?? []).some((field) => hasValueString(profile[field]))
+    return { ...requirement, status: hasLegacyEvidence ? "under_review" : "not_uploaded" }
+  })
+}
+
 function hasValueString(value: unknown): boolean {
   return typeof value === "string" && value.trim().length > 0
 }
@@ -207,4 +246,3 @@ export function missingRequiredSupplierDocuments(
     (requirement) => !hasRequiredSupplierDocument(profile, documents, requirement),
   )
 }
-

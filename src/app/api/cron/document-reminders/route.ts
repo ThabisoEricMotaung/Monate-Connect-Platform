@@ -3,6 +3,7 @@ import { Resend } from "resend"
 import { emailSignatureHtml, emailSignatureText, reviewCopyEmail, SUPPLIER_EMAIL_REVIEW_RECIPIENT } from "@/lib/emailSignature"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 import { missingRequiredSupplierDocuments } from "@/lib/supplierDocuments"
+import { REGISTRATION_EXEMPT_ACCOUNT_EMAILS } from "@/lib/registration"
 
 type SupplierProfile = {
   id: string
@@ -12,6 +13,8 @@ type SupplierProfile = {
   preferred_name: string | null
   business_name: string | null
   created_at: string | null
+  registration_status: string | null
+  registration_completed_at: string | null
   csd_document_url: string | null
   bbbee_document_url: string | null
   tax_clearance_url: string | null
@@ -219,31 +222,37 @@ export async function GET(request: Request) {
   }
 
   const now = new Date()
-  const signupCutoff = new Date(now.getTime() - FIRST_REMINDER_AFTER_MS).toISOString()
+  const completionCutoff = new Date(now.getTime() - FIRST_REMINDER_AFTER_MS).toISOString()
 
   let { data: profilesData, error: profilesError } = await supabaseAdmin
     .from("profiles")
     .select(
-      "id, email, first_name, full_name, preferred_name, business_name, created_at, csd_document_url, bbbee_document_url, tax_clearance_url, tax_document_url, company_registration_url, provisional_missing_document, provisional_deadline",
+      "id, email, first_name, full_name, preferred_name, business_name, created_at, registration_status, registration_completed_at, csd_document_url, bbbee_document_url, tax_clearance_url, tax_document_url, company_registration_url, provisional_missing_document, provisional_deadline",
     )
     .eq("role", "supplier")
+    .eq("registration_status", "complete")
+    .not("registration_completed_at", "is", null)
     .not("email", "is", null)
     .not("email", "ilike", "%@deleted.local")
-    .lte("created_at", signupCutoff)
-    .order("created_at", { ascending: true })
+    .not("email", "in", `(${REGISTRATION_EXEMPT_ACCOUNT_EMAILS.join(",")})`)
+    .lte("registration_completed_at", completionCutoff)
+    .order("registration_completed_at", { ascending: true })
     .limit(MAX_PROFILES_PER_RUN)
 
   if (profilesError?.code === "42703") {
     const retry = await supabaseAdmin
       .from("profiles")
       .select(
-        "id, email, first_name, full_name, preferred_name, business_name, created_at, csd_document_url, bbbee_document_url, tax_clearance_url, tax_document_url, company_registration_url",
+        "id, email, first_name, full_name, preferred_name, business_name, created_at, registration_status, registration_completed_at, csd_document_url, bbbee_document_url, tax_clearance_url, tax_document_url, company_registration_url",
       )
       .eq("role", "supplier")
+      .eq("registration_status", "complete")
+      .not("registration_completed_at", "is", null)
       .not("email", "is", null)
       .not("email", "ilike", "%@deleted.local")
-      .lte("created_at", signupCutoff)
-      .order("created_at", { ascending: true })
+      .not("email", "in", `(${REGISTRATION_EXEMPT_ACCOUNT_EMAILS.join(",")})`)
+      .lte("registration_completed_at", completionCutoff)
+      .order("registration_completed_at", { ascending: true })
       .limit(MAX_PROFILES_PER_RUN)
 
     profilesData = (retry.data?.map((profile) => ({

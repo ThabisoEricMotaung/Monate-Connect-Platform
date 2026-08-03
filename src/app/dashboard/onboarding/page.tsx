@@ -4,35 +4,51 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
-import { applySupplierDocuments, fetchSupplierDocumentsForProfile } from "@/lib/supplierDocuments"
+import {
+  fetchSupplierDocumentsForProfile,
+  requiredSupplierDocumentProgress,
+  type RequiredSupplierDocumentProgressStatus,
+  type SupplierDocument,
+} from "@/lib/supplierDocuments"
+import { isRegistrationExemptAccount } from "@/lib/registration"
 
 type OnboardingProfile = {
   id: string
+  email: string | null
   first_name: string | null
   last_name: string | null
   full_name: string | null
   business_name: string | null
   csd_number: string | null
   bbbee_level: string | null
-  bbbee_document_url: string | null
-  banking_verified: boolean | null
-  bank_verified: boolean | null
   onboarding_seen: boolean | null
+  csd_document_url?: string | null
+  tax_clearance_url?: string | null
+  tax_document_url?: string | null
+  company_registration_url?: string | null
 }
 
 type ChecklistItem = {
   label: string
   href: string
-  done: boolean
+  status: RequiredSupplierDocumentProgressStatus
 }
 
-function CheckIcon({ done }: { done: boolean }) {
-  if (done) {
+function CheckIcon({ status }: { status: RequiredSupplierDocumentProgressStatus }) {
+  if (status === "approved") {
     return (
       <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
         <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
           <path d="m5 12 5 5 9-9" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" />
         </svg>
+      </span>
+    )
+  }
+  if (status === "under_review") {
+    return (
+      <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-warning/40 bg-warning-soft text-xs font-bold text-warning">
+        …
+        <span className="sr-only">Under review</span>
       </span>
     )
   }
@@ -46,6 +62,7 @@ function CheckIcon({ done }: { done: boolean }) {
 export default function OnboardingPage() {
   const router = useRouter()
   const [profile, setProfile] = useState<OnboardingProfile | null>(null)
+  const [documents, setDocuments] = useState<SupplierDocument[]>([])
   const [loading, setLoading] = useState(true)
   const [markingDone, setMarkingDone] = useState(false)
 
@@ -58,16 +75,22 @@ export default function OnboardingPage() {
 
       const { data } = await supabase
         .from("profiles")
-        .select("id, first_name, last_name, full_name, business_name, csd_number, bbbee_level, bbbee_document_url, banking_verified, bank_verified, onboarding_seen")
+        .select("id, email, first_name, last_name, full_name, business_name, csd_number, bbbee_level, onboarding_seen, csd_document_url, bbbee_document_url, tax_clearance_url, tax_document_url, company_registration_url")
         .eq("id", user.id)
         .maybeSingle()
 
       const documents = data ? await fetchSupplierDocumentsForProfile(user.id) : { documents: [], error: null }
-      setProfile(data ? applySupplierDocuments(data as OnboardingProfile, documents.documents) : null)
+      if (data && isRegistrationExemptAccount(data.email)) {
+        router.replace("/dashboard")
+        return
+      }
+      setProfile(data as OnboardingProfile | null)
+      setDocuments(documents.documents)
       setLoading(false)
 
-      // Mark onboarding as seen (non-blocking)
-      if (data && !data.onboarding_seen) {
+      // Only the real post-completion handoff marks the checklist as seen.
+      const reachedFromCompletion = new URLSearchParams(window.location.search).get("source") === "registration-complete"
+      if (data && !data.onboarding_seen && reachedFromCompletion) {
         supabase.from("profiles").update({ onboarding_seen: true }).eq("id", user.id).then(() => {})
       }
     }
@@ -77,45 +100,25 @@ export default function OnboardingPage() {
   const firstName = profile?.first_name?.trim() || profile?.full_name?.split(" ")[0] || "there"
 
   const checklist: ChecklistItem[] = profile
-    ? [
-        {
-          label: "Complete business profile",
-          href: "/dashboard/profile",
-          done: Boolean(profile.business_name),
-        },
-        {
-          label: "Upload BBBEE certificate",
-          href: "/dashboard/profile?tab=verification",
-          done: Boolean(profile.bbbee_document_url),
-        },
-        {
-          label: "Confirm CSD number",
-          href: "/dashboard/profile?tab=verification",
-          done: Boolean(profile.csd_number),
-        },
-        {
-          label: "Add banking details",
-          href: "/dashboard/profile?tab=banking",
-          done: Boolean(profile.banking_verified || profile.bank_verified),
-        },
-        {
-          label: "Browse open RFQs",
-          href: "/dashboard/rfqs",
-          done: false,
-        },
-      ]
+    ? requiredSupplierDocumentProgress(profile as unknown as Record<string, unknown>, documents).map((item) => ({
+        label: item.type === "csd"
+          ? "Upload CSD document"
+          : item.type === "bbbee"
+            ? "Upload B-BBEE certificate"
+            : item.type === "tax_clearance"
+              ? "Upload tax-clearance evidence"
+              : item.type === "cipc"
+                ? "Upload CIPC/company-registration document"
+                : "Add banking details and upload a bank letter",
+        href: "/dashboard/profile?tab=documents",
+        status: item.status,
+      }))
     : []
 
-  const completedCount = checklist.filter((item) => item.done).length
+  const completedCount = checklist.filter((item) => item.status === "approved").length
 
-  const handleGotoDashboard = async () => {
+  const handleGotoDashboard = () => {
     setMarkingDone(true)
-    if (supabase && profile !== null) {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        await supabase.from("profiles").update({ onboarding_seen: true }).eq("id", user.id)
-      }
-    }
     router.push("/dashboard")
   }
 
@@ -159,16 +162,18 @@ export default function OnboardingPage() {
               <Link
                 href={item.href}
                 className={`flex items-center gap-4 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                  item.done
+                  item.status === "approved"
                     ? "border-success/20 bg-success/5 text-heading"
                     : "border-panel bg-surface text-secondary hover:border-accent hover:text-primary"
                 }`}
               >
-                <CheckIcon done={item.done} />
-                <span className={item.done ? "line-through opacity-60" : ""}>{item.label}</span>
-                {!item.done && (
-                  <span className="ml-auto text-xs text-accent">?</span>
-                )}
+                <CheckIcon status={item.status} />
+                <span className={item.status === "approved" ? "line-through opacity-60" : ""}>{item.label}</span>
+                <span className={`ml-auto text-xs font-bold ${
+                  item.status === "approved" ? "text-success" : item.status === "under_review" ? "text-warning" : "text-accent"
+                }`}>
+                  {item.status === "approved" ? "Approved" : item.status === "under_review" ? "Under review" : "Not uploaded"}
+                </span>
               </Link>
             </li>
           ))}

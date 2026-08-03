@@ -25,6 +25,12 @@ function digitArrayFromCode(code: string) {
   return Array.from({ length: OTP_LENGTH }, (_, index) => code[index] ?? "")
 }
 
+function postVerificationDestination() {
+  if (typeof window === "undefined") return "/dashboard"
+  const requested = new URLSearchParams(window.location.search).get("next")
+  return requested?.startsWith("/dashboard/") ? requested : "/dashboard"
+}
+
 export default function VerifyPhonePage() {
   const router = useRouter()
   const digitRefs = useRef<Array<HTMLInputElement | null>>([])
@@ -66,7 +72,7 @@ export default function VerifyPhonePage() {
 
       const provider = session.user.app_metadata?.provider
       if (provider === "google" || provider === "azure") {
-        router.replace("/dashboard")
+        router.replace(postVerificationDestination())
         return
       }
 
@@ -78,7 +84,7 @@ export default function VerifyPhonePage() {
 
       if (profile?.phone_verified_at) {
         sessionStorage.removeItem("phone_skipped")
-        router.replace("/dashboard")
+        router.replace(postVerificationDestination())
         return
       }
 
@@ -106,7 +112,7 @@ export default function VerifyPhonePage() {
     if (!verified) return
 
     const timer = window.setTimeout(() => {
-      router.replace("/dashboard")
+      router.replace(postVerificationDestination())
     }, 5000)
 
     return () => window.clearTimeout(timer)
@@ -227,7 +233,7 @@ export default function VerifyPhonePage() {
 
   const handleSkipForNow = () => {
     sessionStorage.setItem("phone_skipped", "true")
-    router.replace("/dashboard")
+    router.replace(postVerificationDestination())
   }
 
   if (checking) {
