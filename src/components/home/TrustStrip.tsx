@@ -26,8 +26,8 @@ const TRUST_STYLES = `
 
 const TRUST_ITEMS = [
   {
-    title: 'Government-Grade Verification',
-    subtitle: 'CSD, SARS, CIPC, and banking — all cross-checked before any supplier appears.',
+    title: 'Verified Against Official Records',
+    subtitle: 'CSD, SARS, CIPC and banking evidence — reviewed by our team before any supplier appears.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />

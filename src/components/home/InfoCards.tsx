@@ -147,7 +147,7 @@ export default function InfoCards() {
           />
 
           <p className="font-serif" style={{ fontSize: 12, color: '#3a4a3a', lineHeight: 1.55, margin: '0 0 14px' }}>
-            Every supplier carries a SmartScore — drawn from four official SA sources:
+            Every supplier carries a SmartScore — checked against four official SA sources, reviewed by our team.
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
