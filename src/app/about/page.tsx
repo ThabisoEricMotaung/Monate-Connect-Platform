@@ -1,8 +1,10 @@
 import {
   IconBrandNextjs,
   IconBrandFacebook,
+  IconBrandInstagram,
   IconBrandLinkedin,
   IconBrandOpenai,
+  IconBrandReddit,
   IconBrandSupabase,
   IconBrandTiktok,
   IconBrandVercel,
@@ -92,6 +94,20 @@ const socialChannels = [
     href: "https://www.facebook.com/profile.php?id=61592730084230",
     icon: IconBrandFacebook,
     iconClassName: "bg-[#1877f2]/10 text-[#1877f2]",
+  },
+  {
+    name: "Instagram",
+    description: "Visual updates, supplier spotlights, and behind-the-scenes moments.",
+    href: "https://www.instagram.com/aiformprocure/",
+    icon: IconBrandInstagram,
+    iconClassName: "bg-[#e4405f]/10 text-[#e4405f]",
+  },
+  {
+    name: "Reddit",
+    description: "Join the discussion on South African procurement and tenders.",
+    href: "https://www.reddit.com/user/AiForm-Procure/",
+    icon: IconBrandReddit,
+    iconClassName: "bg-[#ff4500]/10 text-[#ff4500]",
   },
 ]
 
