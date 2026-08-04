@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
-import { logActivity } from "@/lib/activity"
-import { logAuditAction } from "@/lib/audit"
 import { supabase } from "@/lib/supabase"
+import type { SupplierDocument } from "@/lib/supplierDocuments"
+import { normalizeSupplierDocumentStatus } from "@/lib/supplierDocuments"
 
 // --- Types --------------------------------------------------------------------
 
@@ -17,7 +17,6 @@ type BankRecord = {
   account_number: string | null
   branch_code: string | null
   account_type: string | null
-  verification_status: string | null
   verification_notes: string | null
   created_at: string | null
   // enriched from profiles join
@@ -25,9 +24,10 @@ type BankRecord = {
   province?: string | null
   industry?: string | null
   profile_verification_status?: string | null
+  bank_document?: SupplierDocument | null
 }
 
-const VERIFICATION_STATUSES = ["Unverified", "Under Review", "Verified", "Rejected"] as const
+const VERIFICATION_STATUSES = ["Under Review", "Verified", "Rejected"] as const
 type VerificationStatus = (typeof VERIFICATION_STATUSES)[number]
 
 // --- Helpers ------------------------------------------------------------------
@@ -39,6 +39,14 @@ function statusBadge(status: string | null): string {
     case "Rejected":     return "border-rose-500/35 bg-rose-500/10 text-rose-700"
     default:             return "border-warning/40 bg-warning/10 text-warning"
   }
+}
+
+function documentDisplayStatus(document: SupplierDocument | null | undefined): VerificationStatus | "Missing evidence" {
+  if (!document) return "Missing evidence"
+  const status = normalizeSupplierDocumentStatus(document.status)
+  if (status === "approved") return "Verified"
+  if (status === "rejected") return "Rejected"
+  return "Under Review"
 }
 
 function fmtDate(d: string | null): string {
@@ -59,61 +67,38 @@ function VerificationPanel({
   onSaved,
 }: {
   record: BankRecord
-  onSaved: (id: number, status: VerificationStatus, notes: string) => void
+  onSaved: (id: number, document: SupplierDocument, notes: string) => void
 }) {
   const [status, setStatus] = useState<VerificationStatus>(
-    (VERIFICATION_STATUSES.includes(record.verification_status as VerificationStatus)
-      ? record.verification_status
-      : "Unverified") as VerificationStatus
+    documentDisplayStatus(record.bank_document) === "Missing evidence"
+      ? "Under Review"
+      : documentDisplayStatus(record.bank_document) as VerificationStatus
   )
   const [notes, setNotes] = useState(record.verification_notes ?? "")
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
   async function handleSave() {
-    if (!supabase) return
+    if (!supabase || !record.bank_document) return
     setSaving(true)
-    const { error } = await supabase
-      .from("supplier_bank_details")
-      .update({ verification_status: status, verification_notes: notes.trim() || null })
-      .eq("id", record.id)
+    const { data: sessionData } = await supabase.auth.getSession()
+    const decision = status === "Verified" ? "approved" : status === "Rejected" ? "rejected" : "under_review"
+    const response = await fetch(`/api/admin/supplier-documents/${record.bank_document.id}/review`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionData.session?.access_token ?? ""}` },
+      body: JSON.stringify({
+        decision,
+        expectedStatus: normalizeSupplierDocumentStatus(record.bank_document.status),
+        expectedReviewedAt: record.bank_document.reviewed_at,
+        reason: notes.trim() || null,
+      }),
+    })
     setSaving(false)
-    if (error) { console.error(error); return }
+    if (!response.ok) { console.error(await response.text()); return }
+    const result = await response.json() as { document: SupplierDocument }
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
-    onSaved(record.id, status, notes.trim())
-    try {
-      await logAuditAction({
-        action:
-          status === "Verified"
-            ? "banking_details.verified"
-            : status === "Rejected"
-              ? "banking_details.rejected"
-              : "banking_details.reviewed",
-        entity_type: "supplier_bank_details",
-        entity_id: record.id,
-        old_values: {
-          verification_status: record.verification_status,
-          verification_notes: record.verification_notes,
-        },
-        new_values: {
-          verification_status: status,
-          verification_notes: notes.trim() || null,
-        },
-        metadata: {
-          supplier_id: record.supplier_id,
-          bank_name: record.bank_name,
-        },
-      })
-      await logActivity({
-        action: "supplier.banking_verified",
-        entity_type: "supplier_profile",
-        entity_id: record.supplier_id ?? record.id,
-        metadata: { verification_status: status, bank_record_id: record.id },
-      })
-    } catch (auditError) {
-      console.warn("Banking verification audit/activity logging failed:", auditError)
-    }
+    onSaved(record.id, result.document, notes.trim())
   }
 
   return (
@@ -176,7 +161,7 @@ function VerificationPanel({
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || !record.bank_document}
           className="inline-flex items-center gap-1.5 rounded-md border border-accent bg-accent px-4 py-2 text-xs font-bold text-button transition hover:bg-accent-strong disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save Decision"}
@@ -194,12 +179,12 @@ function BankCard({
   onSaved,
 }: {
   record: BankRecord
-  onSaved: (id: number, status: VerificationStatus, notes: string) => void
+  onSaved: (id: number, document: SupplierDocument, notes: string) => void
 }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className={`enterprise-card ${record.verification_status === "Verified" ? "!border-success/25" : record.verification_status === "Rejected" ? "!border-rose-500/20" : ""}`}>
+    <div className={`enterprise-card ${documentDisplayStatus(record.bank_document) === "Verified" ? "!border-success/25" : documentDisplayStatus(record.bank_document) === "Rejected" ? "!border-rose-500/20" : ""}`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -207,8 +192,8 @@ function BankCard({
             <h3 className="text-sm font-bold text-heading">
               {record.business_name || record.account_holder || "Unknown Supplier"}
             </h3>
-            <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider ${statusBadge(record.verification_status)}`}>
-              {record.verification_status ?? "Unverified"}
+            <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider ${statusBadge(documentDisplayStatus(record.bank_document))}`}>
+              {documentDisplayStatus(record.bank_document)}
             </span>
           </div>
           <p className="mt-0.5 text-xs text-muted">
@@ -290,7 +275,7 @@ export default function AdminBankingPage() {
 
       const { data, error: fetchErr } = await supabase
         .from("supplier_bank_details")
-        .select("id, supplier_id, bank_name, account_holder, account_number, branch_code, account_type, verification_status, verification_notes, created_at")
+        .select("id, supplier_id, bank_name, account_holder, account_number, branch_code, account_type, verification_notes, created_at")
         .order("created_at", { ascending: false })
 
       if (fetchErr) {
@@ -308,13 +293,21 @@ export default function AdminBankingPage() {
       // Enrich with profile data
       const supplierIds = [...new Set(rawRecords.map((r) => r.supplier_id).filter(Boolean) as string[])]
       if (supplierIds.length > 0 && supabase) {
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("id, business_name, province, industry, verification_status")
-          .in("id", supplierIds)
+        const [{ data: profileData }, { data: documentData }] = await Promise.all([
+          supabase.from("profiles").select("id, business_name, province, industry, verification_status").in("id", supplierIds),
+          supabase.from("supplier_documents")
+            .select("id, profile_id, document_type, file_url, storage_path, original_filename, content_type, file_size, uploaded_at, status, reviewed_at, reviewed_by, review_notes")
+            .in("profile_id", supplierIds)
+            .eq("document_type", "bank_letter")
+            .order("uploaded_at", { ascending: false }),
+        ])
 
         if (profileData) {
           const profileMap = new Map((profileData as Array<{ id: string; business_name: string | null; province: string | null; industry: string | null; verification_status: string | null }>).map((p) => [p.id, p]))
+          const documentMap = new Map<string, SupplierDocument>()
+          for (const document of (documentData ?? []) as SupplierDocument[]) {
+            if (!documentMap.has(document.profile_id)) documentMap.set(document.profile_id, document)
+          }
           setRecords(rawRecords.map((r) => {
             const profile = r.supplier_id ? profileMap.get(r.supplier_id) : undefined
             return {
@@ -323,6 +316,7 @@ export default function AdminBankingPage() {
               province: profile?.province ?? null,
               industry: profile?.industry ?? null,
               profile_verification_status: profile?.verification_status ?? null,
+              bank_document: r.supplier_id ? documentMap.get(r.supplier_id) ?? null : null,
             }
           }))
         } else {
@@ -337,9 +331,9 @@ export default function AdminBankingPage() {
     load()
   }, [router])
 
-  function handleRecordSaved(id: number, status: VerificationStatus, notes: string) {
+  function handleRecordSaved(id: number, document: SupplierDocument, notes: string) {
     setRecords((prev) =>
-      prev.map((r) => r.id === id ? { ...r, verification_status: status, verification_notes: notes || null } : r)
+      prev.map((r) => r.id === id ? { ...r, bank_document: document, verification_notes: notes || null } : r)
     )
   }
 
@@ -350,17 +344,17 @@ export default function AdminBankingPage() {
         (r.business_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
         (r.account_holder ?? "").toLowerCase().includes(search.toLowerCase()) ||
         (r.bank_name ?? "").toLowerCase().includes(search.toLowerCase())
-      const matchStatus = statusFilter === "All" || r.verification_status === statusFilter
+      const matchStatus = statusFilter === "All" || documentDisplayStatus(r.bank_document) === statusFilter
       return matchSearch && matchStatus
     })
   }, [records, search, statusFilter])
 
   const counts = useMemo(() => ({
     total: records.length,
-    unverified: records.filter((r) => !r.verification_status || r.verification_status === "Unverified").length,
-    underReview: records.filter((r) => r.verification_status === "Under Review").length,
-    verified: records.filter((r) => r.verification_status === "Verified").length,
-    rejected: records.filter((r) => r.verification_status === "Rejected").length,
+    unverified: records.filter((r) => !r.bank_document).length,
+    underReview: records.filter((r) => documentDisplayStatus(r.bank_document) === "Under Review").length,
+    verified: records.filter((r) => documentDisplayStatus(r.bank_document) === "Verified").length,
+    rejected: records.filter((r) => documentDisplayStatus(r.bank_document) === "Rejected").length,
   }), [records])
 
   return (

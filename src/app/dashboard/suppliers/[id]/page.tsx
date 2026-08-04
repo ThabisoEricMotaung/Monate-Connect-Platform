@@ -20,17 +20,12 @@ type SupplierProfile = {
   email?: string | null
   verification_status: string | null
   csd_number: string | null
-  csd_verified?: boolean | null
   bbbee_level: string | null
-  bbbee_verified?: boolean | null
   tax_status: string | null
-  tax_verified?: boolean | null
   company_registration: string | null
   cidb_grade: string | null
   company_logo_url: string | null
-  director_verified?: boolean | null
   smart_score?: number | string | null
-  bank_verified?: boolean | null
   supplier_documents?: Array<{
     document_type?: string | null
     file_url?: string | null
@@ -96,7 +91,7 @@ export default async function DashboardSupplierProfilePage({ params }: Props) {
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id,business_name,description,province,industry,phone,email,verification_status,csd_number,csd_verified,bbbee_level,bbbee_verified,tax_status,tax_verified,company_registration,cidb_grade,company_logo_url,smart_score,director_verified,created_at,updated_at"
+      "id,business_name,description,province,industry,phone,email,verification_status,csd_number,bbbee_level,tax_status,company_registration,cidb_grade,company_logo_url,smart_score,created_at,updated_at"
     )
     .eq("id", id)
     .maybeSingle()
@@ -113,7 +108,6 @@ export default async function DashboardSupplierProfilePage({ params }: Props) {
 
   const supplier = {
     ...(data as SupplierProfile),
-    bank_verified: canonicalScore?.input.bank_verified ?? false,
     supplier_documents: (documents ?? []) as SupplierProfile["supplier_documents"],
   }
   const score = canonicalScore?.result ?? getSmartScoreLevel(0)

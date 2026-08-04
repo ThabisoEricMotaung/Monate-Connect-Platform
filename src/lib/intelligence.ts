@@ -268,7 +268,6 @@ export async function getSupplierScores(): Promise<SupplierIntelligenceRecord[]>
       .select(
         "id, business_name, province, industry, phone, email, verification_status, " +
           "csd_number, bbbee_level, tax_status, company_registration, cidb_grade, " +
-          "csd_verified, bbbee_verified, tax_verified, bank_verified, banking_verified, director_verified, " +
           "csd_document_url, bbbee_document_url, tax_document_url, " +
           "company_registration_url, cidb_document_url, capability_statement_url, updated_at"
       )
@@ -277,7 +276,7 @@ export async function getSupplierScores(): Promise<SupplierIntelligenceRecord[]>
     supabase.from("contracts").select("id, supplier_id, status, contract_value"),
     supabase.from("invoices").select("id, supplier_id, status"),
     supabase.from("payments").select("id, supplier_id, status"),
-    supabase.from("supplier_bank_details").select("supplier_id, verification_status"),
+    supabase.from("supplier_bank_details").select("supplier_id, bank_name, account_number"),
   ])
 
   const profileRows = (profileRes.data ?? []) as unknown as Array<{

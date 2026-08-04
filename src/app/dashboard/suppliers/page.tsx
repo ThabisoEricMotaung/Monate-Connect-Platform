@@ -240,7 +240,6 @@ export default function SuppliersDirectoryPage() {
         hydratedProfiles.map((supplier) => ({
           ...supplier,
           smartScore: canonicalScores[supplier.id]?.result,
-          bank_verified: canonicalScores[supplier.id]?.input.bank_verified ?? supplier.bank_verified,
         }))
       )
       setReviewsBySupplier(groupedReviews)

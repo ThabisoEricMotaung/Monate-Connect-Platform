@@ -87,7 +87,6 @@ export async function GET(_request: Request, context: RouteContext) {
       .select(
         `id, business_name, province, industry, verification_status, phone, email,
          bbbee_level, csd_number, tax_status, company_registration,
-         csd_verified, bbbee_verified, tax_verified, bank_verified, banking_verified, director_verified,
          csd_document_url, bbbee_document_url, tax_document_url,
          company_registration_url, cidb_document_url, capability_statement_url,
          tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date`,
@@ -95,7 +94,7 @@ export async function GET(_request: Request, context: RouteContext) {
       .eq("role", "supplier"),
     supabaseAdmin.from("quotes").select("supplier_id, status, rfq_id"),
     supabaseAdmin.from("contracts").select("supplier_id, status"),
-    supabaseAdmin.from("supplier_bank_details").select("supplier_id, verification_status"),
+    supabaseAdmin.from("supplier_bank_details").select("supplier_id, bank_name, account_number"),
   ])
 
   if (rfqRes.error || !rfqRes.data) {

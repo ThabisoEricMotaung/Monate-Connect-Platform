@@ -170,10 +170,7 @@ export function hasActiveSupplierDocument(
 }
 
 // Canonical set of documents a supplier must have on file before their profile
-// can be fully verified. Used both by the document-reminders cron (nudge emails)
-// and the provisional-verification cron (auto provisional-approval + revert).
-// Keeping this in one place avoids the two crons silently disagreeing about
-// what "required" means.
+// can be fully verified. Used by the document-reminders cron for nudge emails.
 export type RequiredSupplierDocument = {
   type: SupplierDocumentType
   label: string

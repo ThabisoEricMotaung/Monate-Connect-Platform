@@ -1,4 +1,7 @@
 import { isVerifiedStatus } from "./supplierStatus"
+import { deriveSupplierVerificationState, type SupplierVerificationState } from "./supplierVerification"
+import { latestSupplierDocuments, normalizeSupplierDocumentStatus, type SupplierDocument } from "./supplierDocuments"
+import { deriveDirectorVerificationState, type VerificationAttestation } from "./verificationAttestations"
 
 export type SmartScoreLevel =
   | "Emerging Supplier / High Risk"
@@ -72,14 +75,19 @@ export type SupplierSmartScoreProfile = {
   updated_at?: string | null
   created_at?: string | null
   supplier_documents?: Array<{
+    id?: string | null
+    profile_id?: string | null
     document_type?: string | null
     file_url?: string | null
     status?: string | null
+    reviewed_at?: string | null
   }> | null
+  verification_state?: SupplierVerificationState
+  verification_attestations?: VerificationAttestation[]
 }
 
 export const SUPPLIER_SMART_SCORE_PROFILE_SELECT =
-  "id, role, business_name, province, provinces, industry, phone, email, description, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, tax_clearance_url, company_registration, cidb_grade, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, banking_verified, bank_verified, director_verified, updated_at, created_at"
+  "id, role, business_name, province, provinces, industry, phone, email, description, verification_status, smart_score, csd_number, bbbee_level, tax_status, tax_clearance_url, company_registration, cidb_grade, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, updated_at, created_at"
 
 export type SmartScoreColour = "success" | "warning" | "danger"
 
@@ -155,21 +163,6 @@ function hasAnyValue(value: unknown): boolean {
   return value !== null && value !== undefined
 }
 
-function hasSupplierDocument(
-  profile: SupplierSmartScoreProfile,
-  documentType: string,
-  fallback?: unknown
-): boolean {
-  return Boolean(
-    profile.supplier_documents?.some(
-      (document) =>
-        document.document_type === documentType &&
-        document.status !== "superseded" &&
-        hasAnyValue(document.file_url)
-    ) || hasAnyValue(fallback)
-  )
-}
-
 function profileProvinces(profile: SupplierSmartScoreProfile | RFQMatchProfile): string[] {
   const provinces = Array.isArray(profile.provinces)
     ? profile.provinces.map((item) => item.trim()).filter(Boolean)
@@ -187,36 +180,29 @@ function profileProvinces(profile: SupplierSmartScoreProfile | RFQMatchProfile):
   return []
 }
 
+function verificationState(profile: SupplierSmartScoreProfile): SupplierVerificationState {
+  if (profile.verification_state) return profile.verification_state
+  return deriveSupplierVerificationState((profile.supplier_documents ?? []) as SupplierDocument[])
+}
+
 function profileCsdVerified(profile: SupplierSmartScoreProfile): boolean {
-  return Boolean(profile.csd_verified || isVerified(profile.verification_status))
+  return verificationState(profile).csd.approved
 }
 
 function profileBBBEEVerified(profile: SupplierSmartScoreProfile): boolean {
-  return Boolean(profile.bbbee_verified || isVerified(profile.verification_status))
+  return verificationState(profile).bbbee.approved
 }
 
 function profileTaxVerified(profile: SupplierSmartScoreProfile): boolean {
-  if (profile.tax_verified) {
-    return true
-  }
-
-  return Boolean(
-    isVerified(profile.tax_status) &&
-      hasSupplierDocument(profile, "tax_clearance", profile.tax_document_url ?? profile.tax_clearance_url)
-  )
+  return verificationState(profile).tax.approved
 }
 
 function profileBankingVerified(profile: SupplierSmartScoreProfile): boolean {
-  return Boolean(
-    profile.banking_verified ||
-      profile.bank_verified ||
-      isVerified(profile.banking_verification_status) ||
-      isVerified(profile.bank_verification_status)
-  )
+  return verificationState(profile).banking.approved
 }
 
-function profileHasBankingDetails(profile: SupplierSmartScoreProfile): boolean {
-  return hasAnyValue(profile.bank_name) && hasAnyValue(profile.bank_account_number ?? profile.account_number)
+function profileDirectorVerified(profile: SupplierSmartScoreProfile): boolean {
+  return deriveDirectorVerificationState(profile.verification_attestations).approved
 }
 
 function clampScore(score: number): number {
@@ -280,17 +266,20 @@ function buildSmartScoreBreakdown(
     hasAnyValue(safeProfile.phone) &&
     hasAnyValue(safeProfile.description)
   const csdVerified = profileCsdVerified(safeProfile)
-  const csdPending =
-    !csdVerified &&
-    (hasAnyValue(safeProfile.csd_number) || hasSupplierDocument(safeProfile, "csd", safeProfile.csd_document_url))
+  const derivedVerification = verificationState(safeProfile)
+  const csdPending = !csdVerified && derivedVerification.csd.status === "under_review"
   const bbbeeVerified = profileBBBEEVerified(safeProfile)
-  const bbbeePending =
-    !bbbeeVerified &&
-    (hasAnyValue(safeProfile.bbbee_level) || hasSupplierDocument(safeProfile, "bbbee", safeProfile.bbbee_document_url))
+  const bbbeePending = !bbbeeVerified && derivedVerification.bbbee.status === "under_review"
+  const bbbeeLevel = Number(String(safeProfile.bbbee_level ?? "").replace(/[^0-9]/g, ""))
+  const bbbeePoints = bbbeeVerified && bbbeeLevel >= 1 && bbbeeLevel <= 4
+    ? 20
+    : bbbeeVerified && bbbeeLevel >= 5 && bbbeeLevel <= 8
+      ? 10
+      : 0
   const taxVerified = profileTaxVerified(safeProfile)
-  const taxPending = !taxVerified && hasSupplierDocument(safeProfile, "tax_clearance", safeProfile.tax_clearance_url ?? safeProfile.tax_document_url)
+  const taxPending = !taxVerified && derivedVerification.tax.status === "under_review"
   const bankingVerified = profileBankingVerified(safeProfile)
-  const bankingPending = !bankingVerified && profileHasBankingDetails(safeProfile)
+  const bankingPending = !bankingVerified && derivedVerification.banking.status === "under_review"
 
   return [
     {
@@ -304,43 +293,43 @@ function buildSmartScoreBreakdown(
       key: "csd",
       label: "CSD number verified",
       points: 20,
-      earnedPoints: csdVerified ? 20 : csdPending ? 10 : 0,
+      earnedPoints: csdVerified ? 20 : 0,
       status: csdVerified ? "earned" : csdPending ? "pending" : "missing",
     },
     {
       key: "bbbee",
       label: "BBBEE certificate verified",
       points: 20,
-      earnedPoints: bbbeeVerified ? 20 : bbbeePending ? 10 : 0,
-      status: bbbeeVerified ? "earned" : bbbeePending ? "pending" : "missing",
+      earnedPoints: bbbeePoints,
+      status: bbbeePoints > 0 ? "earned" : bbbeePending ? "pending" : "missing",
     },
     {
       key: "tax",
       label: "Tax clearance verified",
       points: 15,
-      earnedPoints: taxVerified ? 15 : taxPending ? 7 : 0,
+      earnedPoints: taxVerified ? 15 : 0,
       status: taxVerified ? "earned" : taxPending ? "pending" : "missing",
     },
     {
       key: "banking",
       label: "Banking details verified",
       points: 10,
-      earnedPoints: bankingVerified ? 10 : bankingPending ? 5 : 0,
+      earnedPoints: bankingVerified ? 10 : 0,
       status: bankingVerified ? "earned" : bankingPending ? "pending" : "missing",
     },
     {
       key: "director",
       label: "Director ID verified",
       points: 10,
-      earnedPoints: safeProfile.director_verified ? 10 : 0,
-      status: safeProfile.director_verified ? "earned" : "optional",
+      earnedPoints: profileDirectorVerified(safeProfile) ? 10 : 0,
+      status: profileDirectorVerified(safeProfile) ? "earned" : "optional",
     },
     {
       key: "company_profile",
       label: "Company profile document",
       points: 5,
-      earnedPoints: hasSupplierDocument(safeProfile, "company_profile", safeProfile.capability_statement_url) ? 5 : 0,
-      status: hasSupplierDocument(safeProfile, "company_profile", safeProfile.capability_statement_url) ? "earned" : "optional",
+      earnedPoints: normalizeSupplierDocumentStatus(latestSupplierDocuments((safeProfile.supplier_documents ?? []) as SupplierDocument[]).company_profile?.status) === "approved" ? 5 : 0,
+      status: normalizeSupplierDocumentStatus(latestSupplierDocuments((safeProfile.supplier_documents ?? []) as SupplierDocument[]).company_profile?.status) === "approved" ? "earned" : "optional",
     },
   ]
 }
@@ -467,8 +456,8 @@ export function calculateSupplierSmartScore(
   const level = getLevel(score)
   const tips: string[] = []
 
-  if (!hasSupplierDocument(profile ?? {}, "tax_clearance", profile?.tax_document_url ?? profile?.tax_clearance_url)) {
-    tips.push("Upload tax clearance to gain points")
+  if (!verificationState(profile ?? {}).tax.approved) {
+    tips.push("Submit tax clearance for approval to gain points")
   }
 
   if (!profileBankingVerified(profile ?? {})) {

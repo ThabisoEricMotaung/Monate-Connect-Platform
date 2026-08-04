@@ -13,6 +13,7 @@ import {
 } from "./supplierScoreAssembly"
 import { supabase as defaultSupabase } from "./supabase"
 import type { SupplierDocument } from "./supplierDocuments"
+import { groupAttestationsByProfile, type VerificationAttestation } from "./verificationAttestations"
 
 type SupabaseLike = {
   from: (table: string) => {
@@ -72,17 +73,20 @@ export async function getCanonicalSupplierSmartScoreBatch({
   const bankPromise = banks
     ? Promise.resolve({ data: banks, error: null })
     : query<{ data: unknown; error: { message?: string } | null }>(
-        withIds(client.from("supplier_bank_details").select("supplier_id, bank_name, account_number, verification_status"))
+        withIds(client.from("supplier_bank_details").select("supplier_id, bank_name, account_number"))
           .in?.("supplier_id", ids)
           ?.order?.("created_at", { ascending: false })
       )
 
-  const [profileRes, documentRes, bankRes, quoteRes, contractRes, invoiceRes, paymentRes] = await Promise.all([
+  const [profileRes, documentRes, bankRes, attestationRes, quoteRes, contractRes, invoiceRes, paymentRes] = await Promise.all([
     profilePromise,
     query<{ data: unknown; error: { message?: string } | null }>(
       withIds(client.from("supplier_documents").select("id, profile_id, document_type, file_url, storage_path, original_filename, content_type, file_size, uploaded_at, status, reviewed_at, reviewed_by, review_notes")).in?.("profile_id", ids)
     ),
     bankPromise,
+    query<{ data: unknown; error: { message?: string } | null }>(
+      withIds(client.from("verification_attestations").select("id, profile_id, category, decision, reason, evidence_reference, reviewed_by, reviewed_at, expires_at")).in?.("profile_id", ids)
+    ),
     query<{ data: unknown; error: { message?: string } | null }>(
       withIds(client.from("quotes").select("id, supplier_id, status")).in?.("supplier_id", ids)
     ),
@@ -101,6 +105,7 @@ export async function getCanonicalSupplierSmartScoreBatch({
     profileRes.error,
     documentRes.error,
     bankRes.error,
+    attestationRes.error,
     quoteRes.error,
     contractRes.error,
     invoiceRes.error,
@@ -111,6 +116,7 @@ export async function getCanonicalSupplierSmartScoreBatch({
   const profileRows = (profileRes.data ?? []) as Array<SupplierSmartScoreProfile & { id: string }>
   const documentRows = (documentRes.data ?? []) as SupplierDocument[]
   const bankRows = (bankRes.data ?? []) as SupplierBankScoreRecord[]
+  const attestationsByProfile = groupAttestationsByProfile((attestationRes.data ?? []) as VerificationAttestation[])
   const activityBySupplier = buildSupplierActivityById({
     supplierIds: ids,
     quotes: (quoteRes.data ?? []) as Array<{ supplier_id: string | null; status: string | null }>,
@@ -125,6 +131,7 @@ export async function getCanonicalSupplierSmartScoreBatch({
         profile,
         documents: documentRows.filter((document) => document.profile_id === profile.id),
         banks: bankRows.filter((bank) => bank.supplier_id === profile.id),
+        attestations: attestationsByProfile[profile.id] ?? [],
       })
       const activity = activityBySupplier[profile.id] ?? {}
       return [

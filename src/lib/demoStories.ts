@@ -223,7 +223,6 @@ function buildRows(config: StoryConfig): Record<string, Record<string, unknown>[
       csd_number: `MAAA-STORY-${String(index + 1).padStart(3, "0")}`,
       bbbee_level: index === 0 ? "Level 1" : index === 1 ? "Level 2" : "Level 4",
       tax_status: "Compliant",
-      banking_verified: true,
       profile_complete: true,
       created_at: daysFromNow(-90 + index * 4),
       updated_at: daysFromNow(-3 + index),

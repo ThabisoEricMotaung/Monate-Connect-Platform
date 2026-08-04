@@ -7,6 +7,7 @@ import {
   getSupplierDirectoryVerificationStatus,
 } from "@/lib/supplierVerification"
 import SupplierDirectory, { type PublicSupplierDirectoryRow } from "./SupplierDirectory"
+import { deriveDirectorVerificationState, groupAttestationsByProfile, type VerificationAttestation } from "@/lib/verificationAttestations"
 
 export const dynamic = "force-dynamic"
 
@@ -67,7 +68,7 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
     throw new Error(error.message)
   }
 
-  const rows = (data ?? []) as Array<PublicSupplierDirectoryRow & {
+  const rows = (data ?? []) as unknown as Array<Omit<PublicSupplierDirectoryRow, "director_verified"> & {
     phone?: string | null
     email?: string | null
     csd_number?: string | null
@@ -84,7 +85,7 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
   const supplierIds = rows.map((supplier) => supplier.id)
   if (supplierIds.length === 0) return []
 
-  const [canonicalScores, documentsResult] = await Promise.all([
+  const [canonicalScores, documentsResult, attestationsResult] = await Promise.all([
     getCanonicalSupplierSmartScoreBatch({
       supplierIds,
       client: supabase,
@@ -93,6 +94,10 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
     supabase
       .from("supplier_documents")
       .select("id,profile_id,document_type,file_url,uploaded_at,status,reviewed_at")
+      .in("profile_id", supplierIds),
+    supabase
+      .from("verification_attestations")
+      .select("id,profile_id,category,decision,reason,evidence_reference,reviewed_by,reviewed_at,expires_at")
       .in("profile_id", supplierIds),
   ])
 
@@ -106,6 +111,7 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
       grouped[document.profile_id] = [...(grouped[document.profile_id] ?? []), document]
       return grouped
     }, {})
+  const attestationsBySupplier = groupAttestationsByProfile((attestationsResult.data ?? []) as VerificationAttestation[])
 
   return rows
     .map((supplier) => {
@@ -121,13 +127,8 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
         bbbee_level: supplier.bbbee_level,
         cidb_grade: supplier.cidb_grade,
         smart_score: canonical?.result.score ?? supplier.smart_score,
-        csd_verified: supplier.csd_verified,
-        bbbee_verified: supplier.bbbee_verified,
-        tax_verified: supplier.tax_verified,
-        banking_verified: supplier.banking_verified,
-        bank_verified: Boolean(canonical?.input.bank_verified),
         verification_state: deriveSupplierVerificationState(documentsBySupplier[supplier.id] ?? []),
-        director_verified: supplier.director_verified,
+        director_verified: deriveDirectorVerificationState(attestationsBySupplier[supplier.id]).approved,
         website: supplier.website,
         description: supplier.description,
         employee_count: supplier.employee_count,

@@ -2,8 +2,9 @@ import { supabase } from "./supabase"
 import { getComplianceStatus } from "./complianceStatus"
 import { displayIndustry } from "./industries"
 import { groupBySupplierId, mergeSupplierScoreInputs, scoreCanonicalSupplierInput, type SupplierBankScoreRecord } from "./supplierScoreAssembly"
-import { isVerifiedStatus } from "./supplierStatus"
 import { fetchSupplierDocumentsByProfileIds, type SupplierDocument } from "./supplierDocuments"
+import { deriveSupplierVerificationState, type SupplierVerificationState } from "./supplierVerification"
+import { fetchVerificationAttestationsByProfileIds } from "./verificationAttestations"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -42,6 +43,7 @@ export type SupplierForMatching = {
   cidb_document_url: string | null
   capability_statement_url: string | null
   supplier_documents?: SupplierDocument[]
+  verification_state?: SupplierVerificationState
   tax_expiry_date: string | null
   bbbee_expiry_date: string | null
   csd_expiry_date: string | null
@@ -174,7 +176,8 @@ export function calculateSupplierMatch(
   if (indReason) reasons.push(indReason)
 
   // 3. Verification status (+15)
-  if (isVerifiedStatus(supplier.verification_status)) {
+  const verification = supplier.verification_state ?? deriveSupplierVerificationState(supplier.supplier_documents)
+  if (Object.values(verification).every((category) => category.approved)) {
     breakdown.verificationBonus = 15
     reasons.push("Verified supplier with confirmed compliance documentation")
   }
@@ -258,7 +261,6 @@ export async function getRecommendedSuppliersForRFQ(
       .select(
         `id, business_name, province, industry, verification_status, phone, email,
          bbbee_level, csd_number, tax_status, company_registration,
-         csd_verified, bbbee_verified, tax_verified, bank_verified, banking_verified, director_verified,
          csd_document_url, bbbee_document_url, tax_document_url,
          company_registration_url, cidb_document_url, capability_statement_url,
          tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date`
@@ -272,7 +274,7 @@ export async function getRecommendedSuppliersForRFQ(
       .select("supplier_id, status"),
     supabase
       .from("supplier_bank_details")
-      .select("supplier_id, verification_status"),
+      .select("supplier_id, bank_name, account_number"),
   ])
 
   if (rfqRes.error || !rfqRes.data) {
@@ -299,7 +301,11 @@ export async function getRecommendedSuppliersForRFQ(
 
   const rfq = rfqRes.data as RFQForMatching
   const supplierRows = (profileRes.data ?? []) as SupplierForMatching[]
-  const documents = await fetchSupplierDocumentsByProfileIds(supplierRows.map((supplier) => supplier.id))
+  const supplierIds = supplierRows.map((supplier) => supplier.id)
+  const [documents, attestations] = await Promise.all([
+    fetchSupplierDocumentsByProfileIds(supplierIds),
+    fetchVerificationAttestationsByProfileIds(supplierIds),
+  ])
   if (documents.error) {
     console.error("Supplier matching document query failed:", documents.error)
     throw new Error(
@@ -312,6 +318,7 @@ export async function getRecommendedSuppliersForRFQ(
       profile: supplier,
       documents: documents.documentsByProfile[supplier.id] ?? [],
       banks: banksBySupplier[supplier.id] ?? [],
+      attestations: attestations.attestationsByProfile[supplier.id] ?? [],
     })
   )
   const allQuotes = (quoteRes.data ?? []) as Array<{

@@ -1,5 +1,6 @@
 // ─── Types ────────────────────────────────────────────────────────────────────
 import { isVerifiedStatus } from "./supplierStatus"
+import type { SupplierVerificationState } from "./supplierVerification"
 
 export type ComplianceIssueSeverity = "error" | "warning" | "info"
 
@@ -171,6 +172,7 @@ export type AwardQuoteInput = {
 
 export type AwardSupplierInput = {
   verification_status?: string | null
+  verification_state?: SupplierVerificationState
   risk_level?: string | null
   banking_status?: string | null
   bbbee_level?: string | null
@@ -241,11 +243,14 @@ export function checkAwardCompliance(
     })
     recommendations.push("Manually verify supplier registration, B-BBEE, and tax clearance before award.")
   } else {
-    if (!isVerifiedStatus(supplier.verification_status)) {
+    const documentVerificationComplete = supplier.verification_state
+      ? Object.values(supplier.verification_state).every((category) => category.approved)
+      : false
+    if (!documentVerificationComplete) {
       issues.push({
         severity: "error",
         code: "supplier_not_verified",
-        message: `Supplier is "${supplier.verification_status ?? "unverified"}" — must be Verified before award.`,
+        message: "Supplier does not have approved CSD, B-BBEE, tax, and banking documents — all are required before award.",
       })
       recommendations.push("Complete supplier verification before awarding.")
     }

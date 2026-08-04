@@ -18,6 +18,8 @@ import { checkPaymentCompliance } from "@/lib/policyCompliance"
 import ComplianceBanner from "@/components/compliance/ComplianceBanner"
 import { checkApprovedOverride, type ProcurementOverride } from "@/lib/procurementOverrides"
 import { canUserApprove } from "@/lib/delegationAuthority"
+import { fetchSupplierDocumentsForProfile } from "@/lib/supplierDocuments"
+import { deriveSupplierVerificationState } from "@/lib/supplierVerification"
 
 const statusStyles: Record<string, string> = {
   Pending: "border-sky-500/30 bg-sky-500/10 text-sky-700",
@@ -95,14 +97,10 @@ export default function PaymentDetailPage() {
 
         // Fetch supplier banking verification status
         if (supabase && loadedPayment?.supplier_id) {
-          const { data: bankData } = await supabase
-            .from("supplier_bank_details")
-            .select("verification_status")
-            .eq("supplier_id", loadedPayment.supplier_id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle()
-          setBankingStatus((bankData as { verification_status: string | null } | null)?.verification_status ?? null)
+          const documentResult = await fetchSupplierDocumentsForProfile(loadedPayment.supplier_id)
+          if (documentResult.error) throw new Error(documentResult.error)
+          const banking = deriveSupplierVerificationState(documentResult.documents).banking
+          setBankingStatus(banking.approved ? "Verified" : banking.status)
 
           // Check for approved override for this payment
           const override = await checkApprovedOverride("payment", String(paymentId))

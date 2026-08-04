@@ -1,4 +1,3 @@
-import { isVerifiedStatus } from "./supplierStatus"
 import {
   calculateSupplierSmartScore,
   type SmartScoreResult,
@@ -6,12 +5,16 @@ import {
   type SupplierSmartScoreProfile,
 } from "./smartScore"
 import type { SupplierDocument } from "./supplierDocuments"
+import {
+  deriveSupplierVerificationState,
+  type SupplierVerificationState,
+} from "./supplierVerification"
+import { deriveDirectorVerificationState, type VerificationAttestation } from "./verificationAttestations"
 
 export type SupplierBankScoreRecord = {
   supplier_id: string | null
   bank_name?: string | null
   account_number?: string | null
-  verification_status?: string | null
 }
 
 export type SupplierScoreMergeFields = {
@@ -22,6 +25,9 @@ export type SupplierScoreMergeFields = {
   account_number: string | null
   bank_verification_status: string | null
   bank_verified: boolean
+  verification_state: SupplierVerificationState
+  verification_attestations: VerificationAttestation[]
+  director_verified: boolean
 }
 
 export type CanonicalSupplierScoreInput = SupplierSmartScoreProfile & { id: string } & SupplierScoreMergeFields
@@ -33,14 +39,16 @@ export function mergeSupplierScoreInputs<T extends SupplierSmartScoreProfile & {
   profile,
   documents = [],
   banks = [],
+  attestations = [],
 }: {
   profile: T
   documents?: SupplierDocument[]
   banks?: SupplierBankScoreRecord[]
+  attestations?: VerificationAttestation[]
 }): T & SupplierScoreMergeFields {
   const latestBank = banks[0]
-  const bankVerified = banks.some((bank) => isVerifiedStatus(bank.verification_status))
-
+  const verificationState = deriveSupplierVerificationState(documents)
+  const directorVerified = deriveDirectorVerificationState(attestations).approved
   return {
     ...profile,
     provinces: Array.isArray(profile.provinces)
@@ -52,8 +60,11 @@ export function mergeSupplierScoreInputs<T extends SupplierSmartScoreProfile & {
     bank_name: latestBank?.bank_name ?? null,
     bank_account_number: latestBank?.account_number ?? null,
     account_number: latestBank?.account_number ?? null,
-    bank_verification_status: latestBank?.verification_status ?? null,
-    bank_verified: Boolean(profile.bank_verified || profile.banking_verified || bankVerified),
+    bank_verification_status: verificationState.banking.status,
+    bank_verified: verificationState.banking.approved,
+    verification_state: verificationState,
+    verification_attestations: attestations,
+    director_verified: directorVerified,
   }
 }
 

@@ -10,6 +10,7 @@ import {
   getSupplierDirectoryVerificationStatus,
   type SupplierVerificationState,
 } from "@/lib/supplierVerification"
+import { deriveDirectorVerificationState, type VerificationAttestation } from "@/lib/verificationAttestations"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -30,11 +31,6 @@ type PublicSupplierProfile = {
   bbbee_level: string | null
   cidb_grade: string | null
   smart_score: number | string | null
-  csd_verified: boolean | null
-  bbbee_verified: boolean | null
-  tax_verified: boolean | null
-  banking_verified: boolean | null
-  bank_verified: boolean | null
   director_verified: boolean | null
   website: string | null
   description: string | null
@@ -71,7 +67,7 @@ async function getSupplier(id: string): Promise<PublicSupplierProfile> {
   })
 
   const coreSelect =
-    "id,full_name,preferred_name,email,business_name,province,provinces,industry,verification_status,bbbee_level,cidb_grade,smart_score,csd_verified,bbbee_verified,tax_verified,banking_verified,bank_verified,director_verified,website,description,employee_count,linkedin_url,founded_year,created_at"
+    "id,full_name,preferred_name,email,business_name,province,provinces,industry,verification_status,bbbee_level,cidb_grade,smart_score,website,description,employee_count,linkedin_url,founded_year,created_at"
   let { data, error } = await supabase
     .from("profiles")
     .select(`${coreSelect},avatar_url,company_logo_url`)
@@ -110,19 +106,24 @@ async function getSupplier(id: string): Promise<PublicSupplierProfile> {
 
   if (error || !data) notFound()
 
-  const [canonical, documentsResult] = await Promise.all([
+  const [canonical, documentsResult, attestationsResult] = await Promise.all([
     getCanonicalSupplierSmartScore(id, supabase),
     supabase
       .from("supplier_documents")
       .select("id,profile_id,document_type,file_url,uploaded_at,status,reviewed_at")
+      .eq("profile_id", id),
+    supabase
+      .from("verification_attestations")
+      .select("id,profile_id,category,decision,reason,evidence_reference,reviewed_by,reviewed_at,expires_at")
       .eq("profile_id", id),
   ])
   if (!canonical) notFound()
   if (documentsResult.error) notFound()
 
   return {
-    ...(data as Omit<PublicSupplierProfile, "verification_state">),
+    ...(data as Omit<PublicSupplierProfile, "verification_state" | "director_verified">),
     smart_score: canonical.result.score,
+    director_verified: deriveDirectorVerificationState((attestationsResult.data ?? []) as VerificationAttestation[]).approved,
     verification_state: deriveSupplierVerificationState(
       (documentsResult.data ?? []) as unknown as SupplierDocument[],
     ),

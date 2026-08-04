@@ -328,7 +328,7 @@ export async function getPurchaseOrderById(
     purchaseOrder.supplier_id
       ? supabase
           .from("profiles")
-          .select("id, business_name, province, industry, phone, email, verification_status, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, company_registration, director_verified, bank_verified, banking_verified, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url")
+          .select("id, business_name, province, industry, phone, email, verification_status, csd_number, bbbee_level, tax_status, company_registration, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url")
           .eq("id", purchaseOrder.supplier_id)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
@@ -347,7 +347,7 @@ export async function getPurchaseOrderById(
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
     purchaseOrder.supplier_id
-      ? supabase.from("supplier_bank_details").select("supplier_id, verification_status").eq("supplier_id", purchaseOrder.supplier_id)
+      ? supabase.from("supplier_bank_details").select("supplier_id, bank_name, account_number").eq("supplier_id", purchaseOrder.supplier_id)
       : Promise.resolve({ data: [], error: null }),
   ])
 

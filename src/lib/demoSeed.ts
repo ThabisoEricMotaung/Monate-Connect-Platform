@@ -370,7 +370,6 @@ export async function generateDemoData(): Promise<DemoSeedResult[]> {
       account_holder: supplier.business_name,
       account_number: `62${String(10000000 + index * 731)}`,
       branch_code: ["632005", "051001", "250655", "198765", "470010"][index % 5],
-      verification_status: index % 4 === 0 ? "Under Review" : "Verified",
       created_at: addDays(-80 + index * 5),
       is_demo: true,
     })),

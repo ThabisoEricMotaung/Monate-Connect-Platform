@@ -6,6 +6,8 @@ import { useParams, useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { supabase } from "@/lib/supabase"
+import { fetchSupplierDocumentsByProfileIds } from "@/lib/supplierDocuments"
+import { deriveSupplierVerificationState } from "@/lib/supplierVerification"
 
 // --- Types --------------------------------------------------------------------
 
@@ -196,10 +198,14 @@ export default function AuditPackPage() {
         for (const p of (profileData ?? []) as SupplierProfile[]) map.set(p.id, p)
         setSuppliers(map)
 
-        const { data: bankData } = await supabase.from("supplier_bank_details").select("supplier_id, verification_status").in("supplier_id", supplierIds)
+        const documentResult = await fetchSupplierDocumentsByProfileIds(supplierIds)
         const bmap = new Map<string, BankDetails>()
-        for (const b of (bankData ?? []) as BankDetails[]) {
-          if (b.supplier_id) bmap.set(b.supplier_id, b)
+        for (const supplierId of supplierIds) {
+          const bankingState = deriveSupplierVerificationState(documentResult.documentsByProfile[supplierId]).banking
+          bmap.set(supplierId, {
+            supplier_id: supplierId,
+            verification_status: bankingState.approved ? "Verified" : bankingState.status,
+          })
         }
         setBanking(bmap)
       }

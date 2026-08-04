@@ -33,6 +33,8 @@ import { logActivity } from "@/lib/activity"
 import { createDecisionItem } from "@/lib/decisionBoard"
 import { createPayment } from "@/lib/payments"
 import { evaluateWorkflowRules } from "@/lib/workflowRules"
+import { fetchSupplierDocumentsForProfile } from "@/lib/supplierDocuments"
+import { deriveSupplierVerificationState } from "@/lib/supplierVerification"
 import { checkInvoiceCompliance } from "@/lib/policyCompliance"
 import ComplianceBanner from "@/components/compliance/ComplianceBanner"
 import { checkApprovedOverride, type ProcurementOverride } from "@/lib/procurementOverrides"
@@ -297,15 +299,9 @@ export default function InvoiceDetailPage() {
 
     // Block payment if supplier banking is not verified
     if (supabase && invoice.supplier_id) {
-      const { data: bankData } = await supabase
-        .from("supplier_bank_details")
-        .select("verification_status")
-        .eq("supplier_id", invoice.supplier_id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (!bankData || bankData.verification_status !== "Verified") {
+      const documentResult = await fetchSupplierDocumentsForProfile(invoice.supplier_id)
+      const bankingApproved = !documentResult.error && deriveSupplierVerificationState(documentResult.documents).banking.approved
+      if (!bankingApproved) {
         setErrorMessage(
           "Supplier banking details must be verified before payment can be processed. " +
           "Ask the supplier to submit their banking details, then verify them in Banking Review."

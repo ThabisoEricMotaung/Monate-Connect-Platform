@@ -15,12 +15,6 @@ type LoginProfile = {
   description?: string | null
   smart_score?: number | string | null
   role?: string | null
-  csd_verified?: boolean | null
-  bbbee_verified?: boolean | null
-  tax_verified?: boolean | null
-  director_verified?: boolean | null
-  bank_verified?: boolean | null
-  banking_verified?: boolean | null
 }
 
 function isMissingRoleColumnError(error: { message?: string } | null): boolean {
@@ -160,7 +154,7 @@ export default function LoginPage() {
     if (user) {
       const { data: profileWithRole, error: profileSelectError } = await supabase
         .from("profiles")
-        .select("id, business_name, province, industry, phone, description, smart_score, role, csd_verified, bbbee_verified, tax_verified, director_verified, bank_verified, banking_verified")
+        .select("id, business_name, province, industry, phone, description, smart_score, role")
         .eq("id", user.id)
         .maybeSingle()
       let profile = profileWithRole as LoginProfile | null
@@ -179,7 +173,7 @@ export default function LoginPage() {
 
         const { data: fallbackProfile, error: fallbackProfileError } = await supabase
           .from("profiles")
-          .select("id, business_name, province, industry, phone, description, smart_score, csd_verified, bbbee_verified, tax_verified, director_verified, bank_verified, banking_verified")
+          .select("id, business_name, province, industry, phone, description, smart_score")
           .eq("id", user.id)
           .maybeSingle()
 

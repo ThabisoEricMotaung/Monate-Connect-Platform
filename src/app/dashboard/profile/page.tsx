@@ -26,6 +26,7 @@ import {
   type SupplierDocument,
   type SupplierDocumentType,
 } from "@/lib/supplierDocuments"
+import { deriveSupplierVerificationState, type SupplierVerificationState } from "@/lib/supplierVerification"
 import {
   NATIONAL_PROVINCE_VALUE,
   SA_PHONE_ERROR,
@@ -735,22 +736,22 @@ function ProfileImageUploads({
 
 function ProfileHeaderCard({
   profile,
-  bank,
   smartScore,
+  verification,
   onTabChange,
   onSave,
 }: {
   profile: Profile
-  bank: BankRecord | null
   smartScore: number
+  verification: SupplierVerificationState
   onTabChange: (tab: Tab) => void
   onSave: (patch: Partial<Profile>) => Promise<SaveResult>
 }) {
-  const csdVerified = Boolean(profile.csd_number) && isVerified(profile.verification_status)
-  const bbbeeVerified = Boolean(profile.bbbee_level) && isVerified(profile.verification_status)
-  const taxPending = Boolean(profile.tax_document_url) && !isVerified(profile.verification_status)
-  const taxVerified = Boolean(profile.tax_document_url) && isVerified(profile.verification_status)
-  const bankingMissing = !bank?.id
+  const csdVerified = verification.csd.approved
+  const bbbeeVerified = verification.bbbee.approved
+  const taxPending = verification.tax.status === "under_review"
+  const taxVerified = verification.tax.approved
+  const bankingMissing = !verification.banking.approved
   const businessName = profile.business_name?.trim() || "Your business"
   const contactName =
     profile.preferred_name?.trim() ||
@@ -1550,12 +1551,14 @@ function VerificationTab({
   userId,
   onDocUploaded,
   onTabChange,
+  verification,
 }: {
   profile: Profile
   docUrls: DocUrls
   userId: string
   onDocUploaded: (document: SupplierDocument) => void
   onTabChange: (tab: Tab) => void
+  verification: SupplierVerificationState
 }) {
   const [uploadingField, setUploadingField] = useState<DocumentField | null>(null)
   const [uploadError, setUploadError] = useState("")
@@ -1591,8 +1594,10 @@ function VerificationTab({
   }
 
   function statusOf(doc: DocumentField): "verified" | "pending" | "missing" {
-    if (!docUrls[doc]) return "missing"
-    return isVerified(profile.verification_status) ? "verified" : "pending"
+    const category = doc === "bbbee_document_url" ? verification.bbbee : verification.tax
+    if (category.approved) return "verified"
+    if (category.status === "under_review") return "pending"
+    return "missing"
   }
 
   return (
@@ -2124,7 +2129,6 @@ function BankingTab({
       account_number: form.account_number.trim(),
       branch_code: form.branch_code.trim(),
       account_type: form.account_type,
-      verification_status: "Unverified",
     }
     if (bank?.id) {
       const { error: err } = await supabase.from("supplier_bank_details").update(payload).eq("id", bank.id)
@@ -2137,7 +2141,7 @@ function BankingTab({
         .select("id")
         .single()
       if (err) { setSaving(false); setError(err.message); return }
-      onBankSaved({ ...(data as { id: number }), ...payload, verification_notes: null })
+      onBankSaved({ ...(data as { id: number }), ...payload, verification_status: "missing", verification_notes: null })
     }
     setSaving(false)
     setEditMode(false)
@@ -2441,10 +2445,10 @@ function ProfilePageInner() {
 
       const [profileRes, bankRes, documentRes] = await Promise.all([
         supabase.from("profiles").select(
-          "id, first_name, last_name, full_name, preferred_name, avatar_url, company_logo_url, business_name, province, provinces, industry, phone, email, website, description, company_registration, tax_reference, vat_number, verification_status, smart_score, csd_number, csd_verified, bbbee_level, bbbee_verified, tax_status, tax_verified, banking_verified, bank_verified, director_verified, tax_clearance_url, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date, updated_at"
+          "id, first_name, last_name, full_name, preferred_name, avatar_url, company_logo_url, business_name, province, provinces, industry, phone, email, website, description, company_registration, tax_reference, vat_number, verification_status, smart_score, csd_number, bbbee_level, tax_status, tax_clearance_url, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date, updated_at"
         ).eq("id", user.id).maybeSingle(),
         supabase.from("supplier_bank_details").select(
-          "id, bank_name, account_holder, account_number, branch_code, account_type, verification_status, verification_notes"
+          "id, bank_name, account_holder, account_number, branch_code, account_type, verification_notes"
         ).eq("supplier_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         fetchSupplierDocumentsForProfile(user.id),
       ])
@@ -2462,7 +2466,11 @@ function ProfilePageInner() {
       }
 
       if (bankRes.data && !bankRes.error) {
-        setBank(bankRes.data as BankRecord)
+        const banking = deriveSupplierVerificationState(documentRes.documents).banking
+        setBank({
+          ...(bankRes.data as Omit<BankRecord, "verification_status">),
+          verification_status: banking.approved ? "Verified" : banking.status,
+        })
       }
 
       const canonicalScore = await getCanonicalSupplierSmartScore(user.id, supabase)
@@ -2663,7 +2671,7 @@ function ProfilePageInner() {
         ))}
       </div>
 
-      {profile && <ProfileHeaderCard profile={profile} bank={bank} smartScore={canonicalSmartScore.score} onTabChange={requestTabChange} onSave={handleSave} />}
+      {profile && <ProfileHeaderCard profile={profile} smartScore={canonicalSmartScore.score} verification={deriveSupplierVerificationState(supplierDocuments)} onTabChange={requestTabChange} onSave={handleSave} />}
 
       <div className="mt-4 flex flex-col gap-4 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1">
@@ -2677,7 +2685,7 @@ function ProfilePageInner() {
             <ProfileTab profile={profile} onSave={handleSave} onDirtyChange={setHasUnsaved} saving={saving} />
           )}
           {profile && activeTab === "verification" && (
-            <VerificationTab profile={profile} docUrls={docUrls} userId={userId} onDocUploaded={handleDocUploaded} onTabChange={requestTabChange} />
+            <VerificationTab profile={profile} docUrls={docUrls} userId={userId} onDocUploaded={handleDocUploaded} onTabChange={requestTabChange} verification={deriveSupplierVerificationState(supplierDocuments)} />
           )}
           {profile && activeTab === "documents" && (
             <DocumentsTab profile={profile} docUrls={docUrls} documents={supplierDocuments} userId={userId} onDocUploaded={handleDocUploaded} />

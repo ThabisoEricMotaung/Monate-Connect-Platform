@@ -1,10 +1,10 @@
 import { supabase } from "./supabase"
-import { isVerifiedStatus } from "./supplierStatus"
 import {
   applySupplierDocumentsToProfiles,
   fetchSupplierDocumentsByProfileIds,
   type SupplierDocument,
 } from "./supplierDocuments"
+import { deriveSupplierVerificationState } from "./supplierVerification"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -243,7 +243,6 @@ export async function getSupplierRiskAssessments(): Promise<SupplierRiskRecord[]
     supabase.from("quotes").select("id, supplier_id, status, created_at"),
     supabase.from("contracts").select("id, supplier_id, status, created_at"),
     supabase.from("invoices").select("id, supplier_id, status, created_at"),
-    supabase.from("supplier_bank_details").select("supplier_id, verification_status"),
     supabase.from("supplier_reviews").select("supplier_id, rating, delivery_score, compliance_score, communication_score, created_at"),
   ])
 
@@ -251,8 +250,7 @@ export async function getSupplierRiskAssessments(): Promise<SupplierRiskRecord[]
   const quoteData    = settled(raw[1])
   const contractData = settled(raw[2])
   const invoiceData  = settled(raw[3])
-  const bankingData  = settled(raw[4])
-  const reviewData   = settled(raw[5])
+  const reviewData   = settled(raw[4])
 
   const profileRows = (profileData ?? []) as unknown as Array<{
     id: string
@@ -284,7 +282,6 @@ export async function getSupplierRiskAssessments(): Promise<SupplierRiskRecord[]
   const quotes = (quoteData ?? []) as Array<{ id: number; supplier_id: string | null; status: string | null; created_at: string | null }>
   const contracts = (contractData ?? []) as Array<{ id: number; supplier_id: string | null; status: string | null; created_at: string | null }>
   const invoices = (invoiceData ?? []) as Array<{ id: number; supplier_id: string | null; status: string | null; created_at: string | null }>
-  const banking = (bankingData ?? []) as Array<{ supplier_id: string | null; verification_status: string | null }>
   const reviews = (reviewData ?? []) as Array<{
     supplier_id: string | null
     rating: string | number | null
@@ -315,7 +312,6 @@ export async function getSupplierRiskAssessments(): Promise<SupplierRiskRecord[]
     const sQuotes = quotes.filter((q) => q.supplier_id === sid)
     const sContracts = contracts.filter((c) => c.supplier_id === sid)
     const sInvoices = invoices.filter((i) => i.supplier_id === sid)
-    const sBanking = banking.filter((b) => b.supplier_id === sid)
     const sReviews = reviews.filter((r) => r.supplier_id === sid)
 
     // Latest activity
@@ -330,14 +326,11 @@ export async function getSupplierRiskAssessments(): Promise<SupplierRiskRecord[]
     // Activity recency
     const hasRecentActivity = allDates.some((d) => new Date(d) >= ninetyDaysAgo)
 
-    // Banking
-    const bestBank = sBanking.sort((a, b) => {
-      const order = ["Verified", "Under Review", "Unverified", "Rejected"]
-      return order.indexOf(a.verification_status ?? "") - order.indexOf(b.verification_status ?? "")
-    })[0]
-    const bankingStatus = bestBank?.verification_status ?? null
-    const bankingVerified = isVerifiedStatus(bankingStatus)
-    const bankingMissing = sBanking.length === 0
+    // Category verification is derived only from current supplier documents.
+    const verification = deriveSupplierVerificationState(p.supplier_documents)
+    const bankingStatus = verification.banking.status
+    const bankingVerified = verification.banking.approved
+    const bankingMissing = verification.banking.status === "missing"
 
     // Documents
     const docUrls = [
@@ -385,7 +378,7 @@ export async function getSupplierRiskAssessments(): Promise<SupplierRiskRecord[]
 
     const triggeredIds: string[] = []
 
-    if (!isVerifiedStatus(p.verification_status)) triggeredIds.push("not_verified")
+    if (!Object.values(verification).every((category) => category.approved)) triggeredIds.push("not_verified")
     if (bankingMissing) triggeredIds.push("banking_missing")
     else if (!bankingVerified) triggeredIds.push("banking_unverified")
     if (!p.csd_number?.trim()) triggeredIds.push("missing_csd")

@@ -20,13 +20,20 @@ import {
   type SupplierDocumentStatus,
   type SupplierDocumentType,
 } from "@/lib/supplierDocuments"
+import { deriveSupplierVerificationState } from "@/lib/supplierVerification"
+import { normalizeSupplierDocumentStatus } from "@/lib/supplierDocuments"
+import type { SupplierDocumentReviewResult, SupplierDocumentReviewDecision } from "@/lib/supplierReview"
+import {
+  deriveDirectorVerificationState,
+  groupAttestationsByProfile,
+  type VerificationAttestation,
+} from "@/lib/verificationAttestations"
 
 type FilterMode = "all" | "pending" | "verified"
 type VerificationStep = "csd" | "bbbee" | "tax" | "banking" | "director"
 type BulkAction = "verify" | "reject" | "pending"
 type PendingAction = { supplierId: string; key: string }
 type InlineFeedback = { message: string; type: "success" | "error" }
-type ProvisionalForm = { missingDocument: string; deadline: string }
 
 type SupplierProfile = {
   id: string
@@ -40,20 +47,14 @@ type SupplierProfile = {
   provinces: string[] | string | null
   verification_status: string | null
   csd_number: string | null
-  csd_verified: boolean | null
   csd_document_url: string | null
   bbbee_level: string | null
-  bbbee_verified: boolean | null
   bbbee_document_url: string | null
   bbbee_expiry_date: string | null
-  tax_verified: boolean | null
   tax_status?: string | null
   tax_clearance_url: string | null
   tax_document_url: string | null
   tax_expiry_date: string | null
-  bank_verified: boolean | null
-  banking_verified: boolean | null
-  director_verified: boolean | null
   company_registration: string | null
   company_registration_url: string | null
   cidb_document_url?: string | null
@@ -63,8 +64,6 @@ type SupplierProfile = {
   created_at: string | null
   updated_at?: string | null
   verification_notes: string | null
-  provisional_missing_document: string | null
-  provisional_deadline: string | null
   is_deleted?: boolean | null
   deleted_at?: string | null
 }
@@ -73,7 +72,6 @@ type BankDetails = {
   supplier_id: string | null
   bank_name: string | null
   account_number: string | null
-  verification_status: string | null
 }
 
 const PENDING_QUEUE_STATUSES = ["pending review", "pending", "submitted"]
@@ -90,29 +88,9 @@ const profileSelect = [
   "bbbee_expiry_date",
   "tax_expiry_date",
   "verification_notes",
-  "provisional_missing_document",
-  "provisional_deadline",
   "is_deleted",
   "deleted_at",
 ].join(", ")
-
-const profileSelectWithoutProvisional = [
-  SUPPLIER_SMART_SCORE_PROFILE_SELECT,
-  "full_name",
-  "bbbee_expiry_date",
-  "tax_expiry_date",
-  "verification_notes",
-  "is_deleted",
-  "deleted_at",
-].join(", ")
-
-const STEP_LABELS: Record<VerificationStep, string> = {
-  csd: "CSD",
-  bbbee: "BBBEE",
-  tax: "Tax",
-  banking: "Banking",
-  director: "Director",
-}
 
 type ChecklistItem = {
   key: string
@@ -206,19 +184,6 @@ const CHECKLIST_ITEMS: Record<VerificationStep, ChecklistItem[]> = {
   ],
 }
 
-function normalizeBool(value: boolean | null | undefined): boolean {
-  return value === true
-}
-
-function isFullyVerified(profile: SupplierProfile): boolean {
-  return Boolean(
-    profile.csd_verified &&
-      profile.bbbee_verified &&
-      profile.tax_verified &&
-      profile.bank_verified,
-  )
-}
-
 function normalizedVerificationStatus(profile: SupplierProfile): string {
   return profile.verification_status?.trim().toLowerCase() ?? ""
 }
@@ -295,16 +260,17 @@ function stepSubmitted(step: VerificationStep, profile: SupplierProfile, bank?: 
   return hasValue(profile.company_registration) || hasValue(profile.company_registration_url)
 }
 
-function stepVerified(step: VerificationStep, profile: SupplierProfile): boolean {
-  if (step === "csd") return normalizeBool(profile.csd_verified)
-  if (step === "bbbee") return normalizeBool(profile.bbbee_verified)
-  if (step === "tax") return normalizeBool(profile.tax_verified)
-  if (step === "banking") return normalizeBool(profile.bank_verified)
-  return normalizeBool(profile.director_verified)
-}
-
-function bankStatusForVerified(verified: boolean): string {
-  return verified ? "verified" : "pending"
+function stepVerified(
+  step: VerificationStep,
+  documents: SupplierDocument[],
+  attestations: VerificationAttestation[],
+): boolean {
+  const verification = deriveSupplierVerificationState(documents)
+  if (step === "csd") return verification.csd.approved
+  if (step === "bbbee") return verification.bbbee.approved
+  if (step === "tax") return verification.tax.approved
+  if (step === "banking") return verification.banking.approved
+  return deriveDirectorVerificationState(attestations).approved
 }
 
 function StatusChip({
@@ -494,8 +460,8 @@ export default function AdminVerificationQueuePage() {
   const [profiles, setProfiles] = useState<SupplierProfile[]>([])
   const [documentsBySupplier, setDocumentsBySupplier] = useState<Record<string, SupplierDocument[]>>({})
   const [banksBySupplier, setBanksBySupplier] = useState<Record<string, BankDetails>>({})
+  const [attestationsBySupplier, setAttestationsBySupplier] = useState<Record<string, VerificationAttestation[]>>({})
   const [notesBySupplier, setNotesBySupplier] = useState<Record<string, string>>({})
-  const [provisionalBySupplier, setProvisionalBySupplier] = useState<Record<string, ProvisionalForm>>({})
   const [supplierNotesBySupplier, setSupplierNotesBySupplier] = useState<Record<string, string>>({})
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<FilterMode>("all")
@@ -510,7 +476,6 @@ export default function AdminVerificationQueuePage() {
   const [deletePending, setDeletePending] = useState(false)
   const [checklistState, setChecklistState] = useState<Record<string, boolean>>({})
   const [checklistOpen, setChecklistOpen] = useState<Record<string, boolean>>({})
-  const [provisionalFieldsAvailable, setProvisionalFieldsAvailable] = useState(true)
 
   useEffect(() => {
     let cancelled = false
@@ -543,31 +508,12 @@ export default function AdminVerificationQueuePage() {
         return
       }
 
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select(profileSelect)
         .eq("role", "supplier")
         .or(VERIFICATION_QUEUE_STATUS_FILTER)
         .order("created_at", { ascending: false })
-
-      if (error?.code === "42703") {
-        const retry = await supabase
-          .from("profiles")
-          .select(profileSelectWithoutProvisional)
-          .eq("role", "supplier")
-          .or(VERIFICATION_QUEUE_STATUS_FILTER)
-          .order("created_at", { ascending: false })
-
-        data = (retry.data?.map((profile) => ({
-          ...(profile as unknown as Record<string, unknown>),
-          provisional_missing_document: null,
-          provisional_deadline: null,
-        })) ?? null) as typeof data
-        error = retry.error
-        if (!cancelled) setProvisionalFieldsAvailable(false)
-      } else if (!cancelled) {
-        setProvisionalFieldsAvailable(true)
-      }
 
       if (error) {
         if (!cancelled) {
@@ -583,14 +529,19 @@ export default function AdminVerificationQueuePage() {
       const supplierIds = supplierProfiles.map((profile) => profile.id)
       let bankMap: Record<string, BankDetails> = {}
       let documentMap: Record<string, SupplierDocument[]> = {}
+      let attestationMap: Record<string, VerificationAttestation[]> = {}
 
       if (supplierIds.length > 0) {
-        const [bankResult, documentResult] = await Promise.all([
+        const [bankResult, documentResult, attestationResult] = await Promise.all([
           supabase
             .from("supplier_bank_details")
-            .select("bank_name, account_number, verification_status, supplier_id")
+            .select("bank_name, account_number, supplier_id")
             .in("supplier_id", supplierIds),
           fetchSupplierDocumentsByProfileIds(supplierIds),
+          supabase
+            .from("verification_attestations")
+            .select("id, profile_id, category, decision, reason, evidence_reference, reviewed_by, reviewed_at, expires_at")
+            .in("profile_id", supplierIds),
         ])
 
         if (bankResult.error) {
@@ -607,8 +558,16 @@ export default function AdminVerificationQueuePage() {
           }
           return
         }
+        if (attestationResult.error) {
+          if (!cancelled) {
+            setErrorMessage(attestationResult.error.message)
+            setLoading(false)
+          }
+          return
+        }
 
         documentMap = documentResult.documentsByProfile
+        attestationMap = groupAttestationsByProfile((attestationResult.data ?? []) as VerificationAttestation[])
         bankMap = (((bankResult.data ?? []) as unknown) as BankDetails[]).reduce<Record<string, BankDetails>>(
           (map, bank) => {
             if (!bank.supplier_id || map[bank.supplier_id]) return map
@@ -652,21 +611,13 @@ export default function AdminVerificationQueuePage() {
       if (!cancelled) {
         setProfiles(canonicalProfiles)
         setDocumentsBySupplier(documentMap)
+        setAttestationsBySupplier(attestationMap)
         setBanksBySupplier(bankMap)
         setScoreResults(scoreResultMap)
         setNotesBySupplier(
           supplierProfiles.reduce<Record<string, string>>((notes, profile) => {
             notes[profile.id] = profile.verification_notes ?? ""
             return notes
-          }, {}),
-        )
-        setProvisionalBySupplier(
-          supplierProfiles.reduce<Record<string, ProvisionalForm>>((forms, profile) => {
-            forms[profile.id] = {
-              missingDocument: profile.provisional_missing_document ?? "",
-              deadline: profile.provisional_deadline ?? "",
-            }
-            return forms
           }, {}),
         )
         setLoading(false)
@@ -715,28 +666,6 @@ export default function AdminVerificationQueuePage() {
     }, 1500)
   }
 
-  async function calculateCanonicalSmartScore(profile: SupplierProfile, bank?: BankDetails) {
-    if (!supabase) {
-      return 0
-    }
-    const canonicalScores = await getCanonicalSupplierSmartScoreBatch({
-      supplierIds: [profile.id],
-      client: supabase,
-      profiles: [{ ...profile, provinces: normalizeProvinces(profile.provinces) }],
-      banks: bank ? [bank] : undefined,
-    })
-    const canonical = canonicalScores[profile.id]
-    if (canonical) {
-      setScoreResults((current) => ({
-        ...current,
-        [profile.id]: canonical.result,
-      }))
-      return canonical.result.score
-    }
-
-    return profile.smart_score ? Number(profile.smart_score) : 0
-  }
-
   function toggleChecklistOpen(profileId: string, step: VerificationStep) {
     const key = `${profileId}:${step}`
     setChecklistOpen((current) => ({ ...current, [key]: !current[key] }))
@@ -746,203 +675,104 @@ export default function AdminVerificationQueuePage() {
     setChecklistState((current) => ({ ...current, [itemKey]: !current[itemKey] }))
   }
 
-  function buildChecklistSummary(profileId: string, step: VerificationStep): string {
-    const checked = CHECKLIST_ITEMS[step].filter(
-      (item) => checklistState[`${profileId}:${step}:${item.key}`],
-    )
-    if (checked.length === 0) return ""
-    return `Checked: ${checked.map((item) => item.shortLabel).join(", ")}`
+  async function reviewerToken(): Promise<string> {
+    if (!supabase) throw new Error("Supabase is not configured.")
+    const { data, error } = await supabase.auth.getSession()
+    if (error || !data.session) throw new Error(error?.message ?? "Your session has expired.")
+    return data.session.access_token
   }
 
-  async function saveChecklistSummary(profile: SupplierProfile, step: VerificationStep, summary: string) {
-    if (!supabase || !summary) return
-
-    const documentType = STEP_DOCUMENT_TYPE[step]
-    const latestDocument = latestSupplierDocuments(documentsBySupplier[profile.id])[documentType]
-    if (!latestDocument) return
-
-    const { data, error } = await supabase
-      .from("supplier_documents")
-      .update({ review_notes: summary })
-      .eq("id", latestDocument.id)
-      .select(
-        "id, profile_id, document_type, file_url, storage_path, original_filename, content_type, file_size, uploaded_at, status, reviewed_at, reviewed_by, review_notes",
-      )
-      .single()
-
-    if (error || !data) return
-
-    const updatedDocument = data as SupplierDocument
+  function applyReviewResult(profileId: string, result: SupplierDocumentReviewResult) {
     setDocumentsBySupplier((current) => ({
       ...current,
-      [profile.id]: (current[profile.id] ?? []).map((item) =>
-        item.id === updatedDocument.id ? updatedDocument : item,
-      ),
+      [profileId]: (current[profileId] ?? []).map((item) => item.id === result.document.id ? result.document : item),
     }))
+    setProfiles((current) => current.map((profile) => profile.id === profileId ? {
+      ...profile,
+      verification_status: result.refresh.verification_status,
+      smart_score: result.refresh.smart_score,
+    } : profile))
   }
 
-  async function updateStep(profile: SupplierProfile, step: VerificationStep, verified: boolean) {
-    if (!supabase) return
-
-    const currentProfile = profiles.find((item) => item.id === profile.id) ?? profile
-    const bank = banksBySupplier[currentProfile.id]
-    const nextProfile: SupplierProfile = {
-      ...currentProfile,
-      ...(step === "csd" ? { csd_verified: verified } : {}),
-      ...(step === "bbbee" ? { bbbee_verified: verified } : {}),
-      ...(step === "tax" ? { tax_verified: verified } : {}),
-      ...(step === "banking" ? { bank_verified: verified } : {}),
-      ...(step === "director" ? { director_verified: verified } : {}),
-    }
-    const nextVerificationStatus = isFullyVerified(nextProfile) ? "Verified" : "Pending Review"
-    const scoreProfile = {
-      ...nextProfile,
-      verification_status: nextVerificationStatus,
-    }
-    const nextBank =
-      step === "banking" && bank
-        ? { ...bank, verification_status: bankStatusForVerified(verified) }
-        : bank
-    const nextSmartScore = await calculateCanonicalSmartScore(scoreProfile, nextBank)
-    const pendingKey = `${step}-${verified ? "approve" : "revoke"}`
-
-    setPendingAction({ supplierId: currentProfile.id, key: pendingKey })
+  async function reviewDocument(profile: SupplierProfile, document: SupplierDocument, decision: SupplierDocumentReviewDecision, pendingKey: string) {
+    setPendingAction({ supplierId: profile.id, key: pendingKey })
     setErrorMessage("")
-
-    setProfiles((current) =>
-      current.map((item) =>
-        item.id === currentProfile.id
-          ? {
-              ...scoreProfile,
-              smart_score: nextSmartScore,
-            }
-          : item,
-      ),
-    )
-    if (step === "banking" && nextBank) {
-      setBanksBySupplier((current) => ({ ...current, [currentProfile.id]: nextBank }))
-    }
-
-    const profileUpdate = {
-      ...(step === "csd" ? { csd_verified: verified } : {}),
-      ...(step === "bbbee" ? { bbbee_verified: verified } : {}),
-      ...(step === "tax" ? { tax_verified: verified } : {}),
-      ...(step === "banking" ? { bank_verified: verified } : {}),
-      ...(step === "director" ? { director_verified: verified } : {}),
-      verification_status: nextVerificationStatus,
-      smart_score: nextSmartScore,
-    }
-
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update(profileUpdate)
-      .eq("id", currentProfile.id)
-
-    if (profileError) {
-      setErrorMessage(profileError.message)
-      setProfiles((current) => current.map((item) => (item.id === currentProfile.id ? currentProfile : item)))
-      if (step === "banking" && bank) {
-        setBanksBySupplier((current) => ({ ...current, [currentProfile.id]: bank }))
-      }
+    try {
+      const token = await reviewerToken()
+      const response = await fetch(`/api/admin/supplier-documents/${document.id}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          decision,
+          expectedStatus: normalizeSupplierDocumentStatus(document.status),
+          expectedReviewedAt: document.reviewed_at,
+          reason: notesBySupplier[profile.id]?.trim() || document.review_notes || null,
+        }),
+      })
+      const result = (await response.json()) as SupplierDocumentReviewResult & { error?: string }
+      if (!response.ok) throw new Error(result.error ?? "Document review failed.")
+      applyReviewResult(profile.id, result)
+      setScoreFlash(profile.id)
+      setActionFeedback(profile.id, pendingKey, { message: `${supplierDocumentLabels[result.document.document_type]} marked ${decision.replace("_", " ")}`, type: "success" })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Document review failed."
+      setErrorMessage(message)
+      setActionFeedback(profile.id, pendingKey, { message, type: "error" })
+    } finally {
       setPendingAction(null)
-      setActionFeedback(currentProfile.id, pendingKey, { message: "Couldn't save — try again", type: "error" })
+    }
+  }
+
+  async function reviewDirector(profile: SupplierProfile, approved: boolean) {
+    const current = deriveDirectorVerificationState(attestationsBySupplier[profile.id])
+    const pendingKey = `director-${approved ? "approve" : "revoke"}`
+    setPendingAction({ supplierId: profile.id, key: pendingKey })
+    setErrorMessage("")
+    try {
+      const token = await reviewerToken()
+      const response = await fetch("/api/admin/supplier-attestations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          profileId: profile.id,
+          category: "director",
+          decision: approved ? "approved" : "revoked",
+          reason: notesBySupplier[profile.id]?.trim() || null,
+          evidenceReference: profile.company_registration_url || profile.company_registration || null,
+          expiresAt: approved ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() : null,
+          expectedReviewedAt: current.attestation?.reviewed_at ?? null,
+        }),
+      })
+      const result = await response.json() as { attestation?: VerificationAttestation; refresh?: { verification_status: string; smart_score: number }; error?: string }
+      if (!response.ok || !result.attestation || !result.refresh) throw new Error(result.error ?? "Director review failed.")
+      setAttestationsBySupplier((currentMap) => ({ ...currentMap, [profile.id]: [result.attestation!, ...(currentMap[profile.id] ?? [])] }))
+      setProfiles((currentProfiles) => currentProfiles.map((item) => item.id === profile.id ? { ...item, verification_status: result.refresh!.verification_status, smart_score: result.refresh!.smart_score } : item))
+      setScoreFlash(profile.id)
+      setActionFeedback(profile.id, pendingKey, { message: `Director attestation ${approved ? "approved" : "revoked"}`, type: "success" })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Director review failed."
+      setErrorMessage(message)
+      setActionFeedback(profile.id, pendingKey, { message, type: "error" })
+    } finally {
+      setPendingAction(null)
+    }
+  }
+
+  async function updateStep(profile: SupplierProfile, step: VerificationStep, approved: boolean) {
+    if (step === "director") return reviewDirector(profile, approved)
+    const document = latestSupplierDocuments(documentsBySupplier[profile.id])[STEP_DOCUMENT_TYPE[step]]
+    const pendingKey = `${step}-${approved ? "approve" : "revoke"}`
+    if (!document?.file_url?.trim()) {
+      setActionFeedback(profile.id, pendingKey, { message: "Document evidence is required.", type: "error" })
       return
     }
-
-    if (step === "banking") {
-      const { error: bankError } = await supabase
-        .from("supplier_bank_details")
-        .update({ verification_status: bankStatusForVerified(verified) })
-        .eq("supplier_id", currentProfile.id)
-
-      if (bankError) {
-        setErrorMessage(bankError.message)
-        setPendingAction(null)
-        setActionFeedback(currentProfile.id, pendingKey, {
-          message: "Profile updated, but banking status update failed.",
-          type: "error",
-        })
-        return
-      }
-    }
-
-    setPendingAction(null)
-    setScoreFlash(currentProfile.id)
-    setActionFeedback(currentProfile.id, pendingKey, {
-      message: `${STEP_LABELS[step]} ${verified ? "approved" : "revoked"}`,
-      type: "success",
-    })
+    return reviewDocument(profile, document, approved ? "approved" : "under_review", pendingKey)
   }
 
   async function updateSupplierStatus(profile: SupplierProfile, action: BulkAction) {
-    if (!supabase) return
-
-    const currentProfile = profiles.find((item) => item.id === profile.id) ?? profile
-    const flagUpdates =
-      action === "verify"
-        ? {
-            csd_verified: true,
-            bbbee_verified: true,
-            tax_verified: true,
-            director_verified: true,
-          }
-        : {}
-    const nextProfile: SupplierProfile = {
-      ...currentProfile,
-      ...flagUpdates,
-    }
-    const nextVerificationStatus =
-      action === "reject"
-        ? "Rejected"
-        : action === "pending"
-          ? "Pending Review"
-          : isFullyVerified(nextProfile)
-            ? "Verified"
-            : "Pending Review"
-    const scoreProfile = {
-      ...nextProfile,
-      verification_status: nextVerificationStatus,
-    }
-    const nextSmartScore = await calculateCanonicalSmartScore(scoreProfile, banksBySupplier[currentProfile.id])
-    const pendingKey = `bulk-${action}`
-
-    setPendingAction({ supplierId: currentProfile.id, key: pendingKey })
-    setErrorMessage("")
-
-    setProfiles((current) =>
-      current.map((item) =>
-        item.id === currentProfile.id
-          ? {
-              ...scoreProfile,
-              smart_score: nextSmartScore,
-            }
-          : item,
-      ),
-    )
-    const profileUpdate = {
-      ...flagUpdates,
-      verification_status: nextVerificationStatus,
-      smart_score: nextSmartScore,
-    }
-
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update(profileUpdate)
-      .eq("id", currentProfile.id)
-
-    if (profileError) {
-      setErrorMessage(profileError.message)
-      setProfiles((current) => current.map((item) => (item.id === currentProfile.id ? currentProfile : item)))
-      setPendingAction(null)
-      setActionFeedback(currentProfile.id, pendingKey, { message: "Couldn't save — try again", type: "error" })
-      return
-    }
-
-    setPendingAction(null)
-    setScoreFlash(currentProfile.id)
-    setActionFeedback(currentProfile.id, pendingKey, {
-      message: `Supplier marked ${nextVerificationStatus}. Banking review unchanged. SmartScore updated to ${nextSmartScore}.`,
-      type: "success",
+    setActionFeedback(profile.id, `bulk-${action}`, {
+      message: "Bulk status changes are disabled. Review each required evidence item instead.",
+      type: "error",
     })
   }
 
@@ -950,7 +780,6 @@ export default function AdminVerificationQueuePage() {
     if (!supabase) return
 
     const nextNote = notesBySupplier[profile.id] ?? ""
-    const nextSmartScore = await calculateCanonicalSmartScore(profile, banksBySupplier[profile.id])
     const pendingKey = "notes"
 
     setPendingAction({ supplierId: profile.id, key: pendingKey })
@@ -958,10 +787,7 @@ export default function AdminVerificationQueuePage() {
 
     const { error } = await supabase
       .from("profiles")
-      .update({
-        verification_notes: nextNote.trim() || null,
-        smart_score: nextSmartScore,
-      })
+      .update({ verification_notes: nextNote.trim() || null })
       .eq("id", profile.id)
 
     setPendingAction(null)
@@ -975,78 +801,11 @@ export default function AdminVerificationQueuePage() {
     setProfiles((current) =>
       current.map((item) =>
         item.id === profile.id
-          ? { ...item, verification_notes: nextNote.trim() || null, smart_score: nextSmartScore }
+          ? { ...item, verification_notes: nextNote.trim() || null }
           : item,
       ),
     )
     setActionFeedback(profile.id, pendingKey, { message: "Note saved", type: "success" })
-  }
-
-  async function saveProvisionalStatus(profile: SupplierProfile, clear = false) {
-    if (!supabase) return
-
-    if (!provisionalFieldsAvailable) {
-      setActionFeedback(profile.id, "provisional-save", {
-        message: "Run the provisional fields migration first",
-        type: "error",
-      })
-      return
-    }
-
-    const form = provisionalBySupplier[profile.id] ?? { missingDocument: "", deadline: "" }
-    const missingDocument = clear ? null : form.missingDocument.trim()
-    const deadline = clear ? null : form.deadline
-    const pendingKey = clear ? "provisional-clear" : "provisional-save"
-
-    if (!clear && (!missingDocument || !deadline)) {
-      setActionFeedback(profile.id, pendingKey, {
-        message: "Add the document and due date before saving",
-        type: "error",
-      })
-      return
-    }
-
-    setPendingAction({ supplierId: profile.id, key: pendingKey })
-    setErrorMessage("")
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        provisional_missing_document: missingDocument,
-        provisional_deadline: deadline,
-      })
-      .eq("id", profile.id)
-
-    setPendingAction(null)
-
-    if (error) {
-      setErrorMessage(error.message)
-      setActionFeedback(profile.id, pendingKey, { message: "Provisional status save failed", type: "error" })
-      return
-    }
-
-    setProfiles((current) =>
-      current.map((item) =>
-        item.id === profile.id
-          ? {
-              ...item,
-              provisional_missing_document: missingDocument,
-              provisional_deadline: deadline,
-            }
-          : item,
-      ),
-    )
-    setProvisionalBySupplier((current) => ({
-      ...current,
-      [profile.id]: {
-        missingDocument: missingDocument ?? "",
-        deadline: deadline ?? "",
-      },
-    }))
-    setActionFeedback(profile.id, pendingKey, {
-      message: clear ? "Provisional status cleared" : "Provisional status saved",
-      type: "success",
-    })
   }
 
   async function sendSupplierNote(profile: SupplierProfile) {
@@ -1080,50 +839,10 @@ export default function AdminVerificationQueuePage() {
   async function updateDocumentStatus(
     profile: SupplierProfile,
     document: SupplierDocument,
-    status: Extract<SupplierDocumentStatus, "verified" | "rejected" | "expired" | "under_review">,
+    status: Extract<SupplierDocumentStatus, "verified" | "approved" | "rejected" | "under_review">,
   ) {
-    if (!supabase) return
-
     const pendingKey = `document-${document.id}-${status}`
-    setPendingAction({ supplierId: profile.id, key: pendingKey })
-    setErrorMessage("")
-
-    const { data, error } = await supabase
-      .from("supplier_documents")
-      .update({
-        status,
-        reviewed_at: new Date().toISOString(),
-        review_notes: notesBySupplier[profile.id]?.trim() || document.review_notes || null,
-      })
-      .eq("id", document.id)
-      .select("id, profile_id, document_type, file_url, storage_path, original_filename, content_type, file_size, uploaded_at, status, reviewed_at, reviewed_by, review_notes")
-      .single()
-
-    setPendingAction(null)
-
-    if (error || !data) {
-      setErrorMessage(error?.message ?? "Document status could not be updated.")
-      setActionFeedback(profile.id, pendingKey, { message: "Document update failed", type: "error" })
-      return
-    }
-
-    const updatedDocument = data as SupplierDocument
-    setDocumentsBySupplier((current) => {
-      const nextDocuments = (current[profile.id] ?? []).map((item) =>
-        item.id === updatedDocument.id ? updatedDocument : item,
-      )
-      setProfiles((currentProfiles) =>
-        applySupplierDocumentsToProfiles(currentProfiles, {
-          ...current,
-          [profile.id]: nextDocuments,
-        }),
-      )
-      return { ...current, [profile.id]: nextDocuments }
-    })
-    setActionFeedback(profile.id, pendingKey, {
-      message: `${supplierDocumentLabels[updatedDocument.document_type]} marked ${status.replace("_", " ")}`,
-      type: "success",
-    })
+    return reviewDocument(profile, document, status === "verified" ? "approved" : status, pendingKey)
   }
 
   function renderDocumentHistory(profile: SupplierProfile) {
@@ -1282,7 +1001,7 @@ export default function AdminVerificationQueuePage() {
     children: ReactNode,
     options?: { expired?: boolean },
   ) {
-    const verified = stepVerified(step, profile)
+    const verified = stepVerified(step, documentsBySupplier[profile.id] ?? [], attestationsBySupplier[profile.id] ?? [])
     const isDeleted = profile.is_deleted === true
     const approveKey = `${step}-approve`
     const revokeKey = `${step}-revoke`
@@ -1301,6 +1020,12 @@ export default function AdminVerificationQueuePage() {
       (item) => checklistState[`${profile.id}:${step}:${item.key}`],
     ).length
     const allChecked = checkedCount === checklistItems.length
+    const activeDocument = step === "director"
+      ? null
+      : latestSupplierDocuments(documentsBySupplier[profile.id])[STEP_DOCUMENT_TYPE[step]]
+    const hasEvidence = step === "director"
+      ? hasValue(profile.company_registration_url) || hasValue(profile.company_registration)
+      : Boolean(activeDocument?.file_url?.trim())
 
     return (
       <div className="grid gap-4 rounded-xl border border-panel bg-surface p-4 md:grid-cols-[1fr_auto] md:items-start">
@@ -1346,12 +1071,10 @@ export default function AdminVerificationQueuePage() {
         <div className="flex flex-wrap items-center gap-2 md:justify-end">
           <ActionButton
             loading={approvePending}
-            disabled={isDeleted || Boolean(options?.expired) || stepPending || verified}
+            disabled={isDeleted || Boolean(options?.expired) || stepPending || verified || !hasEvidence}
             emphasize={allChecked}
             onClick={() => {
-              const summary = buildChecklistSummary(profile.id, step)
               updateStep(profile, step, true)
-              if (summary) void saveChecklistSummary(profile, step, summary)
             }}
           >
             Approve
@@ -1451,13 +1174,8 @@ export default function AdminVerificationQueuePage() {
               pendingAction?.supplierId === profile.id && pendingAction.key === "notes"
             const supplierNotePending =
               pendingAction?.supplierId === profile.id && pendingAction.key === "supplier-note"
-            const provisionalSavePending =
-              pendingAction?.supplierId === profile.id && pendingAction.key === "provisional-save"
-            const provisionalClearPending =
-              pendingAction?.supplierId === profile.id && pendingAction.key === "provisional-clear"
             const scoreFlashing = Boolean(scoreHighlight[profile.id])
             const isDeleted = profile.is_deleted === true
-            const provisionalForm = provisionalBySupplier[profile.id] ?? { missingDocument: "", deadline: "" }
 
             return (
               <article
@@ -1516,7 +1234,7 @@ export default function AdminVerificationQueuePage() {
                     <StatusChip
                       key={step}
                       label={step === "bbbee" ? "BBBEE" : step === "csd" ? "CSD" : step === "tax" ? "Tax" : step === "banking" ? "Banking" : "Director"}
-                      verified={stepVerified(step, profile)}
+                      verified={stepVerified(step, documentsBySupplier[profile.id] ?? [], attestationsBySupplier[profile.id] ?? [])}
                       submitted={stepSubmitted(step, profile, bank)}
                     />
                   ))}
@@ -1531,16 +1249,16 @@ export default function AdminVerificationQueuePage() {
                             Supplier action
                           </p>
                           <p className="mt-1 text-sm text-secondary">
-                            Bulk actions update supplier status; verification keeps all step flags aligned.
+                            Rejection and pending actions update supplier status. Verification now comes from approved documents.
                           </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                           <ActionButton
-                            loading={pendingAction?.supplierId === profile.id && pendingAction.key === "bulk-verify"}
-                            disabled={bulkPending || isDeleted}
+                            loading={false}
+                            disabled
                             onClick={() => updateSupplierStatus(profile, "verify")}
                           >
-                            Verify Supplier
+                            Verify Supplier (disabled)
                           </ActionButton>
                           <ActionButton
                             tone="danger"
@@ -1588,107 +1306,6 @@ export default function AdminVerificationQueuePage() {
                               inlineFeedback[`${profile.id}:bulk-verify`] ??
                               inlineFeedback[`${profile.id}:bulk-reject`] ??
                               inlineFeedback[`${profile.id}:bulk-pending`]
-                            }
-                          />
-                        </div>
-                      </div>
-                      <div className="mt-4 border-t border-panel pt-4">
-                        <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted">
-                          Provisional verification
-                        </p>
-                        <p className="mt-1 text-sm text-secondary">
-                          Manual status layer for a supplier with one outstanding document. This does not change verification status or SmartScore.
-                        </p>
-                        {!provisionalFieldsAvailable && (
-                          <p className="mt-2 rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-xs font-semibold text-warning">
-                            Run the provisional verification migration before using this control.
-                          </p>
-                        )}
-                        <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_auto] lg:items-end">
-                          <div>
-                            <label
-                              htmlFor={`provisional-document-${profile.id}`}
-                              className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted"
-                            >
-                              Outstanding document
-                            </label>
-                            <input
-                              id={`provisional-document-${profile.id}`}
-                              type="text"
-                              value={provisionalForm.missingDocument}
-                              onChange={(event) =>
-                                setProvisionalBySupplier((current) => ({
-                                  ...current,
-                                  [profile.id]: {
-                                    ...(current[profile.id] ?? { missingDocument: "", deadline: "" }),
-                                    missingDocument: event.target.value,
-                                  },
-                                }))
-                              }
-                              disabled={isDeleted || !provisionalFieldsAvailable || provisionalSavePending || provisionalClearPending}
-                              placeholder="Tax Clearance"
-                              className="mt-2 w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-60"
-                            />
-                          </div>
-                          <div>
-                            <label
-                              htmlFor={`provisional-deadline-${profile.id}`}
-                              className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted"
-                            >
-                              Due date
-                            </label>
-                            <input
-                              id={`provisional-deadline-${profile.id}`}
-                              type="date"
-                              value={provisionalForm.deadline}
-                              onChange={(event) =>
-                                setProvisionalBySupplier((current) => ({
-                                  ...current,
-                                  [profile.id]: {
-                                    ...(current[profile.id] ?? { missingDocument: "", deadline: "" }),
-                                    deadline: event.target.value,
-                                  },
-                                }))
-                              }
-                              disabled={isDeleted || !provisionalFieldsAvailable || provisionalSavePending || provisionalClearPending}
-                              className="mt-2 w-full rounded-md border border-panel bg-panel px-3 py-2.5 text-sm text-heading outline-none transition focus:border-accent focus:ring-1 focus:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-60"
-                            />
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              disabled={isDeleted || !provisionalFieldsAvailable || provisionalSavePending || provisionalClearPending}
-                              onClick={() => saveProvisionalStatus(profile)}
-                              className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              {provisionalSavePending ? "Saving..." : "Save"}
-                            </button>
-                            <button
-                              type="button"
-                              disabled={
-                                isDeleted ||
-                                !provisionalFieldsAvailable ||
-                                provisionalSavePending ||
-                                provisionalClearPending ||
-                                (!profile.provisional_missing_document && !profile.provisional_deadline)
-                              }
-                              onClick={() => saveProvisionalStatus(profile, true)}
-                              className="rounded-md border border-panel bg-panel px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              {provisionalClearPending ? "Clearing..." : "Clear"}
-                            </button>
-                          </div>
-                        </div>
-                        {(profile.provisional_missing_document || profile.provisional_deadline) && (
-                          <p className="mt-2 text-xs font-semibold text-warning">
-                            Active: {profile.provisional_missing_document ?? "Outstanding document"} due {formatDate(profile.provisional_deadline)}
-                          </p>
-                        )}
-                        <div className="mt-2 flex flex-wrap gap-3">
-                          <InlineFeedbackBadge
-                            feedback={
-                              inlineFeedback[`${profile.id}:provisional-save`] ??
-                              inlineFeedback[`${profile.id}:provisional-clear`]
                             }
                           />
                         </div>
@@ -1792,7 +1409,7 @@ export default function AdminVerificationQueuePage() {
                       <>
                         <DetailLine label="Bank" value={bank?.bank_name} />
                         <DetailLine label="Account number" value={maskAccountNumber(bank?.account_number ?? null)} />
-                        <DetailLine label="Bank record status" value={bank?.verification_status} />
+                        <DetailLine label="Bank evidence status" value={deriveSupplierVerificationState(documentsBySupplier[profile.id]).banking.status} />
                         <div className="sm:col-span-2">
                           <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted">
                             Bank confirmation letter
@@ -1816,7 +1433,7 @@ export default function AdminVerificationQueuePage() {
 
                     {renderStepRow(profile, "director", "Director", (
                       <>
-                        <DetailLine label="Status" value={profile.director_verified ? "Verified" : "Pending"} />
+                        <DetailLine label="Status" value={deriveDirectorVerificationState(attestationsBySupplier[profile.id]).approved ? "Verified" : "Pending"} />
                         <DetailLine label="Company registration" value={profile.company_registration} />
                         <div className="sm:col-span-2">
                           <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted">

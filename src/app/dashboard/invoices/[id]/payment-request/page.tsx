@@ -6,6 +6,8 @@ import { useParams, useRouter } from "next/navigation"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "@/lib/auth"
 import { getInvoiceById, type Invoice } from "@/lib/invoices"
 import { supabase } from "@/lib/supabase"
+import { fetchSupplierDocumentsForProfile } from "@/lib/supplierDocuments"
+import { deriveSupplierVerificationState } from "@/lib/supplierVerification"
 
 // --- Types --------------------------------------------------------------------
 
@@ -124,7 +126,7 @@ export default function PaymentRequestPage() {
 
         if (supabase) {
           // Load most recent approval and banking details in parallel
-          const [approvalRes, bankRes] = await Promise.all([
+          const [approvalRes, bankRes, documentRes] = await Promise.all([
             supabase
               .from("invoice_approvals")
               .select("id, approver_id, approval_status, approval_notes, approved_at, created_at")
@@ -135,15 +137,24 @@ export default function PaymentRequestPage() {
             loadedInvoice?.supplier_id
               ? supabase
                   .from("supplier_bank_details")
-                  .select("bank_name, account_holder, account_number, branch_code, account_type, verification_status, verification_notes")
+                  .select("bank_name, account_holder, account_number, branch_code, account_type, verification_notes")
                   .eq("supplier_id", loadedInvoice.supplier_id)
                   .order("created_at", { ascending: false })
                   .limit(1)
                   .maybeSingle()
               : Promise.resolve({ data: null, error: null }),
+            loadedInvoice?.supplier_id
+              ? fetchSupplierDocumentsForProfile(loadedInvoice.supplier_id)
+              : Promise.resolve({ documents: [], error: null }),
           ])
           if (approvalRes.data) setApproval(approvalRes.data as InvoiceApproval)
-          if (bankRes.data) setBankDetails(bankRes.data as BankDetails)
+          if (bankRes.data) {
+            const banking = deriveSupplierVerificationState(documentRes.documents).banking
+            setBankDetails({
+              ...(bankRes.data as Omit<BankDetails, "verification_status">),
+              verification_status: banking.approved ? "Verified" : banking.status === "rejected" ? "Rejected" : "Under Review",
+            })
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load invoice.")

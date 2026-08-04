@@ -1,8 +1,10 @@
 import { displayIndustry } from "./industries"
 import { fetchSupplierDocumentsByProfileIds, type SupplierDocument } from "./supplierDocuments"
+import { deriveSupplierVerificationState, type SupplierVerificationState } from "./supplierVerification"
 import { groupBySupplierId, mergeSupplierScoreInputs, scoreCanonicalSupplierInput, type SupplierBankScoreRecord } from "./supplierScoreAssembly"
 import { riskLevelFromScore } from "./supplierRisk"
 import { supabase } from "./supabase"
+import { fetchVerificationAttestationsByProfileIds } from "./verificationAttestations"
 
 export type MatchLevel =
   | "Excellent Match"
@@ -36,6 +38,7 @@ export type MatchingSupplier = {
   cidb_document_url?: string | null
   capability_statement_url?: string | null
   supplier_documents?: SupplierDocument[]
+  verification_state?: SupplierVerificationState
   updated_at?: string | null
   created_at?: string | null
 }
@@ -115,10 +118,6 @@ function hasValue(value: string | null | undefined): boolean {
   return Boolean(value?.trim())
 }
 
-function isVerified(status: string | null | undefined): boolean {
-  return normalize(status).includes("verified")
-}
-
 function isRecent(value: string | null | undefined): boolean {
   if (!value) return false
   const date = new Date(value)
@@ -164,9 +163,10 @@ function calculateRiskSignal(
   activity: SupplierMatchActivity
 ): number {
   let riskScore = 0
+  const verification = supplier.verification_state ?? deriveSupplierVerificationState(supplier.supplier_documents)
 
-  if (!isVerified(supplier.verification_status)) riskScore += 25
-  if (!hasValue(supplier.csd_number)) riskScore += 15
+  if (!Object.values(verification).every((category) => category.approved)) riskScore += 25
+  if (!verification.csd.approved) riskScore += 15
   if (!hasValue(supplier.tax_status)) riskScore += 10
   if (!hasValue(supplier.business_name) || !hasValue(supplier.province) || !hasValue(supplier.industry)) {
     riskScore += 15
@@ -180,16 +180,9 @@ function calculateComplianceScore(
   supplier: MatchingSupplier,
   activity: SupplierMatchActivity
 ): number {
-  const verificationStatus = normalize(supplier.verification_status)
-  let score = 0
-
-  if (verificationStatus.includes("verified")) {
-    score = 15
-  } else if (verificationStatus.includes("pending") || verificationStatus.includes("review")) {
-    score = 8
-  } else if (verificationStatus) {
-    score = 4
-  }
+  const verification = supplier.verification_state ?? deriveSupplierVerificationState(supplier.supplier_documents)
+  const approvedCount = Object.values(verification).filter((category) => category.approved).length
+  const score = approvedCount === 4 ? 15 : approvedCount === 3 ? 8 : approvedCount > 0 ? 4 : 0
 
   const riskLevel = riskLevelFromScore(calculateRiskSignal(supplier, activity))
   if (riskLevel === "Critical") return Math.min(score, 4)
@@ -372,7 +365,6 @@ async function getMatchingContext() {
         .select(
           "id, business_name, province, industry, phone, email, verification_status, " +
             "csd_number, bbbee_level, tax_status, company_registration, cidb_grade, " +
-            "csd_verified, bbbee_verified, tax_verified, bank_verified, banking_verified, director_verified, " +
             "csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, " +
             "cidb_document_url, capability_statement_url, updated_at, created_at"
         )
@@ -388,16 +380,21 @@ async function getMatchingContext() {
     safeList<ContractRow>(supabase.from("contracts").select("supplier_id, status, created_at")),
     safeList<InvoiceRow>(supabase.from("invoices").select("supplier_id, status, created_at")),
     safeList<ReviewRow>(supabase.from("supplier_reviews").select("supplier_id, rating, created_at")),
-    safeList<SupplierBankScoreRecord>(supabase.from("supplier_bank_details").select("supplier_id, verification_status")),
+    safeList<SupplierBankScoreRecord>(supabase.from("supplier_bank_details").select("supplier_id, bank_name, account_number")),
   ])
 
-  const documents = await fetchSupplierDocumentsByProfileIds(suppliers.map((supplier) => supplier.id))
+  const supplierIds = suppliers.map((supplier) => supplier.id)
+  const [documents, attestations] = await Promise.all([
+    fetchSupplierDocumentsByProfileIds(supplierIds),
+    fetchVerificationAttestationsByProfileIds(supplierIds),
+  ])
   const banksBySupplier = groupBySupplierId(banks)
   const hydratedSuppliers = suppliers.map((supplier) =>
     mergeSupplierScoreInputs({
       profile: supplier,
       documents: documents.documentsByProfile[supplier.id] ?? [],
       banks: banksBySupplier[supplier.id] ?? [],
+      attestations: attestations.attestationsByProfile[supplier.id] ?? [],
     })
   )
 

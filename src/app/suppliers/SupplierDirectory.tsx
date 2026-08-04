@@ -21,11 +21,6 @@ export type PublicSupplierDirectoryRow = {
   bbbee_level: string | null
   cidb_grade: string | null
   smart_score: number | string | null
-  csd_verified: boolean | null
-  bbbee_verified: boolean | null
-  tax_verified: boolean | null
-  banking_verified: boolean | null
-  bank_verified: boolean | null
   verification_state?: SupplierVerificationState
   director_verified: boolean | null
   website: string | null

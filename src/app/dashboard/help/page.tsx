@@ -220,7 +220,7 @@ const helpSections: HelpSection[] = [
     guidance: {
       en: [
         { heading: "How it works", body: "SmartScore is a 0-100 rating that shows buyers how verified and trustworthy your supplier profile is. It's driven mainly by actual verification — CSD, BBBEE, tax, banking, and director checks — plus a smaller bonus for platform activity over time." },
-        { heading: "Score breakdown", body: "Business profile: 20 points. CSD registration: 20 points. BBBEE verification: 20 points for Levels 1-4 or 10 points for Levels 5-8. Tax clearance: 15 points. Banking details: 10 points. Director verification: 10 points. Company profile or capability statement: 5 points. A smaller capped activity bonus can add to this over time." },
+        { heading: "Score breakdown", body: "Business profile: 20 points. Approved CSD document: 20 points. Approved BBBEE evidence: 20 points for Levels 1-4 or 10 points for Levels 5-8. Approved tax clearance: 15 points. Approved bank letter: 10 points. Director verification: 10 points. Approved company profile: 5 points. Submitted or under-review documents earn no compliance points. A smaller capped activity bonus can add to this over time." },
       ],
       zu: [
         { heading: "Isebenza kanjani", body: "I-SmartScore iyisilinganiso esingu-0 kuya ku-100 esibonisa abathengi ukuthi iphrofayeli yakho yomhlinzeki iphelele futhi ithembekile kangakanani. Ibalwa ngokuzenzakalelayo uma iphrofayeli yakho ibuyekezwa." },
@@ -233,7 +233,7 @@ const helpSections: HelpSection[] = [
     },
     faqs: {
       en: [
-        { question: "Why is my SmartScore 0?", answer: "Your score is built from real verification, not just uploaded documents. Complete your business profile and get your CSD, BBBEE, tax, banking, and director details verified by an admin to raise your score — simply uploading a document earns a little credit, but verification is what moves it the most." },
+        { question: "Why is my SmartScore 0?", answer: "Your score is built from approved evidence, not merely uploaded documents. Complete your business profile and submit your CSD, BBBEE, tax and bank-letter documents for approval. Submitted or under-review documents earn no compliance points until approved." },
         { question: "Do buyers see my SmartScore?", answer: "Yes - your SmartScore is visible on your public supplier profile and in search results." },
       ],
       zu: [

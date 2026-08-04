@@ -12,6 +12,8 @@ import {
 } from "./invoices"
 import { type PurchaseOrderSupplier } from "./purchaseOrders"
 import { supabase } from "./supabase"
+import { fetchSupplierDocumentsForProfile } from "./supplierDocuments"
+import { deriveSupplierVerificationState } from "./supplierVerification"
 
 export const PAYMENT_STATUSES = [
   "Pending",
@@ -182,18 +184,14 @@ export async function createPayment(
   }
 
   // ── Workflow rule evaluation ────────────────────────────────────────────────
-  // Fetch banking verification status for this supplier
+  // Derive banking verification from the supplier's bank-letter document.
   let bankingStatus = "Unknown"
   if (supabase && invoice.supplier_id) {
     try {
-      const { data: bankData } = await supabase
-        .from("supplier_bank_details")
-        .select("verification_status")
-        .eq("supplier_id", invoice.supplier_id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      if (bankData) bankingStatus = String((bankData as { verification_status: string | null }).verification_status ?? "Unverified")
+      const documentResult = await fetchSupplierDocumentsForProfile(invoice.supplier_id)
+      if (documentResult.error) throw new Error(documentResult.error)
+      const banking = deriveSupplierVerificationState(documentResult.documents).banking
+      bankingStatus = banking.approved ? "Verified" : banking.status
     } catch { /* ignore */ }
   }
   const ruleResult = await evaluateWorkflowRules("payment", {
