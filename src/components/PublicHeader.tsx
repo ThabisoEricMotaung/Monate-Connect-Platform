@@ -72,7 +72,7 @@ export default function PublicHeader() {
           CSD · BBBEE · SARS · CIPC · NATIONAL TREASURY
         </span>
         <span style={{ color: "#9FE1CB", fontSize: "11px", letterSpacing: "0.08em" }}>
-          FREE DURING PILOT · UNTIL OCT 2026
+          FREE DURING PILOT · UNTIL OCT 31, 2026
         </span>
       </div>
 

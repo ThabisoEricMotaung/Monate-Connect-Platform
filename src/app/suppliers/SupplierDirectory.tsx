@@ -6,7 +6,10 @@ import BackLink from "@/components/BackLink"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import { displayIndustry } from "@/lib/industries"
 import { supabase } from "@/lib/supabase"
-import { isVerifiedStatus } from "@/lib/supplierStatus"
+import {
+  getSupplierDirectoryVerificationStatus,
+  type SupplierVerificationState,
+} from "@/lib/supplierVerification"
 
 export type PublicSupplierDirectoryRow = {
   id: string
@@ -15,8 +18,6 @@ export type PublicSupplierDirectoryRow = {
   provinces: string[] | null
   industry: string | null
   verification_status: string | null
-  provisional_missing_document: string | null
-  provisional_deadline: string | null
   bbbee_level: string | null
   cidb_grade: string | null
   smart_score: number | string | null
@@ -25,6 +26,7 @@ export type PublicSupplierDirectoryRow = {
   tax_verified: boolean | null
   banking_verified: boolean | null
   bank_verified: boolean | null
+  verification_state?: SupplierVerificationState
   director_verified: boolean | null
   website: string | null
   description: string | null
@@ -81,20 +83,26 @@ function matchesProvince(supplier: PublicSupplierDirectoryRow, province: string)
 
 function verificationItems(supplier: PublicSupplierDirectoryRow) {
   return [
-    ["CSD", Boolean(supplier.csd_verified)],
-    ["BBBEE", Boolean(supplier.bbbee_verified)],
-    ["TAX", Boolean(supplier.tax_verified)],
-    ["BANK", Boolean(supplier.banking_verified || supplier.bank_verified)],
+    ["CSD", Boolean(supplier.verification_state?.csd.approved)],
+    ["BBBEE", Boolean(supplier.verification_state?.bbbee.approved)],
+    ["TAX", Boolean(supplier.verification_state?.tax.approved)],
+    ["BANK", Boolean(supplier.verification_state?.banking.approved)],
     ["DIR", Boolean(supplier.director_verified)],
   ] as const
 }
 
 function isPublicVerifiedSupplier(supplier: PublicSupplierDirectoryRow): boolean {
-  return isVerifiedStatus(supplier.verification_status)
+  return getSupplierDirectoryVerificationStatus(
+    supplier.verification_state,
+    supplier.director_verified,
+  ) === "verified"
 }
 
 function isProvisionallyVerifiedSupplier(supplier: PublicSupplierDirectoryRow): boolean {
-  return supplier.verification_status?.trim() === "Pending Review" && Boolean(supplier.provisional_missing_document?.trim())
+  return getSupplierDirectoryVerificationStatus(
+    supplier.verification_state,
+    supplier.director_verified,
+  ) === "provisional"
 }
 
 function isDirectoryVisibleSupplier(supplier: PublicSupplierDirectoryRow): boolean {
@@ -152,11 +160,11 @@ function InfoPill({ children, tint = "neutral" }: { children: React.ReactNode; t
   )
 }
 
-function ScoreBadge({ score, muted = false }: { score: number | string | null; muted?: boolean }) {
+function ScoreBadge({ score, inReview = false }: { score: number | string | null; inReview?: boolean }) {
   return (
     <div className="min-w-[68px] rounded-lg border bg-white px-3 py-2 text-center" style={{ borderColor: GOLD }}>
-      <p className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>Score</p>
-      <p className="mt-0.5 text-[19px] font-medium leading-none text-[#1f2f28] tabular-nums">{muted ? "In review" : formatScore(score)}</p>
+      <p className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>{inReview ? "In review" : "Score"}</p>
+      <p className="mt-0.5 text-[19px] font-medium leading-none text-[#1f2f28] tabular-nums">{formatScore(score)}</p>
     </div>
   )
 }
@@ -189,7 +197,7 @@ function SupplierCard({ supplier }: { supplier: PublicSupplierDirectoryRow }) {
             </h2>
           </div>
         </div>
-        <ScoreBadge score={supplier.smart_score} muted={provisional} />
+        <ScoreBadge score={supplier.smart_score} inReview={provisional} />
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -259,10 +267,17 @@ function SupplierList({ suppliers }: { suppliers: PublicSupplierDirectoryRow[] }
             </div>
             <div className="flex items-center justify-between gap-3 md:justify-end">
               <div className="text-center">
-                <p className="text-lg font-medium tabular-nums text-[#1f2f28]">
-                  {isProvisionallyVerifiedSupplier(supplier) ? "In review" : formatScore(supplier.smart_score)}
-                </p>
-                <p className="text-[8px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>Score</p>
+                {isProvisionallyVerifiedSupplier(supplier) ? (
+                  <>
+                    <p className="text-[8px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>In review</p>
+                    <p className="mt-0.5 text-lg font-medium tabular-nums text-[#1f2f28]">{formatScore(supplier.smart_score)}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-medium tabular-nums text-[#1f2f28]">{formatScore(supplier.smart_score)}</p>
+                    <p className="text-[8px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>Score</p>
+                  </>
+                )}
               </div>
               <Link href={`/suppliers/${supplier.id}`} className="rounded-md border border-stone-300 px-3 py-2 text-xs font-semibold text-[#1a3a2a] hover:border-[#c8a060] hover:text-[#8c6a2f]">
                 View &rarr;

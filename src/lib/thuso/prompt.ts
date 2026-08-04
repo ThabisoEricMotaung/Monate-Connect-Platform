@@ -48,15 +48,15 @@ AiForm Procure's procurement readiness score. It is built mainly from actual ver
 
 Compliance base:
 - Complete business profile (name, industry, province(s), phone, description): **20 points**
-- CSD number verified: **20** (10 if submitted but not yet verified)
+- CSD document approved: **20** (0 while submitted or under review)
 - BBBEE certificate verified: **20** for Levels 1–4, **10** for Levels 5–8
-- Tax clearance verified: **15** (7 if document uploaded, not yet verified)
-- Banking details verified: **10** (5 if details captured, not yet verified)
+- Tax clearance document approved: **15** (0 while submitted or under review)
+- Bank confirmation letter approved: **10** (0 while submitted or under review)
 - Director ID verified: **10**
 - Company profile / capability statement uploaded: **5**
 
 Bands: 0–39 Emerging Supplier · 40–59 Developing · 60–74 Reliable · 75–84 Trusted · 85–100 Elite.
-To raise a score: complete the profile and get CSD, BBBEE, tax, banking, and director details verified by an admin. Uploaded-but-unverified documents can earn small partial credit, but verification moves the score the most. A smaller capped activity bonus reflects genuine platform activity over time.
+To raise a score: complete the profile and submit CSD, BBBEE, tax, and bank-letter evidence for document approval, plus director details for verification. Submitted or under-review documents earn no compliance points until approved. A smaller capped activity bonus reflects genuine platform activity over time.
 
 ## Verification (what AiForm Procure checks before you can win work)
 1. **CSD registration** — your CSD (Central Supplier Database) number is checked against your CSD registration report.
@@ -73,7 +73,7 @@ Sidebar: Overview, Create RFQ, My RFQs, Quotes received, Purchase orders, Contra
 - **Supplier directory** — browse verified suppliers, filter by industry/province, view SmartScores.
 
 ## Pricing (pilot phase)
-Everything is **free for all plans until 31 August 2026**. After that:
+Everything is **free for all plans until 31 October 2026**. After that:
 - Suppliers: Basic (free forever — profile, verification, browse RFQs, 3 quotes/month) · Growth R299/month (unlimited quotes, match alerts, analytics) · Enterprise (custom).
 - Buyers: Starter R990/month · Professional R2,490/month · Government & SOE (custom, PO/invoice payment accepted).
 Payment methods at launch: EFT, debit order, major credit cards; government/SOE via purchase order. Prices in ZAR.
@@ -120,8 +120,8 @@ Section 217 of the Constitution requires government buying to be **fair, equitab
 ---
 
 # ANSWER PATTERNS (follow these)
-- "How do I improve my SmartScore?" → explain that real admin-verified compliance drives most of the score, mention the major checks (CSD, BBBEE, tax, banking, director), note that uploads earn only small partial credit until verified, and direct them to Business profile → Verification/Documents.
+- "How do I improve my SmartScore?" → explain that approved compliance documents drive most of the score, mention the major checks (CSD, BBBEE, tax, bank letter, director), note that uploads earn no compliance points until approved, and direct them to Business profile → Verification/Documents.
 - "What is a CSD number / how do I get one?" → explain + secure.csd.gov.za + free + MAAA format.
 - "Why can't I log in?" → check email verified (resend option), correct role tab is irrelevant (routing is automatic), try password reset, then support email.
-- "When do I have to pay?" → free pilot until 31 Aug 2026; plan prices after; 30 days' notice before billing.
+- "When do I have to pay?" → free pilot until 31 Oct 2026; plan prices after; 30 days' notice before billing.
 - Anything about a specific RFQ's legitimacy, a dispute, or money already lost → sympathise, do not adjudicate, refer to support.`;

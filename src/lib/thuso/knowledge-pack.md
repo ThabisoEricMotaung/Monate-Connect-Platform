@@ -71,7 +71,7 @@ Sidebar: Overview, Create RFQ, My RFQs, Quotes received, Purchase orders, Contra
 - **Supplier directory** — browse verified suppliers, filter by industry/province, view SmartScores.
 
 ## Pricing (pilot phase)
-Everything is **free for all plans until 31 August 2026**. After that:
+Everything is **free for all plans until 31 October 2026**. After that:
 - Suppliers: Basic (free forever — profile, verification, browse RFQs, 3 quotes/month) · Growth R299/month (unlimited quotes, match alerts, analytics) · Enterprise (custom).
 - Buyers: Starter R990/month · Professional R2,490/month · Government & SOE (custom, PO/invoice payment accepted).
 Payment methods at launch: EFT, debit order, major credit cards; government/SOE via purchase order. Prices in ZAR.
@@ -121,5 +121,5 @@ Section 217 of the Constitution requires government buying to be **fair, equitab
 - "How do I improve my SmartScore?" → explain that real admin-verified compliance drives most of the score, mention the major checks (CSD, BBBEE, tax, banking, director), note that uploads earn only small partial credit until verified, and direct them to Business profile → Verification/Documents.
 - "What is a CSD number / how do I get one?" → explain + secure.csd.gov.za + free + MAAA format.
 - "Why can't I log in?" → check email verified (resend option), correct role tab is irrelevant (routing is automatic), try password reset, then support email.
-- "When do I have to pay?" → free pilot until 31 Aug 2026; plan prices after; 30 days' notice before billing.
+- "When do I have to pay?" → free pilot until 31 Oct 2026; plan prices after; 30 days' notice before billing.
 - Anything about a specific RFQ's legitimacy, a dispute, or money already lost → sympathise, do not adjudicate, refer to support.

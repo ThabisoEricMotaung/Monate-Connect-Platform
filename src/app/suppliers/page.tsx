@@ -1,7 +1,11 @@
 import { createClient } from "@supabase/supabase-js"
 import { SUPPLIER_SMART_SCORE_PROFILE_SELECT } from "@/lib/smartScore"
 import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
-import { isVerifiedStatus } from "@/lib/supplierStatus"
+import type { SupplierDocument } from "@/lib/supplierDocuments"
+import {
+  deriveSupplierVerificationState,
+  getSupplierDirectoryVerificationStatus,
+} from "@/lib/supplierVerification"
 import SupplierDirectory, { type PublicSupplierDirectoryRow } from "./SupplierDirectory"
 
 export const dynamic = "force-dynamic"
@@ -23,10 +27,9 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
   })
 
   const coreSelect = `${SUPPLIER_SMART_SCORE_PROFILE_SELECT}, cidb_grade, website, employee_count, linkedin_url, founded_year`
-  const provisionalSelect = "provisional_missing_document, provisional_deadline"
   let { data, error } = await supabase
     .from("profiles")
-    .select(`${coreSelect}, ${provisionalSelect}, company_logo_url`)
+    .select(`${coreSelect}, company_logo_url`)
     .eq("role", "supplier")
     .order("smart_score", { ascending: false, nullsFirst: false })
     .order("business_name", { ascending: true })
@@ -40,8 +43,6 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
       .order("business_name", { ascending: true })
     data = retry.data?.map((supplier) => ({
       ...(supplier as unknown as Record<string, unknown>),
-      provisional_missing_document: null,
-      provisional_deadline: null,
     })) as typeof data
     error = retry.error
 
@@ -56,8 +57,6 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
       data = legacyRetry.data?.map((supplier) => ({
         ...(supplier as unknown as Record<string, unknown>),
         company_logo_url: null,
-        provisional_missing_document: null,
-        provisional_deadline: null,
       })) as typeof data
       error = legacyRetry.error
     }
@@ -82,22 +81,33 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
     cidb_document_url?: string | null
     capability_statement_url?: string | null
   }>
-  const directoryRows = rows.filter(
-    (supplier) =>
-      isVerifiedStatus(supplier.verification_status) ||
-      (supplier.verification_status?.trim() === "Pending Review" &&
-        Boolean(supplier.provisional_missing_document?.trim())),
-  )
-  const supplierIds = directoryRows.map((supplier) => supplier.id)
+  const supplierIds = rows.map((supplier) => supplier.id)
   if (supplierIds.length === 0) return []
 
-  const canonicalScores = await getCanonicalSupplierSmartScoreBatch({
-    supplierIds,
-    client: supabase,
-    profiles: directoryRows,
-  })
+  const [canonicalScores, documentsResult] = await Promise.all([
+    getCanonicalSupplierSmartScoreBatch({
+      supplierIds,
+      client: supabase,
+      profiles: rows,
+    }),
+    supabase
+      .from("supplier_documents")
+      .select("id,profile_id,document_type,file_url,uploaded_at,status,reviewed_at")
+      .in("profile_id", supplierIds),
+  ])
 
-  return directoryRows
+  if (documentsResult.error) {
+    console.error("Public supplier directory document fetch failed:", documentsResult.error)
+    throw new Error(documentsResult.error.message)
+  }
+
+  const documentsBySupplier = ((documentsResult.data ?? []) as unknown as SupplierDocument[])
+    .reduce<Record<string, SupplierDocument[]>>((grouped, document) => {
+      grouped[document.profile_id] = [...(grouped[document.profile_id] ?? []), document]
+      return grouped
+    }, {})
+
+  return rows
     .map((supplier) => {
       const canonical = canonicalScores[supplier.id]
 
@@ -108,8 +118,6 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
         provinces: supplier.provinces,
         industry: supplier.industry,
         verification_status: supplier.verification_status,
-        provisional_missing_document: supplier.provisional_missing_document,
-        provisional_deadline: supplier.provisional_deadline,
         bbbee_level: supplier.bbbee_level,
         cidb_grade: supplier.cidb_grade,
         smart_score: canonical?.result.score ?? supplier.smart_score,
@@ -118,6 +126,7 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
         tax_verified: supplier.tax_verified,
         banking_verified: supplier.banking_verified,
         bank_verified: Boolean(canonical?.input.bank_verified),
+        verification_state: deriveSupplierVerificationState(documentsBySupplier[supplier.id] ?? []),
         director_verified: supplier.director_verified,
         website: supplier.website,
         description: supplier.description,
@@ -128,6 +137,12 @@ async function getPublicSuppliers(): Promise<PublicSupplierDirectoryRow[]> {
         company_logo_url: supplier.company_logo_url,
       } satisfies PublicSupplierDirectoryRow
     })
+    .filter((supplier) =>
+      getSupplierDirectoryVerificationStatus(
+        supplier.verification_state,
+        supplier.director_verified,
+      ) !== "in_review",
+    )
     .sort((a, b) => Number(b.smart_score ?? 0) - Number(a.smart_score ?? 0))
 }
 

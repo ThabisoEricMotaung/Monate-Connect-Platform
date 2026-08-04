@@ -299,7 +299,7 @@ export default function AboutPage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-5 rounded-md bg-[#1a3a2a] p-7 text-white shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-9">
           <div>
             <p className="font-display text-3xl font-semibold">Ready to see it for yourself?</p>
-            <p className="mt-2 text-sm font-semibold text-[#dbe8df]">Free during the pilot period until October 2026</p>
+            <p className="mt-2 text-sm font-semibold text-[#dbe8df]">Free during the pilot period until October 31, 2026</p>
           </div>
           <Link
             href="/auth/register"

@@ -20,8 +20,6 @@ type SupplierProfile = {
   tax_clearance_url: string | null
   tax_document_url: string | null
   company_registration_url: string | null
-  provisional_missing_document: string | null
-  provisional_deadline: string | null
 }
 
 type SupplierDocumentRow = {
@@ -40,7 +38,6 @@ type ReminderLogRow = {
 const DAY_MS = 24 * 60 * 60 * 1000
 const FIRST_REMINDER_AFTER_MS = DAY_MS
 const FOLLOW_UP_AFTER_MS = 7 * DAY_MS
-const PROVISIONAL_DEADLINE_WINDOW_MS = 7 * DAY_MS
 const MAX_PROFILES_PER_RUN = 500
 
 function cronAuthorized(request: Request): boolean {
@@ -100,29 +97,6 @@ function missingDocuments(profile: SupplierProfile, documents: SupplierDocumentR
     profile as unknown as Record<string, unknown>,
     documents as unknown as Parameters<typeof missingRequiredSupplierDocuments>[1],
   ).map((requirement) => requirement.label)
-}
-
-function formatDateForEmail(value: string): string {
-  const date = new Date(`${value}T00:00:00`)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleDateString("en-ZA", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-}
-
-function provisionalReminderDocuments(profile: SupplierProfile, now: Date): string[] {
-  const document = profile.provisional_missing_document?.trim()
-  if (!document || !profile.provisional_deadline) return []
-
-  const deadline = new Date(`${profile.provisional_deadline}T00:00:00`)
-  if (Number.isNaN(deadline.getTime())) return []
-
-  const windowEnd = new Date(now.getTime() + PROVISIONAL_DEADLINE_WINDOW_MS)
-  if (deadline.getTime() > windowEnd.getTime()) return []
-
-  return [`${document} (provisional deadline: ${formatDateForEmail(profile.provisional_deadline)})`]
 }
 
 function shouldSendReminder(log: ReminderLogRow | undefined, now: Date): boolean {
@@ -227,7 +201,7 @@ export async function GET(request: Request) {
   let { data: profilesData, error: profilesError } = await supabaseAdmin
     .from("profiles")
     .select(
-      "id, email, first_name, full_name, preferred_name, business_name, created_at, registration_status, registration_completed_at, csd_document_url, bbbee_document_url, tax_clearance_url, tax_document_url, company_registration_url, provisional_missing_document, provisional_deadline",
+      "id, email, first_name, full_name, preferred_name, business_name, created_at, registration_status, registration_completed_at, csd_document_url, bbbee_document_url, tax_clearance_url, tax_document_url, company_registration_url",
     )
     .eq("role", "supplier")
     .eq("registration_status", "complete")
@@ -257,8 +231,6 @@ export async function GET(request: Request) {
 
     profilesData = (retry.data?.map((profile) => ({
       ...(profile as unknown as Record<string, unknown>),
-      provisional_missing_document: null,
-      provisional_deadline: null,
     })) ?? null) as typeof profilesData
     profilesError = retry.error
   }
@@ -310,10 +282,7 @@ export async function GET(request: Request) {
   let reviewCopy: { subject: string; html: string; text: string } | null = null
 
   for (const profile of profiles) {
-    const missing = [
-      ...missingDocuments(profile, documentsMap.get(profile.id) ?? []),
-      ...provisionalReminderDocuments(profile, now),
-    ]
+    const missing = missingDocuments(profile, documentsMap.get(profile.id) ?? [])
     const log = logsMap.get(profile.id)
     const reminderCount = Number(log?.reminder_count ?? 0)
 

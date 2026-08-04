@@ -545,7 +545,7 @@ export default function LoginPage() {
             "Verified supplier profiles visible to government and corporate buyers",
             "SmartScore - know your procurement readiness instantly",
             "Regional Insights - see where procurement activity is happening across SA",
-            "Free during the pilot period until October 2026",
+            "Free during the pilot period until October 31, 2026",
           ].map((feature) => (
             <div key={feature} className="flex items-start gap-3">
               <div className="w-1.5 h-1.5 rounded-full bg-[#5DCAA5] mt-1.5 shrink-0" />

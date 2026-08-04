@@ -12,7 +12,7 @@ https://www.aiformprocure.co.za/auth/signup
 
 Registration takes about 5 minutes. You'll need your B-BBEE level, CSD number, and basic company details. Once your profile is live, verified buyers and procurement teams can find and contact you directly.
 
-The platform is free during our pilot period until October 2026.
+The platform is free during our pilot period until October 31, 2026.
 
 If you have any questions, reply to this email.
 

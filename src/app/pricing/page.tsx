@@ -75,7 +75,7 @@ const faqs = [
       "Yes. AiForm Procure is free until October 31, 2026, and no credit card is required to join the pilot.",
   },
   {
-    question: "What happens after October 2026?",
+    question: "What happens after October 31, 2026?",
     answer:
       "You will receive advance notice before paid billing starts, and early adopter pricing will be honoured for pilot users.",
   },
@@ -146,7 +146,7 @@ export default function PricingPage() {
               </div>
             </div>
             <p className="mt-2.5 text-[0.7rem] font-semibold text-[#63766b]">
-              Free until October 2026 during the pilot.
+              Free until October 31, 2026 during the pilot.
             </p>
             <FeatureList features={supplierFeatures} />
             <PayFastCheckoutButton
@@ -173,7 +173,7 @@ export default function PricingPage() {
               </div>
             </div>
             <p className="mt-2.5 text-[0.7rem] font-semibold text-[#63766b]">
-              Free until October 2026 during the pilot.
+              Free until October 31, 2026 during the pilot.
             </p>
             <FeatureList features={buyerFeatures} />
             <PayFastCheckoutButton
@@ -200,7 +200,7 @@ export default function PricingPage() {
               </div>
             </div>
             <p className="mt-2.5 text-[0.7rem] font-semibold text-[#63766b]">
-              Free until October 2026 during the pilot.
+              Free until October 31, 2026 during the pilot.
             </p>
             <FeatureList features={buyerProfessionalFeatures} />
             <PayFastCheckoutButton
