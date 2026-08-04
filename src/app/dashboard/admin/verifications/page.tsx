@@ -478,6 +478,12 @@ export default function AdminVerificationQueuePage() {
   const [checklistOpen, setChecklistOpen] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
+    if (!errorMessage) return
+    const timer = window.setTimeout(() => setErrorMessage(""), 30000)
+    return () => window.clearTimeout(timer)
+  }, [errorMessage])
+
+  useEffect(() => {
     let cancelled = false
 
     async function loadQueue() {
@@ -648,15 +654,14 @@ export default function AdminVerificationQueuePage() {
   function setActionFeedback(supplierId: string, key: string, fb: InlineFeedback) {
     const fbKey = `${supplierId}:${key}`
     setInlineFeedback((current) => ({ ...current, [fbKey]: fb }))
-    if (fb.type === "success") {
-      setTimeout(() => {
-        setInlineFeedback((current) => {
-          const next = { ...current }
-          delete next[fbKey]
-          return next
-        })
-      }, 3000)
-    }
+    const timeoutMs = fb.type === "success" ? 3000 : 30000
+    setTimeout(() => {
+      setInlineFeedback((current) => {
+        const next = { ...current }
+        delete next[fbKey]
+        return next
+      })
+    }, timeoutMs)
   }
 
   function setScoreFlash(supplierId: string) {
@@ -716,7 +721,6 @@ export default function AdminVerificationQueuePage() {
       setActionFeedback(profile.id, pendingKey, { message: `${supplierDocumentLabels[result.document.document_type]} marked ${decision.replace("_", " ")}`, type: "success" })
     } catch (error) {
       const message = error instanceof Error ? error.message : "Document review failed."
-      setErrorMessage(message)
       setActionFeedback(profile.id, pendingKey, { message, type: "error" })
     } finally {
       setPendingAction(null)
@@ -751,7 +755,6 @@ export default function AdminVerificationQueuePage() {
       setActionFeedback(profile.id, pendingKey, { message: `Director attestation ${approved ? "approved" : "revoked"}`, type: "success" })
     } catch (error) {
       const message = error instanceof Error ? error.message : "Director review failed."
-      setErrorMessage(message)
       setActionFeedback(profile.id, pendingKey, { message, type: "error" })
     } finally {
       setPendingAction(null)
