@@ -50,11 +50,8 @@ export type SupplierSmartScoreProfile = {
   verification_status?: string | null
   smart_score?: number | string | null
   csd_number?: string | null
-  csd_verified?: boolean | null
   bbbee_level?: string | null
-  bbbee_verified?: boolean | null
   tax_status?: string | null
-  tax_verified?: boolean | null
   tax_clearance_url?: string | null
   company_registration?: string | null
   cidb_grade?: string | null
@@ -66,12 +63,9 @@ export type SupplierSmartScoreProfile = {
   capability_statement_url?: string | null
   banking_verification_status?: string | null
   bank_verification_status?: string | null
-  bank_verified?: boolean | null
-  banking_verified?: boolean | null
   bank_name?: string | null
   bank_account_number?: string | null
   account_number?: string | null
-  director_verified?: boolean | null
   updated_at?: string | null
   created_at?: string | null
   supplier_documents?: Array<{

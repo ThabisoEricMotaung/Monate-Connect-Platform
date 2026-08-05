@@ -32,13 +32,9 @@ type SupplierProfile = {
   verification_status: string | null
   created_at: string | null
   csd_number: string | null
-  csd_verified?: boolean | null
   bbbee_level: string | null
-  bbbee_verified?: boolean | null
   tax_status: string | null
-  tax_verified?: boolean | null
   company_registration: string | null
-  director_verified?: boolean | null
   csd_document_url: string | null
   bbbee_document_url: string | null
   tax_document_url: string | null
@@ -50,8 +46,6 @@ type SupplierProfile = {
   csd_expiry_date: string | null
   cidb_expiry_date: string | null
   supplier_documents?: SupplierDocument[]
-  bank_verified?: boolean | null
-  banking_verified?: boolean | null
   smartScore?: SmartScoreResult
 }
 

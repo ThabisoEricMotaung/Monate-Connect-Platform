@@ -285,9 +285,6 @@ export async function getSupplierScores(): Promise<SupplierIntelligenceRecord[]>
     verification_status: string | null; csd_number: string | null
     bbbee_level: string | null; tax_status: string | null
     company_registration: string | null; cidb_grade: string | null
-    csd_verified?: boolean | null; bbbee_verified?: boolean | null
-    tax_verified?: boolean | null; bank_verified?: boolean | null
-    banking_verified?: boolean | null; director_verified?: boolean | null
     csd_document_url: string | null; bbbee_document_url: string | null
     tax_document_url: string | null; company_registration_url: string | null
     cidb_document_url: string | null; capability_statement_url: string | null

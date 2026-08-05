@@ -72,12 +72,6 @@ type Profile = {
   cidb_grade: string | null
   verification_notes: string | null
   smart_score?: number | string | null
-  csd_verified?: boolean | null
-  bbbee_verified?: boolean | null
-  tax_verified?: boolean | null
-  banking_verified?: boolean | null
-  bank_verified?: boolean | null
-  director_verified?: boolean | null
   tax_clearance_url?: string | null
   csd_document_url: string | null
   bbbee_document_url: string | null
