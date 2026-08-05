@@ -1,0 +1,19 @@
+-- Drop public_supplier_directory entirely.
+--
+-- Confirmed superseded and unused (investigation 2026-08-05):
+-- - Created 2026-06-13 (615b6e8) as the original data source for the public
+--   /suppliers and /suppliers/[id] pages.
+-- - Superseded 2026-07-08 (d9f86f1, "Fix public supplier directory RLS
+--   bypass") by an RLS policy directly on public.profiles
+--   ("Public supplier directory profiles are visible", anon, role =
+--   'supplier') plus a column allowlist in application code
+--   (SUPPLIER_SMART_SCORE_PROFILE_SELECT). Nothing in src/ has queried this
+--   view since.
+-- - Flagged by `supabase db advisors` as an ERROR-level security_definer_view
+--   finding: the view runs with the privileges of its owner and bypasses
+--   profiles' RLS entirely rather than inheriting it, decoupled from and
+--   invisible to the policy that is now the actual source of truth for
+--   public exposure.
+--
+-- Dropping the view does not touch public.profiles or any table data.
+drop view if exists public.public_supplier_directory;
