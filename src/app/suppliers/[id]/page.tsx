@@ -11,6 +11,7 @@ import {
   type SupplierVerificationState,
 } from "@/lib/supplierVerification"
 import { deriveDirectorVerificationState, type VerificationAttestation } from "@/lib/verificationAttestations"
+import { derivePassportComplianceSnapshot, displayStatusFor, type ComplianceSnapshotItem, type PassportDisplayStatus, type PassportReviewStatus } from "@/lib/supplierPassport"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -39,7 +40,71 @@ type PublicSupplierProfile = {
   founded_year: number | string | null
   created_at: string | null
   verification_state: SupplierVerificationState
+  passport: PassportSummary
 }
+
+// Condensed public summary only. Deliberately excludes internal review
+// metadata (reviewed_by, reviewed_at, notes) and reference contact details
+// (contact_email, contact_phone) -- those stay private to the dashboard.
+type PassportCertificationSummary = {
+  id: string
+  name: string
+  issuing_body: string | null
+  expiry_date: string | null
+  displayStatus: PassportDisplayStatus
+  evidence_url: string | null
+}
+type PassportLicenceSummary = {
+  id: string
+  licence_type: string
+  issuing_body: string | null
+  expiry_date: string | null
+  displayStatus: PassportDisplayStatus
+  evidence_url: string | null
+}
+type PassportServiceCategorySummary = { id: string; category_name: string; category_group: string | null }
+type PassportOperatingAreaSummary = {
+  id: string
+  province: string | null
+  municipality: string | null
+  city: string | null
+  region: string | null
+  service_radius_km: number | null
+  is_primary: boolean
+}
+type PassportProjectSummary = {
+  id: string
+  project_name: string
+  client_name: string | null
+  sector: string | null
+  location: string | null
+  start_date: string | null
+  end_date: string | null
+  description: string | null
+  outcome_summary: string | null
+}
+type PassportReferenceSummary = {
+  id: string
+  referrer_name: string
+  organisation_name: string | null
+  relationship: string | null
+  project_summary: string | null
+}
+
+type PassportSummary = {
+  complianceSnapshot: ComplianceSnapshotItem[]
+  certifications: PassportCertificationSummary[]
+  licences: PassportLicenceSummary[]
+  serviceCategories: PassportServiceCategorySummary[]
+  operatingAreas: PassportOperatingAreaSummary[]
+  projects: PassportProjectSummary[]
+  references: PassportReferenceSummary[]
+}
+
+const KEY_CERTIFICATION_STATUSES: PassportDisplayStatus[] = ["Verified", "Expiring soon"]
+const MAX_KEY_CERTIFICATIONS = 6
+const MAX_PUBLIC_PROJECTS = 2
+const MAX_PUBLIC_REFERENCES = 2
 
 const FOREST = "#1a3a2a"
 const GOLD = "#c8a060"
@@ -67,7 +132,7 @@ async function getSupplier(id: string): Promise<PublicSupplierProfile> {
   })
 
   const coreSelect =
-    "id,full_name,preferred_name,email,business_name,province,provinces,industry,verification_status,bbbee_level,cidb_grade,smart_score,website,description,employee_count,linkedin_url,founded_year,created_at"
+    "id,full_name,preferred_name,email,business_name,province,provinces,industry,verification_status,bbbee_level,cidb_grade,smart_score,website,description,employee_count,linkedin_url,founded_year,created_at,tax_expiry_date,bbbee_expiry_date,csd_expiry_date"
   let { data, error } = await supabase
     .from("profiles")
     .select(`${coreSelect},avatar_url,company_logo_url`)
@@ -106,27 +171,119 @@ async function getSupplier(id: string): Promise<PublicSupplierProfile> {
 
   if (error || !data) notFound()
 
-  const [canonical, documentsResult, attestationsResult] = await Promise.all([
-    getCanonicalSupplierSmartScore(id, supabase),
-    supabase
-      .from("supplier_documents")
-      .select("id,profile_id,document_type,file_url,uploaded_at,status,reviewed_at")
-      .eq("profile_id", id),
-    supabase
-      .from("verification_attestations")
-      .select("id,profile_id,category,decision,reason,evidence_reference,reviewed_by,reviewed_at,expires_at")
-      .eq("profile_id", id),
-  ])
+  const [canonical, documentsResult, attestationsResult, certificationsResult, licencesResult, serviceCategoriesResult, operatingAreasResult, projectsResult, referencesResult] =
+    await Promise.all([
+      getCanonicalSupplierSmartScore(id, supabase),
+      supabase
+        .from("supplier_documents")
+        .select("id,profile_id,document_type,file_url,uploaded_at,status,reviewed_at")
+        .eq("profile_id", id),
+      supabase
+        .from("verification_attestations")
+        .select("id,profile_id,category,decision,reason,evidence_reference,reviewed_by,reviewed_at,expires_at")
+        .eq("profile_id", id),
+      supabase
+        .from("supplier_certifications")
+        .select("id,name,issuing_body,expiry_date,status,evidence_url")
+        .eq("profile_id", id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("supplier_licences")
+        .select("id,licence_type,issuing_body,expiry_date,status,evidence_url")
+        .eq("profile_id", id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("supplier_service_categories")
+        .select("id,category_name,category_group")
+        .eq("profile_id", id)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("supplier_operating_areas")
+        .select("id,province,municipality,city,region,service_radius_km,is_primary")
+        .eq("profile_id", id)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("supplier_projects")
+        .select("id,project_name,client_name,sector,location,start_date,end_date,description,outcome_summary")
+        .eq("profile_id", id)
+        .order("start_date", { ascending: false })
+        .limit(MAX_PUBLIC_PROJECTS),
+      supabase
+        .from("supplier_references")
+        .select("id,referrer_name,organisation_name,relationship,project_summary")
+        .eq("profile_id", id)
+        .order("created_at", { ascending: false })
+        .limit(MAX_PUBLIC_REFERENCES),
+    ])
   if (!canonical) notFound()
   if (documentsResult.error) notFound()
 
+  const verificationState = deriveSupplierVerificationState((documentsResult.data ?? []) as unknown as SupplierDocument[])
+  const attestations = (attestationsResult.data ?? []) as VerificationAttestation[]
+
+  const keyCertifications = ((certificationsResult.data ?? []) as Array<{
+    id: string
+    name: string
+    issuing_body: string | null
+    expiry_date: string | null
+    status: string
+    evidence_url: string | null
+  }>)
+    .map((row) => ({ ...row, displayStatus: displayStatusFor(row.status as PassportReviewStatus, row.expiry_date) }))
+    .filter((row) => KEY_CERTIFICATION_STATUSES.includes(row.displayStatus))
+    .slice(0, MAX_KEY_CERTIFICATIONS)
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      issuing_body: row.issuing_body,
+      expiry_date: row.expiry_date,
+      evidence_url: row.evidence_url,
+      displayStatus: row.displayStatus,
+    }))
+
+  const keyLicences = ((licencesResult.data ?? []) as Array<{
+    id: string
+    licence_type: string
+    issuing_body: string | null
+    expiry_date: string | null
+    status: string
+    evidence_url: string | null
+  }>)
+    .map((row) => ({ ...row, displayStatus: displayStatusFor(row.status as PassportReviewStatus, row.expiry_date) }))
+    .filter((row) => KEY_CERTIFICATION_STATUSES.includes(row.displayStatus))
+    .slice(0, MAX_KEY_CERTIFICATIONS)
+    .map((row) => ({
+      id: row.id,
+      licence_type: row.licence_type,
+      issuing_body: row.issuing_body,
+      expiry_date: row.expiry_date,
+      evidence_url: row.evidence_url,
+      displayStatus: row.displayStatus,
+    }))
+
+  const passport: PassportSummary = {
+    complianceSnapshot: derivePassportComplianceSnapshot({
+      verification: verificationState,
+      documents: (documentsResult.data ?? []) as unknown as SupplierDocument[],
+      attestations,
+      csdExpiryDate: data.csd_expiry_date,
+      bbbeeExpiryDate: data.bbbee_expiry_date,
+      taxExpiryDate: data.tax_expiry_date,
+    }),
+    certifications: keyCertifications,
+    licences: keyLicences,
+    serviceCategories: (serviceCategoriesResult.data ?? []) as PassportServiceCategorySummary[],
+    operatingAreas: (operatingAreasResult.data ?? []) as PassportOperatingAreaSummary[],
+    projects: (projectsResult.data ?? []) as PassportProjectSummary[],
+    references: (referencesResult.data ?? []) as PassportReferenceSummary[],
+  }
+
   return {
-    ...(data as Omit<PublicSupplierProfile, "verification_state" | "director_verified">),
+    ...(data as Omit<PublicSupplierProfile, "verification_state" | "director_verified" | "passport">),
     smart_score: canonical.result.score,
-    director_verified: deriveDirectorVerificationState((attestationsResult.data ?? []) as VerificationAttestation[]).approved,
-    verification_state: deriveSupplierVerificationState(
-      (documentsResult.data ?? []) as unknown as SupplierDocument[],
-    ),
+    director_verified: deriveDirectorVerificationState(attestations).approved,
+    verification_state: verificationState,
+    passport,
   }
 }
 
@@ -229,6 +386,153 @@ function DetailItem({ label, value }: { label: string; value: string }) {
       <p className="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-stone-500">{label}</p>
       <p className="mt-2 text-sm font-semibold text-[#1f2f28]">{value}</p>
     </div>
+  )
+}
+
+const PASSPORT_STATUS_STYLES: Record<PassportDisplayStatus, string> = {
+  Verified: "bg-[#E1F5EE] text-[#085041]",
+  "Pending review": "bg-amber-100 text-amber-800",
+  "Expiring soon": "bg-amber-100 text-amber-800",
+  Expired: "bg-rose-100 text-rose-700",
+  Rejected: "bg-rose-100 text-rose-700",
+  Missing: "bg-stone-100 text-stone-500",
+}
+
+function PassportStatusChip({ status }: { status: PassportDisplayStatus }) {
+  return (
+    <span className={`rounded-full px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.1em] ${PASSPORT_STATUS_STYLES[status]}`}>
+      {status}
+    </span>
+  )
+}
+
+function InfoChip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full border border-stone-200 bg-[#fbf8f1] px-3 py-1.5 text-xs font-semibold text-[#1f2f28]">
+      {children}
+    </span>
+  )
+}
+
+function PassportSummarySection({ passport }: { passport: PassportSummary }) {
+  const hasCertsOrLicences = passport.certifications.length > 0 || passport.licences.length > 0
+  const hasProjectsOrReferences = passport.projects.length > 0 || passport.references.length > 0
+
+  return (
+    <>
+      <div className="rounded-lg border border-stone-200 bg-white p-5 sm:p-6">
+        <h2 className="font-display text-xl font-medium text-[#1a3a2a]">Compliance snapshot</h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {passport.complianceSnapshot.map((item) => (
+            <div key={item.key} className="flex items-center justify-between gap-2 rounded-lg border border-stone-200 bg-[#fbf8f1] p-3">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-stone-500">{item.label}</p>
+              <PassportStatusChip status={item.status} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {(passport.serviceCategories.length > 0 || passport.operatingAreas.length > 0) && (
+        <div className="rounded-lg border border-stone-200 bg-white p-5 sm:p-6">
+          <h2 className="font-display text-xl font-medium text-[#1a3a2a]">Where we work</h2>
+          {passport.serviceCategories.length > 0 && (
+            <div className="mt-4">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-stone-500">Service categories</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {passport.serviceCategories.map((category) => (
+                  <InfoChip key={category.id}>
+                    {category.category_name}
+                    {category.category_group ? ` (${category.category_group})` : ""}
+                  </InfoChip>
+                ))}
+              </div>
+            </div>
+          )}
+          {passport.operatingAreas.length > 0 && (
+            <div className="mt-4">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-stone-500">Operating areas</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {passport.operatingAreas.map((area) => (
+                  <InfoChip key={area.id}>
+                    {[area.province, area.municipality || area.city, area.region].filter(Boolean).join(" · ") || "Area"}
+                    {area.is_primary ? " ★" : ""}
+                    {area.service_radius_km ? ` · ${area.service_radius_km}km radius` : ""}
+                  </InfoChip>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {hasCertsOrLicences && (
+        <div className="rounded-lg border border-stone-200 bg-white p-5 sm:p-6">
+          <h2 className="font-display text-xl font-medium text-[#1a3a2a]">Key certifications &amp; licences</h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {passport.certifications.map((cert) => (
+              <div key={cert.id} className="rounded-lg border border-stone-200 bg-[#fbf8f1] p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-semibold text-[#1f2f28]">{cert.name}</p>
+                  <PassportStatusChip status={cert.displayStatus} />
+                </div>
+                <p className="mt-1 text-xs text-stone-600">{cert.issuing_body || "Certification"}</p>
+                {cert.evidence_url && (
+                  <a href={cert.evidence_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1a3a2a] hover:text-[#8c6a2f]">
+                    View evidence <ExternalLinkIcon />
+                  </a>
+                )}
+              </div>
+            ))}
+            {passport.licences.map((licence) => (
+              <div key={licence.id} className="rounded-lg border border-stone-200 bg-[#fbf8f1] p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-semibold text-[#1f2f28]">{licence.licence_type}</p>
+                  <PassportStatusChip status={licence.displayStatus} />
+                </div>
+                <p className="mt-1 text-xs text-stone-600">{licence.issuing_body || "Licence"}</p>
+                {licence.evidence_url && (
+                  <a href={licence.evidence_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1a3a2a] hover:text-[#8c6a2f]">
+                    View evidence <ExternalLinkIcon />
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {hasProjectsOrReferences && (
+        <div className="rounded-lg border border-stone-200 bg-white p-5 sm:p-6">
+          <h2 className="font-display text-xl font-medium text-[#1a3a2a]">Track record</h2>
+          {passport.projects.length > 0 && (
+            <div className="mt-4 space-y-3">
+              {passport.projects.map((project) => (
+                <div key={project.id} className="rounded-lg border border-stone-200 bg-[#fbf8f1] p-4">
+                  <p className="text-sm font-semibold text-[#1f2f28]">{project.project_name}</p>
+                  <p className="mt-1 text-xs text-stone-600">
+                    {[project.client_name, project.sector, project.location].filter(Boolean).join(" · ") || "Past project"}
+                  </p>
+                  {project.description && <p className="mt-2 text-xs leading-6 text-stone-700">{project.description}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {passport.references.length > 0 && (
+            <div className="mt-4 space-y-3">
+              {passport.references.map((reference) => (
+                <div key={reference.id} className="rounded-lg border border-stone-200 bg-[#fbf8f1] p-4">
+                  <p className="text-sm font-semibold text-[#1f2f28]">{reference.referrer_name}</p>
+                  <p className="mt-1 text-xs text-stone-600">
+                    {[reference.organisation_name, reference.relationship].filter(Boolean).join(" · ") || "Reference"}
+                  </p>
+                  {reference.project_summary && <p className="mt-2 text-xs leading-6 text-stone-700">{reference.project_summary}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </>
   )
 }
 
@@ -380,6 +684,8 @@ export default async function SupplierProfilePage({ params }: Props) {
               </div>
             </div>
           )}
+
+          <PassportSummarySection passport={supplier.passport} />
         </section>
 
         <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">

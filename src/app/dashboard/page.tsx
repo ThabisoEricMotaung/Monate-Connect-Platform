@@ -74,6 +74,22 @@ export default function DashboardPage() {
   const [smartScoreError, setSmartScoreError] = useState("")
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false)
   const [documentProgress, setDocumentProgress] = useState<RequiredSupplierDocumentProgress[]>([])
+  const [passportCardGlow, setPassportCardGlow] = useState(false)
+
+  // Attention glow for the Compliance Passport card: plays once per browser
+  // session (sessionStorage, not localStorage/DB) since this is a purely
+  // cosmetic "new feature" nudge, not state worth persisting across devices
+  // or forever. Clears itself after the CSS animation's fixed duration so it
+  // never lingers or re-triggers on re-render.
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const key = "passport-card-glow-shown"
+    if (window.sessionStorage.getItem(key)) return
+    window.sessionStorage.setItem(key, "1")
+    setPassportCardGlow(true)
+    const timer = window.setTimeout(() => setPassportCardGlow(false), 4500)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   // Load greeting + real stat values
   useEffect(() => {
@@ -389,6 +405,44 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        <div className={`mt-6 rounded-xl border border-[#c8a060]/25 bg-[#1a3a2a] p-6 shadow-panel ${passportCardGlow ? "feature-glow-once" : ""}`}>
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3 lg:shrink-0">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#c8a060]/40 bg-[#c8a060]/15">
+                <svg className="h-6 w-6 text-[#c8a060]" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+                  />
+                </svg>
+              </span>
+              <div>
+                <p className="text-sm font-bold uppercase tracking-widest text-[#c8a060]">Compliance Passport</p>
+                <p className="mt-0.5 text-xs text-[#f8f4ec]/60">Your complete supplier record</p>
+              </div>
+            </div>
+
+            <ul className="grid flex-1 grid-cols-2 gap-2.5 sm:grid-cols-3 lg:flex lg:flex-wrap lg:justify-center lg:gap-5">
+              {["Certifications", "Licences", "Service categories", "Operating areas", "Past projects", "References"].map((item) => (
+                <li key={item} className="flex items-center gap-2 text-sm text-[#f8f4ec]/85">
+                  <svg className="h-4 w-4 shrink-0 text-[#c8a060]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                  {item}
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              href="/dashboard/profile?tab=passport"
+              className="inline-flex shrink-0 items-center justify-center rounded-md border border-[#c8a060] bg-[#c8a060] px-5 py-2.5 text-sm font-bold text-[#1a3a2a] transition hover:bg-[#d8b36f]"
+            >
+              View compliance passport
+            </Link>
           </div>
         </div>
       </div>

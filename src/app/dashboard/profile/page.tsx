@@ -27,6 +27,22 @@ import {
   type SupplierDocumentType,
 } from "@/lib/supplierDocuments"
 import { deriveSupplierVerificationState, type SupplierVerificationState } from "@/lib/supplierVerification"
+import { type VerificationAttestation } from "@/lib/verificationAttestations"
+import {
+  EMPTY_SUPPLIER_PASSPORT,
+  derivePassportComplianceSnapshot,
+  displayStatusFor,
+  fetchSupplierPassport,
+  type ComplianceSnapshotItem,
+  type PassportDisplayStatus,
+  type SupplierCertification,
+  type SupplierLicence,
+  type SupplierOperatingArea,
+  type SupplierPassport,
+  type SupplierProject,
+  type SupplierReference,
+  type SupplierServiceCategory,
+} from "@/lib/supplierPassport"
 import {
   NATIONAL_PROVINCE_VALUE,
   SA_PHONE_ERROR,
@@ -44,7 +60,7 @@ import {
 
 // --- Types ---
 
-type Tab = "profile" | "verification" | "documents" | "banking"
+type Tab = "profile" | "verification" | "documents" | "banking" | "passport"
 
 type Profile = {
   id: string
@@ -158,6 +174,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "verification", label: "Verification" },
   { key: "documents", label: "Documents" },
   { key: "banking", label: "Banking details" },
+  { key: "passport", label: "Passport" },
 ]
 
 const PUBLIC_STORAGE_BASE =
@@ -2276,6 +2293,510 @@ function BankingTab({
   )
 }
 
+// --- TAB 5: Passport ---
+
+type PassportFieldType = "text" | "textarea" | "date" | "number" | "checkbox" | "email" | "tel" | "url"
+
+type PassportFieldConfig = {
+  key: string
+  label: string
+  type: PassportFieldType
+  required?: boolean
+  placeholder?: string
+}
+
+const PASSPORT_BADGE_STYLES: Record<PassportDisplayStatus, string> = {
+  Verified: "bg-emerald-600 text-white",
+  "Pending review": "bg-amber-500 text-white",
+  "Expiring soon": "bg-amber-500 text-white",
+  Expired: "bg-rose-600 text-white",
+  Rejected: "bg-rose-600 text-white",
+  Missing: "bg-stone-300 text-stone-700",
+}
+
+function PassportBadge({ status }: { status: PassportDisplayStatus }) {
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.08em] ${PASSPORT_BADGE_STYLES[status]}`}>
+      {status}
+    </span>
+  )
+}
+
+function PassportHeader() {
+  return (
+    <div className="rounded-md border border-[#c8a060]/25 bg-[#1a3a2a] p-5 sm:p-6">
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#c8a060]/40 bg-[#c8a060]/15">
+          <svg className="h-6 w-6 text-[#c8a060]" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+            />
+          </svg>
+        </span>
+        <div>
+          <h2 className="text-base font-bold text-[#f8f4ec]">Compliance Passport</h2>
+          <p className="mt-0.5 text-xs text-[#f8f4ec]/60">
+            Certifications, licences, service categories, operating areas, past projects, and references - all in one place.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ComplianceSnapshotSection({ items }: { items: ComplianceSnapshotItem[] }) {
+  return (
+    <div className="rounded-md border border-[#c8a060]/20 bg-card p-5">
+      <h3 className="text-sm font-bold text-heading">Compliance snapshot</h3>
+      <p className="mt-1 text-xs text-secondary">
+        A live read of your verification status across every compliance area - not a separate record, just this
+        data viewed together.
+      </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {items.map((item) => (
+          <div key={item.key} className="flex min-w-0 flex-col gap-2 rounded-md border border-panel bg-panel p-3">
+            <p className="min-w-0 text-[0.68rem] font-bold uppercase leading-tight tracking-[0.06em] text-secondary">{item.label}</p>
+            <PassportBadge status={item.status} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function PassportListSection<T extends { id: string }>({
+  title,
+  description,
+  table,
+  fields,
+  profileId,
+  rows,
+  onRowsChange,
+  renderRow,
+  addLabel,
+  emptyText,
+  layout = "list",
+}: {
+  title: string
+  description?: string
+  table: string
+  fields: PassportFieldConfig[]
+  profileId: string
+  rows: T[]
+  onRowsChange: (rows: T[]) => void
+  renderRow: (row: T) => React.ReactNode
+  addLabel: string
+  emptyText: string
+  layout?: "list" | "chips"
+}) {
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState<Record<string, string | boolean>>({})
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  function fieldValue(field: PassportFieldConfig): string | boolean {
+    return form[field.key] ?? (field.type === "checkbox" ? false : "")
+  }
+
+  function handleFieldChange(field: PassportFieldConfig, value: string | boolean) {
+    setForm((prev) => ({ ...prev, [field.key]: value }))
+  }
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault()
+    if (!supabase || !profileId) return
+    const missingRequired = fields.find((f) => f.required && !String(form[f.key] ?? "").trim())
+    if (missingRequired) {
+      setError(`${missingRequired.label} is required.`)
+      return
+    }
+    setSaving(true)
+    setError("")
+    const payload: Record<string, unknown> = { profile_id: profileId }
+    fields.forEach((f) => {
+      const raw = form[f.key]
+      if (f.type === "checkbox") {
+        payload[f.key] = Boolean(raw)
+        return
+      }
+      if (f.type === "number") {
+        payload[f.key] = raw === "" || raw === undefined ? null : Number(raw)
+        return
+      }
+      const trimmed = String(raw ?? "").trim()
+      payload[f.key] = trimmed === "" ? null : trimmed
+    })
+
+    const { data, error: err } = await supabase.from(table).insert(payload).select("*").single()
+    setSaving(false)
+    if (err) {
+      setError(err.message)
+      return
+    }
+    onRowsChange([data as T, ...rows])
+    setForm({})
+    setShowForm(false)
+  }
+
+  async function handleDelete(id: string) {
+    if (!supabase) return
+    setDeletingId(id)
+    const { error: err } = await supabase.from(table).delete().eq("id", id)
+    setDeletingId(null)
+    if (err) {
+      setError(err.message)
+      return
+    }
+    onRowsChange(rows.filter((row) => row.id !== id))
+  }
+
+  return (
+    <div className="rounded-md border border-[#c8a060]/20 bg-card p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-bold text-heading">{title}</h3>
+          {description && <p className="mt-1 text-xs text-secondary">{description}</p>}
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowForm((v) => !v)}
+          className="shrink-0 rounded-md border border-[#c8a060]/50 bg-transparent px-3 py-1.5 text-xs font-semibold text-[#8a6a2f] transition hover:border-[#c8a060] hover:bg-[#c8a060]/10"
+        >
+          {showForm ? "Cancel" : addLabel}
+        </button>
+      </div>
+
+      {error && <p className="mt-3 text-xs font-semibold text-rose-600">{error}</p>}
+
+      {showForm && (
+        <form onSubmit={handleAdd} className="mt-4 grid gap-3 rounded-md border border-panel bg-panel p-4 sm:grid-cols-2 lg:grid-cols-3">
+          {fields.map((field) => (
+            <label
+              key={field.key}
+              className={`flex flex-col gap-1 text-xs font-semibold text-secondary ${field.type === "textarea" ? "sm:col-span-2 lg:col-span-3" : ""}`}
+            >
+              {field.label}
+              {field.required && <span className="text-rose-500"> *</span>}
+              {field.type === "textarea" ? (
+                <textarea
+                  value={String(fieldValue(field))}
+                  onChange={(e) => handleFieldChange(field, e.target.value)}
+                  rows={2}
+                  className="rounded-md border border-panel bg-card px-3 py-2 text-sm font-normal text-primary"
+                />
+              ) : field.type === "checkbox" ? (
+                <input
+                  type="checkbox"
+                  checked={Boolean(fieldValue(field))}
+                  onChange={(e) => handleFieldChange(field, e.target.checked)}
+                  className="mt-1 h-4 w-4"
+                />
+              ) : (
+                <input
+                  type={field.type}
+                  value={String(fieldValue(field))}
+                  onChange={(e) => handleFieldChange(field, e.target.value)}
+                  placeholder={field.placeholder}
+                  className="rounded-md border border-panel bg-card px-3 py-2 text-sm font-normal text-primary"
+                />
+              )}
+            </label>
+          ))}
+          <div className="sm:col-span-2 lg:col-span-3">
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-md border border-[#c8a060] bg-[#c8a060] px-4 py-2 text-xs font-bold text-[#1a3a2a] transition hover:bg-[#d8b36f] disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {layout === "chips" ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {rows.length === 0 && !showForm && <p className="text-xs text-muted">{emptyText}</p>}
+          {rows.map((row) => (
+            <span
+              key={row.id}
+              className="inline-flex items-center gap-2 rounded-full border border-panel bg-panel px-3 py-1.5 text-xs font-semibold text-secondary"
+            >
+              {renderRow(row)}
+              <button
+                type="button"
+                onClick={() => handleDelete(row.id)}
+                disabled={deletingId === row.id}
+                aria-label="Remove"
+                className="text-muted transition hover:text-rose-600 disabled:opacity-50"
+              >
+                &times;
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {rows.length === 0 && !showForm && <p className="text-xs text-muted sm:col-span-2">{emptyText}</p>}
+          {rows.map((row) => (
+            <div key={row.id} className="flex items-start justify-between gap-3 rounded-md border border-panel bg-panel p-3">
+              <div className="min-w-0 flex-1">{renderRow(row)}</div>
+              <button
+                type="button"
+                onClick={() => handleDelete(row.id)}
+                disabled={deletingId === row.id}
+                className="shrink-0 text-xs font-semibold text-muted transition hover:text-rose-600 disabled:opacity-50"
+              >
+                {deletingId === row.id ? "Removing..." : "Remove"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PassportTab({
+  profile,
+  userId,
+  documents,
+  attestations,
+  passport,
+  onPassportChange,
+}: {
+  profile: Profile
+  userId: string
+  documents: SupplierDocument[]
+  attestations: VerificationAttestation[]
+  passport: SupplierPassport
+  onPassportChange: React.Dispatch<React.SetStateAction<SupplierPassport>>
+}) {
+  const verification = deriveSupplierVerificationState(documents)
+  const snapshot = derivePassportComplianceSnapshot({
+    verification,
+    documents,
+    attestations,
+    csdExpiryDate: profile.csd_expiry_date,
+    bbbeeExpiryDate: profile.bbbee_expiry_date,
+    taxExpiryDate: profile.tax_expiry_date,
+  })
+
+  return (
+    <div className="space-y-5">
+      <PassportHeader />
+      <ComplianceSnapshotSection items={snapshot} />
+
+      <PassportListSection<SupplierCertification>
+        title="Certifications"
+        description="Industry or professional certifications held by your business."
+        table="supplier_certifications"
+        profileId={userId}
+        rows={passport.certifications}
+        onRowsChange={(rows) => onPassportChange((prev) => ({ ...prev, certifications: rows }))}
+        addLabel="Add certification"
+        emptyText="No certifications added yet."
+        fields={[
+          { key: "name", label: "Certification name", type: "text", required: true },
+          { key: "issuing_body", label: "Issuing body", type: "text" },
+          { key: "certificate_number", label: "Certificate number", type: "text" },
+          { key: "issue_date", label: "Issue date", type: "date" },
+          { key: "expiry_date", label: "Expiry date", type: "date" },
+          { key: "evidence_url", label: "Evidence URL", type: "url", placeholder: "https://..." },
+          { key: "notes", label: "Notes", type: "textarea" },
+        ]}
+        renderRow={(row) => {
+          const display = displayStatusFor(row.status, row.expiry_date)
+          return (
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-bold text-heading">{row.name}</p>
+                <PassportBadge status={display} />
+              </div>
+              <p className="mt-1 text-xs text-secondary">
+                {[row.issuing_body, row.certificate_number].filter(Boolean).join(" · ") || "No issuing body or number on file"}
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                {row.expiry_date ? `Expires ${row.expiry_date}` : "No expiry date on file"}
+                {row.reviewed_at ? ` · Last reviewed ${new Date(row.reviewed_at).toLocaleDateString()}` : ""}
+              </p>
+              {row.evidence_url && (
+                <a href={row.evidence_url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs font-semibold text-[#8a6a2f] hover:text-[#c8a060]">
+                  View evidence &rarr;
+                </a>
+              )}
+            </div>
+          )
+        }}
+      />
+
+      <PassportListSection<SupplierLicence>
+        title="Licences"
+        description="Operating, trade, or professional licences held by your business."
+        table="supplier_licences"
+        profileId={userId}
+        rows={passport.licences}
+        onRowsChange={(rows) => onPassportChange((prev) => ({ ...prev, licences: rows }))}
+        addLabel="Add licence"
+        emptyText="No licences added yet."
+        fields={[
+          { key: "licence_type", label: "Licence type", type: "text", required: true },
+          { key: "issuing_body", label: "Issuing body", type: "text" },
+          { key: "licence_number", label: "Licence number", type: "text" },
+          { key: "issue_date", label: "Issue date", type: "date" },
+          { key: "expiry_date", label: "Expiry date", type: "date" },
+          { key: "evidence_url", label: "Evidence URL", type: "url", placeholder: "https://..." },
+          { key: "notes", label: "Notes", type: "textarea" },
+        ]}
+        renderRow={(row) => {
+          const display = displayStatusFor(row.status, row.expiry_date)
+          return (
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-bold text-heading">{row.licence_type}</p>
+                <PassportBadge status={display} />
+              </div>
+              <p className="mt-1 text-xs text-secondary">
+                {[row.issuing_body, row.licence_number].filter(Boolean).join(" · ") || "No issuing body or number on file"}
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                {row.expiry_date ? `Expires ${row.expiry_date}` : "No expiry date on file"}
+                {row.reviewed_at ? ` · Last reviewed ${new Date(row.reviewed_at).toLocaleDateString()}` : ""}
+              </p>
+              {row.evidence_url && (
+                <a href={row.evidence_url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs font-semibold text-[#8a6a2f] hover:text-[#c8a060]">
+                  View evidence &rarr;
+                </a>
+              )}
+            </div>
+          )
+        }}
+      />
+
+      <PassportListSection<SupplierServiceCategory>
+        title="Service categories"
+        description="The categories of work your business offers."
+        table="supplier_service_categories"
+        profileId={userId}
+        rows={passport.serviceCategories}
+        onRowsChange={(rows) => onPassportChange((prev) => ({ ...prev, serviceCategories: rows }))}
+        addLabel="Add category"
+        emptyText="No service categories added yet."
+        layout="chips"
+        fields={[
+          { key: "category_name", label: "Category", type: "text", required: true },
+          { key: "category_group", label: "Group", type: "text" },
+          { key: "description", label: "Description", type: "textarea" },
+        ]}
+        renderRow={(row) => (
+          <span>
+            {row.category_name}
+            {row.category_group ? ` (${row.category_group})` : ""}
+          </span>
+        )}
+      />
+
+      <PassportListSection<SupplierOperatingArea>
+        title="Operating areas"
+        description="Where your business is able to deliver work."
+        table="supplier_operating_areas"
+        profileId={userId}
+        rows={passport.operatingAreas}
+        onRowsChange={(rows) => onPassportChange((prev) => ({ ...prev, operatingAreas: rows }))}
+        addLabel="Add area"
+        emptyText="No operating areas added yet."
+        layout="chips"
+        fields={[
+          { key: "province", label: "Province", type: "text" },
+          { key: "municipality", label: "Municipality", type: "text" },
+          { key: "city", label: "City", type: "text" },
+          { key: "region", label: "Region", type: "text" },
+          { key: "service_radius_km", label: "Service radius (km)", type: "number" },
+          { key: "is_primary", label: "Primary area", type: "checkbox" },
+        ]}
+        renderRow={(row) => (
+          <span>
+            {[row.province, row.municipality || row.city, row.region].filter(Boolean).join(" · ") || "Area"}
+            {row.is_primary ? " ★" : ""}
+            {row.service_radius_km ? ` · ${row.service_radius_km}km radius` : ""}
+          </span>
+        )}
+      />
+
+      <PassportListSection<SupplierProject>
+        title="Past projects"
+        description="Notable work your business has delivered."
+        table="supplier_projects"
+        profileId={userId}
+        rows={passport.projects}
+        onRowsChange={(rows) => onPassportChange((prev) => ({ ...prev, projects: rows }))}
+        addLabel="Add project"
+        emptyText="No past projects added yet."
+        fields={[
+          { key: "project_name", label: "Project name", type: "text", required: true },
+          { key: "client_name", label: "Client", type: "text" },
+          { key: "sector", label: "Sector", type: "text" },
+          { key: "location", label: "Location", type: "text" },
+          { key: "start_date", label: "Start date", type: "date" },
+          { key: "end_date", label: "End date", type: "date" },
+          { key: "value", label: "Value (ZAR)", type: "number" },
+          { key: "description", label: "Description", type: "textarea" },
+          { key: "outcome_summary", label: "Outcome summary", type: "textarea" },
+        ]}
+        renderRow={(row) => (
+          <div>
+            <p className="text-sm font-bold text-heading">{row.project_name}</p>
+            <p className="mt-1 text-xs text-secondary">
+              {[row.client_name, row.sector, row.location].filter(Boolean).join(" · ") || "No client, sector, or location on file"}
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              {[row.start_date, row.end_date].filter(Boolean).join(" - ")}
+              {row.value ? ` · R${Number(row.value).toLocaleString()}` : ""}
+            </p>
+            {row.description && <p className="mt-2 text-xs leading-relaxed text-secondary">{row.description}</p>}
+            {row.outcome_summary && <p className="mt-1 text-xs leading-relaxed text-muted">Outcome: {row.outcome_summary}</p>}
+          </div>
+        )}
+      />
+
+      <PassportListSection<SupplierReference>
+        title="References"
+        description="People who can vouch for your business."
+        table="supplier_references"
+        profileId={userId}
+        rows={passport.references}
+        onRowsChange={(rows) => onPassportChange((prev) => ({ ...prev, references: rows }))}
+        addLabel="Add reference"
+        emptyText="No references added yet."
+        fields={[
+          { key: "referrer_name", label: "Referee name", type: "text", required: true },
+          { key: "organisation_name", label: "Organisation", type: "text" },
+          { key: "relationship", label: "Relationship", type: "text" },
+          { key: "contact_email", label: "Contact email", type: "email" },
+          { key: "contact_phone", label: "Contact phone", type: "tel" },
+          { key: "project_summary", label: "Project summary", type: "textarea" },
+          { key: "notes", label: "Notes", type: "textarea" },
+        ]}
+        renderRow={(row) => (
+          <div>
+            <p className="text-sm font-bold text-heading">{row.referrer_name}</p>
+            <p className="mt-1 text-xs text-secondary">
+              {[row.organisation_name, row.relationship].filter(Boolean).join(" · ") || "No organisation or relationship on file"}
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              {[row.contact_email, row.contact_phone].filter(Boolean).join(" · ") || "No contact details on file"}
+            </p>
+            {row.project_summary && <p className="mt-2 text-xs leading-relaxed text-secondary">{row.project_summary}</p>}
+          </div>
+        )}
+      />
+    </div>
+  )
+}
+
 // --- Sidebar: SmartScore card ---
 
 function SmartScoreCard({ scoreResult }: { scoreResult: SmartScoreResult }) {
@@ -2397,7 +2918,7 @@ function ProfilePageInner() {
   const router = useRouter()
 
   function resolveTab(param: string | null): Tab {
-    const valid: Tab[] = ["profile", "verification", "documents", "banking"]
+    const valid: Tab[] = ["profile", "verification", "documents", "banking", "passport"]
     return valid.includes(param as Tab) ? (param as Tab) : "profile"
   }
 
@@ -2413,6 +2934,8 @@ function ProfilePageInner() {
     capability_statement_url: "",
   })
   const [supplierDocuments, setSupplierDocuments] = useState<SupplierDocument[]>([])
+  const [attestations, setAttestations] = useState<VerificationAttestation[]>([])
+  const [passport, setPassport] = useState<SupplierPassport>(EMPTY_SUPPLIER_PASSPORT)
   const [bank, setBank] = useState<BankRecord | null>(null)
   const [canonicalSmartScore, setCanonicalSmartScore] = useState<SmartScoreResult>(getSmartScoreLevel(0))
   const [userId, setUserId] = useState("")
@@ -2437,7 +2960,7 @@ function ProfilePageInner() {
       if (userErr || !user) { setError("You must be signed in."); setLoading(false); return }
       setUserId(user.id)
 
-      const [profileRes, bankRes, documentRes] = await Promise.all([
+      const [profileRes, bankRes, documentRes, attestationRes, passportRes] = await Promise.all([
         supabase.from("profiles").select(
           "id, first_name, last_name, full_name, preferred_name, avatar_url, company_logo_url, business_name, province, provinces, industry, phone, email, website, description, company_registration, tax_reference, vat_number, verification_status, smart_score, csd_number, bbbee_level, tax_status, tax_clearance_url, cidb_grade, verification_notes, csd_document_url, bbbee_document_url, tax_document_url, company_registration_url, cidb_document_url, capability_statement_url, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date, updated_at"
         ).eq("id", user.id).maybeSingle(),
@@ -2445,7 +2968,14 @@ function ProfilePageInner() {
           "id, bank_name, account_holder, account_number, branch_code, account_type, verification_notes"
         ).eq("supplier_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         fetchSupplierDocumentsForProfile(user.id),
+        supabase.from("verification_attestations").select(
+          "id, profile_id, category, decision, reason, evidence_reference, reviewed_by, reviewed_at, expires_at"
+        ).eq("profile_id", user.id),
+        fetchSupplierPassport(user.id),
       ])
+
+      setAttestations((attestationRes.data ?? []) as VerificationAttestation[])
+      setPassport(passportRes.passport)
 
       if (profileRes.error) { setError(profileRes.error.message); setLoading(false); return }
 
@@ -2687,12 +3217,24 @@ function ProfilePageInner() {
           {activeTab === "banking" && (
             <BankingTab userId={userId} bank={bank} businessName={profile?.business_name ?? null} onBankSaved={handleBankSaved} onDirtyChange={setHasUnsaved} />
           )}
+          {profile && activeTab === "passport" && (
+            <PassportTab
+              profile={profile}
+              userId={userId}
+              documents={supplierDocuments}
+              attestations={attestations}
+              passport={passport}
+              onPassportChange={setPassport}
+            />
+          )}
         </div>
 
-        <aside className="w-full space-y-4 xl:w-72 xl:shrink-0">
-          <SmartScoreCard scoreResult={canonicalSmartScore} />
-          <RFQVisibilityCard profile={profile} />
-        </aside>
+        {activeTab !== "passport" && (
+          <aside className="w-full space-y-4 xl:w-72 xl:shrink-0">
+            <SmartScoreCard scoreResult={canonicalSmartScore} />
+            <RFQVisibilityCard profile={profile} />
+          </aside>
+        )}
       </div>
 
       <section className="mt-8 rounded-md border border-rose-500/30 bg-rose-500/10 p-6">
