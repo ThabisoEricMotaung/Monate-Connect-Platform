@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   runClosingSoonCheck,
-  runComplianceExpiryCheck,
   runContractExpiryCheck,
   type AutomationRunResult,
 } from "@/lib/automationRules"
@@ -263,14 +262,6 @@ export default function AdminAutomationRulesPage() {
               className="rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
             >
               {runningCheck === "closing" ? "Running..." : "Run Closing Soon Check"}
-            </button>
-            <button
-              type="button"
-              disabled={Boolean(runningCheck)}
-              onClick={() => runManualCheck("compliance", "Compliance expiry check", runComplianceExpiryCheck)}
-              className="rounded-md border border-warning bg-warning-soft px-5 py-2.5 text-sm font-semibold text-warning transition hover:bg-warning/10 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {runningCheck === "compliance" ? "Running..." : "Run Compliance Expiry Check"}
             </button>
             <button
               type="button"

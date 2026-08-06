@@ -27,6 +27,10 @@ create table public.profiles (
   bbbee_level text,
   verification_status text,
   smart_score numeric default 0,
+  csd_expiry_date text,
+  bbbee_expiry_date text,
+  tax_expiry_date text,
+  cidb_expiry_date text,
   updated_at timestamptz default now()
 );
 
@@ -59,4 +63,24 @@ create table public.audit_logs (
   new_values jsonb,
   metadata jsonb,
   created_at timestamptz default now()
+);
+
+create table public.supplier_certifications (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  name text not null,
+  expiry_date date,
+  status text not null default 'Missing'
+    check (status in ('Verified', 'Pending review', 'Rejected', 'Expired', 'Missing')),
+  updated_at timestamptz not null default now()
+);
+
+create table public.supplier_licences (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  licence_type text not null,
+  expiry_date date,
+  status text not null default 'Missing'
+    check (status in ('Verified', 'Pending review', 'Rejected', 'Expired', 'Missing')),
+  updated_at timestamptz not null default now()
 );

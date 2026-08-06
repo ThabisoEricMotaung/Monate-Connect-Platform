@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { runContractExpiryCheck } from "@/lib/automationRules"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 
 function authorized(request: Request): boolean {
@@ -11,11 +12,12 @@ export async function GET(request: Request) {
   if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (!supabaseAdmin) return NextResponse.json({ error: "Supabase service role client is not configured." }, { status: 500 })
 
-  const { data: attestations, error: attestationsError } = await supabaseAdmin.rpc("expire_verification_attestations")
-  if (attestationsError) return NextResponse.json({ error: attestationsError.message }, { status: 500 })
-
-  const { data: passportRecords, error: passportError } = await supabaseAdmin.rpc("expire_supplier_passport_records")
-  if (passportError) return NextResponse.json({ error: passportError.message }, { status: 500 })
-
-  return NextResponse.json({ attestations, passportRecords })
+  // The manual "Run Contract Expiry Check" button on /dashboard/admin/automation
+  // calls runContractExpiryCheck() with no argument, defaulting to the
+  // RLS-bound browser client under the admin's session. This cron has no
+  // session, so it must pass the service-role client explicitly -- every
+  // Supabase call inside runContractExpiryCheck/notifyContractExpiring
+  // threads this same client through.
+  const result = await runContractExpiryCheck(supabaseAdmin)
+  return NextResponse.json(result)
 }

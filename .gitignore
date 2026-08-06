@@ -65,8 +65,15 @@ tshoarelo-workflow-update.md
 /notes/
 scripts/delete-listed-accounts.mjs
 
+# raw production pg_dump backups (pre-migration safety dumps) - never commit
+*.dump
+*.pgdump
+
 *.log
 .next-dev-backup*
 .vercel
 /.agents/
 /output/
+
+.release-h1-copy-20260804.zip
+.release-h1-copy-20260804/

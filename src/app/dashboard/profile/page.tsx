@@ -20,6 +20,7 @@ import { supabase } from "@/lib/supabase"
 import {
   activeSupplierDocuments,
   applySupplierDocuments,
+  EXPIRY_ENABLED_DOCUMENT_TYPES,
   fetchSupplierDocumentsForProfile,
   supplierDocumentLabels,
   supplierDocumentStorageFolders,
@@ -129,6 +130,10 @@ type DocumentUploadOption = {
   storageType: string
   legacyField?: DocumentField
   hint?: { text: string; linkLabel?: string; linkUrl?: string }
+}
+
+function hasExpiry(option: DocumentUploadOption): boolean {
+  return EXPIRY_ENABLED_DOCUMENT_TYPES.has(option.value)
 }
 
 // --- Constants ---
@@ -1818,12 +1823,14 @@ async function createSupplierDocumentUpload({
   label,
   storageType,
   file,
+  expiryDate,
 }: {
   userId: string
   documentType: SupplierDocumentType
   label: string
   storageType: string
   file: File
+  expiryDate?: string | null
 }): Promise<{ ok: true; path: string; document: SupplierDocument; replaced: boolean } | { ok: false; error: string }> {
   if (!supabase) return { ok: false, error: "Supabase is not configured." }
 
@@ -1855,8 +1862,9 @@ async function createSupplierDocumentUpload({
       content_type: file.type,
       file_size: file.size,
       status: "under_review",
+      expiry_date: expiryDate?.trim() || null,
     })
-    .select("id, profile_id, document_type, file_url, storage_path, original_filename, content_type, file_size, uploaded_at, status, reviewed_at, reviewed_by, review_notes")
+    .select("id, profile_id, document_type, file_url, storage_path, original_filename, content_type, file_size, uploaded_at, status, reviewed_at, reviewed_by, review_notes, expiry_date")
     .single()
 
   if (insertError || !inserted) return { ok: false, error: insertError?.message ?? `${label} record could not be saved.` }
@@ -1896,6 +1904,7 @@ function DocumentsTab({
   const [confirmedDocumentType, setConfirmedDocumentType] = useState(false)
   const [uploadError, setUploadError] = useState("")
   const [uploadSuccess, setUploadSuccess] = useState("")
+  const [expiryDate, setExpiryDate] = useState("")
 
   const activeDocuments = activeSupplierDocuments(documents)
   const selectedOption =
@@ -1935,6 +1944,7 @@ function DocumentsTab({
       label: selectedOption.label,
       storageType: selectedOption.storageType,
       file: selectedFile,
+      expiryDate: hasExpiry(selectedOption) ? expiryDate : null,
     })
     if (!result.ok) {
       setUploadError(result.error)
@@ -1945,6 +1955,7 @@ function DocumentsTab({
     setUploading(false)
     setSelectedFile(null)
     setConfirmedDocumentType(false)
+    setExpiryDate("")
     setUploadSuccess(hadExistingDocument || result.replaced ? `Replaced previous ${selectedOption.label}` : `${selectedOption.label} uploaded`)
   }
 
@@ -2013,6 +2024,7 @@ function DocumentsTab({
               setConfirmedDocumentType(false)
               setUploadSuccess("")
               setUploadError("")
+              setExpiryDate("")
             }}
             className={inputCls}
           >
@@ -2021,6 +2033,21 @@ function DocumentsTab({
             ))}
           </select>
           {selectedOption.legacyField && !docUrls[selectedOption.legacyField] && <SmartScoreNudge />}
+          {hasExpiry(selectedOption) && (
+            <div className="mt-3">
+              <label htmlFor="doc-expiry" className={labelCls}>Expiry date (optional)</label>
+              <input
+                id="doc-expiry"
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                className={inputCls}
+              />
+              <p className="mt-1 text-xs text-muted">
+                Helps us remind you before this {selectedOption.label} lapses. You can leave this blank and add it later.
+              </p>
+            </div>
+          )}
           {selectedOption.hint && (
             <details
               key={selectedOption.value}

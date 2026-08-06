@@ -1,6 +1,8 @@
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { createNotification, createNotificationsForRoles } from "./notifications"
 import { createRFQWhatsAppMessage, createWhatsAppLink, type WhatsAppAlertType } from "./whatsapp"
 import { supabase } from "./supabase"
+import { hasComplianceExpiryNotificationBeenSent, recordComplianceExpiryNotification } from "./complianceExpiryNotifications"
 
 type RFQAutomation = {
   id?: number | string | null
@@ -23,10 +25,6 @@ type SupplierAutomation = {
   industry?: string | null
   verification_status?: string | null
   role?: string | null
-  tax_expiry_date?: string | null
-  bbbee_expiry_date?: string | null
-  csd_expiry_date?: string | null
-  cidb_expiry_date?: string | null
 }
 
 type QuoteAutomation = {
@@ -94,7 +92,7 @@ export type AutomationRunResult = {
 }
 
 const SUPPLIER_SELECT =
-  "id, business_name, email, phone, province, industry, verification_status, role, tax_expiry_date, bbbee_expiry_date, csd_expiry_date, cidb_expiry_date"
+  "id, business_name, email, phone, province, industry, verification_status, role"
 
 function warnAutomationFailure(action: string, error: unknown) {
   console.warn(`Automation rule failed: ${action}`, error)
@@ -135,10 +133,13 @@ function getRFQTitle(rfq: RFQAutomation | null | undefined): string {
   return rfq?.title || `RFQ-${rfq?.id ?? ""}`.trim() || "a procurement opportunity"
 }
 
-async function getSupplierById(supplierId: string | null | undefined): Promise<SupplierAutomation | null> {
-  if (!supabase || !supplierId) return null
+async function getSupplierById(
+  supplierId: string | null | undefined,
+  client: SupabaseClient | null = supabase,
+): Promise<SupplierAutomation | null> {
+  if (!client || !supplierId) return null
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from("profiles")
     .select(SUPPLIER_SELECT)
     .eq("id", supplierId)
@@ -180,18 +181,20 @@ async function createWhatsAppDraft({
   message,
   rfqId = null,
   metadata = {},
+  client = supabase,
 }: {
   supplier: SupplierAutomation | null | undefined
   alertType: WhatsAppAlertType | string
   message: string
   rfqId?: number | string | null
   metadata?: Record<string, unknown>
+  client?: SupabaseClient | null
 }) {
-  if (!supabase || !supplier?.id) return
+  if (!client || !supplier?.id) return
 
   const waLink = createWhatsAppLink({ phone: supplier.phone, message })
 
-  const { error } = await supabase.from("whatsapp_alerts").insert([
+  const { error } = await client.from("whatsapp_alerts").insert([
     {
       supplier_id: supplier.id,
       supplier_phone: supplier.phone ?? null,
@@ -218,6 +221,7 @@ async function createSupplierNotification({
   message,
   link,
   metadata,
+  client = supabase,
 }: {
   supplierId: string | null | undefined
   type: Parameters<typeof createNotification>[0]["type"]
@@ -225,20 +229,24 @@ async function createSupplierNotification({
   message: string
   link: string | null
   metadata: Record<string, unknown>
+  client?: SupabaseClient | null
 }) {
   if (!supplierId) return
 
-  await createNotification({
-    userId: supplierId,
-    type,
-    title,
-    message,
-    link,
-    metadata: {
-      ...metadata,
-      automation_generated: true,
+  await createNotification(
+    {
+      userId: supplierId,
+      type,
+      title,
+      message,
+      link,
+      metadata: {
+        ...metadata,
+        automation_generated: true,
+      },
     },
-  })
+    client,
+  )
 }
 
 export async function notifyNewRFQ(rfq: RFQAutomation): Promise<void> {
@@ -405,25 +413,43 @@ export async function notifyPOIssued(po: POAutomation): Promise<void> {
   }
 }
 
-export async function notifyContractExpiring(contract: ContractAutomation): Promise<void> {
+export async function notifyContractExpiring(
+  contract: ContractAutomation,
+  client: SupabaseClient | null = supabase,
+): Promise<void> {
+  if (!contract.id || !contract.end_date) return
+
+  const recordId = String(contract.id)
+  const alreadyNotified = await hasComplianceExpiryNotificationBeenSent(client, {
+    recordType: "contract",
+    recordId,
+    windowDays: 30,
+    notifiedForDate: contract.end_date,
+  })
+  if (alreadyNotified) return
+
   try {
-    const supplier = await getSupplierById(contract.supplier_id)
+    const supplier = await getSupplierById(contract.supplier_id, client)
     const contractLabel = contract.contract_number || `Contract-${contract.id ?? ""}`.trim() || "A contract"
     const message = `${contractLabel} expires on ${formatDate(contract.end_date)}. Review renewal, close-out, or extension actions.`
 
-    await createNotificationsForRoles(["admin", "buyer"], {
-      type: "Contract Expiring",
-      title: "Contract expiring soon",
-      message,
-      link: contract.id ? `/dashboard/contracts/${contract.id}` : "/dashboard/contracts",
-      metadata: {
-        contract_id: contract.id ?? null,
-        contract_number: contract.contract_number ?? null,
-        supplier_id: contract.supplier_id ?? null,
-        end_date: contract.end_date ?? null,
-        automation_generated: true,
+    await createNotificationsForRoles(
+      ["admin", "buyer"],
+      {
+        type: "Contract Expiring",
+        title: "Contract expiring soon",
+        message,
+        link: contract.id ? `/dashboard/contracts/${contract.id}` : "/dashboard/contracts",
+        metadata: {
+          contract_id: contract.id ?? null,
+          contract_number: contract.contract_number ?? null,
+          supplier_id: contract.supplier_id ?? null,
+          end_date: contract.end_date ?? null,
+          automation_generated: true,
+        },
       },
-    })
+      client,
+    )
 
     await createSupplierNotification({
       supplierId: contract.supplier_id,
@@ -435,6 +461,7 @@ export async function notifyContractExpiring(contract: ContractAutomation): Prom
         contract_id: contract.id ?? null,
         contract_number: contract.contract_number ?? null,
       },
+      client,
     })
 
     await createWhatsAppDraft({
@@ -447,7 +474,18 @@ export async function notifyContractExpiring(contract: ContractAutomation): Prom
         contract_number: contract.contract_number ?? null,
         end_date: contract.end_date ?? null,
       },
+      client,
     })
+
+    if (contract.supplier_id) {
+      await recordComplianceExpiryNotification(client, {
+        profileId: contract.supplier_id,
+        recordType: "contract",
+        recordId,
+        windowDays: 30,
+        notifiedForDate: contract.end_date,
+      })
+    }
   } catch (error) {
     warnAutomationFailure("notifyContractExpiring", error)
   }
@@ -517,44 +555,6 @@ export async function notifyPaymentPaid(payment: PaymentAutomation): Promise<voi
   }
 }
 
-export async function notifyComplianceExpiring(profile: SupplierAutomation): Promise<void> {
-  try {
-    const expiringDocuments = [
-      ["Tax clearance", profile.tax_expiry_date],
-      ["B-BBEE certificate", profile.bbbee_expiry_date],
-      ["CSD registration", profile.csd_expiry_date],
-      ["CIDB certificate", profile.cidb_expiry_date],
-    ]
-      .filter(([, date]) => isWithinDays(date, 30))
-      .map(([label, date]) => `${label}: ${formatDate(date)}`)
-
-    if (expiringDocuments.length === 0) return
-
-    const message = `Hi ${getSupplierName(profile)}, AiForm Procure compliance reminder: ${expiringDocuments.join("; ")}. Please update your supplier profile documents.`
-
-    await createSupplierNotification({
-      supplierId: profile.id,
-      type: "Compliance Expiry Warning",
-      title: "Compliance documents expiring",
-      message: expiringDocuments.join("; "),
-      link: "/dashboard/verification",
-      metadata: {
-        supplier_id: profile.id ?? null,
-        expiring_documents: expiringDocuments,
-      },
-    })
-
-    await createWhatsAppDraft({
-      supplier: profile,
-      alertType: "Compliance Reminder",
-      message,
-      metadata: { expiring_documents: expiringDocuments },
-    })
-  } catch (error) {
-    warnAutomationFailure("notifyComplianceExpiring", error)
-  }
-}
-
 export async function runClosingSoonCheck(): Promise<AutomationRunResult> {
   if (!supabase) return { processed: 0, errors: ["Supabase is not configured."] }
 
@@ -581,38 +581,10 @@ export async function runClosingSoonCheck(): Promise<AutomationRunResult> {
   return { processed: rfqs.length, errors }
 }
 
-export async function runComplianceExpiryCheck(): Promise<AutomationRunResult> {
-  if (!supabase) return { processed: 0, errors: ["Supabase is not configured."] }
+export async function runContractExpiryCheck(client: SupabaseClient | null = supabase): Promise<AutomationRunResult> {
+  if (!client) return { processed: 0, errors: ["Supabase is not configured."] }
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select(SUPPLIER_SELECT)
-    .eq("role", "supplier")
-
-  if (error) return { processed: 0, errors: [error.message] }
-
-  const profiles = ((data ?? []) as SupplierAutomation[]).filter((profile) =>
-    [profile.tax_expiry_date, profile.bbbee_expiry_date, profile.csd_expiry_date, profile.cidb_expiry_date].some((date) =>
-      isWithinDays(date, 30)
-    )
-  )
-
-  const errors: string[] = []
-  for (const profile of profiles) {
-    try {
-      await notifyComplianceExpiring(profile)
-    } catch (error) {
-      errors.push(error instanceof Error ? error.message : "Compliance expiry automation failed.")
-    }
-  }
-
-  return { processed: profiles.length, errors }
-}
-
-export async function runContractExpiryCheck(): Promise<AutomationRunResult> {
-  if (!supabase) return { processed: 0, errors: ["Supabase is not configured."] }
-
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from("contracts")
     .select("id, contract_number, supplier_id, supplier_name, rfq_id, purchase_order_id, contract_value, end_date, renewal_date, status")
     .in("status", ["Active", "Expiring Soon", "Renewed"])
@@ -626,7 +598,7 @@ export async function runContractExpiryCheck(): Promise<AutomationRunResult> {
   const errors: string[] = []
   for (const contract of contracts) {
     try {
-      await notifyContractExpiring(contract)
+      await notifyContractExpiring(contract, client)
     } catch (error) {
       errors.push(error instanceof Error ? error.message : "Contract expiry automation failed.")
     }

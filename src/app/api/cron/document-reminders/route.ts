@@ -2,8 +2,15 @@ import { NextResponse } from "next/server"
 import { Resend } from "resend"
 import { emailSignatureHtml, emailSignatureText, reviewCopyEmail, SUPPLIER_EMAIL_REVIEW_RECIPIENT } from "@/lib/emailSignature"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
-import { missingRequiredSupplierDocuments } from "@/lib/supplierDocuments"
+import { EXPIRY_ENABLED_DOCUMENT_TYPES, missingRequiredSupplierDocuments, supplierDocumentLabels, type SupplierDocumentType } from "@/lib/supplierDocuments"
 import { REGISTRATION_EXEMPT_ACCOUNT_EMAILS } from "@/lib/registration"
+import {
+  hasComplianceExpiryNotificationBeenSent,
+  matchingExpiryWindow,
+  recordComplianceExpiryNotification,
+  type ComplianceExpiryRecordType,
+  type ComplianceExpiryWindowDays,
+} from "@/lib/complianceExpiryNotifications"
 
 type SupplierProfile = {
   id: string
@@ -35,6 +42,42 @@ type ReminderLogRow = {
   reminder_count: number | null
 }
 
+type ExpiryProfile = {
+  id: string
+  email: string | null
+  first_name: string | null
+  full_name: string | null
+  preferred_name: string | null
+  business_name: string | null
+}
+
+type ExpiringDocumentRow = {
+  id: string
+  profile_id: string
+  document_type: string
+  status: string
+  expiry_date: string | null
+  uploaded_at: string
+}
+
+type ExpiringPassportRow = {
+  id: string
+  profile_id: string
+  status: string
+  expiry_date: string | null
+  name: string | null
+  licence_type: string | null
+}
+
+type ExpiryCandidate = {
+  profileId: string
+  recordType: ComplianceExpiryRecordType
+  recordId: string
+  windowDays: ComplianceExpiryWindowDays
+  notifiedForDate: string
+  label: string
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000
 const FIRST_REMINDER_AFTER_MS = DAY_MS
 const FOLLOW_UP_AFTER_MS = 7 * DAY_MS
@@ -50,7 +93,12 @@ function cronAuthorized(request: Request): boolean {
   return authHeader === `Bearer ${secret}` || cronHeader === secret
 }
 
-function profileName(profile: SupplierProfile): string {
+function profileName(profile: {
+  preferred_name: string | null
+  first_name: string | null
+  full_name: string | null
+  business_name: string | null
+}): string {
   return (
     profile.preferred_name?.trim() ||
     profile.first_name?.trim() ||
@@ -97,6 +145,109 @@ function missingDocuments(profile: SupplierProfile, documents: SupplierDocumentR
     profile as unknown as Record<string, unknown>,
     documents as unknown as Parameters<typeof missingRequiredSupplierDocuments>[1],
   ).map((requirement) => requirement.label)
+}
+
+function formatExpiryDate(dateStr: string): string {
+  const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return dateStr
+  return date.toLocaleDateString("en-ZA", { year: "numeric", month: "short", day: "numeric" })
+}
+
+// Defensive: supersede_supplier_documents should leave only one non-superseded
+// row per (profile_id, document_type), but pick the most recently uploaded
+// one explicitly rather than assuming that invariant always holds.
+function latestExpiringDocuments(documents: ExpiringDocumentRow[]): ExpiringDocumentRow[] {
+  const latest = new Map<string, ExpiringDocumentRow>()
+  for (const document of documents) {
+    const key = `${document.profile_id}:${document.document_type}`
+    const current = latest.get(key)
+    if (!current || new Date(document.uploaded_at).getTime() > new Date(current.uploaded_at).getTime()) {
+      latest.set(key, document)
+    }
+  }
+  return [...latest.values()]
+}
+
+function buildDocumentExpiryCandidates(documents: ExpiringDocumentRow[], now: Date): ExpiryCandidate[] {
+  const candidates: ExpiryCandidate[] = []
+  for (const document of latestExpiringDocuments(documents)) {
+    const windowDays = matchingExpiryWindow(document.expiry_date, now)
+    if (!windowDays || !document.expiry_date) continue
+    candidates.push({
+      profileId: document.profile_id,
+      recordType: "supplier_document",
+      recordId: document.id,
+      windowDays,
+      notifiedForDate: document.expiry_date,
+      label: supplierDocumentLabels[document.document_type as SupplierDocumentType] ?? document.document_type,
+    })
+  }
+  return candidates
+}
+
+function buildPassportExpiryCandidates(
+  rows: ExpiringPassportRow[],
+  recordType: Extract<ComplianceExpiryRecordType, "supplier_certification" | "supplier_licence">,
+  now: Date,
+): ExpiryCandidate[] {
+  const candidates: ExpiryCandidate[] = []
+  for (const row of rows) {
+    const windowDays = matchingExpiryWindow(row.expiry_date, now)
+    if (!windowDays || !row.expiry_date) continue
+    candidates.push({
+      profileId: row.profile_id,
+      recordType,
+      recordId: row.id,
+      windowDays,
+      notifiedForDate: row.expiry_date,
+      label: row.name || row.licence_type || (recordType === "supplier_certification" ? "Certification" : "Licence"),
+    })
+  }
+  return candidates
+}
+
+function expiryEmailHtml(profile: ExpiryProfile, items: ExpiryCandidate[], profileLink: string): string {
+  const sorted = [...items].sort((a, b) => a.windowDays - b.windowDays)
+  const list = sorted
+    .map((item) => {
+      const dueLabel = item.windowDays === 1 ? "tomorrow" : `in ${item.windowDays} days`
+      return `<li><strong>${escapeHtml(item.label)}</strong> expires ${escapeHtml(formatExpiryDate(item.notifiedForDate))} (${dueLabel})</li>`
+    })
+    .join("")
+
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#27332d;">
+      <h2 style="font-size:21px;line-height:1.3;margin:0 0 14px;color:#1a3a2a;">Compliance documents expiring soon</h2>
+      <p style="font-size:14px;line-height:1.7;margin:0 0 16px;">Hi ${escapeHtml(profileName(profile))},</p>
+      <p style="font-size:14px;line-height:1.7;margin:0 0 16px;">
+        The following item${items.length === 1 ? " is" : "s are"} approaching its expiry date. Renew it and upload updated evidence so your supplier profile stays in good standing:
+      </p>
+      <ul style="font-size:14px;line-height:1.8;margin:0 0 20px 20px;padding:0;">${list}</ul>
+      <p style="margin:0 0 24px;">
+        <a href="${profileLink}" style="display:inline-block;background:#1a3a2a;color:#ffffff;text-decoration:none;border-radius:8px;padding:12px 18px;font-size:14px;font-weight:700;">Update your documents</a>
+      </p>
+      ${emailSignatureHtml()}
+    </div>
+  `
+}
+
+function expiryEmailText(profile: ExpiryProfile, items: ExpiryCandidate[], profileLink: string): string {
+  const sorted = [...items].sort((a, b) => a.windowDays - b.windowDays)
+  const lines = sorted.map((item) => {
+    const dueLabel = item.windowDays === 1 ? "tomorrow" : `in ${item.windowDays} days`
+    return `- ${item.label} expires ${formatExpiryDate(item.notifiedForDate)} (${dueLabel})`
+  })
+
+  return `Hi ${profileName(profile)},
+
+The following item${items.length === 1 ? " is" : "s are"} approaching its expiry date:
+
+${lines.join("\n")}
+
+Update your documents here:
+${profileLink}
+
+${emailSignatureText()}`
 }
 
 function shouldSendReminder(log: ReminderLogRow | undefined, now: Date): boolean {
@@ -243,11 +394,17 @@ export async function GET(request: Request) {
   const profiles = (profilesData ?? []) as SupplierProfile[]
   const profileIds = profiles.map((profile) => profile.id)
 
-  if (profileIds.length === 0) {
-    console.log("Document reminders run", { checked: 0, incomplete: 0, sent: 0 })
-    return NextResponse.json({ ok: true, checked: 0, incomplete: 0, sent: 0, errors: 0 })
-  }
+  const resend = new Resend(resendApiKey)
+  const profileLink = `${siteUrl()}/dashboard/profile?tab=documents`
 
+  let incomplete = 0
+  let sent = 0
+  let skippedNotDue = 0
+  let completed = 0
+  let errors = 0
+  let reviewCopy: { subject: string; html: string; text: string } | null = null
+
+  if (profileIds.length > 0) {
   const [documentsResult, logsResult] = await Promise.all([
     supabaseAdmin
       .from("supplier_documents")
@@ -271,15 +428,6 @@ export async function GET(request: Request) {
 
   const documentsMap = documentsByProfile((documentsResult.data ?? []) as SupplierDocumentRow[])
   const logsMap = new Map((logsResult.data ?? []).map((log) => [log.profile_id, log as ReminderLogRow]))
-  const resend = new Resend(resendApiKey)
-  const profileLink = `${siteUrl()}/dashboard/profile?tab=documents`
-
-  let incomplete = 0
-  let sent = 0
-  let skippedNotDue = 0
-  let completed = 0
-  let errors = 0
-  let reviewCopy: { subject: string; html: string; text: string } | null = null
 
   for (const profile of profiles) {
     const missing = missingDocuments(profile, documentsMap.get(profile.id) ?? [])
@@ -356,6 +504,118 @@ export async function GET(request: Request) {
       })
     }
   }
+  }
+
+  // --- Compliance-expiry reminders: csd/bbbee/tax documents and Passport
+  // certifications/licences approaching their 30/14/1-day windows. This is
+  // independent of the missing-documents nudge above -- it applies to every
+  // supplier with expiry-tracked evidence, not just recently-onboarded ones,
+  // so it runs even when the block above found zero profiles.
+  let expiryChecked = 0
+  let expirySent = 0
+  let expiryErrors = 0
+
+  const [expiringDocumentsResult, expiringCertsResult, expiringLicencesResult] = await Promise.all([
+    supabaseAdmin
+      .from("supplier_documents")
+      .select("id, profile_id, document_type, status, expiry_date, uploaded_at")
+      .in("document_type", [...EXPIRY_ENABLED_DOCUMENT_TYPES])
+      .in("status", ["approved", "verified"])
+      .not("expiry_date", "is", null),
+    supabaseAdmin
+      .from("supplier_certifications")
+      .select("id, profile_id, status, expiry_date, name")
+      .eq("status", "Verified")
+      .not("expiry_date", "is", null),
+    supabaseAdmin
+      .from("supplier_licences")
+      .select("id, profile_id, status, expiry_date, licence_type")
+      .eq("status", "Verified")
+      .not("expiry_date", "is", null),
+  ])
+
+  if (expiringDocumentsResult.error || expiringCertsResult.error || expiringLicencesResult.error) {
+    const message =
+      expiringDocumentsResult.error?.message ?? expiringCertsResult.error?.message ?? expiringLicencesResult.error?.message
+    console.error("Compliance expiry candidate query failed:", message)
+  } else {
+    const candidates = [
+      ...buildDocumentExpiryCandidates(expiringDocumentsResult.data as ExpiringDocumentRow[], now),
+      ...buildPassportExpiryCandidates(
+        (expiringCertsResult.data ?? []).map((row) => ({ ...row, licence_type: null })) as ExpiringPassportRow[],
+        "supplier_certification",
+        now,
+      ),
+      ...buildPassportExpiryCandidates(
+        (expiringLicencesResult.data ?? []).map((row) => ({ ...row, name: null })) as ExpiringPassportRow[],
+        "supplier_licence",
+        now,
+      ),
+    ]
+
+    const dueCandidates: ExpiryCandidate[] = []
+    for (const candidate of candidates) {
+      const alreadySent = await hasComplianceExpiryNotificationBeenSent(supabaseAdmin, candidate)
+      if (!alreadySent) dueCandidates.push(candidate)
+    }
+
+    const byProfile = new Map<string, ExpiryCandidate[]>()
+    for (const candidate of dueCandidates) {
+      byProfile.set(candidate.profileId, [...(byProfile.get(candidate.profileId) ?? []), candidate])
+    }
+
+    expiryChecked = byProfile.size
+
+    if (byProfile.size > 0) {
+      const { data: expiryProfilesData, error: expiryProfilesError } = await supabaseAdmin
+        .from("profiles")
+        .select("id, email, first_name, full_name, preferred_name, business_name")
+        .in("id", [...byProfile.keys()])
+        .not("email", "is", null)
+
+      if (expiryProfilesError) {
+        console.error("Compliance expiry profile lookup failed:", expiryProfilesError)
+      } else {
+        for (const expiryProfile of (expiryProfilesData ?? []) as ExpiryProfile[]) {
+          const items = byProfile.get(expiryProfile.id) ?? []
+          if (items.length === 0 || !expiryProfile.email) continue
+
+          try {
+            const subject = "Compliance documents expiring soon"
+            const html = expiryEmailHtml(expiryProfile, items, profileLink)
+            const text = expiryEmailText(expiryProfile, items, profileLink)
+
+            await resend.emails.send({
+              from: "AiForm Procure <noreply@aiformprocure.co.za>",
+              to: expiryProfile.email,
+              subject,
+              html,
+              text,
+            })
+
+            expirySent += 1
+            if (!reviewCopy) {
+              reviewCopy = reviewCopyEmail({
+                subject,
+                html,
+                text,
+                sourceLabel: expiryProfile.business_name ?? profileName(expiryProfile),
+                runLabel: "Compliance Expiry Reminder",
+              })
+            }
+
+            for (const item of items) {
+              await recordComplianceExpiryNotification(supabaseAdmin, { ...item, profileId: expiryProfile.id })
+            }
+          } catch (error) {
+            expiryErrors += 1
+            const message = error instanceof Error ? error.message : "Unknown email send failure"
+            console.error("Compliance expiry reminder email failed:", { profileId: expiryProfile.id, error: message })
+          }
+        }
+      }
+    }
+  }
 
   const summary = {
     checked: profiles.length,
@@ -364,6 +624,9 @@ export async function GET(request: Request) {
     skippedNotDue,
     completed,
     errors,
+    expiryChecked,
+    expirySent,
+    expiryErrors,
   }
   console.log("Document reminders run", summary)
 
@@ -381,5 +644,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: errors === 0, ...summary })
+  return NextResponse.json({ ok: errors === 0 && expiryErrors === 0, ...summary })
 }

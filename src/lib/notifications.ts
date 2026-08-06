@@ -1,4 +1,5 @@
-﻿import { supabase } from "@/lib/supabase"
+﻿import type { SupabaseClient } from "@supabase/supabase-js"
+import { supabase } from "@/lib/supabase"
 
 export const notificationReadEvent = "monate:notification-read"
 export type NotificationReadEventDetail = { id: number; read: boolean }
@@ -49,16 +50,13 @@ export type CreateNotificationInput = {
   metadata?: Record<string, unknown>
 }
 
-export async function createNotification({
-  userId,
-  type,
-  title,
-  message,
-  link = null,
-}: CreateNotificationInput): Promise<Notification | null> {
-  if (!supabase || !userId) return null
+export async function createNotification(
+  { userId, type, title, message, link = null }: CreateNotificationInput,
+  client: SupabaseClient | null = supabase,
+): Promise<Notification | null> {
+  if (!client || !userId) return null
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from("notifications")
     .insert([{ user_id: userId, type, title, message, link, is_read: false }])
     .select("id, user_id, type, title, message, link, is_read, created_at")
@@ -133,11 +131,12 @@ export async function markNotificationRead(notificationId: number): Promise<void
 
 export async function createNotificationsForRoles(
   roles: string[],
-  notification: Omit<CreateNotificationInput, "userId">
+  notification: Omit<CreateNotificationInput, "userId">,
+  client: SupabaseClient | null = supabase,
 ): Promise<void> {
-  if (!supabase || roles.length === 0) return
+  if (!client || roles.length === 0) return
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from("profiles")
     .select("id, role")
     .in("role", roles)
@@ -149,7 +148,7 @@ export async function createNotificationsForRoles(
 
   await Promise.all(
     (data ?? []).map((profile) =>
-      createNotification({ ...notification, userId: profile.id as string })
+      createNotification({ ...notification, userId: profile.id as string }, client)
     )
   )
 }

@@ -7,6 +7,7 @@ export type SupplierDocumentReviewRequest = {
   expectedStatus: CanonicalSupplierDocumentStatus
   expectedReviewedAt: string | null
   reason?: string | null
+  expiryDate?: string | null
 }
 
 export type SupplierReviewRefresh = {
@@ -46,6 +47,7 @@ export function validateSupplierDocumentReviewRequest(
   const decision = String(body.decision ?? "") as SupplierDocumentReviewDecision
   const expectedStatus = String(body.expectedStatus ?? "") as CanonicalSupplierDocumentStatus
   const expectedReviewedAt = body.expectedReviewedAt
+  const expiryDate = body.expiryDate
 
   if (!(["approved", "rejected", "under_review"] as string[]).includes(decision)) {
     return { ok: false, error: "Invalid review decision." }
@@ -59,6 +61,13 @@ export function validateSupplierDocumentReviewRequest(
   if (!isValidDocumentReviewTransition(expectedStatus, decision)) {
     return { ok: false, error: `Invalid document transition: ${expectedStatus} to ${decision}.` }
   }
+  if (
+    expiryDate !== undefined &&
+    expiryDate !== null &&
+    (typeof expiryDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(expiryDate))
+  ) {
+    return { ok: false, error: "Invalid expiry date." }
+  }
 
   return {
     ok: true,
@@ -67,6 +76,7 @@ export function validateSupplierDocumentReviewRequest(
       expectedStatus,
       expectedReviewedAt,
       reason: typeof body.reason === "string" ? body.reason : null,
+      expiryDate: typeof expiryDate === "string" ? expiryDate : null,
     },
   }
 }

@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase"
 import {
   activeSupplierDocuments,
   applySupplierDocumentsToProfiles,
+  EXPIRY_ENABLED_DOCUMENT_TYPES,
   fetchSupplierDocumentsByProfileIds,
   latestSupplierDocuments,
   supplierDocumentLabels,
@@ -208,6 +209,31 @@ function isExpired(dateValue: string | null): boolean {
   today.setHours(0, 0, 0, 0)
   expiry.setHours(0, 0, 0, 0)
   return expiry < today
+}
+
+const EXPIRING_SOON_WINDOW_DAYS = 30
+
+function isExpiringSoon(dateValue: string | null): boolean {
+  if (!dateValue || isExpired(dateValue)) return false
+  const expiry = new Date(dateValue)
+  if (Number.isNaN(expiry.getTime())) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  expiry.setHours(0, 0, 0, 0)
+  const daysUntil = Math.round((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  return daysUntil <= EXPIRING_SOON_WINDOW_DAYS
+}
+
+// Computed live from expiry_date, same as categoryState() in
+// supplierVerification.ts -- no cron needs to run first for this to show up.
+export function documentExpiryBadge(expiryDate: string | null): { label: string; className: string } | null {
+  if (isExpired(expiryDate)) {
+    return { label: "Expired", className: "border-rose-500/30 bg-rose-500/10 text-rose-700" }
+  }
+  if (isExpiringSoon(expiryDate)) {
+    return { label: "Expiring soon", className: "border-warning bg-warning-soft text-warning" }
+  }
+  return null
 }
 
 function formatDate(dateValue: string | null): string {
@@ -462,6 +488,7 @@ export default function AdminVerificationQueuePage() {
   const [banksBySupplier, setBanksBySupplier] = useState<Record<string, BankDetails>>({})
   const [attestationsBySupplier, setAttestationsBySupplier] = useState<Record<string, VerificationAttestation[]>>({})
   const [notesBySupplier, setNotesBySupplier] = useState<Record<string, string>>({})
+  const [expiryDateByDocument, setExpiryDateByDocument] = useState<Record<string, string>>({})
   const [supplierNotesBySupplier, setSupplierNotesBySupplier] = useState<Record<string, string>>({})
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<FilterMode>("all")
@@ -712,6 +739,7 @@ export default function AdminVerificationQueuePage() {
           expectedStatus: normalizeSupplierDocumentStatus(document.status),
           expectedReviewedAt: document.reviewed_at,
           reason: notesBySupplier[profile.id]?.trim() || document.review_notes || null,
+          expiryDate: (expiryDateByDocument[document.id] ?? document.expiry_date ?? "").trim() || null,
         }),
       })
       const result = (await response.json()) as SupplierDocumentReviewResult & { error?: string }
@@ -877,6 +905,32 @@ export default function AdminVerificationQueuePage() {
                       </p>
                       {document.review_notes ? (
                         <p className="mt-2 text-xs text-secondary">Review notes: {document.review_notes}</p>
+                      ) : null}
+                      {EXPIRY_ENABLED_DOCUMENT_TYPES.has(document.document_type) ? (
+                        <div className="mt-2">
+                          <div className="mb-1 flex items-center gap-2">
+                            <label htmlFor={`expiry-${document.id}`} className="block text-[0.6rem] font-bold uppercase tracking-[0.14em] text-muted">
+                              Expiry date
+                            </label>
+                            {(document.status === "approved" || document.status === "verified") && (() => {
+                              const badge = documentExpiryBadge(document.expiry_date)
+                              return badge ? (
+                                <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.1em] ${badge.className}`}>
+                                  {badge.label}
+                                </span>
+                              ) : null
+                            })()}
+                          </div>
+                          <input
+                            id={`expiry-${document.id}`}
+                            type="date"
+                            value={expiryDateByDocument[document.id] ?? document.expiry_date ?? ""}
+                            onChange={(event) =>
+                              setExpiryDateByDocument((current) => ({ ...current, [document.id]: event.target.value }))
+                            }
+                            className="rounded-md border border-panel bg-panel px-2 py-1 text-xs text-heading outline-none focus:border-accent"
+                          />
+                        </div>
                       ) : null}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">

@@ -34,6 +34,7 @@ export async function POST(request: Request, { params }: Props) {
     p_expected_reviewed_at: parsed.value.expectedReviewedAt,
     p_decision: parsed.value.decision,
     p_reason: parsed.value.reason ?? null,
+    p_expiry_date: parsed.value.expiryDate ?? null,
   })
 
   if (error) {

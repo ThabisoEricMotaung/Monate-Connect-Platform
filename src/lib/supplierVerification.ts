@@ -30,13 +30,30 @@ const CATEGORY_DOCUMENT_TYPES: Record<SupplierVerificationCategory, SupplierDocu
   banking: "bank_letter",
 }
 
+// Categories whose evidence has a meaningful expiry. Banking has none.
+const EXPIRY_CHECKED_CATEGORIES = new Set<SupplierVerificationCategory>(["csd", "bbbee", "tax"])
+
+function isDocumentExpired(dateValue: string | null | undefined, now = new Date()): boolean {
+  if (!dateValue) return false
+  const expiry = new Date(dateValue)
+  if (Number.isNaN(expiry.getTime())) return false
+  const today = new Date(now)
+  today.setHours(0, 0, 0, 0)
+  expiry.setHours(0, 0, 0, 0)
+  return expiry.getTime() < today.getTime()
+}
+
 function categoryState(
   category: SupplierVerificationCategory,
   documents: SupplierDocument[] | null | undefined,
 ): SupplierVerificationCategoryState {
   const documentType = CATEGORY_DOCUMENT_TYPES[category]
   const document = latestSupplierDocuments(documents)[documentType]
-  const status = document ? normalizeSupplierDocumentStatus(document.status) : "missing"
+  let status: SupplierVerificationStatus = document ? normalizeSupplierDocumentStatus(document.status) : "missing"
+
+  if (status === "approved" && EXPIRY_CHECKED_CATEGORIES.has(category) && isDocumentExpired(document?.expiry_date)) {
+    status = "expired"
+  }
 
   return {
     category,

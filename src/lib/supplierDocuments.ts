@@ -43,6 +43,7 @@ export type SupplierDocument = {
   reviewed_at: string | null
   reviewed_by: string | null
   review_notes: string | null
+  expiry_date: string | null
 }
 
 export type SupplierDocumentMap = Partial<Record<SupplierDocumentType, SupplierDocument>>
@@ -57,6 +58,11 @@ export type LegacyDocumentProfile = {
   capability_statement_url?: string | null
   supplier_documents?: SupplierDocument[]
 }
+
+// Document types with a meaningful expiry date. Matches the compliance
+// categories that check expiry in deriveSupplierVerificationState and
+// supplier_compliance_base -- banking and the rest have no expiry concept.
+export const EXPIRY_ENABLED_DOCUMENT_TYPES = new Set<SupplierDocumentType>(["csd", "bbbee", "tax_clearance"])
 
 export const supplierDocumentLabels: Record<SupplierDocumentType, string> = {
   cipc: "CIPC",
@@ -137,7 +143,7 @@ export async function fetchSupplierDocumentsByProfileIds(
   const { data, error } = await supabase
     .from("supplier_documents")
     .select(
-      "id, profile_id, document_type, file_url, storage_path, original_filename, content_type, file_size, uploaded_at, status, reviewed_at, reviewed_by, review_notes",
+      "id, profile_id, document_type, file_url, storage_path, original_filename, content_type, file_size, uploaded_at, status, reviewed_at, reviewed_by, review_notes, expiry_date",
     )
     .in("profile_id", profileIds)
     .order("uploaded_at", { ascending: false })
