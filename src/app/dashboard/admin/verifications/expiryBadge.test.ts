@@ -1,8 +1,5 @@
-import { describe, expect, it, vi } from "vitest"
-
-vi.mock("@/lib/supabase", () => ({ supabase: null }))
-
-const { documentExpiryBadge } = await import("./page")
+import { describe, expect, it } from "vitest"
+import { documentExpiryBadge } from "./expiryBadge"
 
 const daysFromToday = (days: number) => {
   const date = new Date()
