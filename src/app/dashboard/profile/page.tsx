@@ -35,6 +35,7 @@ import {
   displayStatusFor,
   fetchSupplierPassport,
   type ComplianceSnapshotItem,
+  type ComplianceSnapshotKey,
   type PassportDisplayStatus,
   type SupplierCertification,
   type SupplierLicence,
@@ -2343,10 +2344,69 @@ const PASSPORT_BADGE_STYLES: Record<PassportDisplayStatus, string> = {
 
 function PassportBadge({ status }: { status: PassportDisplayStatus }) {
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.08em] ${PASSPORT_BADGE_STYLES[status]}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.08em] ${PASSPORT_BADGE_STYLES[status]}`}>
+      {status === "Verified" && (
+        <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        </svg>
+      )}
       {status}
     </span>
   )
+}
+
+// Non-verified statuses stay neutral/panel so a category's own color (see
+// CATEGORY_META) never gets mistaken for a status color once it's not Verified.
+// Verified is unused here — it takes its rail color from CATEGORY_META instead.
+const SNAPSHOT_STATUS_RAIL: Record<PassportDisplayStatus, string> = {
+  Verified: "",
+  "Pending review": "border-t-amber-500",
+  "Expiring soon": "border-t-amber-500",
+  Expired: "border-t-rose-600",
+  Rejected: "border-t-rose-600",
+  Missing: "border-t-[var(--border)]",
+}
+
+const CATEGORY_META: Record<
+  ComplianceSnapshotKey,
+  { path: string; chip: string; tint: string; railTop: string }
+> = {
+  csd: {
+    path: "M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 21h18M4.5 21V9.75l7.5-4.9 7.5 4.9V21M2.25 9.75L12 3.75l9.75 6",
+    chip: "bg-emerald-600",
+    tint: "bg-emerald-500/10",
+    railTop: "border-t-emerald-600",
+  },
+  bbbee: {
+    path: "M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z",
+    chip: "bg-sky-600",
+    tint: "bg-sky-500/10",
+    railTop: "border-t-sky-600",
+  },
+  tax: {
+    path: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z",
+    chip: "bg-amber-600",
+    tint: "bg-amber-500/10",
+    railTop: "border-t-amber-600",
+  },
+  banking: {
+    path: "M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 21h18M4.5 21V9.75l7.5-4.9 7.5 4.9V21M2.25 9.75L12 3.75l9.75 6",
+    chip: "bg-violet-600",
+    tint: "bg-violet-500/10",
+    railTop: "border-t-violet-600",
+  },
+  director: {
+    path: "M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z",
+    chip: "bg-teal-600",
+    tint: "bg-teal-500/10",
+    railTop: "border-t-teal-600",
+  },
+  cipc: {
+    path: "M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21",
+    chip: "bg-orange-600",
+    tint: "bg-orange-500/10",
+    railTop: "border-t-orange-600",
+  },
 }
 
 function PassportHeader() {
@@ -2373,7 +2433,18 @@ function PassportHeader() {
   )
 }
 
-function ComplianceSnapshotSection({ items }: { items: ComplianceSnapshotItem[] }) {
+function ComplianceSnapshotSection({ items, profileId }: { items: ComplianceSnapshotItem[]; profileId: string }) {
+  const verifiedCount = items.filter((item) => item.status === "Verified").length
+  const allVerified = verifiedCount === items.length
+  const progressLabel =
+    allVerified
+      ? "Excellent"
+      : verifiedCount >= items.length - 2
+        ? "Good progress"
+        : verifiedCount > 0
+          ? "Getting started"
+          : "Not started"
+
   return (
     <div className="rounded-md border border-[#c8a060]/20 bg-card p-5">
       <h3 className="text-sm font-bold text-heading">Compliance snapshot</h3>
@@ -2382,12 +2453,66 @@ function ComplianceSnapshotSection({ items }: { items: ComplianceSnapshotItem[] 
         data viewed together.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {items.map((item) => (
-          <div key={item.key} className="flex min-w-0 flex-col gap-2 rounded-md border border-panel bg-panel p-3">
-            <p className="min-w-0 text-[0.68rem] font-bold uppercase leading-tight tracking-[0.06em] text-secondary">{item.label}</p>
-            <PassportBadge status={item.status} />
+        {items.map((item) => {
+          const meta = CATEGORY_META[item.key]
+          const verified = item.status === "Verified"
+          const railTop = verified ? meta.railTop : SNAPSHOT_STATUS_RAIL[item.status]
+          return (
+            <div
+              key={item.key}
+              className={`flex min-w-0 flex-col gap-2 rounded-md border border-[var(--border)] border-t-2 ${railTop} p-3 ${verified ? meta.tint : "bg-[var(--bg-panel)]"}`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                    verified ? `${meta.chip} text-white` : "bg-[var(--bg-muted)] text-muted"
+                  }`}
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d={meta.path} />
+                  </svg>
+                </span>
+                <PassportBadge status={item.status} />
+              </div>
+              <p className="min-w-0 text-[0.68rem] font-bold uppercase leading-tight tracking-[0.06em] text-secondary">{item.label}</p>
+              <p className="min-w-0 text-[0.65rem] leading-snug text-muted">{item.detail ?? "Not yet submitted"}</p>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-panel pt-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1a3a2a] text-[#c8a060]">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+              />
+            </svg>
+          </span>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-heading">{allVerified ? "You're all set" : "Keep going"}</p>
+            <p className="mt-0.5 text-xs text-secondary">
+              {allVerified
+                ? "All compliance areas are verified and up to date. Keep your documents current to maintain trust and visibility."
+                : `${verifiedCount} of ${items.length} compliance areas verified. Finish the rest to strengthen how buyers see your profile.`}
+            </p>
           </div>
-        ))}
+        </div>
+        <div className="flex shrink-0 items-center gap-4">
+          <div className="text-right">
+            <p className={`text-base font-bold ${allVerified ? "text-emerald-600" : "text-heading"}`}>
+              {verifiedCount}/{items.length}
+            </p>
+            <p className="text-[0.6rem] font-bold uppercase tracking-[0.06em] text-muted">Areas verified</p>
+            <p className="text-[0.62rem] font-bold text-emerald-600">{progressLabel}</p>
+          </div>
+          <Link href={`/suppliers/${profileId}`} target="_blank" className="text-xs font-bold text-[#8a6a2f] hover:text-[#c8a060]">
+            View full passport →
+          </Link>
+        </div>
       </div>
     </div>
   )
@@ -2615,7 +2740,7 @@ function PassportTab({
   return (
     <div className="space-y-5">
       <PassportHeader />
-      <ComplianceSnapshotSection items={snapshot} />
+      <ComplianceSnapshotSection items={snapshot} profileId={profile.id} />
 
       <PassportListSection<SupplierCertification>
         title="Certifications"

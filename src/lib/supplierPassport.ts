@@ -245,6 +245,40 @@ function documentDisplayStatus(
   return "Missing"
 }
 
+function formatSnapshotDate(value: string | null | undefined): string | null {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" })
+}
+
+// Caption shown under the category label on each snapshot card. Prefers the
+// expiry_date (when the category tracks one) over the submission/review date,
+// since "when does this stop being valid" is the more actionable fact.
+function snapshotDetail(
+  status: PassportDisplayStatus,
+  dates: { expiryDate?: string | null; uploadedAt?: string | null; reviewedAt?: string | null },
+): string | null {
+  const expiry = formatSnapshotDate(dates.expiryDate)
+  const uploaded = formatSnapshotDate(dates.uploadedAt)
+  const reviewed = formatSnapshotDate(dates.reviewedAt)
+
+  switch (status) {
+    case "Verified":
+      return expiry ? `Valid until ${expiry}` : reviewed ? `Verified on ${reviewed}` : null
+    case "Expiring soon":
+      return expiry ? `Expires ${expiry} soon` : null
+    case "Expired":
+      return expiry ? `Expired ${expiry} — resubmit` : "Expired — resubmit"
+    case "Pending review":
+      return uploaded ? `Under review since ${uploaded}` : "Awaiting review"
+    case "Rejected":
+      return "Needs resubmission"
+    default:
+      return null
+  }
+}
+
 export function derivePassportComplianceSnapshot(input: {
   verification: SupplierVerificationState
   documents: SupplierDocument[] | null | undefined
@@ -258,55 +292,84 @@ export function derivePassportComplianceSnapshot(input: {
   const { verification, documents, attestations } = input
 
   const director = deriveDirectorVerificationState(attestations, now)
-  const cipcDocument = latestSupplierDocuments(documents).cipc
+  const latestDocuments = latestSupplierDocuments(documents)
+  const cipcDocument = latestDocuments.cipc
   const cipcStatus = cipcDocument ? normalizeSupplierDocumentStatus(cipcDocument.status) : "missing"
   const cipcApproved = cipcStatus === "approved"
+
+  const csdStatus = documentDisplayStatus(verification.csd.approved, verification.csd.status, input.csdExpiryDate, now)
+  const bbbeeStatus = documentDisplayStatus(verification.bbbee.approved, verification.bbbee.status, input.bbbeeExpiryDate, now)
+  const taxStatus = documentDisplayStatus(verification.tax.approved, verification.tax.status, input.taxExpiryDate, now)
+  const bankingStatus = documentDisplayStatus(verification.banking.approved, verification.banking.status, null, now)
+  const directorStatus: PassportDisplayStatus =
+    director.status === "missing"
+      ? "Missing"
+      : director.status === "rejected" || director.status === "revoked"
+        ? "Rejected"
+        : director.status === "expired"
+          ? "Expired"
+          : director.approved && isExpiringSoon(director.attestation?.expires_at, now)
+            ? "Expiring soon"
+            : "Verified"
+  const cipcStatusDisplay = documentDisplayStatus(cipcApproved, cipcStatus, null, now)
 
   return [
     {
       key: "csd",
       label: COMPLIANCE_SNAPSHOT_LABELS.csd,
-      status: documentDisplayStatus(verification.csd.approved, verification.csd.status, input.csdExpiryDate, now),
-      detail: null,
+      status: csdStatus,
+      detail: snapshotDetail(csdStatus, {
+        expiryDate: input.csdExpiryDate,
+        uploadedAt: latestDocuments.csd?.uploaded_at,
+        reviewedAt: latestDocuments.csd?.reviewed_at,
+      }),
     },
     {
       key: "bbbee",
       label: COMPLIANCE_SNAPSHOT_LABELS.bbbee,
-      status: documentDisplayStatus(verification.bbbee.approved, verification.bbbee.status, input.bbbeeExpiryDate, now),
-      detail: null,
+      status: bbbeeStatus,
+      detail: snapshotDetail(bbbeeStatus, {
+        expiryDate: input.bbbeeExpiryDate,
+        uploadedAt: latestDocuments.bbbee?.uploaded_at,
+        reviewedAt: latestDocuments.bbbee?.reviewed_at,
+      }),
     },
     {
       key: "tax",
       label: COMPLIANCE_SNAPSHOT_LABELS.tax,
-      status: documentDisplayStatus(verification.tax.approved, verification.tax.status, input.taxExpiryDate, now),
-      detail: null,
+      status: taxStatus,
+      detail: snapshotDetail(taxStatus, {
+        expiryDate: input.taxExpiryDate,
+        uploadedAt: latestDocuments.tax_clearance?.uploaded_at,
+        reviewedAt: latestDocuments.tax_clearance?.reviewed_at,
+      }),
     },
     {
       key: "banking",
       label: COMPLIANCE_SNAPSHOT_LABELS.banking,
-      status: documentDisplayStatus(verification.banking.approved, verification.banking.status, null, now),
-      detail: null,
+      status: bankingStatus,
+      detail: snapshotDetail(bankingStatus, {
+        uploadedAt: latestDocuments.bank_letter?.uploaded_at,
+        reviewedAt: latestDocuments.bank_letter?.reviewed_at,
+      }),
     },
     {
       key: "director",
       label: COMPLIANCE_SNAPSHOT_LABELS.director,
-      status:
-        director.status === "missing"
-          ? "Missing"
-          : director.status === "rejected" || director.status === "revoked"
-            ? "Rejected"
-            : director.status === "expired"
-              ? "Expired"
-              : director.approved && isExpiringSoon(director.attestation?.expires_at, now)
-                ? "Expiring soon"
-                : "Verified",
-      detail: null,
+      status: directorStatus,
+      detail: snapshotDetail(directorStatus, {
+        expiryDate: director.attestation?.expires_at,
+        reviewedAt: director.attestation?.reviewed_at,
+      }),
     },
     {
       key: "cipc",
       label: COMPLIANCE_SNAPSHOT_LABELS.cipc,
-      status: documentDisplayStatus(cipcApproved, cipcStatus, null, now),
-      detail: null,
+      status: cipcStatusDisplay,
+      detail: snapshotDetail(cipcStatusDisplay, {
+        uploadedAt: cipcDocument?.uploaded_at,
+        reviewedAt: cipcDocument?.reviewed_at,
+      }),
     },
   ] as ComplianceSnapshotItem[]
 }

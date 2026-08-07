@@ -1060,7 +1060,7 @@ export default function OpportunitiesPage() {
               Find tenders and RFQs across South Africa
             </h1>
             <p className="newspaper-body mb-6 max-w-2xl text-secondary">
-              Browse curator-reviewed public procurement opportunities from government entities and private buyers.
+              Browse curator-reviewed tenders and RFQs sourced from official government procurement listings.
               Register free to respond and win contracts.
             </p>
 
