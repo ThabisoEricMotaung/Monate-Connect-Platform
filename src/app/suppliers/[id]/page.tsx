@@ -425,7 +425,12 @@ function PassportSummarySection({ passport }: { passport: PassportSummary }) {
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {passport.complianceSnapshot.map((item) => (
             <div key={item.key} className="flex items-center justify-between gap-2 rounded-lg border border-stone-200 bg-[#fbf8f1] p-3">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-stone-500">{item.label}</p>
+              <div className="min-w-0">
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-stone-500">{item.label}</p>
+                {item.informational && (
+                  <p className="mt-0.5 text-[0.58rem] font-semibold uppercase tracking-[0.04em] text-stone-400">Informational</p>
+                )}
+              </div>
               <PassportStatusChip status={item.status} />
             </div>
           ))}

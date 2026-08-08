@@ -217,7 +217,13 @@ export type ComplianceSnapshotItem = {
   label: string
   status: PassportDisplayStatus
   detail: string | null
+  // True only for categories that sit outside supplier_compliance_base /
+  // refresh_supplier_verification (currently just cipc) -- shown but not
+  // counted toward verification_status, SmartScore, or directory eligibility.
+  informational: boolean
 }
+
+const INFORMATIONAL_SNAPSHOT_KEYS = new Set<ComplianceSnapshotKey>(["cipc"])
 
 const COMPLIANCE_SNAPSHOT_LABELS: Record<ComplianceSnapshotKey, string> = {
   csd: "CSD",
@@ -313,7 +319,7 @@ export function derivePassportComplianceSnapshot(input: {
             : "Verified"
   const cipcStatusDisplay = documentDisplayStatus(cipcApproved, cipcStatus, null, now)
 
-  return [
+  const items: Array<Omit<ComplianceSnapshotItem, "informational">> = [
     {
       key: "csd",
       label: COMPLIANCE_SNAPSHOT_LABELS.csd,
@@ -371,7 +377,9 @@ export function derivePassportComplianceSnapshot(input: {
         reviewedAt: cipcDocument?.reviewed_at,
       }),
     },
-  ] as ComplianceSnapshotItem[]
+  ]
+
+  return items.map((item) => ({ ...item, informational: INFORMATIONAL_SNAPSHOT_KEYS.has(item.key) }))
 }
 
 export function passportStatusBadgeColor(status: PassportDisplayStatus): "green" | "amber" | "red" | "gray" {

@@ -863,6 +863,11 @@ export default function AdminVerificationQueuePage() {
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-heading">{supplierDocumentLabels[document.document_type]}</p>
+                      {document.document_type === "cipc" && (
+                        <p className="mt-1 inline-flex rounded-full border border-warning/30 bg-warning-soft px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.1em] text-warning">
+                          Informational — does not affect verification status or SmartScore
+                        </p>
+                      )}
                       <p className="mt-1 truncate text-xs text-muted">
                         {document.original_filename || document.storage_path || document.file_url}
                       </p>

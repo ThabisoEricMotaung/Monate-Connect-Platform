@@ -2434,12 +2434,17 @@ function PassportHeader() {
 }
 
 function ComplianceSnapshotSection({ items, profileId }: { items: ComplianceSnapshotItem[]; profileId: string }) {
-  const verifiedCount = items.filter((item) => item.status === "Verified").length
-  const allVerified = verifiedCount === items.length
+  // Informational categories (cipc) are shown but don't gate verification_status
+  // or SmartScore, so they're excluded from the progress count below -- otherwise
+  // a fully directory-eligible supplier could see "Good progress" instead of
+  // "Excellent" over a document that was never part of the eligibility gate.
+  const eligibilityItems = items.filter((item) => !item.informational)
+  const verifiedCount = eligibilityItems.filter((item) => item.status === "Verified").length
+  const allVerified = verifiedCount === eligibilityItems.length
   const progressLabel =
     allVerified
       ? "Excellent"
-      : verifiedCount >= items.length - 2
+      : verifiedCount >= eligibilityItems.length - 2
         ? "Good progress"
         : verifiedCount > 0
           ? "Getting started"
@@ -2476,6 +2481,11 @@ function ComplianceSnapshotSection({ items, profileId }: { items: ComplianceSnap
               </div>
               <p className="min-w-0 text-[0.68rem] font-bold uppercase leading-tight tracking-[0.06em] text-secondary">{item.label}</p>
               <p className="min-w-0 text-[0.65rem] leading-snug text-muted">{item.detail ?? "Not yet submitted"}</p>
+              {item.informational && (
+                <p className="min-w-0 text-[0.6rem] font-semibold uppercase tracking-[0.04em] text-muted/80">
+                  Informational — not counted toward verification status
+                </p>
+              )}
             </div>
           )
         })}
@@ -2497,14 +2507,14 @@ function ComplianceSnapshotSection({ items, profileId }: { items: ComplianceSnap
             <p className="mt-0.5 text-xs text-secondary">
               {allVerified
                 ? "All compliance areas are verified and up to date. Keep your documents current to maintain trust and visibility."
-                : `${verifiedCount} of ${items.length} compliance areas verified. Finish the rest to strengthen how buyers see your profile.`}
+                : `${verifiedCount} of ${eligibilityItems.length} compliance areas verified. Finish the rest to strengthen how buyers see your profile.`}
             </p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-4">
           <div className="text-right">
             <p className={`text-base font-bold ${allVerified ? "text-emerald-600" : "text-heading"}`}>
-              {verifiedCount}/{items.length}
+              {verifiedCount}/{eligibilityItems.length}
             </p>
             <p className="text-[0.6rem] font-bold uppercase tracking-[0.06em] text-muted">Areas verified</p>
             <p className="text-[0.62rem] font-bold text-emerald-600">{progressLabel}</p>
