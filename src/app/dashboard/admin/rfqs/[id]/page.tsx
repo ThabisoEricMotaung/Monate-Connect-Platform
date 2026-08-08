@@ -113,7 +113,7 @@ export default function AdminRFQDetailPage() {
   const isBuyerRoute = pathname?.startsWith("/dashboard/buyer/")
   const rfqBaseHref = isBuyerRoute ? "/dashboard/buyer/rfqs" : "/dashboard/admin/rfqs"
   const quotesHref = isBuyerRoute
-    ? `/dashboard/buyer/quotes?rfq_id=${params.id}`
+    ? `/dashboard/buyer/rfqs/${params.id}/quotes`
     : `/dashboard/admin/rfqs/${params.id}/quotes`
 
   const [editing, setEditing] = useState(false)

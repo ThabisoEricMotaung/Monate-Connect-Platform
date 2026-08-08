@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, usePathname, useRouter } from "next/navigation"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import { logActivity } from "@/lib/activity"
 import { logAuditAction } from "@/lib/audit"
@@ -58,6 +58,15 @@ type PurchaseOrder = {
   id: number
   po_number: string | null
   quote_id: number | null
+}
+
+type QuoteSupplierScore = {
+  supplierId: string
+  smartScore: number
+  smartScoreLabel: string
+  verification: "verified" | "partially_verified" | "under_review" | "unverified"
+  approvedCoreChecks: number
+  totalCoreChecks: number
 }
 
 type EvaluationDraft = {
@@ -300,8 +309,10 @@ function CriterionSlider({
 
 export default function AdminRFQQuotesPage() {
   const params = useParams<{ id: string }>()
+  const pathname = usePathname()
   const router = useRouter()
   const rfqId = Number(params.id)
+  const isBuyerRoute = pathname.startsWith("/dashboard/buyer/")
 
   // Existing state
   const [rfq, setRfq] = useState<RFQ | null>(null)
@@ -314,6 +325,7 @@ export default function AdminRFQQuotesPage() {
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
   const [errorMessage, setErrorMessage] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
+  const [supplierScores, setSupplierScores] = useState<Record<string, QuoteSupplierScore>>({})
 
   // Evaluation state
   const [evaluations, setEvaluations] = useState<Record<number, EvaluationDraft>>({})
@@ -437,11 +449,29 @@ export default function AdminRFQQuotesPage() {
       )
       setPurchaseOrders((purchaseOrderData ?? []) as PurchaseOrder[])
 
-      // Load existing evaluations (graceful failure if table doesn't exist)
-      const { data: evalData } = await supabase
+      const scoreResponse = await fetch(`/api/rfqs/${rfqId}/quote-supplier-scores`, {
+        cache: "no-store",
+      })
+      if (!scoreResponse.ok) {
+        const body = (await scoreResponse.json().catch(() => null)) as { error?: string } | null
+        setErrorMessage(body?.error ?? "Supplier SmartScore data failed to load.")
+        setLoading(false)
+        return
+      }
+      const scoreBody = (await scoreResponse.json()) as { scores?: QuoteSupplierScore[] }
+      setSupplierScores(
+        Object.fromEntries((scoreBody.scores ?? []).map((score) => [score.supplierId, score]))
+      )
+
+      const { data: evalData, error: evalLoadError } = await supabase
         .from("quote_evaluations")
         .select("id, quote_id, price_score, compliance_score, delivery_score, experience_score, locality_score, evaluation_notes")
         .eq("rfq_id", rfqId)
+        .eq("evaluator_id", authorizedProfile.id)
+
+      if (evalLoadError) {
+        setEvalError(evalLoadError.message)
+      }
 
       if (evalData && evalData.length > 0) {
         const evalMap: Record<number, EvaluationDraft> = {}
@@ -738,11 +768,7 @@ export default function AdminRFQQuotesPage() {
         .eq("id", draft.db_id)
       if (updateErr) {
         setSavingEvals((prev) => { const n = new Set(prev); n.delete(quoteId); return n })
-        if (updateErr.message.includes("does not exist") || updateErr.message.includes("relation")) {
-          setEvalError("quote_evaluations table not found. Run the SQL migration provided.")
-        } else {
-          setEvalError(updateErr.message)
-        }
+        setEvalError(updateErr.message)
         return
       }
       newDbId = draft.db_id
@@ -754,11 +780,7 @@ export default function AdminRFQQuotesPage() {
         .single()
       if (insertErr) {
         setSavingEvals((prev) => { const n = new Set(prev); n.delete(quoteId); return n })
-        if (insertErr.message.includes("does not exist") || insertErr.message.includes("relation")) {
-          setEvalError("quote_evaluations table not found. Run the SQL migration provided.")
-        } else {
-          setEvalError(insertErr.message)
-        }
+        setEvalError(insertErr.message)
         return
       }
       newDbId = (data as { id: number } | null)?.id
@@ -812,7 +834,7 @@ export default function AdminRFQQuotesPage() {
       {/* Header */}
       <div className="mb-8 border-b border-panel pb-6">
         <p className="text-xs uppercase tracking-[0.28em] text-accent">
-          Admin / RFQ Quote Comparison
+          {isBuyerRoute ? "Buyer / RFQ Quote Comparison" : "Admin / RFQ Quote Comparison"}
         </p>
         <h1 className="mt-3 text-2xl font-semibold text-heading">
           RFQ Quote Comparison
@@ -907,48 +929,33 @@ export default function AdminRFQQuotesPage() {
 
           {/* -- Quote Controls -- */}
           <section className="mt-6 rounded-md border border-panel bg-card p-5 shadow-panel">
-            <div className="grid gap-4 md:grid-cols-[1fr_auto_auto_auto_auto_260px] md:items-end">
+            <div className="flex flex-wrap items-end gap-4">
               <div>
                 <p className="text-[0.68rem] uppercase tracking-[0.24em] text-secondary">Quote Controls</p>
                 <h2 className="mt-2 text-lg font-semibold text-heading">Supplier comparison queue</h2>
               </div>
-              <Link
-                href={`/dashboard/admin/rfqs/${rfq.id}/award-report`}
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
-              >
+              {!isBuyerRoute && <Link href={`/dashboard/admin/rfqs/${rfq.id}/award-report`} className="inline-flex items-center justify-center gap-2 rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
                 </svg>
                 Award Report
-              </Link>
-              <Link
-                href={`/dashboard/admin/rfqs/${rfq.id}/matching`}
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-success bg-success-soft px-5 py-2.5 text-sm font-semibold text-success transition-colors hover:bg-success/10"
-              >
+              </Link>}
+              {!isBuyerRoute && <Link href={`/dashboard/admin/rfqs/${rfq.id}/matching`} className="inline-flex items-center justify-center gap-2 rounded-md border border-success bg-success-soft px-5 py-2.5 text-sm font-semibold text-success transition-colors hover:bg-success/10">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35M11 8v6M8 11h6" />
                 </svg>
                 Recommended Suppliers
-              </Link>
-              <Link
-                href={`/dashboard/admin/rfqs/${rfq.id}/questions`}
-                className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
-              >
+              </Link>}
+              {!isBuyerRoute && <Link href={`/dashboard/admin/rfqs/${rfq.id}/questions`} className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong">
                 Manage Questions
-              </Link>
-              <Link
-                href={`/dashboard/admin/whatsapp?rfq_id=${rfq.id}`}
-                className="inline-flex items-center justify-center rounded-md border border-success bg-success-soft px-5 py-2.5 text-sm font-semibold text-success transition-colors hover:bg-success/10"
-              >
+              </Link>}
+              {!isBuyerRoute && <Link href={`/dashboard/admin/whatsapp?rfq_id=${rfq.id}`} className="inline-flex items-center justify-center rounded-md border border-success bg-success-soft px-5 py-2.5 text-sm font-semibold text-success transition-colors hover:bg-success/10">
                 Send RFQ WhatsApp Alert
-              </Link>
-              <Link
-                href={`/dashboard/admin/rfqs/${rfq.id}/document-pack`}
-                className="inline-flex items-center justify-center rounded-md border border-panel bg-surface px-5 py-2.5 text-sm font-semibold text-secondary transition hover:bg-panel"
-              >
+              </Link>}
+              {!isBuyerRoute && <Link href={`/dashboard/admin/rfqs/${rfq.id}/document-pack`} className="inline-flex items-center justify-center rounded-md border border-panel bg-surface px-5 py-2.5 text-sm font-semibold text-secondary transition hover:bg-panel">
                 Tender Pack
-              </Link>
-              <div>
+              </Link>}
+              <div className="ml-auto w-full sm:w-[260px]">
                 <label htmlFor="quote-sort" className="mb-1.5 block text-[0.68rem] uppercase tracking-[0.24em] text-secondary">
                   Sort
                 </label>
@@ -979,7 +986,7 @@ export default function AdminRFQQuotesPage() {
                   <thead>
                     <tr className="border-b border-panel bg-panel">
                       {[
-                        "Rank", "Supplier", "WhatsApp", "Amount",
+                        "Evaluation Rank", "SmartScore", "Verification", "Supplier", "WhatsApp", "Amount",
                         "Timeline", "Status", "Scope", "Supporting Notes",
                         "Created", "Actions",
                       ].map((heading) => (
@@ -997,6 +1004,7 @@ export default function AdminRFQQuotesPage() {
                       const rank = rankByQuoteId.get(quote.id)
                       const isRecommended = quote.id === recommendedId || quote.id === topScoringQuoteId
                       const evalScore = evaluations[quote.id] ? computeTotal(evaluations[quote.id]) : null
+                      const supplierScore = quote.supplier_id ? supplierScores[quote.supplier_id] : undefined
 
                       return (
                         <tr
@@ -1021,6 +1029,33 @@ export default function AdminRFQQuotesPage() {
                             ) : (
                               <span className="text-xs text-muted">—</span>
                             )}
+                          </td>
+
+                          <td className="px-4 py-4">
+                            {supplierScore ? (
+                              <div>
+                                <span className="text-lg font-bold tabular-nums text-heading">{supplierScore.smartScore}</span>
+                                <span className="text-xs text-muted">/100</span>
+                                <p className="mt-1 text-[0.65rem] text-secondary">{supplierScore.smartScoreLabel}</p>
+                              </div>
+                            ) : <span className="text-xs text-muted">Unavailable</span>}
+                          </td>
+
+                          <td className="px-4 py-4">
+                            {supplierScore ? (
+                              <div>
+                                <span className={`inline-flex rounded-md border px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em] ${
+                                  supplierScore.verification === "verified"
+                                    ? "border-success bg-success-soft text-success"
+                                    : supplierScore.verification === "under_review"
+                                      ? "border-warning bg-warning-soft text-warning"
+                                      : "border-panel bg-panel text-secondary"
+                                }`}>
+                                  {supplierScore.verification.replaceAll("_", " ")}
+                                </span>
+                                <p className="mt-1 text-[0.65rem] text-muted">{supplierScore.approvedCoreChecks}/{supplierScore.totalCoreChecks} core checks approved</p>
+                              </div>
+                            ) : <span className="text-xs text-muted">Unavailable</span>}
                           </td>
 
                           {/* Supplier */}
@@ -1105,7 +1140,7 @@ export default function AdminRFQQuotesPage() {
                               {quote.status === "Awarded" && (() => {
                                 const po = purchaseOrderByQuoteId.get(quote.id)
                                 return po ? (
-                                  <Link href={`/dashboard/purchase-orders/${po.id}`}
+                                  <Link href={isBuyerRoute ? `/dashboard/buyer/purchase-orders/${po.id}` : `/dashboard/admin/purchase-orders/${po.id}`}
                                     className="rounded-md border border-accent bg-accent px-3 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong">
                                     View PO
                                   </Link>
@@ -1189,14 +1224,6 @@ export default function AdminRFQQuotesPage() {
 
               {showEvalMatrix && (
                 <div className="space-y-5">
-                  {/* SQL migration notice */}
-                  <div className="rounded-md border border-accent/20 bg-accent/5 px-5 py-3">
-                    <p className="text-xs text-secondary">
-                      <span className="font-semibold text-accent">Database required:</span>{" "}
-                      Make sure the <code className="rounded bg-accent/10 px-1 font-mono text-[0.7rem] text-accent">quote_evaluations</code> table exists. Run the SQL provided in the requirements if it does not.
-                    </p>
-                  </div>
-
                   {/* Advisory warning */}
                   <div className="flex items-start gap-3 rounded-md border border-warning/30 bg-warning/8 px-5 py-4">
                     <svg className="mt-0.5 h-4 w-4 shrink-0 text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

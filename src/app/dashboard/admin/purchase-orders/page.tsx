@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 
@@ -65,8 +65,10 @@ function PurchaseOrdersSkeleton() {
   )
 }
 
-export default function AdminPurchaseOrdersPage() {
+export default function PurchaseOrdersPage() {
   const router = useRouter()
+  const pathname = usePathname()
+  const isBuyerRoute = pathname.startsWith("/dashboard/buyer/")
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
@@ -108,7 +110,7 @@ export default function AdminPurchaseOrdersPage() {
     <div>
       <div className="mb-8 border-b border-panel pb-6">
         <p className="text-xs uppercase tracking-[0.28em] text-accent">
-          Admin / Procurement Control
+          {isBuyerRoute ? "Buyer / Procurement" : "Admin / Procurement Control"}
         </p>
         <h1 className="mt-3 text-2xl font-semibold text-heading">
           Purchase Orders
@@ -200,7 +202,11 @@ export default function AdminPurchaseOrdersPage() {
                     </td>
                     <td className="px-4 py-4">
                       <Link
-                        href={`/dashboard/purchase-orders/${purchaseOrder.id}`}
+                        href={
+                          isBuyerRoute
+                            ? `/dashboard/buyer/purchase-orders/${purchaseOrder.id}`
+                            : `/dashboard/admin/purchase-orders/${purchaseOrder.id}`
+                        }
                         className="inline-flex rounded-md border border-accent bg-accent px-4 py-2 text-xs font-semibold text-button transition hover:bg-accent-strong"
                       >
                         View PO

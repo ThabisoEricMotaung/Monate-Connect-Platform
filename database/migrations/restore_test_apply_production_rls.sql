@@ -252,6 +252,34 @@ create policy supplier_documents_admin_update
   using (is_admin())
   with check (is_admin());
 
+-- quote_evaluations -----------------------------------------------------------
+alter table public.quote_evaluations enable row level security;
+
+drop policy if exists quote_evaluations_select on public.quote_evaluations;
+drop policy if exists quote_evaluations_insert on public.quote_evaluations;
+drop policy if exists quote_evaluations_update on public.quote_evaluations;
+drop policy if exists quote_evaluations_delete on public.quote_evaluations;
+
+create policy quote_evaluations_select on public.quote_evaluations for select to authenticated
+using (is_admin() or exists (select 1 from public.rfqs where rfqs.id = quote_evaluations.rfq_id and rfqs.created_by = (select auth.uid())));
+create policy quote_evaluations_insert on public.quote_evaluations for insert to authenticated
+with check (evaluator_id = (select auth.uid()) and (is_admin() or exists (select 1 from public.rfqs where rfqs.id = quote_evaluations.rfq_id and rfqs.created_by = (select auth.uid()))));
+create policy quote_evaluations_update on public.quote_evaluations for update to authenticated
+using (evaluator_id = (select auth.uid()) and (is_admin() or exists (select 1 from public.rfqs where rfqs.id = quote_evaluations.rfq_id and rfqs.created_by = (select auth.uid()))))
+with check (evaluator_id = (select auth.uid()) and (is_admin() or exists (select 1 from public.rfqs where rfqs.id = quote_evaluations.rfq_id and rfqs.created_by = (select auth.uid()))));
+create policy quote_evaluations_delete on public.quote_evaluations for delete to authenticated
+using (evaluator_id = (select auth.uid()) and (is_admin() or exists (select 1 from public.rfqs where rfqs.id = quote_evaluations.rfq_id and rfqs.created_by = (select auth.uid()))));
+
+-- purchase_orders -------------------------------------------------------------
+alter table public.purchase_orders enable row level security;
+drop policy if exists po_select on public.purchase_orders;
+create policy po_select on public.purchase_orders for select to authenticated
+using (
+  supplier_id = (select auth.uid())
+  or is_admin()
+  or exists (select 1 from public.rfqs where rfqs.id = purchase_orders.rfq_id and rfqs.created_by = (select auth.uid()))
+);
+
 -- ── supplier_bank_details ─────────────────────────────────────────────────
 alter table public.supplier_bank_details enable row level security;
 
