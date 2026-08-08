@@ -164,6 +164,8 @@ drop policy if exists dev_quotes_update on public.quotes;
 drop policy if exists quotes_select on public.quotes;
 drop policy if exists quotes_insert on public.quotes;
 drop policy if exists quotes_update on public.quotes;
+drop policy if exists quotes_update_supplier on public.quotes;
+drop policy if exists quotes_update_reviewer on public.quotes;
 
 create policy quotes_select
   on public.quotes
@@ -180,32 +182,43 @@ create policy quotes_select
 create policy quotes_insert
   on public.quotes
   for insert
+  to authenticated
   with check (
-    supplier_id = auth.uid()
-    or is_admin()
-    or exists (
-      select 1 from public.rfqs
-      where rfqs.id = quotes.rfq_id and rfqs.created_by = auth.uid()
-    )
+    supplier_id = (select auth.uid())
+    and status = 'Pending'
   );
 
-create policy quotes_update
+create policy quotes_update_supplier
   on public.quotes
   for update
+  to authenticated
   using (
-    supplier_id = auth.uid()
-    or is_admin()
+    supplier_id = (select auth.uid())
+    and status = 'Pending'
+  )
+  with check (
+    supplier_id = (select auth.uid())
+    and status = 'Pending'
+  );
+
+create policy quotes_update_reviewer
+  on public.quotes
+  for update
+  to authenticated
+  using (
+    is_admin()
     or exists (
       select 1 from public.rfqs
-      where rfqs.id = quotes.rfq_id and rfqs.created_by = auth.uid()
+      where rfqs.id = quotes.rfq_id
+        and rfqs.created_by = (select auth.uid())
     )
   )
   with check (
-    supplier_id = auth.uid()
-    or is_admin()
+    is_admin()
     or exists (
       select 1 from public.rfqs
-      where rfqs.id = quotes.rfq_id and rfqs.created_by = auth.uid()
+      where rfqs.id = quotes.rfq_id
+        and rfqs.created_by = (select auth.uid())
     )
   );
 
