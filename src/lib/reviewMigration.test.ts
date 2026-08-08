@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs"
 const sql = readFileSync("supabase/migrations/20260804080949_smartscore_phase2_review_workflow.sql", "utf8")
 const expirySql = readFileSync("supabase/migrations/20260806090000_supplier_document_expiry_phase1.sql", "utf8")
 const complianceExpirySql = readFileSync("supabase/migrations/20260806150000_compliance_expiry_phase2.sql", "utf8")
+const passportStatusSql = readFileSync("supabase/migrations/20260808060141_supplier_passport_self_reported_status.sql", "utf8")
 
 describe("atomic review migration", () => {
   it("refreshes derived state inside the review transaction", () => {
@@ -71,5 +72,35 @@ describe("Phase 2 compliance expiry migration", () => {
       "revoke execute on function public.expire_supplier_passport_records() from public, anon, authenticated",
     )
     expect(complianceExpirySql).toContain("grant execute on function public.expire_supplier_passport_records() to service_role")
+  })
+})
+
+describe("supplier Passport self-reported status migration", () => {
+  it("changes both defaults and constraints from Missing to Self-reported", () => {
+    expect(passportStatusSql.match(/alter column status set default 'Self-reported'/g)).toHaveLength(2)
+    expect(passportStatusSql).toContain("check (status in ('Self-reported', 'Verified', 'Pending review', 'Rejected', 'Expired'))")
+  })
+
+  it("backfills active Missing rows and directly expires past rows", () => {
+    expect(passportStatusSql.match(/when expiry_date is not null and expiry_date < current_date then 'Expired'/g)).toHaveLength(2)
+    expect(passportStatusSql.match(/where status = 'Missing'/g)).toHaveLength(2)
+  })
+
+  it("forces supplier-owned writes back to a non-reviewed status", () => {
+    expect(passportStatusSql).toMatch(/v_user_id = new\.profile_id[\s\S]*new\.status := case/)
+    expect(passportStatusSql).toContain("new.reviewed_by := null")
+    expect(passportStatusSql).toContain("new.reviewed_at := null")
+    expect(passportStatusSql.match(/before insert or update on public\.supplier_/g)).toHaveLength(2)
+  })
+
+  it("expires both Verified and Self-reported active records", () => {
+    expect(passportStatusSql.match(/where status in \('Verified', 'Self-reported'\)/g)).toHaveLength(2)
+  })
+
+  it("keeps the expiry function restricted to service_role", () => {
+    expect(passportStatusSql).toContain(
+      "revoke execute on function public.expire_supplier_passport_records()\n  from public, anon, authenticated",
+    )
+    expect(passportStatusSql).toContain("grant execute on function public.expire_supplier_passport_records() to service_role")
   })
 })

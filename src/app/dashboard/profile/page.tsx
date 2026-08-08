@@ -2334,6 +2334,7 @@ type PassportFieldConfig = {
 }
 
 const PASSPORT_BADGE_STYLES: Record<PassportDisplayStatus, string> = {
+  "Self-reported": "bg-sky-100 text-sky-800",
   Verified: "bg-emerald-600 text-white",
   "Pending review": "bg-amber-500 text-white",
   "Expiring soon": "bg-amber-500 text-white",
@@ -2359,6 +2360,7 @@ function PassportBadge({ status }: { status: PassportDisplayStatus }) {
 // CATEGORY_META) never gets mistaken for a status color once it's not Verified.
 // Verified is unused here — it takes its rail color from CATEGORY_META instead.
 const SNAPSHOT_STATUS_RAIL: Record<PassportDisplayStatus, string> = {
+  "Self-reported": "border-t-sky-500",
   Verified: "",
   "Pending review": "border-t-amber-500",
   "Expiring soon": "border-t-amber-500",
@@ -2754,7 +2756,7 @@ function PassportTab({
 
       <PassportListSection<SupplierCertification>
         title="Certifications"
-        description="Industry or professional certifications held by your business."
+        description="Industry or professional certifications held by your business. New entries are self-reported and are not independently verified by AiForm Procure."
         table="supplier_certifications"
         profileId={userId}
         rows={passport.certifications}
@@ -2767,7 +2769,7 @@ function PassportTab({
           { key: "certificate_number", label: "Certificate number", type: "text" },
           { key: "issue_date", label: "Issue date", type: "date" },
           { key: "expiry_date", label: "Expiry date", type: "date" },
-          { key: "evidence_url", label: "Evidence URL", type: "url", placeholder: "https://..." },
+          { key: "evidence_url", label: "Supporting evidence URL", type: "url", placeholder: "https://..." },
           { key: "notes", label: "Notes", type: "textarea" },
         ]}
         renderRow={(row) => {
@@ -2787,7 +2789,7 @@ function PassportTab({
               </p>
               {row.evidence_url && (
                 <a href={row.evidence_url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs font-semibold text-[#8a6a2f] hover:text-[#c8a060]">
-                  View evidence &rarr;
+                  View supporting evidence &rarr;
                 </a>
               )}
             </div>
@@ -2797,7 +2799,7 @@ function PassportTab({
 
       <PassportListSection<SupplierLicence>
         title="Licences"
-        description="Operating, trade, or professional licences held by your business."
+        description="Operating, trade, or professional licences held by your business. New entries are self-reported and are not independently verified by AiForm Procure."
         table="supplier_licences"
         profileId={userId}
         rows={passport.licences}
@@ -2810,7 +2812,7 @@ function PassportTab({
           { key: "licence_number", label: "Licence number", type: "text" },
           { key: "issue_date", label: "Issue date", type: "date" },
           { key: "expiry_date", label: "Expiry date", type: "date" },
-          { key: "evidence_url", label: "Evidence URL", type: "url", placeholder: "https://..." },
+          { key: "evidence_url", label: "Supporting evidence URL", type: "url", placeholder: "https://..." },
           { key: "notes", label: "Notes", type: "textarea" },
         ]}
         renderRow={(row) => {
@@ -2830,7 +2832,7 @@ function PassportTab({
               </p>
               {row.evidence_url && (
                 <a href={row.evidence_url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs font-semibold text-[#8a6a2f] hover:text-[#c8a060]">
-                  View evidence &rarr;
+                  View supporting evidence &rarr;
                 </a>
               )}
             </div>

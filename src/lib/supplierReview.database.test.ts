@@ -199,6 +199,36 @@ describeDatabase.sequential("expire_supplier_passport_records", () => {
     expect(sql(`select status from public.supplier_certifications where profile_id='${supplierId}'`)).toBe("Pending review")
   })
 
+  it("expires a Self-reported certification past its expiry_date", () => {
+    resetPassportRecords("2020-01-01", "Self-reported")
+    sql("select public.expire_supplier_passport_records();")
+    expect(sql(`select status from public.supplier_certifications where profile_id='${supplierId}'`)).toBe("Expired")
+  })
+
+  it("prevents a supplier client from assigning its own review status or metadata", () => {
+    reset()
+    try {
+      sql(`
+        create or replace function auth.uid() returns uuid
+        language sql stable
+        as $$ select '${supplierId}'::uuid $$;
+        insert into public.supplier_certifications
+          (profile_id, name, expiry_date, status, reviewed_by, reviewed_at)
+        values
+          ('${supplierId}', 'ISO 9001', '2099-01-01', 'Verified', '${reviewerId}', now());
+      `)
+      expect(
+        sql(`select status || ':' || coalesce(reviewed_by::text, 'null') || ':' || coalesce(reviewed_at::text, 'null') from public.supplier_certifications where profile_id='${supplierId}'`),
+      ).toBe("Self-reported:null:null")
+    } finally {
+      sql(`
+        create or replace function auth.uid() returns uuid
+        language sql stable
+        as $$ select null::uuid $$;
+      `)
+    }
+  })
+
   it("audit-logs each expiry transition", () => {
     resetPassportRecords("2020-01-01")
     sql("select public.expire_supplier_passport_records();")

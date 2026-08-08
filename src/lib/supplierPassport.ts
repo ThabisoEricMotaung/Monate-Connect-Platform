@@ -3,9 +3,9 @@ import { latestSupplierDocuments, normalizeSupplierDocumentStatus, type Supplier
 import { deriveDirectorVerificationState, type VerificationAttestation } from "@/lib/verificationAttestations"
 import { type SupplierVerificationState } from "@/lib/supplierVerification"
 
-// --- Review-backed status ladder (certifications, licences) ---
+// --- Supplier-claimed status ladder (certifications, licences) ---
 
-export const PASSPORT_REVIEW_STATUSES = ["Verified", "Pending review", "Rejected", "Expired", "Missing"] as const
+export const PASSPORT_REVIEW_STATUSES = ["Self-reported", "Verified", "Pending review", "Rejected", "Expired"] as const
 export type PassportReviewStatus = (typeof PASSPORT_REVIEW_STATUSES)[number]
 
 // Days out from expiry_date at which the UI starts showing "Expiring soon".
@@ -13,7 +13,7 @@ export type PassportReviewStatus = (typeof PASSPORT_REVIEW_STATUSES)[number]
 // elsewhere in the app (see isWithinDays in lib/automationRules.ts).
 const EXPIRING_SOON_WINDOW_DAYS = 30
 
-export type PassportDisplayStatus = "Verified" | "Pending review" | "Expiring soon" | "Expired" | "Rejected" | "Missing"
+export type PassportDisplayStatus = "Self-reported" | "Verified" | "Pending review" | "Expiring soon" | "Expired" | "Rejected" | "Missing"
 
 export type SupplierCertification = {
   id: string
@@ -192,16 +192,30 @@ export function displayStatusFor(
   expiryDate: string | null | undefined,
   now = new Date(),
 ): PassportDisplayStatus {
-  if (status === "Rejected" || status === "Missing") return status
-  if (status === "Verified") {
+  if (status === "Rejected") return status
+  if (status === "Verified" || status === "Self-reported") {
     if (isPastExpiry(expiryDate, now)) return "Expired"
     if (isExpiringSoon(expiryDate, now)) return "Expiring soon"
-    return "Verified"
+    return status
   }
   // "Pending review" and the stored "Expired" both pass through as-is; a
   // pending item can still be past its stated expiry_date, but that is the
   // reviewer's concern, not a separate display state.
   return status
+}
+
+export function isPublicPassportCredentialStatus(status: PassportDisplayStatus): boolean {
+  return status === "Self-reported" || status === "Verified" || status === "Expiring soon"
+}
+
+export function passportEvidenceUrl(value: string | null | undefined): string | null {
+  if (!value) return null
+  try {
+    const url = new URL(value)
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null
+  } catch {
+    return null
+  }
 }
 
 // --- Compliance snapshot ---

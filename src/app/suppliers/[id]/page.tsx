@@ -11,7 +11,7 @@ import {
   type SupplierVerificationState,
 } from "@/lib/supplierVerification"
 import { deriveDirectorVerificationState, type VerificationAttestation } from "@/lib/verificationAttestations"
-import { derivePassportComplianceSnapshot, displayStatusFor, type ComplianceSnapshotItem, type PassportDisplayStatus, type PassportReviewStatus } from "@/lib/supplierPassport"
+import { derivePassportComplianceSnapshot, displayStatusFor, isPublicPassportCredentialStatus, passportEvidenceUrl, type ComplianceSnapshotItem, type PassportDisplayStatus, type PassportReviewStatus } from "@/lib/supplierPassport"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -101,7 +101,6 @@ type PassportSummary = {
   references: PassportReferenceSummary[]
 }
 
-const KEY_CERTIFICATION_STATUSES: PassportDisplayStatus[] = ["Verified", "Expiring soon"]
 const MAX_KEY_CERTIFICATIONS = 6
 const MAX_PUBLIC_PROJECTS = 2
 const MAX_PUBLIC_REFERENCES = 2
@@ -230,14 +229,14 @@ async function getSupplier(id: string): Promise<PublicSupplierProfile> {
     evidence_url: string | null
   }>)
     .map((row) => ({ ...row, displayStatus: displayStatusFor(row.status as PassportReviewStatus, row.expiry_date) }))
-    .filter((row) => KEY_CERTIFICATION_STATUSES.includes(row.displayStatus))
+    .filter((row) => isPublicPassportCredentialStatus(row.displayStatus))
     .slice(0, MAX_KEY_CERTIFICATIONS)
     .map((row) => ({
       id: row.id,
       name: row.name,
       issuing_body: row.issuing_body,
       expiry_date: row.expiry_date,
-      evidence_url: row.evidence_url,
+      evidence_url: passportEvidenceUrl(row.evidence_url),
       displayStatus: row.displayStatus,
     }))
 
@@ -250,14 +249,14 @@ async function getSupplier(id: string): Promise<PublicSupplierProfile> {
     evidence_url: string | null
   }>)
     .map((row) => ({ ...row, displayStatus: displayStatusFor(row.status as PassportReviewStatus, row.expiry_date) }))
-    .filter((row) => KEY_CERTIFICATION_STATUSES.includes(row.displayStatus))
+    .filter((row) => isPublicPassportCredentialStatus(row.displayStatus))
     .slice(0, MAX_KEY_CERTIFICATIONS)
     .map((row) => ({
       id: row.id,
       licence_type: row.licence_type,
       issuing_body: row.issuing_body,
       expiry_date: row.expiry_date,
-      evidence_url: row.evidence_url,
+      evidence_url: passportEvidenceUrl(row.evidence_url),
       displayStatus: row.displayStatus,
     }))
 
@@ -390,6 +389,7 @@ function DetailItem({ label, value }: { label: string; value: string }) {
 }
 
 const PASSPORT_STATUS_STYLES: Record<PassportDisplayStatus, string> = {
+  "Self-reported": "bg-sky-100 text-sky-800",
   Verified: "bg-[#E1F5EE] text-[#085041]",
   "Pending review": "bg-amber-100 text-amber-800",
   "Expiring soon": "bg-amber-100 text-amber-800",
@@ -473,6 +473,9 @@ function PassportSummarySection({ passport }: { passport: PassportSummary }) {
       {hasCertsOrLicences && (
         <div className="rounded-lg border border-stone-200 bg-white p-5 sm:p-6">
           <h2 className="font-display text-xl font-medium text-[#1a3a2a]">Key certifications &amp; licences</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">
+            Unless marked Verified, these items were supplied by the business and have not been independently verified by AiForm Procure.
+          </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {passport.certifications.map((cert) => (
               <div key={cert.id} className="rounded-lg border border-stone-200 bg-[#fbf8f1] p-4">
@@ -483,7 +486,7 @@ function PassportSummarySection({ passport }: { passport: PassportSummary }) {
                 <p className="mt-1 text-xs text-stone-600">{cert.issuing_body || "Certification"}</p>
                 {cert.evidence_url && (
                   <a href={cert.evidence_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1a3a2a] hover:text-[#8c6a2f]">
-                    View evidence <ExternalLinkIcon />
+                    View supporting evidence <ExternalLinkIcon />
                   </a>
                 )}
               </div>
@@ -497,7 +500,7 @@ function PassportSummarySection({ passport }: { passport: PassportSummary }) {
                 <p className="mt-1 text-xs text-stone-600">{licence.issuing_body || "Licence"}</p>
                 {licence.evidence_url && (
                   <a href={licence.evidence_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#1a3a2a] hover:text-[#8c6a2f]">
-                    View evidence <ExternalLinkIcon />
+                    View supporting evidence <ExternalLinkIcon />
                   </a>
                 )}
               </div>
