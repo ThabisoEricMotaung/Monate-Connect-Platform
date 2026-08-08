@@ -721,13 +721,11 @@ function CTABanner() {
 
 function RFQCard({
   rfq,
-  idx,
   isAuth,
   matchesProfile,
   onPreview,
 }: {
   rfq: PublicRFQ
-  idx: number
   isAuth: boolean
   matchesProfile: boolean
   onPreview: (rfq: PublicRFQ) => void
@@ -735,7 +733,6 @@ function RFQCard({
   const daysLeft = daysUntil(getClosingDate(rfq))
   const isClosingSoon = daysLeft !== null && daysLeft >= 0 && daysLeft <= 3
   const isNew = isPostedWithin48h(getPublishedDate(rfq))
-  const blurDesc = !isAuth && (idx + 1) % 3 === 0
   const isExternalOpportunity = Boolean(rfq.is_external_opportunity)
   const externalLabel = rfq.source_name?.trim() || "External"
 
@@ -796,36 +793,6 @@ function RFQCard({
         </div>
       </div>
 
-      {/* Description — blurred for every 3rd card when unauthenticated */}
-      <div className="relative mt-3">
-        <p
-          className={
-            "text-sm leading-relaxed text-secondary line-clamp-2" +
-            (blurDesc ? " select-none blur-sm" : "")
-          }
-        >
-          {rfq.description ?? "No description provided."}
-        </p>
-        {blurDesc && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <button
-              onClick={() => onPreview(rfq)}
-              className="rounded-full border border-panel bg-card px-4 py-1.5 text-xs font-semibold text-secondary shadow hover:bg-surface hover:text-primary"
-            >
-              Preview opportunity
-            </button>
-          </div>
-        )}
-        {!blurDesc && rfq.description && rfq.description.length > 140 && (
-          <button
-            onClick={() => onPreview(rfq)}
-            className="mt-1 text-xs font-semibold text-accent transition hover:text-accent-strong"
-          >
-            Read full scope &rarr;
-          </button>
-        )}
-      </div>
-
       {/* Meta chips */}
       <div className="mt-3 flex flex-wrap gap-2">
         <MetaChip icon={<PinIcon />} label={getRFQProvince(rfq)} />
@@ -841,6 +808,14 @@ function RFQCard({
         <div className="flex items-center gap-3">
           <p className="text-xs text-muted">Closes {formatDate(getClosingDate(rfq))}</p>
           <CopyLinkButton url={`${SITE_URL}/opportunities/${rfq.id}`} title={rfq.title ? normalizeOpportunityTitleCase(rfq.title) : undefined} />
+          {rfq.description && (
+            <button
+              onClick={() => onPreview(rfq)}
+              className="text-xs font-semibold text-accent transition hover:text-accent-strong"
+            >
+              Read full scope &rarr;
+            </button>
+          )}
         </div>
         {isAuth ? (
           isExternalOpportunity && rfq.original_source_url ? (
@@ -1270,7 +1245,6 @@ export default function OpportunitiesPage() {
                     <div key={rfq.id}>
                       <RFQCard
                         rfq={rfq}
-                        idx={idx}
                         isAuth={isAuth}
                         matchesProfile={opportunityMatchScore(rfq, supplierProfile) > 0}
                         onPreview={setPreviewRFQ}
