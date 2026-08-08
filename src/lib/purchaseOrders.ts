@@ -1,9 +1,5 @@
 import { logActivity } from "./activity"
 import { logAuditAction } from "./audit"
-import { notifyPOIssued } from "./automationRules"
-import { createDecisionItem, isHighValue } from "./decisionBoard"
-import { evaluateWorkflowRules } from "./workflowRules"
-import { checkAndLogApprovalRequirement } from "./approvalMatrix"
 import { getCurrentProfile, hasAdminOrBuyerAccess } from "./auth"
 import { supabase } from "./supabase"
 import { fetchSupplierDocumentsForProfile, type SupplierDocument } from "./supplierDocuments"
@@ -137,31 +133,6 @@ export function getEstimatedDeliveryDate(
   return issueDate.toISOString()
 }
 
-export async function generatePONumber(): Promise<string> {
-  if (!supabase) {
-    throw new Error("Supabase environment variables are not configured.")
-  }
-
-  const year = new Date().getFullYear()
-  const prefix = `PO-${year}-`
-  const { data, error } = await supabase
-    .from("purchase_orders")
-    .select("po_number")
-    .like("po_number", `${prefix}%`)
-    .order("po_number", { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (error) throw error
-
-  const lastNumber = data?.po_number
-    ? Number(String(data.po_number).replace(prefix, ""))
-    : 0
-  const nextNumber = Number.isFinite(lastNumber) ? lastNumber + 1 : 1
-
-  return `${prefix}${String(nextNumber).padStart(4, "0")}`
-}
-
 export async function createPurchaseOrder(
   input: CreatePurchaseOrderInput
 ): Promise<PurchaseOrder> {
@@ -169,108 +140,14 @@ export async function createPurchaseOrder(
     throw new Error("Supabase environment variables are not configured.")
   }
 
-  const { data: existingPurchaseOrder, error: existingError } = await supabase
-    .from("purchase_orders")
-    .select(PURCHASE_ORDER_SELECT)
-    .eq("quote_id", input.quoteId)
-    .maybeSingle()
-
-  if (existingError) throw existingError
-  if (existingPurchaseOrder) return existingPurchaseOrder as PurchaseOrder
-
-  // ── Workflow rule evaluation (may block creation) ───────────────────────────
-  const ruleResult = await evaluateWorkflowRules("purchase_order", {
-    amount: parseCurrencyToNum(input.amount),
-    supplier_id: input.supplierId,
-    supplier_name: input.supplierName,
-    title: input.title,
-  }, input.supplierId)
-  if (ruleResult.blocked && ruleResult.blockMessage) {
-    throw new Error(`Workflow rule blocked this action: ${ruleResult.blockMessage}`)
-  }
-
-  const poNumber = await generatePONumber()
-  const { data, error } = await supabase
-    .from("purchase_orders")
-    .insert([
-      {
-        po_number: poNumber,
-        rfq_id: input.rfqId,
-        quote_id: input.quoteId,
-        supplier_id: input.supplierId,
-        supplier_name: input.supplierName,
-        amount: input.amount,
-        timeline: input.timeline,
-        title: input.title,
-        status: "Issued",
-        generated_at: new Date().toISOString(),
-      },
-    ])
-    .select(PURCHASE_ORDER_SELECT)
-    .single()
+  const { data, error } = await supabase.rpc("create_purchase_order_for_award", {
+    p_rfq_id: input.rfqId,
+  })
 
   if (error) throw error
-
-  try {
-    await logAuditAction({
-      action: "purchase_order.generated",
-      entity_type: "purchase_order",
-      entity_id: data.id,
-      old_values: null,
-      new_values: data as Record<string, unknown>,
-      metadata: {
-        rfq_id: input.rfqId,
-        quote_id: input.quoteId,
-        supplier_id: input.supplierId,
-      },
-    })
-    await logActivity({
-      action: "purchase_order.created",
-      entity_type: "purchase_order",
-      entity_id: data.id,
-      metadata: {
-        po_number: data.po_number,
-        rfq_id: input.rfqId,
-        quote_id: input.quoteId,
-        supplier_name: input.supplierName,
-        status: "Issued",
-      },
-    })
-  } catch (activityError) {
-    console.warn("Purchase order audit/activity logging failed:", activityError)
-  }
-
-  await notifyPOIssued(data as PurchaseOrder)
-
-  // Log to decision board for high-value POs (never blocks main action)
-  if (isHighValue(input.amount)) {
-    createDecisionItem({
-      item_type: "purchase_order",
-      entity_id: String(data.id),
-      title: `High-Value PO: ${data.po_number ?? `PO-${data.id}`} — ${input.supplierName ?? "Unknown Supplier"}`,
-      description: `Purchase order issued for R${parseCurrencyToNum(input.amount).toLocaleString("en-ZA")}. RFQ ID: ${input.rfqId}. Supplier: ${input.supplierName}.`,
-      requested_by: input.supplierId,
-      priority: "High",
-    }).catch(() => { /* never block */ })
-  }
-
-  // Approval matrix check — fire-and-forget, never blocks
-  checkAndLogApprovalRequirement(
-    "purchase_order",
-    String(data.id),
-    data.po_number ?? `PO-${data.id}`,
-    parseCurrencyToNum(input.amount),
-    null,
-    input.supplierId
-  )
+  if (!data) throw new Error("Purchase order generation returned no record.")
 
   return data as PurchaseOrder
-}
-
-function parseCurrencyToNum(value: string | null): number {
-  if (!value) return 0
-  const n = Number(value.replace(/[^\d.]/g, ""))
-  return Number.isFinite(n) ? n : 0
 }
 
 export async function getPurchaseOrders(): Promise<PurchaseOrder[]> {

@@ -6,7 +6,6 @@ import { useParams, usePathname, useRouter } from "next/navigation"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import { logActivity } from "@/lib/activity"
 import { logAuditAction } from "@/lib/audit"
-import { notifyQuoteAwarded } from "@/lib/automationRules"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { createContract } from "@/lib/contracts"
 import { createPurchaseOrder } from "@/lib/purchaseOrders"
@@ -16,7 +15,6 @@ import { evaluateWorkflowRules } from "@/lib/workflowRules"
 import { checkRFQCompliance } from "@/lib/policyCompliance"
 import ComplianceBanner from "@/components/compliance/ComplianceBanner"
 import { checkApprovedOverride } from "@/lib/procurementOverrides"
-import { checkAndLogApprovalRequirement } from "@/lib/approvalMatrix"
 
 // --- Types --------------------------------------------------------------------
 
@@ -589,14 +587,6 @@ export default function AdminRFQQuotesPage() {
         metadata: { previous_status: updated?.status ?? null, new_status: status, rfq_id: rfqId, supplier_name: updated?.supplier_name ?? null },
       })
     } catch (err) { console.warn("Quote status audit/activity logging failed:", err) }
-    if (status === "Awarded" && updated) {
-      await notifyQuoteAwarded({
-        ...updated,
-        id: quoteId,
-        status,
-        rfq_title: rfq?.title ?? null,
-      })
-    }
     setQuotes((cur) => cur.map((q) => q.id === quoteId ? { ...q, status } : q))
     setSuccessMessage(`Quote ${quoteId} marked as ${status}.`)
   }
@@ -625,56 +615,18 @@ export default function AdminRFQQuotesPage() {
       }
     }
 
-    // Approval matrix check for the award (fire-and-forget)
-    if (quoteToAward) {
-      checkAndLogApprovalRequirement(
-        "award_recommendation",
-        String(selectedQuoteId),
-        rfq.title ?? `RFQ-${rfqId}`,
-        quoteToAward.amount ? Number(quoteToAward.amount.replace(/[^\d.]/g, "")) : null,
-        null,
-        null
-      )
-    }
-
     if (!window.confirm("Are you sure you want to award this RFQ to this supplier?")) return
 
     setAwardingId(selectedQuoteId)
     setErrorMessage("")
     setSuccessMessage("")
 
-    const { error: e1 } = await supabase.from("quotes").update({ status: "Awarded" }).eq("id", selectedQuoteId).eq("rfq_id", rfqId)
-    if (e1) { setAwardingId(null); setErrorMessage(e1.message); return }
-
-    const { error: e2 } = await supabase.from("quotes").update({ status: "Not Awarded" }).eq("rfq_id", rfqId).neq("id", selectedQuoteId)
-    if (e2) { setAwardingId(null); setErrorMessage(e2.message); return }
-
-    const { error: e3 } = await supabase.from("rfqs").update({ status: "awarded" }).eq("id", rfqId)
+    const { error } = await supabase.rpc("award_rfq_quote", {
+      p_rfq_id: rfqId,
+      p_quote_id: selectedQuoteId,
+    })
     setAwardingId(null)
-    if (e3) { setErrorMessage(e3.message); return }
-
-    try {
-      const selected = quotes.find((q) => q.id === selectedQuoteId)
-      await logAuditAction({
-        action: "quote.awarded",
-        entity_type: "quote",
-        entity_id: selectedQuoteId,
-        old_values: { status: selected?.status ?? null, rfq_status: rfq.status },
-        new_values: { status: "Awarded", rfq_status: "awarded" },
-        metadata: { rfq_id: rfq.id, supplier_id: selected?.supplier_id ?? null, supplier_name: selected?.supplier_name ?? null },
-      })
-      await logActivity({ action: "RFQ awarded", entity_type: "rfq", entity_id: params.id, metadata: { quote_id: selectedQuoteId } })
-    } catch (err) { console.warn("RFQ award audit/activity logging failed:", err) }
-
-    const selected = quotes.find((q) => q.id === selectedQuoteId)
-    if (selected) {
-      await notifyQuoteAwarded({
-        ...selected,
-        id: selectedQuoteId,
-        status: "Awarded",
-        rfq_title: rfq.title,
-      })
-    }
+    if (error) { setErrorMessage(error.message); return }
 
     setRfq((cur) => cur ? { ...cur, status: "awarded" } : cur)
     setQuotes((cur) => cur.map((q) => ({ ...q, status: q.id === selectedQuoteId ? "Awarded" : "Not Awarded" })))

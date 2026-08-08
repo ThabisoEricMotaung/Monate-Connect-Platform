@@ -272,7 +272,9 @@ using (evaluator_id = (select auth.uid()) and (is_admin() or exists (select 1 fr
 
 -- purchase_orders -------------------------------------------------------------
 alter table public.purchase_orders enable row level security;
+drop policy if exists po_insert on public.purchase_orders;
 drop policy if exists po_select on public.purchase_orders;
+revoke insert on public.purchase_orders from authenticated;
 create policy po_select on public.purchase_orders for select to authenticated
 using (
   supplier_id = (select auth.uid())

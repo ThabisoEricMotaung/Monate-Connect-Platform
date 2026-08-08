@@ -19,6 +19,7 @@ export type NotificationType =
   | "RFQ Deadline"
   | "Quote Submitted"
   | "Quote Awarded"
+  | "Quote Not Awarded"
   | "Verification Approved"
   | "Verification Rejected"
   | "Purchase Order Issued"
