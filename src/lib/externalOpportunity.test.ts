@@ -93,7 +93,7 @@ describe("normalizeOpportunityTitleCase", () => {
       normalizeOpportunityTitleCase(
         "SUPPLY OF COMPONENTS ON AN AS AND WHEN REQUIRED BASIS FOR 18 MONTHS",
       ),
-    ).toBe("Supply of Components on an as and when required Basis for 18 Months")
+    ).toBe("Supply of Components on an as and when required basis for 18 Months")
   })
 
   it("leaves genuinely mixed-case titles untouched", () => {

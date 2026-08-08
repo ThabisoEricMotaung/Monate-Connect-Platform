@@ -115,7 +115,10 @@ export function normalizeOpportunityTitleCase(value: string): string {
     return `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`
   })
 
-  return normalized.replace(/\bas and when Required\b/g, "as and when required")
+  return normalized.replace(
+    /\bas and when Required(?: Basis)?\b/g,
+    (phrase) => phrase.toLowerCase(),
+  )
 }
 
 export function resolveExternalOpportunityTitle(
