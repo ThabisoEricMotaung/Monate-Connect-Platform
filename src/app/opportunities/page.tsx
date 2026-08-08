@@ -778,7 +778,7 @@ function RFQCard({
               </span>
             )}
           </div>
-          <h3 className="font-bold text-heading line-clamp-2">
+          <h3 className="font-semibold text-heading line-clamp-2">
             <Link href={`/opportunities/${rfq.id}`} className="hover:text-accent-strong hover:underline">
               {rfq.title ? normalizeOpportunityTitleCase(rfq.title) : "Untitled opportunity"}
             </Link>
