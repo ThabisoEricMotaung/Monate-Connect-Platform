@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   classifyTerminalNotice,
+  normalizeOpportunityTitleCase,
   resolveExternalBuyerName,
   resolveExternalOpportunityTitle,
 } from "@/lib/externalOpportunity"
@@ -59,13 +60,45 @@ describe("resolveExternalOpportunityTitle", () => {
         "15G/2026/27",
         "SUPPLY AND INSTALLATION OF SWITCHGEAR FOR NEW INTERNAL ARC RATED\nINSTALLATIONS",
       ),
-    ).toBe("SUPPLY AND INSTALLATION OF SWITCHGEAR FOR NEW INTERNAL ARC RATED INSTALLATIONS")
+    ).toBe("Supply and Installation of Switchgear for New Internal Arc Rated Installations")
   })
 
   it("caps unusually long source paragraphs", () => {
     const title = resolveExternalOpportunityTitle("RFQ 123", "word ".repeat(100))
     expect(title?.endsWith("…")).toBe(true)
     expect(title!.length).toBeLessThanOrEqual(181)
+  })
+})
+
+describe("normalizeOpportunityTitleCase", () => {
+  it("normalizes uppercase titles while preserving procurement acronyms", () => {
+    expect(
+      normalizeOpportunityTitleCase(
+        "REQUEST FOR PROPOSAL [RFP] FOR ICT SERVICES AND BBBEE VERIFICATION",
+      ),
+    ).toBe("Request for Proposal [RFP] for ICT Services and BBBEE Verification")
+  })
+
+  it("preserves mixed-case brands and known technical names", () => {
+    expect(
+      normalizeOpportunityTitleCase("PROVISION OF CIVIL SERVICES TO PetroSA GTL REFINERY"),
+    ).toBe("Provision of Civil Services to PetroSA GTL Refinery")
+    expect(
+      normalizeOpportunityTitleCase("MIGRATE QLIKVIEW REPORTS TO QLIK FOR ICT USERS"),
+    ).toBe("Migrate QlikView Reports to QLIK for ICT Users")
+  })
+
+  it("keeps the procurement phrase as and when required naturally cased", () => {
+    expect(
+      normalizeOpportunityTitleCase(
+        "SUPPLY OF COMPONENTS ON AN AS AND WHEN REQUIRED BASIS FOR 18 MONTHS",
+      ),
+    ).toBe("Supply of Components on an as and when required Basis for 18 Months")
+  })
+
+  it("leaves genuinely mixed-case titles untouched", () => {
+    const title = "Supply and delivery of C-Band 5G LNB's to regional offices"
+    expect(normalizeOpportunityTitleCase(title)).toBe(title)
   })
 })
 

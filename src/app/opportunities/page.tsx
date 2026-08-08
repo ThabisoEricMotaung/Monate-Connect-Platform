@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import CopyLinkButton from "./[id]/CopyLinkButton"
 import DigestSignupForm from "./DigestSignupForm"
+import { normalizeOpportunityTitleCase } from "@/lib/externalOpportunity"
 
 const SITE_URL = "https://www.aiformprocure.co.za"
 
@@ -619,7 +620,7 @@ function PreviewModal({
         <p className="mb-1 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-accent">
           {getRFQIndustry(rfq)}
         </p>
-        <h2 className="mb-1.5 text-lg font-bold text-heading">{rfq.title ?? "Untitled RFQ"}</h2>
+        <h2 className="mb-1.5 text-lg font-bold text-heading">{rfq.title ? normalizeOpportunityTitleCase(rfq.title) : "Untitled RFQ"}</h2>
         <p className="mb-4 text-sm text-secondary">Issued by {getBuyerName(rfq)}</p>
         <p className="mb-4 text-sm leading-relaxed text-secondary">
           {rfq.description ?? "No description provided."}
@@ -738,20 +739,11 @@ function RFQCard({
   const isExternalOpportunity = Boolean(rfq.is_external_opportunity)
   const externalLabel = rfq.source_name?.trim() || "External"
 
-  // left-border accent: blue =2 days (=48h), amber =3 days
-  const borderAccent =
-    daysLeft !== null && daysLeft >= 0 && daysLeft <= 2
-      ? "border-l-4 border-l-sky-500"
-      : daysLeft !== null && daysLeft >= 0 && daysLeft <= 3
-      ? "border-l-4 border-l-amber-400"
-      : ""
-
   return (
     <article
       className={
         "rounded-md border bg-card p-5 shadow-panel transition hover:border-accent/30 hover:shadow-md " +
-        (matchesProfile ? "border-accent/50 bg-accent/5 ring-1 ring-accent/10 " : "border-panel ") +
-        borderAccent
+        (matchesProfile ? "border-accent/50 bg-accent/5 ring-1 ring-accent/10" : "border-panel")
       }
     >
       <div className="flex items-start justify-between gap-4">
@@ -791,7 +783,7 @@ function RFQCard({
           </div>
           <h3 className="font-bold text-heading line-clamp-2">
             <Link href={`/opportunities/${rfq.id}`} className="hover:text-accent-strong hover:underline">
-              {rfq.title ?? "Untitled opportunity"}
+              {rfq.title ? normalizeOpportunityTitleCase(rfq.title) : "Untitled opportunity"}
             </Link>
           </h3>
           <p className="mt-0.5 text-sm text-secondary">{getBuyerName(rfq)}</p>
@@ -848,7 +840,7 @@ function RFQCard({
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-panel pt-3">
         <div className="flex items-center gap-3">
           <p className="text-xs text-muted">Closes {formatDate(getClosingDate(rfq))}</p>
-          <CopyLinkButton url={`${SITE_URL}/opportunities/${rfq.id}`} title={rfq.title ?? undefined} />
+          <CopyLinkButton url={`${SITE_URL}/opportunities/${rfq.id}`} title={rfq.title ? normalizeOpportunityTitleCase(rfq.title) : undefined} />
         </div>
         {isAuth ? (
           isExternalOpportunity && rfq.original_source_url ? (

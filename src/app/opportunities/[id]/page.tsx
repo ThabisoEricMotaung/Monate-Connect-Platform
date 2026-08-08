@@ -6,6 +6,7 @@ import BackLink from "@/components/BackLink"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import CopyLinkButton from "./CopyLinkButton"
+import { normalizeOpportunityTitleCase } from "@/lib/externalOpportunity"
 
 // Server-rendered detail page for a single public opportunity. The main
 // /opportunities page is a client component (search/filter state), which
@@ -134,7 +135,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const rfq = await getOpportunity(id)
   if (!rfq) return { title: "Opportunity not found - AiForm Procure" }
 
-  const title = `${rfq.title ?? "Open tender"} - AiForm Procure`
+  const displayTitle = rfq.title ? normalizeOpportunityTitleCase(rfq.title) : "Open tender"
+  const title = `${displayTitle} - AiForm Procure`
   const description = plainSummary(rfq)
   const url = `${SITE_URL}/opportunities/${rfq.id}`
 
@@ -143,7 +145,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     alternates: { canonical: url },
     openGraph: {
-      title: rfq.title ?? "Open tender",
+      title: displayTitle,
       description,
       url,
       siteName: "AiForm Procure",
@@ -151,7 +153,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: "summary",
-      title: rfq.title ?? "Open tender",
+      title: displayTitle,
       description,
     },
   }
@@ -207,7 +209,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
           <p className="mb-1 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-accent">
             {industryLabel(rfq)}
           </p>
-          <h1 className="newspaper-headline mb-2">{rfq.title ?? "Untitled opportunity"}</h1>
+          <h1 className="newspaper-headline mb-2">{rfq.title ? normalizeOpportunityTitleCase(rfq.title) : "Untitled opportunity"}</h1>
           <p className="mb-6 text-sm text-secondary">Issued by {buyerLabel(rfq)}</p>
 
           <div className="mb-6 flex flex-wrap gap-2">
@@ -271,7 +273,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
 
           <div className="flex flex-wrap items-center gap-3 border-t border-panel pt-5">
             <p className="text-xs text-muted">Know a supplier who&apos;d want this one?</p>
-            <CopyLinkButton url={shareUrl} title={rfq.title ?? undefined} />
+            <CopyLinkButton url={shareUrl} title={rfq.title ? normalizeOpportunityTitleCase(rfq.title) : undefined} />
             <Link href="/opportunities" className="text-xs font-semibold text-accent hover:underline">
               Browse all open opportunities &rarr;
             </Link>
