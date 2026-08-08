@@ -40,6 +40,7 @@ type PublicRFQDetail = {
   is_external_opportunity: boolean | null
   original_source_url: string | null
   source_name: string | null
+  curation_status: string | null
 }
 
 const SITE_URL = "https://www.aiformprocure.co.za"
@@ -63,10 +64,13 @@ async function getOpportunity(id: string): Promise<PublicRFQDetail | null> {
   const { data, error } = await supabase
     .from("rfqs")
     .select(
-      "id,title,description,province,provinces,category,industry,budget,estimated_value_min,estimated_value_max,closing_date,published_date,created_at,status,buyer_name,buyer_org,bbbee_requirement,is_external_opportunity,original_source_url,source_name"
+      "id,title,description,province,provinces,category,industry,budget,estimated_value_min,estimated_value_max,closing_date,published_date,created_at,status,buyer_name,buyer_org,bbbee_requirement,is_external_opportunity,original_source_url,source_name,curation_status"
     )
     .eq("id", numericId)
     .eq("is_public", true)
+    .ilike("status", "open")
+    .gt("closing_date", new Date().toISOString())
+    .or("is_external_opportunity.is.null,is_external_opportunity.eq.false,curation_status.eq.approved")
     .maybeSingle()
 
   if (error || !data) return null
@@ -181,7 +185,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
                 {rfq.source_name?.trim() || "External"}
               </span>
             )}
-            {isExternal && (
+            {isExternal && rfq.curation_status === "approved" && (
               <span
                 title="A member of our team checked this listing before it was published — see the Trust Center for how opportunity sourcing works."
                 className="rounded-full border border-panel bg-surface px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-secondary"

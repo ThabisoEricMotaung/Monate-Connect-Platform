@@ -39,6 +39,7 @@ type PublicRFQ = {
   is_external_opportunity?: boolean | null
   original_source_url?: string | null
   source_name?: string | null
+  curation_status?: string | null
 }
 
 type SortKey = "deadline" | "newest" | "value"
@@ -233,11 +234,12 @@ async function fetchPublicRFQs(): Promise<PublicRFQ[]> {
   const { data, error } = await supabase
     .from("rfqs")
     .select(
-      "id,title,description,buyer_name,buyer_org,industry,category,province,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count,is_external_opportunity,original_source_url,source_name"
+      "id,title,description,buyer_name,buyer_org,industry,category,province,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count,is_external_opportunity,original_source_url,source_name,curation_status"
     )
     .ilike("status", "open")
     .gt("closing_date", new Date().toISOString())
     .eq("is_public", true)
+    .or("is_external_opportunity.is.null,is_external_opportunity.eq.false,curation_status.eq.approved")
     .order("closing_date", { ascending: true, nullsFirst: false })
   if (error) {
     console.warn("Public opportunities fetch failed:", error.message)
@@ -778,7 +780,7 @@ function RFQCard({
                 {externalLabel}
               </span>
             )}
-            {isExternalOpportunity && (
+            {isExternalOpportunity && rfq.curation_status === "approved" && (
               <span
                 title="A member of our team checked this listing before it was published — see the Trust Center for how opportunity sourcing works."
                 className="rounded-full border border-panel bg-surface px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-secondary"

@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
+import {
+  classifyTerminalNotice,
+  resolveExternalBuyerName,
+  resolveExternalOpportunityTitle,
+  type TerminalNoticeReason,
+} from "@/lib/externalOpportunity"
 
 // Syncs open tender opportunities from the National Treasury eTenders OCDS
 // Release API (public, unauthenticated) into public.rfqs as drafts for
@@ -22,6 +28,7 @@ type OcdsValue = {
 type OcdsDocument = {
   id?: string | null
   title?: string | null
+  description?: string | null
   url?: string | null
   documentType?: string | null
 }
@@ -57,6 +64,7 @@ type OcdsTender = {
   tenderPeriod?: OcdsTenderPeriod | null
   items?: OcdsTenderItem[] | null
   documents?: OcdsDocument[] | null
+  procuringEntity?: OcdsBuyer | null
 }
 
 type OcdsBuyer = {
@@ -84,6 +92,7 @@ type SyncStateRow = {
 
 type RfqUpsertPayload = {
   external_ocid: string
+  external_reference: string
   title: string
   description: string
   category: string
@@ -91,14 +100,17 @@ type RfqUpsertPayload = {
   province: string | null
   closing_date: string
   deadline: string
-  status: "draft"
+  status: string
   is_external_opportunity: true
-  is_public: true
+  is_public: boolean
+  curation_status: "not_required" | "pending" | "approved" | "quarantined"
+  curation_reason: string | null
   source_name: string
   original_source_url: string | null
   estimated_value_min: number | null
   estimated_value_max: number | null
   budget: string | null
+  buyer_org: string | null
 }
 
 function cronAuthorized(request: Request): boolean {
@@ -158,15 +170,17 @@ function resolveSourceUrl(tender: OcdsTender): string | null {
 function toRfqPayload(release: OcdsRelease): RfqUpsertPayload | null {
   const tender = release.tender
   const ocid = release.ocid?.trim()
-  const title = tender?.title?.trim()
+  const externalReference = tender?.title?.trim()
+  const title = resolveExternalOpportunityTitle(externalReference, tender?.description)
   const endDate = tender?.tenderPeriod?.endDate
 
-  if (!ocid || !tender || !title || !endDate) return null
+  if (!ocid || !tender || !externalReference || !title || !endDate) return null
 
   const category = resolveCategory(tender)
 
   return {
     external_ocid: ocid,
+    external_reference: externalReference,
     title,
     description: buildDescription(tender),
     category,
@@ -176,7 +190,9 @@ function toRfqPayload(release: OcdsRelease): RfqUpsertPayload | null {
     deadline: endDate,
     status: "draft",
     is_external_opportunity: true,
-    is_public: true,
+    is_public: false,
+    curation_status: "pending",
+    curation_reason: null,
     source_name: SOURCE_NAME,
     original_source_url: resolveSourceUrl(tender),
     // estimated_value_min/max are the numeric source of truth. `budget` is a
@@ -185,6 +201,7 @@ function toRfqPayload(release: OcdsRelease): RfqUpsertPayload | null {
     estimated_value_min: tender.value?.amount ?? null,
     estimated_value_max: tender.value?.amount ?? null,
     budget: tender.value?.amount != null ? String(tender.value.amount) : null,
+    buyer_org: resolveExternalBuyerName(release.buyer?.name, tender.procuringEntity?.name),
   }
 }
 
@@ -234,12 +251,16 @@ export async function GET(request: Request) {
   let fetched = 0
   let stillOpen = 0
   let skippedIncomplete = 0
+  let skippedTerminal = 0
+  const terminalReasons: Partial<Record<TerminalNoticeReason, number>> = {}
   let upserted = 0
+  let quarantined = 0
   let errors = 0
   const errorMessages: string[] = []
 
   try {
-    const releasesToUpsert: RfqUpsertPayload[] = []
+    const releasesToUpsert = new Map<string, RfqUpsertPayload>()
+    const terminalOcids = new Map<string, TerminalNoticeReason>()
     let nextParams: URLSearchParams | null = new URLSearchParams({
       PageNumber: "1",
       PageSize: String(PAGE_SIZE),
@@ -255,6 +276,19 @@ export async function GET(request: Request) {
       fetched += releases.length
 
       for (const release of releases) {
+        const terminalReason = classifyTerminalNotice({
+          reference: release.tender?.title,
+          description: release.tender?.description,
+          documents: release.tender?.documents,
+        })
+        if (terminalReason) {
+          skippedTerminal += 1
+          terminalReasons[terminalReason] = (terminalReasons[terminalReason] ?? 0) + 1
+          const terminalOcid = release.ocid?.trim()
+          if (terminalOcid) terminalOcids.set(terminalOcid, terminalReason)
+          continue
+        }
+
         if (!isStillOpen(release.tender, now)) continue
         stillOpen += 1
 
@@ -264,7 +298,7 @@ export async function GET(request: Request) {
           continue
         }
 
-        releasesToUpsert.push(payload)
+        releasesToUpsert.set(payload.external_ocid, payload)
       }
 
       if (releases.length < PAGE_SIZE) {
@@ -279,10 +313,37 @@ export async function GET(request: Request) {
       }
     }
 
-    if (releasesToUpsert.length > 0) {
+    const payloads = [...releasesToUpsert.values()]
+    if (payloads.length > 0) {
+      // Preserve the review/publication lifecycle when a later compiled OCDS
+      // release refreshes an already-curated opportunity.
+      for (let offset = 0; offset < payloads.length; offset += 200) {
+        const batch = payloads.slice(offset, offset + 200)
+        const { data: existingData, error: existingError } = await supabaseAdmin
+          .from("rfqs")
+          .select("external_ocid,status,is_public,curation_status,curation_reason")
+          .in("external_ocid", batch.map((payload) => payload.external_ocid))
+
+        if (existingError) throw existingError
+        const existingByOcid = new Map(
+          (existingData ?? []).map((row) => [row.external_ocid, row]),
+        )
+
+        for (const payload of batch) {
+          const existing = existingByOcid.get(payload.external_ocid)
+          if (!existing) continue
+          payload.status = existing.status ?? payload.status
+          payload.is_public = existing.is_public ?? payload.is_public
+          payload.curation_status =
+            (existing.curation_status as RfqUpsertPayload["curation_status"] | null) ??
+            payload.curation_status
+          payload.curation_reason = existing.curation_reason ?? payload.curation_reason
+        }
+      }
+
       const { error: upsertError, data: upsertData } = await supabaseAdmin
         .from("rfqs")
-        .upsert(releasesToUpsert, { onConflict: "external_ocid" })
+        .upsert(payloads, { onConflict: "external_ocid" })
         .select("id")
 
       if (upsertError) {
@@ -290,8 +351,35 @@ export async function GET(request: Request) {
         errorMessages.push(upsertError.message)
         console.error("eTenders sync upsert failed:", upsertError)
       } else {
-        upserted = upsertData?.length ?? releasesToUpsert.length
+        upserted = upsertData?.length ?? payloads.length
       }
+    }
+
+    for (const reason of [
+      "regret_letter",
+      "award_notice",
+      "unsuccessful_bidder_letter",
+      "tender_cancellation",
+    ] satisfies TerminalNoticeReason[]) {
+      const ocids = [...terminalOcids]
+        .filter(([, terminalReason]) => terminalReason === reason)
+        .map(([ocid]) => ocid)
+      if (ocids.length === 0) continue
+      const { data: quarantinedData, error: quarantineError } = await supabaseAdmin
+        .from("rfqs")
+        .update({
+          status: "closed",
+          is_public: false,
+          curation_status: "quarantined",
+          curation_reason: reason,
+          curated_at: now.toISOString(),
+        })
+        .in("external_ocid", ocids)
+        .eq("is_external_opportunity", true)
+        .select("id")
+
+      if (quarantineError) throw quarantineError
+      quarantined += quarantinedData?.length ?? 0
     }
 
     const summary = {
@@ -301,7 +389,10 @@ export async function GET(request: Request) {
       fetched,
       stillOpen,
       skippedIncomplete,
+      skippedTerminal,
+      terminalReasons,
       upserted,
+      quarantined,
       errors,
     }
 
@@ -325,7 +416,14 @@ export async function GET(request: Request) {
       {
         id: 1,
         last_run_at: now.toISOString(),
-        last_run_summary: { error: message, fetched, stillOpen, skippedIncomplete },
+        last_run_summary: {
+          error: message,
+          fetched,
+          stillOpen,
+          skippedIncomplete,
+          skippedTerminal,
+          terminalReasons,
+        },
       },
       { onConflict: "id" },
     )
