@@ -1,4 +1,4 @@
-+-- Adds explicit provenance and curation state for externally-sourced opportunities.
+﻿-- Adds explicit provenance and curation state for externally-sourced opportunities.
 -- Public application queries only expose external rows that have been approved.
 --
 -- The nine terminal notices below were individually reviewed and quarantined on
