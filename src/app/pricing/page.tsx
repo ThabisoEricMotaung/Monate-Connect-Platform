@@ -17,7 +17,6 @@ const supplierFeatures = [
   "Browse and respond to RFQs",
   "Quote submission and PO management",
   "Procurement Glossary and Help Centre",
-  "Thuso AI procurement assistant",
 ]
 
 const buyerFeatures = [
