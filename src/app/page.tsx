@@ -1,9 +1,11 @@
+
 import Link from "next/link"
 import Image from "next/image"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import GazetteHeader from "@/components/home/GazetteHeader"
 import HeroSection from "@/components/home/HeroSection"
+import OpportunityStatStrip from "@/components/home/OpportunityStatStrip"
 import InfoCards from "@/components/home/InfoCards"
 import CTASection from "@/components/home/CTASection"
 import TrustStrip from "@/components/home/TrustStrip"
@@ -146,7 +148,7 @@ function MakersMark() {
   )
 }
 
-export default function Home() {
+export default async function Home() {
   return (
     <>
       <AccountDeletedNotice />
@@ -155,6 +157,7 @@ export default function Home() {
       <main className="min-h-screen bg-page text-primary">
         <IncompleteRegistrationBanner />
         <HeroSection />
+        <OpportunityStatStrip />
         <InfoCards />
         <MakersMark />
         <CTASection />
