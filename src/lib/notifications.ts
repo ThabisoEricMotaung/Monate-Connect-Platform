@@ -23,6 +23,7 @@ export type NotificationType =
   | "Verification Approved"
   | "Verification Rejected"
   | "Purchase Order Issued"
+  | "Contract Created"
   | "Contract Expiring"
   | "Invoice Approved"
   | "Payment Paid"
