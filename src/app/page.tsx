@@ -5,7 +5,7 @@ import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import GazetteHeader from "@/components/home/GazetteHeader"
 import HeroSection from "@/components/home/HeroSection"
-import OpportunityStatStrip from "@/components/home/OpportunityStatStrip"
+import OpportunityStatsBanner from "@/components/home/OpportunityStatsBanner"
 import InfoCards from "@/components/home/InfoCards"
 import CTASection from "@/components/home/CTASection"
 import TrustStrip from "@/components/home/TrustStrip"
@@ -157,7 +157,7 @@ export default async function Home() {
       <main className="min-h-screen bg-page text-primary">
         <IncompleteRegistrationBanner />
         <HeroSection />
-        <OpportunityStatStrip />
+        <OpportunityStatsBanner />
         <InfoCards />
         <MakersMark />
         <CTASection />

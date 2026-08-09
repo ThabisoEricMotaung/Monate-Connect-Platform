@@ -265,7 +265,7 @@ export default function HeroSection() {
             </span>
           </h1>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: "#3a4a3a", maxWidth: 480, margin: "0 0 18px" }}>
-            Browse curator-reviewed public tenders and RFQs by industry, province and closing date&mdash;with links to original sources.
+            Browse automatically screened public tenders and RFQs by industry, province and closing date&mdash;with links to original sources.
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a8a7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
