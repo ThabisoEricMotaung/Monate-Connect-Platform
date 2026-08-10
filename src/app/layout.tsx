@@ -30,6 +30,7 @@ const libreFranklin = Libre_Franklin({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.aiformprocure.co.za"),
   title: "AiForm Procure",
   description:
     "Enterprise procurement portal for suppliers, RFQs, quotes, and verification.",

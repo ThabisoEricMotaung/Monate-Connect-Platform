@@ -12,8 +12,32 @@ import TrustStrip from "@/components/home/TrustStrip"
 import AccountDeletedNotice from "@/components/AccountDeletedNotice"
 import IncompleteRegistrationBanner from "@/components/IncompleteRegistrationBanner"
 import DigestSignupForm from "@/app/opportunities/DigestSignupForm"
+import type { Metadata } from "next"
 
 export const dynamic = "force-dynamic"
+
+const title = "Government Tenders & RFQs in South Africa | AiForm Procure"
+const description = "Find live South African government tenders and RFQs sourced from public procurement listings, with deadlines, provinces, categories, and original-source links."
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: { canonical: "/" },
+  openGraph: {
+    title,
+    description,
+    url: "/",
+    siteName: "AiForm Procure",
+    type: "website",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "AiForm Procure — South African procurement opportunities" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: ["/opengraph-image"],
+  },
+}
 
 const audienceCards = [
   {
