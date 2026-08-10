@@ -2,7 +2,21 @@ import type { MetadataRoute } from "next"
 import { createClient } from "@supabase/supabase-js"
 
 const SITE_URL = "https://www.aiformprocure.co.za"
-const PUBLIC_ROUTES = ["", "/opportunities", "/suppliers", "/trust", "/pricing", "/about", "/contact"] as const
+const PUBLIC_ROUTES = [
+  "",
+  "/opportunities",
+  "/suppliers",
+  "/trust",
+  "/pricing",
+  "/about",
+  "/contact",
+  "/guides",
+  "/guides/pppfa",
+  "/guides/bbbee",
+  "/guides/cidb-grading",
+  "/guides/coida-uif",
+  "/guides/tax-compliance-status",
+] as const
 
 type SitemapOpportunity = {
   id: number
