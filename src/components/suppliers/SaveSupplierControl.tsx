@@ -6,7 +6,7 @@ import {
   saveSupplier,
   unsaveSupplier,
 } from "@/lib/savedSuppliers"
-import { useI18n } from "@/lib/i18n"
+import { useTranslations } from "next-intl"
 
 type SaveSupplierControlProps = {
   supplierId: string
@@ -19,7 +19,7 @@ export default function SaveSupplierControl({
   compact = false,
   onRemoved,
 }: SaveSupplierControlProps) {
-  const { t } = useI18n()
+  const t = useTranslations("legacy")
   const [saved, setSaved] = useState(false)
   const [notes, setNotes] = useState("")
   const [loading, setLoading] = useState(true)

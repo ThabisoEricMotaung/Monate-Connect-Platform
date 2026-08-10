@@ -8,7 +8,7 @@ import {
   calculateSupplierPerformance,
   type SupplierPerformanceReview,
 } from "@/lib/supplierPerformance"
-import { useI18n } from "@/lib/i18n"
+import { useTranslations } from "next-intl"
 import { displayIndustry } from "@/lib/industries"
 import { SUPPLIER_SMART_SCORE_PROFILE_SELECT, type SmartScoreResult } from "@/lib/smartScore"
 import { getCanonicalSupplierSmartScoreBatch } from "@/lib/supplierScoring"
@@ -154,7 +154,7 @@ function PerformanceScore({ reviews }: { reviews: SupplierPerformanceReview[] })
 }
 
 export default function SuppliersDirectoryPage() {
-  const { t } = useI18n()
+  const t = useTranslations("legacy")
   const [suppliers, setSuppliers] = useState<SupplierProfile[]>([])
   const [search, setSearch] = useState("")
   const [provinceFilter, setProvinceFilter] = useState("")

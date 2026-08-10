@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { Libre_Franklin, Playfair_Display, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
-import { I18nProvider } from "@/lib/i18n";
 import AppChrome from "@/components/layout/AppChrome";
 
 const playfair = Playfair_Display({
@@ -64,14 +65,16 @@ const accessibilityScript = `(function() {
   } catch (e) {}
 })();`;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [locale, messages] = await Promise.all([getLocale(), getMessages()]);
+
   return (
     <html
-      lang="en"
+      lang={locale}
       data-font-size="normal"
       data-contrast="standard"
       data-motion="standard"
@@ -94,9 +97,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-full bg-page text-primary font-sans">
         <ThemeProvider>
-          <I18nProvider>
+          <NextIntlClientProvider locale={locale} messages={messages} timeZone="Africa/Johannesburg">
             <AppChrome>{children}</AppChrome>
-          </I18nProvider>
+          </NextIntlClientProvider>
         </ThemeProvider>
       </body>
     </html>

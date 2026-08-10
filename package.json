@@ -19,6 +19,7 @@
     "africastalking": "^0.7.9",
     "aws4fetch": "^1.0.20",
     "next": "15.5.18",
+    "next-intl": "4.13.5",
     "puppeteer": "^25.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

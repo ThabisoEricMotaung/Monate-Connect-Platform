@@ -31,14 +31,15 @@ import ProcurementWire from "@/components/ProcurementWire"
 import { usePageTracking } from "@/hooks/useSessionTracking"
 import { hasAdminOrBuyerAccess } from "@/lib/auth"
 import { getAdminNavGroups, getBuyerNavGroups } from "@/lib/dashboardNavigation"
-import { useI18n, type TranslationKey } from "@/lib/i18n"
+import { useTranslations } from "next-intl"
+import type { LegacyTranslationKey } from "@/i18n/config"
 import { roleHomeHref } from "@/lib/navigation"
 import { supabase } from "@/lib/supabase"
 import { getInboxUnreadCounts, subscribeToInboxActivity } from "@/lib/inboxCounts"
 import { hasCompletedRegistration } from "@/lib/registration"
 
 type SupplierNavigationName =
-  | TranslationKey
+  | LegacyTranslationKey
   | "Banking details"
   | "Business profile"
   | "Contracts"
@@ -192,7 +193,7 @@ const supplierNavigationSections: { title: "Top" | "Work" | "Profile" | "Discove
   { title: "Pinned", label: null },
 ]
 
-function supplierNavigationLabel(name: SupplierNavigationName, t: (key: TranslationKey) => string) {
+function supplierNavigationLabel(name: SupplierNavigationName, t: (key: LegacyTranslationKey) => string) {
   if (
     name === "dashboard" ||
     name === "rfqs" ||
@@ -212,7 +213,7 @@ export default function DashboardLayout({
 }: {
   children: ReactNode
 }) {
-  const { t } = useI18n()
+  const t = useTranslations("legacy")
   const router = useRouter()
   const pathname = usePathname() || ""
   usePageTracking()

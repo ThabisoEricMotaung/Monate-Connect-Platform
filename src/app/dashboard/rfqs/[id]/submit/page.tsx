@@ -5,7 +5,7 @@ import { useAutosave } from "@/hooks/useAutosave"
 import { logActivity } from "@/lib/activity"
 import { logAuditAction } from "@/lib/audit"
 import { getCurrentUser } from "@/lib/auth"
-import { useI18n } from "@/lib/i18n"
+import { useTranslations } from "next-intl"
 import { createNotificationsForRoles } from "@/lib/notifications"
 import { getRFQDisplayStatus } from "@/lib/rfq-deadline"
 import { supabase } from "@/lib/supabase"
@@ -260,7 +260,7 @@ function buildTenderResponse(
 // --- Page ---------------------------------------------------------------------
 
 export default function SubmitQuotePage() {
-  const { t } = useI18n()
+  const t = useTranslations("legacy")
   const params = useParams<{ id: string }>()
   const router = useRouter()
 

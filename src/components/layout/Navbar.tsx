@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useI18n } from "@/lib/i18n"
+import { useTranslations } from "next-intl"
 import { usePathname } from "next/navigation"
 import { useRouter } from "next/navigation"
 import BrandMark from "@/components/BrandMark"
@@ -31,7 +31,7 @@ const publicRoutes = new Set([
 ])
 
 export default function Navbar() {
-  const { t } = useI18n()
+  const t = useTranslations("legacy")
   const router = useRouter()
   const pathname = usePathname() || ""
   const [isOauthRegistration, setIsOauthRegistration] = useState(false)

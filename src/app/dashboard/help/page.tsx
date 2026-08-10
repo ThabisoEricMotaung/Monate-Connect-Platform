@@ -19,10 +19,12 @@ import {
   IconSettings,
   IconShieldCheck,
   IconUsers,
-  IconWorld,
   type Icon,
 } from "@tabler/icons-react"
 import { useMemo, useRef, useState } from "react"
+import { useLocale } from "next-intl"
+import LanguageSwitcher from "@/components/LanguageSwitcher"
+import { isAppLocale } from "@/i18n/config"
 
 type GuideType = "user" | "admin"
 type Language = "en" | "zu" | "af"
@@ -639,12 +641,6 @@ const guideLabels: { key: GuideType; label: string }[] = [
   { key: "user", label: "End User Guide" },
   { key: "admin", label: "Admin Guide" },
 ]
-const languages: { key: Language; label: string }[] = [
-  { key: "en", label: "EN" },
-  { key: "zu", label: "ZU" },
-  { key: "af", label: "AF" },
-]
-
 function sectionSearchText(section: HelpSection, language: Language) {
   return [
     section.title[language],
@@ -656,8 +652,9 @@ function sectionSearchText(section: HelpSection, language: Language) {
 }
 
 export default function HelpCentrePage() {
+  const locale = useLocale()
+  const activeLanguage: Language = isAppLocale(locale) ? locale : "en"
   const [activeGuide, setActiveGuide] = useState<GuideType>("user")
-  const [activeLanguage, setActiveLanguage] = useState<Language>("en")
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const expandedPanelRef = useRef<HTMLDivElement | null>(null)
@@ -716,20 +713,8 @@ export default function HelpCentrePage() {
                 ))}
               </div>
 
-              <div className="inline-flex items-center gap-1 rounded-md border border-[#1a3a2a]/15 bg-[#f0ebe0] p-1">
-                <IconWorld className="ml-2 h-4 w-4 text-[#1a3a2a]" aria-hidden />
-                {languages.map((language) => (
-                  <button
-                    key={language.key}
-                    type="button"
-                    onClick={() => setActiveLanguage(language.key)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
-                      activeLanguage === language.key ? "bg-[#1a3a2a] text-[#c8a060]" : "text-[#1a3a2a] hover:bg-white"
-                    }`}
-                  >
-                    {language.label}
-                  </button>
-                ))}
+              <div className="rounded-md border border-[#1a3a2a]/15 bg-[#f0ebe0] px-3 py-1">
+                <LanguageSwitcher variant="inline" />
               </div>
             </div>
           </div>
