@@ -4,6 +4,7 @@ import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import { getCanonicalSupplierSmartScore } from "@/lib/supplierScoring"
+import { formatSmartScoreBand } from "@/lib/smartScore"
 import type { SupplierDocument } from "@/lib/supplierDocuments"
 import {
   deriveSupplierVerificationState,
@@ -293,24 +294,19 @@ function asNumber(value: number | string | null | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-function formatScore(value: number | string | null | undefined): string {
-  const score = asNumber(value)
-  if (score === null) return "-"
-  return String(Math.round(Math.min(100, Math.max(0, score))))
-}
-
 function statusLabel(status: string | null | undefined): string {
   return status?.trim() || "Pending Review"
 }
 
-function displayScore(value: number | string | null | undefined, verified: boolean, provisional: boolean): string {
-  // Deliberately suppress the numeric SmartScore whenever a document is
+function displayScoreBand(value: number | string | null | undefined, verified: boolean, provisional: boolean): string {
+  // Deliberately suppress the SmartScore band whenever a document is
   // still outstanding (provisional) or the supplier isn't fully verified —
   // do not "simplify" this back to always showing the stored score. This is
   // the exact bug we fixed: a supplier previously showed a SmartScore of 100
   // while their tax clearance was still unverified.
   if (!verified || provisional) return "In review"
-  return formatScore(value)
+  const score = asNumber(value)
+  return score === null ? "-" : formatSmartScoreBand(score)
 }
 
 function coverGradient(name: string | null | undefined): string {
@@ -628,7 +624,7 @@ export default async function SupplierProfilePage({ params }: Props) {
                 </div>
                 <div className="w-fit rounded-lg border bg-white px-4 py-3 text-center" style={{ borderColor: GOLD }}>
                   <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>SmartScore</p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-[#1a3a2a]">{displayScore(supplier.smart_score, verifiedSupplier, provisionallyVerified)}</p>
+                  <p className="mt-1 max-w-[240px] text-lg font-bold leading-snug text-[#1a3a2a]">{displayScoreBand(supplier.smart_score, verifiedSupplier, provisionallyVerified)}</p>
                 </div>
               </div>
 
@@ -701,7 +697,7 @@ export default async function SupplierProfilePage({ params }: Props) {
             <p className="text-[0.7rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
               SmartScore
             </p>
-            <p className="mt-3 font-display text-5xl font-medium leading-none text-[#1a3a2a]">{displayScore(supplier.smart_score, verifiedSupplier, provisionallyVerified)}</p>
+            <p className="mt-3 font-display text-2xl font-medium leading-tight text-[#1a3a2a]">{displayScoreBand(supplier.smart_score, verifiedSupplier, provisionallyVerified)}</p>
             <p className="mt-3 text-sm leading-6 text-stone-600">
               {provisionallyVerified
                 ? "Provisionally approved — one verification category remains in review"

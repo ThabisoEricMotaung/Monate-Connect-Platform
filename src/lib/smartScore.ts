@@ -12,6 +12,21 @@ export type SmartScoreLevel =
 
 export type SmartScoreTone = "red" | "orange" | "blue" | "green" | "gold"
 
+export type SmartScoreBand = {
+  min: number
+  max: number
+  label: SmartScoreLevel
+  tone: SmartScoreTone
+}
+
+export const SMART_SCORE_BANDS: readonly SmartScoreBand[] = [
+  { min: 0, max: 39, label: "Emerging Supplier / High Risk", tone: "red" },
+  { min: 40, max: 59, label: "Developing Supplier", tone: "orange" },
+  { min: 60, max: 74, label: "Reliable Supplier", tone: "blue" },
+  { min: 75, max: 84, label: "Trusted Supplier", tone: "green" },
+  { min: 85, max: 100, label: "Elite Supplier", tone: "gold" },
+]
+
 export type SmartScoreResult = {
   score: number
   label: SmartScoreLevel
@@ -203,24 +218,19 @@ function clampScore(score: number): number {
   return Math.max(0, Math.min(100, Math.round(score)))
 }
 
+export function getSmartScoreBand(score: number): SmartScoreBand {
+  const normalizedScore = clampScore(score)
+  return SMART_SCORE_BANDS.find((band) => normalizedScore <= band.max) ?? SMART_SCORE_BANDS[SMART_SCORE_BANDS.length - 1]
+}
+
+export function formatSmartScoreBand(score: number): string {
+  const band = getSmartScoreBand(score)
+  return `${band.label} (${band.min}-${band.max})`
+}
+
 function getLevel(score: number): Pick<SmartScoreResult, "label" | "tone"> {
-  if (score <= 39) {
-    return { label: "Emerging Supplier / High Risk", tone: "red" }
-  }
-
-  if (score <= 59) {
-    return { label: "Developing Supplier", tone: "orange" }
-  }
-
-  if (score <= 74) {
-    return { label: "Reliable Supplier", tone: "blue" }
-  }
-
-  if (score <= 84) {
-    return { label: "Trusted Supplier", tone: "green" }
-  }
-
-  return { label: "Elite Supplier", tone: "gold" }
+  const { label, tone } = getSmartScoreBand(score)
+  return { label, tone }
 }
 
 const isVerified = isVerifiedStatus

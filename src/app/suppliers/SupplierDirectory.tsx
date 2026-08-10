@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import BackLink from "@/components/BackLink"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 import { displayIndustry } from "@/lib/industries"
+import { getSmartScoreBand } from "@/lib/smartScore"
 import { supabase } from "@/lib/supabase"
 import {
   getSupplierDirectoryVerificationStatus,
@@ -50,12 +51,6 @@ function asNumber(value: number | string | null | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-function formatScore(value: number | string | null | undefined): string {
-  const score = asNumber(value)
-  if (score === null) return "-"
-  return String(Math.round(Math.min(100, Math.max(0, score))))
-}
-
 function levelValue(value: string | null | undefined): string {
   const match = (value ?? "").match(/(?:level|l)\s*(\d)/i)
   return match ? `L${match[1]}` : (value ?? "").trim()
@@ -91,6 +86,11 @@ function isPublicVerifiedSupplier(supplier: PublicSupplierDirectoryRow): boolean
     supplier.verification_state,
     supplier.director_verified,
   ) === "verified"
+}
+
+function publicScoreBand(value: number | string | null | undefined) {
+  const score = asNumber(value)
+  return score === null ? null : getSmartScoreBand(score)
 }
 
 function isProvisionallyVerifiedSupplier(supplier: PublicSupplierDirectoryRow): boolean {
@@ -156,10 +156,21 @@ function InfoPill({ children, tint = "neutral" }: { children: React.ReactNode; t
 }
 
 function ScoreBadge({ score, inReview = false }: { score: number | string | null; inReview?: boolean }) {
+  const band = publicScoreBand(score)
+
   return (
-    <div className="min-w-[68px] rounded-lg border bg-white px-3 py-2 text-center" style={{ borderColor: GOLD }}>
-      <p className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>{inReview ? "In review" : "Score"}</p>
-      <p className="mt-0.5 text-[19px] font-medium leading-none text-[#1f2f28] tabular-nums">{formatScore(score)}</p>
+    <div className="max-w-[180px] rounded-lg border bg-white px-3 py-2 text-right" style={{ borderColor: GOLD }}>
+      <p className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>SmartScore</p>
+      {inReview ? (
+        <p className="mt-1 text-sm font-semibold text-[#1f2f28]">In review</p>
+      ) : band ? (
+        <>
+          <p className="mt-1 text-sm font-semibold leading-snug text-[#1f2f28]">{band.label}</p>
+          <p className="mt-0.5 text-xs tabular-nums text-stone-500">{band.min}-{band.max}</p>
+        </>
+      ) : (
+        <p className="mt-1 text-sm font-semibold text-[#1f2f28]">-</p>
+      )}
     </div>
   )
 }
@@ -192,7 +203,7 @@ function SupplierCard({ supplier }: { supplier: PublicSupplierDirectoryRow }) {
             </h2>
           </div>
         </div>
-        <ScoreBadge score={supplier.smart_score} inReview={provisional} />
+        <ScoreBadge score={supplier.smart_score} inReview={!isPublicVerifiedSupplier(supplier)} />
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -261,17 +272,22 @@ function SupplierList({ suppliers }: { suppliers: PublicSupplierDirectoryRow[] }
               ))}
             </div>
             <div className="flex items-center justify-between gap-3 md:justify-end">
-              <div className="text-center">
-                {isProvisionallyVerifiedSupplier(supplier) ? (
+              <div className="max-w-[180px] text-right">
+                {!isPublicVerifiedSupplier(supplier) ? (
                   <>
-                    <p className="text-[8px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>In review</p>
-                    <p className="mt-0.5 text-lg font-medium tabular-nums text-[#1f2f28]">{formatScore(supplier.smart_score)}</p>
+                    <p className="text-[8px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>SmartScore</p>
+                    <p className="mt-1 text-sm font-semibold text-[#1f2f28]">In review</p>
                   </>
                 ) : (
-                  <>
-                    <p className="text-lg font-medium tabular-nums text-[#1f2f28]">{formatScore(supplier.smart_score)}</p>
-                    <p className="text-[8px] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>Score</p>
-                  </>
+                  (() => {
+                    const band = publicScoreBand(supplier.smart_score)
+                    return band ? (
+                      <>
+                        <p className="text-sm font-semibold leading-snug text-[#1f2f28]">{band.label}</p>
+                        <p className="mt-0.5 text-xs tabular-nums text-stone-500">SmartScore {band.min}-{band.max}</p>
+                      </>
+                    ) : <p className="text-sm font-semibold text-[#1f2f28]">SmartScore -</p>
+                  })()
                 )}
               </div>
               <Link href={`/suppliers/${supplier.id}`} className="rounded-md border border-stone-300 px-3 py-2 text-xs font-semibold text-[#1a3a2a] hover:border-[#c8a060] hover:text-[#8c6a2f]">
