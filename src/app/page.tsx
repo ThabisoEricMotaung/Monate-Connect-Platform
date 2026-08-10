@@ -13,6 +13,8 @@ import AccountDeletedNotice from "@/components/AccountDeletedNotice"
 import IncompleteRegistrationBanner from "@/components/IncompleteRegistrationBanner"
 import DigestSignupForm from "@/app/opportunities/DigestSignupForm"
 
+export const dynamic = "force-dynamic"
+
 const audienceCards = [
   {
     icon: "shop",

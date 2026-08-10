@@ -43,6 +43,10 @@ type PublicRFQ = {
   curation_status?: string | null
 }
 
+type OpportunityStats = {
+  closingThisWeek: number
+}
+
 type SortKey = "deadline" | "newest" | "value"
 type DeadlineFilter = "week" | "twoWeeks" | "month"
 type BBBEEFilter = "level1to2" | "level3to4" | "level5to8" | "any"
@@ -247,6 +251,12 @@ async function fetchPublicRFQs(): Promise<PublicRFQ[]> {
     return []
   }
   return (data ?? []) as PublicRFQ[]
+}
+
+async function fetchOpportunityStats(): Promise<OpportunityStats | null> {
+  const response = await fetch("/api/opportunities/stats", { cache: "no-store" })
+  if (!response.ok) return null
+  return response.json() as Promise<OpportunityStats>
 }
 
 // --- Icons --------------------------------------------------------------------
@@ -771,10 +781,10 @@ function RFQCard({
             )}
             {isExternalOpportunity && rfq.curation_status === "approved" && (
               <span
-                title="A member of our team checked this listing before it was published — see the Trust Center for how opportunity sourcing works."
+                title="This listing passed automated screening for cancelled or already-awarded notices — see the Trust Center for how opportunity sourcing works."
                 className="rounded-full border border-panel bg-surface px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-secondary"
               >
-                Team-reviewed
+                Automatically screened
               </span>
             )}
           </div>
@@ -863,14 +873,17 @@ export default function OpportunitiesPage() {
   const [bbeeFilters, setBbeeFilters] = useState<BBBEEFilter[]>([])
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [previewRFQ, setPreviewRFQ] = useState<PublicRFQ | null>(null)
+  const [opportunityStats, setOpportunityStats] = useState<OpportunityStats | null>(null)
 
   useEffect(() => {
     async function load() {
-      const [data, authResult] = await Promise.all([
+      const [data, stats, authResult] = await Promise.all([
         fetchPublicRFQs(),
+        fetchOpportunityStats(),
         supabase ? supabase.auth.getUser() : Promise.resolve(null),
       ])
       setRfqs(data)
+      setOpportunityStats(stats)
       const user = authResult?.data?.user
       setIsAuth(Boolean(user))
 
@@ -902,10 +915,7 @@ export default function OpportunitiesPage() {
   )
 
   const totalOpen = rfqs.length
-  const closingSoonCount = rfqs.filter((r) => {
-    const d = daysUntil(getClosingDate(r))
-    return d !== null && d >= 0 && d <= 7
-  }).length
+  const closingSoonCount = opportunityStats?.closingThisWeek ?? 0
   const newRecentCount = rfqs.filter((r) => isPostedWithin48h(getPublishedDate(r))).length
 
   const filtered = useMemo(() => {

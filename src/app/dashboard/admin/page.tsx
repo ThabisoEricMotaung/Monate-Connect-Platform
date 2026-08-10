@@ -19,6 +19,7 @@ type RfqRow = {
   deadline: string | null
   status: string | null
   created_at: string | null
+  is_external_opportunity: boolean | null
 }
 
 type QuoteRow = {
@@ -89,7 +90,7 @@ type DashboardData = {
   suppliers: SupplierProfile[]
 }
 
-type PipelineStage = "Draft" | "Open" | "Evaluation" | "Awarded" | "Closed"
+type PipelineStage = "Draft" | "Open" | "Evaluation" | "Expired" | "Awarded" | "Closed"
 
 const emptyData: DashboardData = {
   buyer: null,
@@ -105,11 +106,12 @@ const stageDescriptions: Record<PipelineStage, string> = {
   Draft: "RFQs saved but not yet published",
   Open: "Published RFQs accepting quotes",
   Evaluation: "Deadline passed, under review",
+  Expired: "External notices past their closing date",
   Awarded: "Selected supplier, PO issued",
   Closed: "Completed or cancelled",
 }
 
-const stageOrder: PipelineStage[] = ["Draft", "Open", "Evaluation", "Awarded", "Closed"]
+const stageOrder: PipelineStage[] = ["Draft", "Open", "Evaluation", "Expired", "Awarded", "Closed"]
 
 const barColors = [
   "bg-sky-500",
@@ -169,14 +171,19 @@ function stageForRfq(rfq: RfqRow): PipelineStage {
   if (["draft"].includes(status)) return "Draft"
   if (["awarded", "po issued"].includes(status)) return "Awarded"
   if (["closed", "completed", "cancelled", "canceled"].includes(status)) return "Closed"
-  if (["evaluation", "under review", "review"].includes(status)) return "Evaluation"
+  const isExternalOpportunity = rfq.is_external_opportunity === true
+  if (!isExternalOpportunity && ["evaluation", "under review", "review"].includes(status)) {
+    return "Evaluation"
+  }
 
   // Status alone isn't authoritative for "open" rows: nothing automatically
   // moves an RFQ out of "open" once its closing date passes, so a deadline
   // check here catches RFQs still marked open in the database that have
   // genuinely stopped accepting quotes.
   const remaining = daysUntil(rfq.deadline)
-  if (remaining != null && remaining < 0) return "Evaluation"
+  if (remaining != null && remaining < 0) {
+    return isExternalOpportunity ? "Expired" : "Evaluation"
+  }
 
   if (["open", "published", "active"].includes(status)) return "Open"
 
@@ -290,7 +297,7 @@ export default function AdminOverviewPage() {
         readAllRows<RfqRow>((from, to) =>
           client
             .from("rfqs")
-            .select("id, title, category, province, region, budget, deadline, status, created_at")
+            .select("id, title, category, province, region, budget, deadline, status, created_at, is_external_opportunity")
             .eq("is_demo", false)
             .order("created_at", { ascending: false })
             .range(from, to),
@@ -675,6 +682,11 @@ export default function AdminOverviewPage() {
                             {stage === "Evaluation" && (
                               <p className="mt-1 text-[0.68rem] text-muted">
                                 {quoteCount} quote{quoteCount !== 1 ? "s" : ""} received
+                              </p>
+                            )}
+                            {stage === "Expired" && (
+                              <p className="mt-1 text-[0.68rem] text-muted">
+                                Closed {formatDate(rfq.deadline)}
                               </p>
                             )}
                             {stage === "Awarded" && awardedQuote && (

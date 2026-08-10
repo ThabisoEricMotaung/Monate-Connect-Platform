@@ -351,7 +351,28 @@ export default function AdminRfqsPage() {
     setBulkMessage(null)
 
     const ids = Array.from(selectedIds)
-    const { error } = await supabase.from("rfqs").update({ status: "open" }).in("id", ids)
+    const selectedRfqs = rfqs.filter((rfq) => selectedIds.has(rfq.id))
+    const externalIds = selectedRfqs.filter((rfq) => rfq.is_external_opportunity).map((rfq) => rfq.id)
+    const organicIds = selectedRfqs.filter((rfq) => !rfq.is_external_opportunity).map((rfq) => rfq.id)
+    const curatedAt = new Date().toISOString()
+
+    const results = await Promise.all([
+      externalIds.length > 0
+        ? supabase
+            .from("rfqs")
+            .update({
+              status: "open",
+              is_public: true,
+              curation_status: "approved",
+              curated_at: curatedAt,
+            })
+            .in("id", externalIds)
+        : Promise.resolve({ error: null }),
+      organicIds.length > 0
+        ? supabase.from("rfqs").update({ status: "open" }).in("id", organicIds)
+        : Promise.resolve({ error: null }),
+    ])
+    const error = results.find((result) => result.error)?.error
 
     setBulkBusy(false)
     if (error) {
