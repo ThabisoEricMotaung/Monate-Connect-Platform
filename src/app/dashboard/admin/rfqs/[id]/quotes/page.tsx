@@ -109,7 +109,7 @@ const CRITERIA: Array<{
   {
     field: "locality_score",
     label: "Locality / Province Alignment",
-    hint: "Local supplier presence, proximity to site, regional B-BBEE contribution",
+    hint: "Local supplier presence and geographic proximity to the site",
   },
 ]
 
@@ -1140,10 +1140,10 @@ export default function AdminRFQQuotesPage() {
               <div className="mb-4 flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-accent">
-                    Evaluation Matrix
+                    Internal Assessment
                   </p>
                   <h2 className="mt-1 text-lg font-semibold text-heading">
-                    Quote Scoring Matrix
+                    Internal Qualitative Assessment
                   </h2>
                 </div>
                 <button
@@ -1161,14 +1161,14 @@ export default function AdminRFQQuotesPage() {
                       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <polyline points="18 15 12 9 6 15" />
                       </svg>
-                      Hide Evaluation Matrix
+                      Hide Internal Assessment
                     </>
                   ) : (
                     <>
                       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
                       </svg>
-                      Open Evaluation Matrix
+                      Open Internal Assessment
                     </>
                   )}
                 </button>
@@ -1184,6 +1184,7 @@ export default function AdminRFQQuotesPage() {
                     </svg>
                     <p className="text-sm text-warning">
                       <span className="font-bold">Advisory only.</span>{" "}
+                      This is not the PPR 2022 preference-point calculation. {" "}
                       Evaluation scores are a decision-support tool. Final award remains a procurement decision made by an authorised person in accordance with applicable regulations and procurement policy.
                     </p>
                   </div>
