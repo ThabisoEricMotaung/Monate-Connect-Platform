@@ -4,7 +4,11 @@ import {
   type SupplierSmartScoreActivity,
   type SupplierSmartScoreProfile,
 } from "./smartScore"
-import type { SupplierDocument } from "./supplierDocuments"
+import {
+  REQUIRED_SUPPLIER_DOCUMENTS,
+  type SupplierDocument,
+  type SupplierDocumentType,
+} from "./supplierDocuments"
 import {
   deriveSupplierVerificationState,
   type SupplierVerificationState,
@@ -73,6 +77,50 @@ export function scoreCanonicalSupplierInput(
   activity: SupplierSmartScoreActivity = {}
 ): SmartScoreResult {
   return calculateSupplierSmartScore(input, activity)
+}
+
+export function projectSupplierSmartScoreWithApprovedDocuments({
+  input,
+  activity = {},
+  approvedDocumentTypes = REQUIRED_SUPPLIER_DOCUMENTS.map((requirement) => requirement.type),
+}: {
+  input: CanonicalSupplierScoreInput
+  activity?: SupplierSmartScoreActivity
+  approvedDocumentTypes?: readonly SupplierDocumentType[]
+}): SmartScoreResult {
+  const projectedTypes = new Set(approvedDocumentTypes)
+  const actualDocuments = input.supplier_documents as SupplierDocument[]
+  const preservedDocuments = actualDocuments.filter(
+    (document) => !projectedTypes.has(document.document_type),
+  )
+  const projectedDocuments: SupplierDocument[] = approvedDocumentTypes.map((documentType) => ({
+    id: `smartscore-projection-${documentType}`,
+    profile_id: input.id,
+    document_type: documentType,
+    file_url: `projection://${documentType}`,
+    storage_path: null,
+    original_filename: null,
+    content_type: null,
+    file_size: null,
+    uploaded_at: new Date().toISOString(),
+    status: "approved",
+    reviewed_at: new Date().toISOString(),
+    reviewed_by: null,
+    review_notes: null,
+    expiry_date: null,
+  }))
+  const supplierDocuments = [...projectedDocuments, ...preservedDocuments]
+  const verificationState = deriveSupplierVerificationState(supplierDocuments)
+
+  return calculateSupplierSmartScore(
+    {
+      ...input,
+      supplier_documents: supplierDocuments,
+      verification_state: verificationState,
+      bank_verification_status: verificationState.banking.status,
+    },
+    activity,
+  )
 }
 
 export function groupBySupplierId<T extends { supplier_id: string | null }>(

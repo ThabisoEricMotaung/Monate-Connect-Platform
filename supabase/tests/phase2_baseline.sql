@@ -70,6 +70,8 @@ create table public.supplier_certifications (
   profile_id uuid not null references public.profiles(id) on delete cascade,
   name text not null,
   expiry_date date,
+  reviewed_by uuid references auth.users(id),
+  reviewed_at timestamptz,
   status text not null default 'Missing'
     check (status in ('Verified', 'Pending review', 'Rejected', 'Expired', 'Missing')),
   updated_at timestamptz not null default now()
@@ -80,6 +82,8 @@ create table public.supplier_licences (
   profile_id uuid not null references public.profiles(id) on delete cascade,
   licence_type text not null,
   expiry_date date,
+  reviewed_by uuid references auth.users(id),
+  reviewed_at timestamptz,
   status text not null default 'Missing'
     check (status in ('Verified', 'Pending review', 'Rejected', 'Expired', 'Missing')),
   updated_at timestamptz not null default now()

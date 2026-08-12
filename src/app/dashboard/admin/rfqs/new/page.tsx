@@ -431,6 +431,7 @@ function ChecklistRow({ done, label }: { done: boolean; label: string }) {
 export default function NewRFQPage() {
   const router = useRouter()
   const firstErrorRef = useRef<HTMLDivElement | null>(null)
+  const touchedFieldsRef = useRef<Set<keyof FormState>>(new Set())
   const [step, setStep] = useState<Step>(1)
   const [form, setForm] = useState<FormState>(() => initialForm())
   const [documents, setDocuments] = useState<UploadedDocument[]>([])
@@ -486,9 +487,15 @@ export default function NewRFQPage() {
       setSuppliers((supplierResult.data ?? []) as SupplierProfile[])
       setForm((current) => ({
         ...current,
-        buyerOrganisation: current.buyerOrganisation || buyer?.business_name || "",
-        contactPerson: current.contactPerson || buyer?.full_name || buyer?.business_name || "",
-        contactEmail: current.contactEmail || buyer?.email || authData.user?.email || "",
+        buyerOrganisation: touchedFieldsRef.current.has("buyerOrganisation")
+          ? current.buyerOrganisation
+          : current.buyerOrganisation || buyer?.business_name || "",
+        contactPerson: touchedFieldsRef.current.has("contactPerson")
+          ? current.contactPerson
+          : current.contactPerson || buyer?.full_name || buyer?.business_name || "",
+        contactEmail: touchedFieldsRef.current.has("contactEmail")
+          ? current.contactEmail
+          : current.contactEmail || buyer?.email || authData.user?.email || "",
       }))
 
       const resolvedUserId = buyer?.id || profile?.id || authData.user?.id || null
@@ -585,6 +592,7 @@ export default function NewRFQPage() {
   const shortTurnaround = form.closingDate ? (calendarDaysFromToday(form.closingDate) ?? 99) < 7 : false
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
+    touchedFieldsRef.current.add(field)
     setForm((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: undefined }))
     setHasUnsavedChanges(true)

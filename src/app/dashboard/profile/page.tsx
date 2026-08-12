@@ -28,7 +28,7 @@ import {
   type SupplierDocumentType,
 } from "@/lib/supplierDocuments"
 import { deriveSupplierVerificationState, type SupplierVerificationState } from "@/lib/supplierVerification"
-import { type VerificationAttestation } from "@/lib/verificationAttestations"
+import { deriveDirectorVerificationState, type VerificationAttestation } from "@/lib/verificationAttestations"
 import {
   EMPTY_SUPPLIER_PASSPORT,
   derivePassportComplianceSnapshot,
@@ -1569,6 +1569,7 @@ function VerificationTab({
   onDocUploaded,
   onTabChange,
   verification,
+  attestations,
 }: {
   profile: Profile
   docUrls: DocUrls
@@ -1576,6 +1577,7 @@ function VerificationTab({
   onDocUploaded: (document: SupplierDocument) => void
   onTabChange: (tab: Tab) => void
   verification: SupplierVerificationState
+  attestations: VerificationAttestation[]
 }) {
   const [uploadingField, setUploadingField] = useState<DocumentField | null>(null)
   const [uploadError, setUploadError] = useState("")
@@ -1610,12 +1612,15 @@ function VerificationTab({
     setUploadSuccess(hadExistingDocument || result.replaced ? `Replaced previous ${label}` : `${label} uploaded`)
   }
 
-  function statusOf(doc: DocumentField): "verified" | "pending" | "missing" {
-    const category = doc === "bbbee_document_url" ? verification.bbbee : verification.tax
+  function statusOf(categoryName: keyof SupplierVerificationState): "verified" | "pending" | "missing" {
+    const category = verification[categoryName]
     if (category.approved) return "verified"
     if (category.status === "under_review") return "pending"
     return "missing"
   }
+
+  const directorVerification = deriveDirectorVerificationState(attestations)
+  const directorStatus = directorVerification.approved ? "verified" : "missing"
 
   return (
     <div className="rounded-md border border-panel bg-panel p-6">
@@ -1636,9 +1641,9 @@ function VerificationTab({
 
       <div className="space-y-4">
         <VerificationRow
-          icon={<svg className={`h-4 w-4 ${profile.csd_number ? "text-success" : "text-muted"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>}
+          icon={<svg className={`h-4 w-4 ${statusOf("csd") === "verified" ? "text-success" : statusOf("csd") === "pending" ? "text-warning" : "text-muted"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>}
           title="CSD registration"
-          status={profile.csd_number ? (isVerified(profile.verification_status) ? "verified" : "pending") : "missing"}
+          status={statusOf("csd")}
           verifiedText={`Your CSD number ${profile.csd_number} has been confirmed as active.`}
           pendingText="CSD number submitted — under review."
           missingText="Enter your CSD number to begin verification."
@@ -1646,16 +1651,16 @@ function VerificationTab({
         />
 
         <VerificationRow
-          icon={<svg className={`h-4 w-4 ${statusOf("bbbee_document_url") === "verified" ? "text-success" : statusOf("bbbee_document_url") === "pending" ? "text-warning" : "text-muted"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
+          icon={<svg className={`h-4 w-4 ${statusOf("bbbee") === "verified" ? "text-success" : statusOf("bbbee") === "pending" ? "text-warning" : "text-muted"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
           title="BBBEE certificate"
-          status={statusOf("bbbee_document_url")}
+          status={statusOf("bbbee")}
           verifiedText={`Level ${profile.bbbee_level?.replace("Level ", "")} certificate verified${profile.bbbee_expiry_date ? `. Expires ${profile.bbbee_expiry_date}` : ""}.`}
           pendingText="Under review — typically 1-2 business days."
           missingText="Upload your BBBEE certificate to verify."
           uploadSlot={
             <div className="mt-2">
               {docUrls.bbbee_document_url
-                ? <FileRow label="BBBEE Certificate" url={docUrls.bbbee_document_url} status={statusOf("bbbee_document_url") === "verified" ? "Verified" : "Under review"} />
+                ? <FileRow label="BBBEE Certificate" url={docUrls.bbbee_document_url} status={statusOf("bbbee") === "verified" ? "Verified" : "Under review"} />
                 : (
                   <>
                     <UploadZone id="bbbee-upload" uploading={uploadingField === "bbbee_document_url"} onFile={(file) => handleUpload(file, "bbbee_document_url", "bbbee")} />
@@ -1668,16 +1673,16 @@ function VerificationTab({
         />
 
         <VerificationRow
-          icon={<svg className={`h-4 w-4 ${statusOf("tax_document_url") === "verified" ? "text-success" : statusOf("tax_document_url") === "pending" ? "text-warning" : "text-muted"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
+          icon={<svg className={`h-4 w-4 ${statusOf("tax") === "verified" ? "text-success" : statusOf("tax") === "pending" ? "text-warning" : "text-muted"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
           title="Tax clearance certificate"
-          status={statusOf("tax_document_url")}
+          status={statusOf("tax")}
           verifiedText="Tax clearance certificate verified."
           pendingText="Under review — typically 1-2 business days."
           missingText="Upload your tax clearance certificate to verify."
           uploadSlot={
             <div className="mt-2">
               {docUrls.tax_document_url
-                ? <FileRow label="Tax Clearance" url={docUrls.tax_document_url} status={statusOf("tax_document_url") === "verified" ? "Verified" : "Under review"} />
+                ? <FileRow label="Tax Clearance" url={docUrls.tax_document_url} status={statusOf("tax") === "verified" ? "Verified" : "Under review"} />
                 : (
                   <>
                     <UploadZone id="tax-upload" uploading={uploadingField === "tax_document_url"} onFile={(file) => handleUpload(file, "tax_document_url", "tax_clearance")} />
@@ -1690,9 +1695,9 @@ function VerificationTab({
         />
 
         <VerificationRow
-          icon={<svg className="h-4 w-4 text-muted" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75" /></svg>}
+          icon={<svg className={`h-4 w-4 ${statusOf("banking") === "verified" ? "text-success" : statusOf("banking") === "pending" ? "text-warning" : "text-muted"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75" /></svg>}
           title="Banking details"
-          status="missing"
+          status={statusOf("banking")}
           verifiedText="Banking details confirmed."
           pendingText="Banking details under review."
           missingText="Required before any PO can be processed."
@@ -1700,9 +1705,9 @@ function VerificationTab({
         />
 
         <VerificationRow
-          icon={<svg className="h-4 w-4 text-muted" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>}
+          icon={<svg className={`h-4 w-4 ${directorStatus === "verified" ? "text-success" : "text-muted"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>}
           title="Director ID verification"
-          status="missing"
+          status={directorStatus}
           optional
           verifiedText="Identity verified."
           pendingText="Identity verification in progress."
@@ -3373,7 +3378,7 @@ function ProfilePageInner() {
             <ProfileTab profile={profile} onSave={handleSave} onDirtyChange={setHasUnsaved} saving={saving} />
           )}
           {profile && activeTab === "verification" && (
-            <VerificationTab profile={profile} docUrls={docUrls} userId={userId} onDocUploaded={handleDocUploaded} onTabChange={requestTabChange} verification={deriveSupplierVerificationState(supplierDocuments)} />
+            <VerificationTab profile={profile} docUrls={docUrls} userId={userId} onDocUploaded={handleDocUploaded} onTabChange={requestTabChange} verification={deriveSupplierVerificationState(supplierDocuments)} attestations={attestations} />
           )}
           {profile && activeTab === "documents" && (
             <DocumentsTab profile={profile} docUrls={docUrls} documents={supplierDocuments} userId={userId} onDocUploaded={handleDocUploaded} />

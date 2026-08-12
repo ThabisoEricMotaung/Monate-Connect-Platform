@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "backfill:etenders": "tsx scripts/backfill-etenders-opportunities.mts",
     "restore:backup": "tsx scripts/restore-backup.mts"
   },
   "dependencies": {
