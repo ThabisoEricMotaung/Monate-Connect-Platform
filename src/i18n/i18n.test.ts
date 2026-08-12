@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { ACTIVE_LOCALES, DEFAULT_LOCALE, normalizeLocale } from "./config"
+import { ACTIVE_LOCALES, DEFAULT_LOCALE, localeFormatTag, normalizeLocale } from "./config"
+import { NAMESPACE_REVIEWS, PUBLIC_DISCOVERY_NAMESPACES } from "./review-metadata"
 import { englishMessages, getMessagesForLocale, mergeWithEnglish } from "./messages"
 
 function leafKeys(value: unknown, prefix = ""): string[] {
@@ -8,8 +9,8 @@ function leafKeys(value: unknown, prefix = ""): string[] {
 }
 
 describe("i18n Phase 1 coverage", () => {
-  it("activates only the honestly supported EN/ZU/AF locales", () => {
-    expect(ACTIVE_LOCALES).toEqual(["en", "zu", "af"])
+  it("activates all eleven official South African language locales", () => {
+    expect(ACTIVE_LOCALES).toEqual(["en", "af", "nr", "xh", "zu", "nso", "st", "tn", "ss", "ve", "ts"])
   })
 
   it.each(ACTIVE_LOCALES)("keeps %s message keys in parity with English", (locale) => {
@@ -17,8 +18,18 @@ describe("i18n Phase 1 coverage", () => {
   })
 
   it("falls back to English for unsupported or missing locale values", () => {
-    expect(normalizeLocale("xh")).toBe(DEFAULT_LOCALE)
+    expect(normalizeLocale("xh")).toBe("xh")
+    expect(normalizeLocale("de")).toBe(DEFAULT_LOCALE)
     expect(normalizeLocale(null)).toBe(DEFAULT_LOCALE)
+  })
+
+  it.each(ACTIVE_LOCALES)("uses a South African formatting tag for %s", (locale) => {
+    expect(localeFormatTag(locale)).toMatch(/-ZA$/)
+  })
+
+  it("records provenance for every public-discovery locale and namespace", () => {
+    expect(NAMESPACE_REVIEWS).toHaveLength(ACTIVE_LOCALES.length * PUBLIC_DISCOVERY_NAMESPACES.length)
+    expect(NAMESPACE_REVIEWS.filter((record) => record.locale !== "en").every((record) => record.status === "machine_translated")).toBe(true)
   })
 
   it("fills a missing localized key from the canonical English messages", () => {

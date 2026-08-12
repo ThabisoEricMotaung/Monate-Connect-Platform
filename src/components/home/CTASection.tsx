@@ -1,3 +1,7 @@
+"use client"
+
+import { useTranslations } from "next-intl"
+
 const CTA_STYLES = `
   .cta-wrap {
     background: #1a3a2a;
@@ -63,6 +67,7 @@ const CTA_STYLES = `
 `
 
 export default function CTASection() {
+  const t = useTranslations("home")
   return (
     <div className="cta-wrap">
       <style dangerouslySetInnerHTML={{ __html: CTA_STYLES }} />
@@ -75,16 +80,16 @@ export default function CTASection() {
           </svg>
         </div>
         <p className="font-display" style={{ fontSize: 16, fontStyle: 'italic', color: '#E1F5EE', margin: 0, lineHeight: 1.4 }}>
-          The procurement network South Africa has been waiting for.
+          {t("network")}
         </p>
       </div>
 
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <a href="/auth/signup" className="cta-btn-gold">
-          Register as supplier &rarr;
+          {t("registerSupplier")} &rarr;
         </a>
         <a href="/auth/login?role=admin" className="cta-btn-outline">
-          Buyer access &rarr;
+          {t("buyerAccess")} &rarr;
         </a>
       </div>
     </div>

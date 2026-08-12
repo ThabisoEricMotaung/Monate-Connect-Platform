@@ -7,6 +7,8 @@ import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import CopyLinkButton from "./CopyLinkButton"
 import { normalizeOpportunityTitleCase } from "@/lib/externalOpportunity"
+import { getLocale, getTranslations } from "next-intl/server"
+import { localeFormatTag, normalizeLocale } from "@/i18n/config"
 
 // Server-rendered detail page for a single public opportunity. The main
 // /opportunities page is a client component (search/filter state), which
@@ -78,27 +80,27 @@ async function getOpportunity(id: string): Promise<PublicRFQDetail | null> {
   return data as PublicRFQDetail
 }
 
-function formatBudget(value: string | number | null | undefined): string {
-  if (value === null || value === undefined || value === "") return "Value not disclosed"
-  if (typeof value === "number") return `R${value.toLocaleString("en-ZA", { maximumFractionDigits: 0 })}`
+function formatBudget(value: string | number | null | undefined, locale: string, unavailable: string): string {
+  if (value === null || value === undefined || value === "") return unavailable
+  if (typeof value === "number") return new Intl.NumberFormat(locale, { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(value)
   const num = Number(value.toString().replace(/[^\d.]/g, ""))
   if (Number.isNaN(num) || num === 0) return String(value)
-  return `R${num.toLocaleString("en-ZA", { maximumFractionDigits: 0 })}`
+  return new Intl.NumberFormat(locale, { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(num)
 }
 
-function formatValueRange(rfq: PublicRFQDetail): string {
+function formatValueRange(rfq: PublicRFQDetail, locale: string, unavailable: string): string {
   const { estimated_value_min: min, estimated_value_max: max } = rfq
-  if (typeof min === "number" && typeof max === "number") return `${formatBudget(min)} - ${formatBudget(max)}`
-  if (typeof min === "number") return `From ${formatBudget(min)}`
-  if (typeof max === "number") return `Up to ${formatBudget(max)}`
-  return formatBudget(rfq.budget)
+  if (typeof min === "number" && typeof max === "number") return `${formatBudget(min, locale, unavailable)} - ${formatBudget(max, locale, unavailable)}`
+  if (typeof min === "number") return formatBudget(min, locale, unavailable)
+  if (typeof max === "number") return formatBudget(max, locale, unavailable)
+  return formatBudget(rfq.budget, locale, unavailable)
 }
 
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "TBC"
+function formatDate(value: string | null | undefined, locale: string, unavailable: string): string {
+  if (!value) return unavailable
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" })
+  return d.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })
 }
 
 function daysUntil(value: string | null | undefined): number | null {
@@ -163,6 +165,8 @@ export default async function OpportunityDetailPage({ params }: Props) {
   const { id } = await params
   const rfq = await getOpportunity(id)
   if (!rfq) notFound()
+  const [locale, t] = await Promise.all([getLocale(), getTranslations("opportunityDetail")])
+  const formatLocale = localeFormatTag(normalizeLocale(locale))
 
   const daysLeft = daysUntil(rfq.closing_date)
   const isClosed = daysLeft !== null && daysLeft < 0
@@ -175,33 +179,33 @@ export default async function OpportunityDetailPage({ params }: Props) {
       <main className="min-h-screen bg-white text-primary">
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="mb-4">
-            <BackLink />
+            <BackLink label={t("backLabel")} />
           </div>
 
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-success/30 bg-success-soft px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-success">
-              Public opportunity
+              {t("overview")}
             </span>
             {isExternal && (
               <span className="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-accent-strong">
-                {rfq.source_name?.trim() || "External"}
+                {rfq.source_name?.trim() || t("external")}
               </span>
             )}
             {isExternal && rfq.curation_status === "approved" && (
               <span
-                title="A member of our team checked this listing before it was published — see the Trust Center for how opportunity sourcing works."
+                title={t("teamReviewedHelp")}
                 className="rounded-full border border-panel bg-surface px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-secondary"
               >
-                Team-reviewed
+                {t("teamReviewed")}
               </span>
             )}
             {isClosed ? (
               <span className="rounded-full border border-panel bg-surface px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-muted">
-                Closed
+                {t("closed")}
               </span>
             ) : daysLeft !== null && daysLeft <= 3 ? (
               <span className="rounded-full border border-warning bg-warning-soft px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-warning">
-                Closing soon
+                {t("closingSoon")}
               </span>
             ) : null}
           </div>
@@ -209,15 +213,15 @@ export default async function OpportunityDetailPage({ params }: Props) {
           <p className="mb-1 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-accent">
             {industryLabel(rfq)}
           </p>
-          <h1 className="newspaper-headline mb-2">{rfq.title ? normalizeOpportunityTitleCase(rfq.title) : "Untitled opportunity"}</h1>
-          <p className="mb-6 text-sm text-secondary">Issued by {buyerLabel(rfq)}</p>
+          <h1 className="newspaper-headline mb-2">{rfq.title ? normalizeOpportunityTitleCase(rfq.title) : t("untitled")}</h1>
+          <p className="mb-6 text-sm text-secondary">{t("issuedBy", { buyer: buyerLabel(rfq) })}</p>
 
           <div className="mb-6 flex flex-wrap gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-panel bg-surface px-3 py-1 text-xs text-secondary">
               {provinceLabel(rfq)}
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-panel bg-surface px-3 py-1 text-xs text-secondary">
-              {formatValueRange(rfq)}
+              {formatValueRange(rfq, formatLocale, t("valueNotDisclosed"))}
             </span>
             {rfq.bbbee_requirement && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-panel bg-surface px-3 py-1 text-xs text-secondary">
@@ -225,23 +229,23 @@ export default async function OpportunityDetailPage({ params }: Props) {
               </span>
             )}
             <span className="inline-flex items-center gap-1.5 rounded-full border border-panel bg-surface px-3 py-1 text-xs text-secondary">
-              Closes {formatDate(rfq.closing_date)}
+              {t("closingDate")}: {formatDate(rfq.closing_date, formatLocale, t("tbc"))}
             </span>
           </div>
 
           <div className="mb-8 rounded-md border border-panel bg-card p-5 shadow-panel">
+            <p className="mb-3 text-xs font-semibold text-muted">{t("sourceNotice")}</p>
             <p className="whitespace-pre-line text-sm leading-relaxed text-secondary">
-              {rfq.description || "No further description was provided for this opportunity."}
+              {rfq.description || t("noDescription")}
             </p>
           </div>
 
           <div className="mb-8 rounded-lg border border-accent/20 bg-accent/5 p-5">
             {isExternal && rfq.original_source_url ? (
               <>
-                <p className="mb-1.5 text-sm font-semibold text-heading">Externally-sourced opportunity</p>
+                <p className="mb-1.5 text-sm font-semibold text-heading">{t("externalTitle")}</p>
                 <p className="mb-4 text-sm text-secondary">
-                  Source: {rfq.source_name?.trim() || "External"}. Quotes for this opportunity are submitted
-                  directly with the buyer, not through AiForm Procure.
+                  {t("externalBody", { source: rfq.source_name?.trim() || t("external") })}
                 </p>
                 <a
                   href={rfq.original_source_url}
@@ -249,22 +253,21 @@ export default async function OpportunityDetailPage({ params }: Props) {
                   rel="noopener noreferrer"
                   className="masthead__btn-primary text-sm"
                 >
-                  View original tender
+                  {t("originalSource")}
                 </a>
               </>
             ) : (
               <>
-                <p className="mb-1.5 text-sm font-semibold text-heading">Register to respond</p>
+                <p className="mb-1.5 text-sm font-semibold text-heading">{t("register")}</p>
                 <p className="mb-4 text-sm text-secondary">
-                  Create a free supplier account to submit a quote, track this deadline, and get matched to
-                  similar opportunities.
+                  {t("registerBody")}
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Link href="/auth/signup" className="masthead__btn-primary text-sm">
-                    Create free account
+                    {t("createAccount")}
                   </Link>
                   <Link href="/auth/login" className="masthead__btn-secondary text-sm">
-                    Sign in
+                    {t("signIn")}
                   </Link>
                 </div>
               </>
@@ -272,10 +275,10 @@ export default async function OpportunityDetailPage({ params }: Props) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 border-t border-panel pt-5">
-            <p className="text-xs text-muted">Know a supplier who&apos;d want this one?</p>
+            <p className="text-xs text-muted">{t("sharePrompt")}</p>
             <CopyLinkButton url={shareUrl} title={rfq.title ? normalizeOpportunityTitleCase(rfq.title) : undefined} />
             <Link href="/opportunities" className="text-xs font-semibold text-accent hover:underline">
-              Browse all open opportunities &rarr;
+              {t("back")} &rarr;
             </Link>
           </div>
         </div>

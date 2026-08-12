@@ -4,6 +4,7 @@ import { IconAccessible, IconBrandInstagram, IconBrandReddit, IconBrandTiktok, I
 import Image from "next/image"
 import Link from "next/link"
 import { type CSSProperties } from "react"
+import { useTranslations } from "next-intl"
 
 const footerSections = [
   {
@@ -41,20 +42,6 @@ const footerVars = {
   "--procure-ivory": "#f8f3e7",
   "--procure-border": "rgba(18, 60, 43, 0.14)",
 } as CSSProperties
-
-const trustChips = [
-  "Trusted information",
-  "Verified network",
-  "Transparent procurement",
-  "Better outcomes for SA",
-]
-
-const complianceBadges = [
-  "CSD Verified",
-  "BBBEE Compliant",
-  "SARS Compliant",
-  "POPIA Aware",
-]
 
 const sectionIconPaths: Record<string, { tone: string; path: string }> = {
   Platform: {
@@ -167,6 +154,16 @@ function CardPattern() {
 }
 
 export default function PublicFooter() {
+  const t = useTranslations("publicChrome")
+  const translated = (label: string) => ({
+    Platform: t("platform"), Support: t("support"), Legal: t("legal"), About: t("about"),
+    Opportunities: t("opportunities"), "Supplier Marketplace": t("supplierMarketplace"),
+    "Trust Centre": t("trustCentre"), Pricing: t("pricing"), "Help Centre": t("helpCentre"),
+    Contact: t("contact"), Privacy: t("privacy"), Terms: t("terms"),
+    "Cookie Policy": t("cookiePolicy"), "Data Protection": t("dataProtection"),
+  } as Record<string, string>)[label] ?? label
+  const translatedTrustChips = [t("trustedInformation"), t("clearSignposting"), t("plainLanguage"), t("saBuilt")]
+  const translatedComplianceBadges = [t("csdVerified"), t("bbbeeCompliant"), t("sarsCompliant"), t("popiaAware")]
   function openAccessibility() {
     window.dispatchEvent(new Event("monate:open-accessibility"))
   }
@@ -181,16 +178,13 @@ export default function PublicFooter() {
           </p>
           <div className="mt-3 h-0.5 w-16 rounded-full bg-[#c8a060]" />
           <h2 className="mt-5 font-display text-4xl font-bold leading-tight text-[#123c2b] md:text-5xl">
-            Public procurement intelligence, clearly{" "}
-            <span className="italic text-[#c8a060]">signposted</span>
+            {t("footerHeadline")}
           </h2>
           <p className="mt-5 max-w-2xl text-base leading-7 text-[#123c2b]/70">
-            Public information for suppliers, buyers, pilot partners and procurement stakeholders.
-            Legal and policy pages contain professional placeholder language and are not final legal
-            advice.
+            {t("footerBody")}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            {trustChips.map((chip, index) => (
+            {translatedTrustChips.map((chip, index) => (
               <span key={chip} className="footer-trust-chip">
                 <span className={index % 2 === 0 ? "footer-chip-icon footer-chip-icon-green" : "footer-chip-icon footer-chip-icon-gold"}>
                   <SvgIcon path="M9 12.75l2 2 4-4" className="h-3.5 w-3.5" />
@@ -201,7 +195,7 @@ export default function PublicFooter() {
           </div>
         </div>
 
-        <nav className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Public footer navigation">
+        <nav className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label={t("footerNavigation")}>
           {footerSections.map((section) => {
             const sectionIcon = sectionIconPaths[section.title]
 
@@ -212,7 +206,7 @@ export default function PublicFooter() {
                   <SvgIcon path={sectionIcon.path} className="h-5 w-5" />
                 </span>
                 <p className="mt-5 text-xs font-extrabold uppercase tracking-[0.22em] text-[#123c2b]">
-                  {section.title}
+                  {translated(section.title)}
                 </p>
                 <div className="mt-2 h-0.5 w-10 rounded-full bg-[#c8a060]" />
                 <div className="relative z-10 mt-5 grid gap-2.5">
@@ -221,7 +215,7 @@ export default function PublicFooter() {
                       <span className="footer-link-icon">
                         <SvgIcon path={linkIconPaths[link.label]} className="h-4 w-4" />
                       </span>
-                      <span className="min-w-0 flex-1">{link.label}</span>
+                      <span className="min-w-0 flex-1">{translated(link.label)}</span>
                       <svg className="footer-link-arrow h-4 w-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.3} viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M9 5l7 7-7 7" />
                       </svg>
@@ -238,7 +232,7 @@ export default function PublicFooter() {
         <div className="grid gap-5 lg:grid-cols-[1fr_minmax(260px,0.8fr)_1fr] lg:items-center">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <p className="text-sm font-semibold text-[#123c2b]/70">
-              &copy; 2026 AiForm Procure &middot; Procurement Suite
+              &copy; 2026 AiForm Procure &middot; {t("copyrightSuite")}
             </p>
             <div className="flex items-center gap-2 text-sm font-semibold text-[#123c2b]/70">
               <Image
@@ -248,11 +242,11 @@ export default function PublicFooter() {
                 height={24}
                 className="h-6 w-auto"
               />
-              <span>A product of AiForm Studio</span>
+              <span>{t("studioProduct")}</span>
             </div>
           </div>
           <div className="relative flex items-center lg:justify-end">
-            <div className="flex flex-nowrap items-center gap-1 sm:gap-2" role="group" aria-label="AiForm Procure social channels and accessibility">
+            <div className="flex flex-nowrap items-center gap-1 sm:gap-2" role="group" aria-label={t("socialChannels")}>
             <a
               href="https://linkedin.com/company/aiform-procure/"
               target="_blank"
@@ -333,8 +327,8 @@ export default function PublicFooter() {
               type="button"
               onClick={openAccessibility}
               className="footer-social-button footer-social-link footer-access-button shrink-0"
-              aria-label="Accessibility"
-              title="Accessibility"
+              aria-label={t("accessibility")}
+              title={t("accessibility")}
             >
               <IconAccessible className="h-4 w-4" stroke={2} aria-hidden />
             </button>
@@ -343,7 +337,7 @@ export default function PublicFooter() {
         </div>
 
         <div className="mt-5 flex flex-wrap gap-3">
-          {complianceBadges.map((badge, index) => (
+          {translatedComplianceBadges.map((badge, index) => (
             <span key={badge} className="footer-compliance-chip">
               <span className={index % 2 === 0 ? "footer-chip-icon footer-chip-icon-green" : "footer-chip-icon footer-chip-icon-gold"}>
                 <SvgIcon path={index === 3 ? linkIconPaths.Privacy : "M9 12.75l2 2 4-4"} className="h-3.5 w-3.5" />

@@ -1,4 +1,7 @@
+"use client"
+
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 
 const INFO_STYLES = `
   .ic-grid {
@@ -89,6 +92,7 @@ function CheckItem({ text }: { text: string }) {
 }
 
 export default function InfoCards() {
+  const t = useTranslations("home")
   return (
     <div style={{ background: '#f8f4ec', borderTop: '2px solid #1a3a2a', borderBottom: '2px solid #1a3a2a' }}>
       <style dangerouslySetInnerHTML={{ __html: INFO_STYLES }} />
@@ -97,7 +101,7 @@ export default function InfoCards() {
         {/* ── CARD 1: FOR SUPPLIERS ── */}
         <div className="ic-card" style={{ padding: 28 }}>
           <CardHeader
-            title="For Suppliers"
+            title={t("supplierCardTitle")}
             icon={
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M4 10h16l-1.5-5h-13L4 10Z" />
@@ -107,9 +111,9 @@ export default function InfoCards() {
           />
 
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 14px' }}>
-            <CheckItem text="List your business. Upload your CSD number and BBBEE certificate." />
-            <CheckItem text="Receive a SmartScore — your trust rating, visible to every buyer." />
-            <CheckItem text="Matched RFQs come to you. No more missed closing dates." />
+            <CheckItem text={t("supplierPoint1")} />
+            <CheckItem text={t("supplierPoint2")} />
+            <CheckItem text={t("supplierPoint3")} />
           </ul>
 
           <div style={{ background: '#1a3a2a', color: '#9FE1CB', padding: '5px 10px', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 12 }}>
@@ -126,8 +130,8 @@ export default function InfoCards() {
               </svg>
             </div>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#1a3a2a', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>Register Free</div>
-              <div style={{ fontSize: 11, color: '#6a7a6a' }}>Verified in 48 hours. No credit card.</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: '#1a3a2a', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{t("registerFree")}</div>
+              <div style={{ fontSize: 11, color: '#6a7a6a' }}>{t("verified48")}</div>
             </div>
           </Link>
         </div>
@@ -137,7 +141,7 @@ export default function InfoCards() {
         {/* ── CARD 2: THE SMARTSCORE ── */}
         <div className="ic-card" style={{ padding: 28 }}>
           <CardHeader
-            title="The SmartScore"
+            title={t("smartScoreTitle")}
             icon={
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
@@ -147,13 +151,13 @@ export default function InfoCards() {
           />
 
           <p className="font-serif" style={{ fontSize: 12, color: '#3a4a3a', lineHeight: 1.55, margin: '0 0 14px' }}>
-            Every supplier carries a SmartScore — checked against four official SA sources, reviewed by our team.
+            {t("smartScoreIntro")}
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
             {[
               {
-                label: 'National Treasury CSD',
+                label: t("nationalTreasury"),
                 icon: (
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6a5a3a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -162,7 +166,7 @@ export default function InfoCards() {
                 ),
               },
               {
-                label: 'SARS Tax Records',
+                label: t("taxRecords"),
                 icon: (
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6a5a3a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
@@ -173,7 +177,7 @@ export default function InfoCards() {
                 ),
               },
               {
-                label: 'CIPC Confirmation',
+                label: t("cipcConfirmation"),
                 icon: (
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6a5a3a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
@@ -183,7 +187,7 @@ export default function InfoCards() {
                 ),
               },
               {
-                label: 'Banking Confirmed',
+                label: t("bankingConfirmed"),
                 icon: (
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6a5a3a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="1" y="4" width="22" height="16" rx="2" />
@@ -202,7 +206,7 @@ export default function InfoCards() {
           </div>
 
           <p className="font-serif" style={{ fontSize: 12, color: '#3a4a3a', lineHeight: 1.55, margin: '0 0 14px' }}>
-            Score 90 or above and your profile sits first in buyer searches.
+            {t("smartScoreRank")}
           </p>
 
           <div style={{ background: '#f0ebe0', border: '1px solid #d4c8a8', borderRadius: 4, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -221,7 +225,7 @@ export default function InfoCards() {
         {/* ── CARD 3: FOR BUYERS ── */}
         <div className="ic-card" style={{ padding: 28 }}>
           <CardHeader
-            title="For Buyers"
+            title={t("buyerCardTitle")}
             icon={
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="2" y="7" width="20" height="14" rx="2" />
@@ -233,17 +237,17 @@ export default function InfoCards() {
           />
 
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 14px' }}>
-            <CheckItem text="Post an RFQ in five minutes. Set your BBBEE requirement, province, and value range." />
-            <CheckItem text="Verified suppliers are notified immediately." />
-            <CheckItem text="Compare quotes side by side — each carrying a SmartScore and verification badge." />
+            <CheckItem text={t("buyerPoint1")} />
+            <CheckItem text={t("buyerPoint2")} />
+            <CheckItem text={t("buyerPoint3")} />
           </ul>
 
           <div>
             <Link href="/contact" style={{ color: '#c8a060', textDecoration: 'underline', fontSize: 12, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-              Get in touch {"\u2192"}
+              {t("getInTouch")} {"\u2192"}
             </Link>
             <div>
-              <div style={{ fontSize: 11, color: '#6a7a6a' }}>For verified organisations. Municipalities welcome.</div>
+              <div style={{ fontSize: 11, color: '#6a7a6a' }}>{t("verifiedOrganisations")}</div>
             </div>
           </div>
         </div>

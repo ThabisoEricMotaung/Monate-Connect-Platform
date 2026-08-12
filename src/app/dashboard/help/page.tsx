@@ -24,7 +24,6 @@ import {
 import { useMemo, useRef, useState } from "react"
 import { useLocale } from "next-intl"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
-import { isAppLocale } from "@/i18n/config"
 
 type GuideType = "user" | "admin"
 type Language = "en" | "zu" | "af"
@@ -653,7 +652,7 @@ function sectionSearchText(section: HelpSection, language: Language) {
 
 export default function HelpCentrePage() {
   const locale = useLocale()
-  const activeLanguage: Language = isAppLocale(locale) ? locale : "en"
+  const activeLanguage: Language = locale === "zu" || locale === "af" ? locale : "en"
   const [activeGuide, setActiveGuide] = useState<GuideType>("user")
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")

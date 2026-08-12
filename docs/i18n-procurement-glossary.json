@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "sourceLocale": "en",
+  "governance": {
+    "canonicalSource": "English",
+    "dynamicTenderContent": "Never translate automatically; retain the source-language record.",
+    "protectedAbbreviations": ["RFQ", "CSD", "B-BBEE"],
+    "protectedProductNames": ["AiForm Procure", "SmartScore"]
+  },
+  "terms": {
+    "tender": {"source":"tender","definition":"A formal procurement invitation.","note":"Do not substitute RFQ unless the source says RFQ."},
+    "rfq": {"source":"request for quotation","preferredShortForm":"RFQ","definition":"A buyer request inviting suppliers to submit quotations."},
+    "quote": {"source":"quote","definition":"A supplier's commercial response to an RFQ.","note":"Keep distinct from bid and tender."},
+    "award": {"source":"award","definition":"The buyer's formal selection decision."},
+    "buyer": {"source":"buyer","definition":"The organisation procuring goods or services."},
+    "supplier": {"source":"supplier","definition":"The organisation offering goods or services."},
+    "verification": {"source":"verification","definition":"A recorded check of supplier information or evidence."},
+    "compliance": {"source":"compliance","definition":"Conformity with an applicable requirement; do not imply legal approval."},
+    "specific_goals": {"source":"specific goals","definition":"Tender-specific goals defined by the buyer; not a universal B-BBEE lookup."},
+    "preference_points": {"source":"preference points","definition":"Points allocated under the tender's stated preference system."},
+    "closing_date": {"source":"closing date","definition":"The deadline for a procurement response."},
+    "original_source": {"source":"original source","definition":"The authoritative external listing from which an opportunity was obtained."}
+  }
+}

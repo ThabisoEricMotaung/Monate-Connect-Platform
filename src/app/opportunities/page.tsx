@@ -5,10 +5,12 @@ import BackLink from "@/components/BackLink"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import { useEffect, useMemo, useState } from "react"
+import { useLocale, useTranslations } from "next-intl"
 import { supabase } from "@/lib/supabase"
 import CopyLinkButton from "./[id]/CopyLinkButton"
 import DigestSignupForm from "./DigestSignupForm"
 import { normalizeOpportunityTitleCase } from "@/lib/externalOpportunity"
+import { localeFormatTag, normalizeLocale } from "@/i18n/config"
 
 const SITE_URL = "https://www.aiformprocure.co.za"
 
@@ -107,43 +109,35 @@ function daysUntil(value: string | null | undefined): number | null {
   return Math.ceil((deadline.getTime() - today.getTime()) / 86_400_000)
 }
 
-function formatDaysLeft(daysLeft: number | null): string {
-  if (daysLeft === null) return "Deadline TBC"
-  if (daysLeft < 0) return "Closed"
-  if (daysLeft === 0) return "Due today"
-  if (daysLeft === 1) return "1 day left"
-  return `${daysLeft} days left`
-}
-
-function formatBudget(value: string | number | null | undefined): string {
-  if (value === null || value === undefined || value === "") return "Value TBC"
+function formatBudget(value: string | number | null | undefined, locale: string, unavailable: string): string {
+  if (value === null || value === undefined || value === "") return unavailable
   if (typeof value === "number") {
-    return `R${value.toLocaleString("en-ZA", { maximumFractionDigits: 0 })}`
+    return new Intl.NumberFormat(locale, { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(value)
   }
   const num = Number(value.toString().replace(/[^\d.]/g, ""))
   if (Number.isNaN(num) || num === 0) return String(value)
-  return `R${num.toLocaleString("en-ZA", { maximumFractionDigits: 0 })}`
+  return new Intl.NumberFormat(locale, { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(num)
 }
 
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "Deadline TBC"
+function formatDate(value: string | null | undefined, locale: string, unavailable: string): string {
+  if (!value) return unavailable
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" })
+  return d.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })
 }
 
-function formatValueRange(rfq: PublicRFQ): string {
+function formatValueRange(rfq: PublicRFQ, locale: string, unavailable: string): string {
   const min = rfq.estimated_value_min
   const max = rfq.estimated_value_max
 
   if (typeof min === "number" && typeof max === "number") {
-    return `${formatBudget(min)} - ${formatBudget(max)}`
+    return `${formatBudget(min, locale, unavailable)} - ${formatBudget(max, locale, unavailable)}`
   }
 
-  if (typeof min === "number") return `From ${formatBudget(min)}`
-  if (typeof max === "number") return `Up to ${formatBudget(max)}`
+  if (typeof min === "number") return formatBudget(min, locale, unavailable)
+  if (typeof max === "number") return formatBudget(max, locale, unavailable)
 
-  return formatBudget(rfq.budget)
+  return formatBudget(rfq.budget, locale, unavailable)
 }
 
 function getClosingDate(rfq: PublicRFQ): string | null {
@@ -463,6 +457,7 @@ function FilterBody({
   setBbeeFilters: (v: BBBEEFilter[]) => void
   onReset: () => void
 }) {
+  const t = useTranslations("opportunities")
   const [showAllProvinces, setShowAllProvinces] = useState(false)
   const [showAllIndustries, setShowAllIndustries] = useState(false)
 
@@ -499,11 +494,11 @@ function FilterBody({
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="text-[0.68rem] font-bold uppercase tracking-[0.22em] text-secondary">
-          Filters
+          {t("filters")}
         </h2>
         {hasActive && (
           <button onClick={onReset} className="text-xs font-semibold text-accent hover:underline">
-            Reset all
+            {t("resetAll")}
           </button>
         )}
       </div>
@@ -511,7 +506,7 @@ function FilterBody({
       {/* Industry */}
       {industries.length > 0 && (
         <div>
-          <FilterSectionTitle>Industry</FilterSectionTitle>
+          <FilterSectionTitle>{t("industry")}</FilterSectionTitle>
           <div className="space-y-0.5">
             {visibleIndustries.map((ind) => (
               <FilterCheckbox
@@ -528,7 +523,7 @@ function FilterBody({
               onClick={() => setShowAllIndustries(!showAllIndustries)}
               className="mt-1 px-2 text-xs font-semibold text-accent hover:underline"
             >
-              {showAllIndustries ? "Show less" : `+${industries.length - 6} more`}
+              {showAllIndustries ? t("showLess") : t("more", { count: industries.length - 6 })}
             </button>
           )}
         </div>
@@ -536,7 +531,7 @@ function FilterBody({
 
       {/* Province */}
       <div>
-        <FilterSectionTitle>Province</FilterSectionTitle>
+        <FilterSectionTitle>{t("province")}</FilterSectionTitle>
         <div className="space-y-0.5">
           {visibleProvinces.map((p) => (
             <FilterCheckbox
@@ -553,19 +548,19 @@ function FilterBody({
             onClick={() => setShowAllProvinces(!showAllProvinces)}
             className="mt-1 px-2 text-xs font-semibold text-accent hover:underline"
           >
-            {showAllProvinces ? "Show less" : "Show all provinces"}
+            {showAllProvinces ? t("showLess") : t("showAllProvinces")}
           </button>
         )}
       </div>
 
       {/* Closing date */}
       <div>
-        <FilterSectionTitle>Closing date</FilterSectionTitle>
+        <FilterSectionTitle>{t("closingDate")}</FilterSectionTitle>
         <div className="space-y-0.5">
-          {DEADLINE_OPTIONS.map(({ key, label }) => (
+          {DEADLINE_OPTIONS.map(({ key }) => (
             <FilterCheckbox
               key={key}
-              label={label}
+              label={t(key === "week" ? "deadlineWeek" : key === "twoWeeks" ? "deadlineTwoWeeks" : "deadlineMonth")}
               count={countByDeadline(key)}
               checked={deadlineFilters.includes(key)}
               onChange={() =>
@@ -578,12 +573,12 @@ function FilterBody({
 
       {/* BBBEE requirement */}
       <div>
-        <FilterSectionTitle>BBBEE requirement</FilterSectionTitle>
+        <FilterSectionTitle>{t("bbbeeRequirement")}</FilterSectionTitle>
         <div className="space-y-0.5">
-          {BBBEE_OPTIONS.map(({ key, label }) => (
+          {BBBEE_OPTIONS.map(({ key }) => (
             <FilterCheckbox
               key={key}
-              label={label}
+              label={t(key === "level1to2" ? "bbbeeLevel12" : key === "level3to4" ? "bbbeeLevel34" : key === "level5to8" ? "bbbeeLevel58" : "bbbeeAny")}
               count={countByBBBEE(key)}
               checked={bbeeFilters.includes(key)}
               onChange={() =>
@@ -608,6 +603,8 @@ function PreviewModal({
   isAuth: boolean
   onClose: () => void
 }) {
+  const t = useTranslations("opportunities")
+  const formatLocale = localeFormatTag(normalizeLocale(useLocale()))
   if (!rfq) return null
   const daysLeft = daysUntil(getClosingDate(rfq))
   const isExternalOpportunity = Boolean(rfq.is_external_opportunity)
@@ -630,29 +627,28 @@ function PreviewModal({
         <p className="mb-1 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-accent">
           {getRFQIndustry(rfq)}
         </p>
-        <h2 className="mb-1.5 text-lg font-bold text-heading">{rfq.title ? normalizeOpportunityTitleCase(rfq.title) : "Untitled RFQ"}</h2>
-        <p className="mb-4 text-sm text-secondary">Issued by {getBuyerName(rfq)}</p>
+        <h2 className="mb-1.5 text-lg font-bold text-heading">{rfq.title ? normalizeOpportunityTitleCase(rfq.title) : t("untitledRfq")}</h2>
+        <p className="mb-4 text-sm text-secondary">{t("issuedBy", { buyer: getBuyerName(rfq) })}</p>
         <p className="mb-4 text-sm leading-relaxed text-secondary">
-          {rfq.description ?? "No description provided."}
+          {rfq.description ?? t("noDescription")}
         </p>
         <div className="mb-6 flex flex-wrap gap-2">
           <MetaChip icon={<PinIcon />} label={getRFQProvince(rfq)} />
-          <MetaChip icon={<RandIcon />} label={formatValueRange(rfq)} />
+          <MetaChip icon={<RandIcon />} label={formatValueRange(rfq, formatLocale, t("valueTbc"))} />
           {getBBBEEReq(rfq) && (
             <MetaChip icon={<ShieldIcon />} label={"BBBEE: " + getBBBEEReq(rfq)} />
           )}
-          <MetaChip icon={<CalendarIcon />} label={formatDaysLeft(daysLeft)} />
+          <MetaChip icon={<CalendarIcon />} label={daysLeft === null ? t("deadlineTbc") : daysLeft < 0 ? t("closed") : daysLeft === 0 ? t("closesToday") : t("daysLeft", { count: daysLeft })} />
         </div>
         {isAuth ? (
           <div className="rounded-lg border border-accent/20 bg-accent/5 p-4">
             {isExternalOpportunity && rfq.original_source_url ? (
               <>
                 <p className="mb-1.5 text-sm font-semibold text-heading">
-                  Externally-sourced opportunity
+                  {t("externalOpportunity")}
                 </p>
                 <p className="mb-4 text-sm text-secondary">
-                  Source: {rfq.source_name?.trim() || "External"}. Quotes for this opportunity are
-                  submitted directly with the buyer, not through AiForm Procure.
+                  {t("externalSubmission", { source: rfq.source_name?.trim() || t("external") })}
                 </p>
                 <a
                   href={rfq.original_source_url}
@@ -660,30 +656,29 @@ function PreviewModal({
                   rel="noopener noreferrer"
                   className="masthead__btn-primary text-sm"
                 >
-                  View Original Tender
+                  {t("viewOriginalTender")}
                 </a>
               </>
             ) : (
               <Link href={"/dashboard/rfqs?open=" + rfq.id} className="masthead__btn-primary text-sm">
-                View &amp; quote
+                {t("viewAndQuote")}
               </Link>
             )}
           </div>
         ) : (
           <div className="rounded-lg border border-accent/20 bg-accent/5 p-4">
             <p className="mb-1.5 text-sm font-semibold text-heading">
-              Register to respond to this opportunity
+              {t("registerRespond")}
             </p>
             <p className="mb-4 text-sm text-secondary">
-              Create a free supplier account to submit quotes, track deadlines, and access all
-              active tenders on AiForm Procure.
+              {t("registerRespondBody")}
             </p>
             <div className="flex gap-3">
               <Link href="/auth/signup" className="masthead__btn-primary text-sm">
-                Create free account
+                {t("createFreeAccount")}
               </Link>
               <Link href="/auth/login" className="masthead__btn-secondary text-sm">
-                Sign in
+                {t("signIn")}
               </Link>
             </div>
           </div>
@@ -696,30 +691,30 @@ function PreviewModal({
 // --- Registration CTA banner (unauthenticated only) ---------------------------
 
 function CTABanner() {
+  const t = useTranslations("opportunities")
   return (
     <div className="rounded-md border border-accent/20 bg-accent/10 p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-accent">
-            Free supplier registration
+            {t("freeRegistration")}
           </p>
           <h3 className="mt-1 text-lg font-bold text-heading">
-            Respond to tenders and win more contracts
+            {t("ctaTitle")}
           </h3>
           <p className="mt-1 text-sm text-secondary">
-            Join thousands of verified South African suppliers — submit quotes, get matched to
-            opportunities, and grow your business on AiForm Procure.
+            {t("ctaBody")}
           </p>
         </div>
         <div className="flex shrink-0 flex-col gap-2 sm:items-end">
           <Link href="/auth/signup" className="masthead__btn-primary whitespace-nowrap">
-            Register free
+            {t("registerFree")}
           </Link>
           <Link href="/auth/login" className="text-sm font-medium text-accent hover:underline">
-            Already registered? Sign in
+            {t("alreadyRegistered")}
           </Link>
           <Link href="/auth/login?role=buyer" className="text-sm font-medium text-secondary hover:underline">
-            I&apos;m a Buyer
+            {t("buyerLogin")}
           </Link>
         </div>
       </div>
@@ -740,11 +735,13 @@ function RFQCard({
   matchesProfile: boolean
   onPreview: (rfq: PublicRFQ) => void
 }) {
+  const t = useTranslations("opportunities")
+  const formatLocale = localeFormatTag(normalizeLocale(useLocale()))
   const daysLeft = daysUntil(getClosingDate(rfq))
   const isClosingSoon = daysLeft !== null && daysLeft >= 0 && daysLeft <= 3
   const isNew = isPostedWithin48h(getPublishedDate(rfq))
   const isExternalOpportunity = Boolean(rfq.is_external_opportunity)
-  const externalLabel = rfq.source_name?.trim() || "External"
+  const externalLabel = rfq.source_name?.trim() || t("external")
 
   return (
     <article
@@ -757,21 +754,21 @@ function RFQCard({
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-success/30 bg-success-soft px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-success">
-              Public opportunity
+              {t("publicOpportunity")}
             </span>
             {matchesProfile && (
               <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-accent-strong">
-                Matches your profile
+                {t("matchesProfile")}
               </span>
             )}
             {isNew && (
               <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-sky-700">
-                New
+                {t("new")}
               </span>
             )}
             {isClosingSoon && (
               <span className="rounded-full border border-warning bg-warning-soft px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-warning">
-                Closing soon
+                {t("closingSoon")}
               </span>
             )}
             {isExternalOpportunity && (
@@ -781,25 +778,25 @@ function RFQCard({
             )}
             {isExternalOpportunity && rfq.curation_status === "approved" && (
               <span
-                title="This listing passed automated screening for cancelled or already-awarded notices — see the Trust Center for how opportunity sourcing works."
+                title={t("screenedHelp")}
                 className="rounded-full border border-panel bg-surface px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-secondary"
               >
-                Automatically screened
+                {t("screened")}
               </span>
             )}
           </div>
           <h3 className="font-semibold text-heading line-clamp-2">
             <Link href={`/opportunities/${rfq.id}`} className="hover:text-accent-strong hover:underline">
-              {rfq.title ? normalizeOpportunityTitleCase(rfq.title) : "Untitled opportunity"}
+              {rfq.title ? normalizeOpportunityTitleCase(rfq.title) : t("untitledOpportunity")}
             </Link>
           </h3>
           <p className="mt-0.5 text-sm text-secondary">{getBuyerName(rfq)}</p>
         </div>
         <div className="shrink-0 text-right">
           <p className="rounded-full border border-panel bg-surface px-3 py-1 text-xs font-bold text-heading">
-            {formatDaysLeft(daysLeft)}
+            {daysLeft === null ? t("deadlineTbc") : daysLeft < 0 ? t("closed") : daysLeft === 0 ? t("closesToday") : t("daysLeft", { count: daysLeft })}
           </p>
-          <p className="mt-0.5 text-xs text-muted">{formatValueRange(rfq)}</p>
+          <p className="mt-0.5 text-xs text-muted">{formatValueRange(rfq, formatLocale, t("valueTbc"))}</p>
         </div>
       </div>
 
@@ -810,20 +807,20 @@ function RFQCard({
         {getBBBEEReq(rfq) && (
           <MetaChip icon={<ShieldIcon />} label={"BBBEE " + getBBBEEReq(rfq)} />
         )}
-        <MetaChip icon={<RandIcon />} label={formatValueRange(rfq)} />
+        <MetaChip icon={<RandIcon />} label={formatValueRange(rfq, formatLocale, t("valueTbc"))} />
       </div>
 
       {/* Action row */}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-panel pt-3">
         <div className="flex items-center gap-3">
-          <p className="text-xs text-muted">Closes {formatDate(getClosingDate(rfq))}</p>
+          <p className="text-xs text-muted">{t("closesOn", { date: formatDate(getClosingDate(rfq), formatLocale, t("deadlineTbc")) })}</p>
           <CopyLinkButton url={`${SITE_URL}/opportunities/${rfq.id}`} title={rfq.title ? normalizeOpportunityTitleCase(rfq.title) : undefined} />
           {rfq.description && (
             <button
               onClick={() => onPreview(rfq)}
               className="text-xs font-semibold text-accent transition hover:text-accent-strong"
             >
-              Read full scope &rarr;
+              {t("readFullScope")} &rarr;
             </button>
           )}
         </div>
@@ -835,14 +832,14 @@ function RFQCard({
               rel="noopener noreferrer"
               className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-panel hover:text-heading"
             >
-              View Original Tender
+              {t("viewOriginalTender")}
             </a>
           ) : (
             <Link
               href={"/dashboard/rfqs?open=" + rfq.id}
               className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-panel hover:text-heading"
             >
-              View &amp; quote
+              {t("viewAndQuote")}
             </Link>
           )
         ) : (
@@ -850,7 +847,7 @@ function RFQCard({
             onClick={() => onPreview(rfq)}
             className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-panel hover:text-heading"
           >
-            Preview
+            {t("preview")}
           </button>
         )}
       </div>
@@ -861,6 +858,8 @@ function RFQCard({
 // --- Main page ----------------------------------------------------------------
 
 export default function OpportunitiesPage() {
+  const t = useTranslations("opportunities")
+  const locale = useLocale()
   const [rfqs, setRfqs] = useState<PublicRFQ[]>([])
   const [isAuth, setIsAuth] = useState(false)
   const [supplierProfile, setSupplierProfile] = useState<SupplierMatchProfile | null>(null)
@@ -1032,15 +1031,14 @@ export default function OpportunitiesPage() {
         <section className="border-b border-panel bg-white py-10">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mb-4">
-              <BackLink />
+              <BackLink label={t("backLabel")} />
             </div>
-            <p className="newspaper-kicker mb-2">Live procurement &middot; South Africa</p>
+             <p className="newspaper-kicker mb-2">{t("title")}</p>
             <h1 className="newspaper-headline mb-4">
-              Find tenders and RFQs across South Africa
+               {t("title")}
             </h1>
             <p className="newspaper-body mb-6 max-w-2xl text-secondary">
-              Browse automatically screened tenders and RFQs sourced from official government procurement listings.
-              Register free to respond and win contracts.
+               {t("subtitle")}
             </p>
 
             {/* Search */}
@@ -1059,7 +1057,7 @@ export default function OpportunitiesPage() {
               </svg>
               <input
                 type="search"
-                placeholder="Search by keyword, industry, province or buyer…"
+                placeholder={t("search")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full rounded-lg border border-panel bg-panel py-3 pl-11 pr-4 text-sm text-primary outline-none placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent/30"
@@ -1077,19 +1075,18 @@ export default function OpportunitiesPage() {
                   {closingSoonCount > 0 && (
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-warning bg-warning-soft px-4 py-1.5 text-sm font-semibold text-warning">
                       <CalendarIcon />
-                      {closingSoonCount} closing this week
+                      {t("closingThisWeek", { count: closingSoonCount })}
                     </span>
                   )}
                   {newRecentCount > 0 && (
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-4 py-1.5 text-sm font-semibold text-sky-700">
                       <span className="h-2 w-2 rounded-full bg-sky-500" />
-                      {newRecentCount} new in last 48h
+                      {t("newLast48", { count: newRecentCount })}
                     </span>
                   )}
                 </div>
                 <p className="mt-3 text-xs text-muted">
-                  Opportunities are sourced from public procurement notices and
-                  platform-posted RFQs. Data is updated regularly during the pilot period.
+                  {t("sourceExplanation")}
                 </p>
               </>
             )}
@@ -1107,9 +1104,9 @@ export default function OpportunitiesPage() {
                     <PersonIcon />
                   </span>
                   <div>
-                    <p className="font-bold text-heading">You&apos;re browsing as a guest</p>
+                    <p className="font-bold text-heading">{t("guestTitle")}</p>
                     <p className="mt-0.5 text-sm text-secondary">
-                      Create a free account to submit quotes and get matched RFQs.
+                      {t("guestBody")}
                     </p>
                   </div>
                 </div>
@@ -1118,19 +1115,19 @@ export default function OpportunitiesPage() {
                     href="/auth/signup"
                     className="rounded-md bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-button transition hover:bg-accent-strong"
                   >
-                    Register free
+                    {t("registerFree")}
                   </Link>
                   <Link
                     href="/auth/login"
                     className="rounded-md border border-panel bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-secondary transition hover:text-accent"
                   >
-                    Log in
+                    {t("login")}
                   </Link>
                   <Link
                     href="/auth/login?role=buyer"
                     className="rounded-md border border-[#1a3a2a] bg-[#1a3a2a] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#c8a060] transition hover:bg-[#123020]"
                   >
-                    I&apos;m a Buyer
+                    {t("buyerLogin")}
                   </Link>
                 </div>
               </div>
@@ -1139,15 +1136,15 @@ export default function OpportunitiesPage() {
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-panel bg-surface/60 px-5 py-3">
                 <span className="inline-flex items-center gap-1.5 text-xs text-secondary">
                   <BadgeCheckIcon />
-                  <span><strong className="font-semibold text-heading">Free to join</strong> &middot; no cost during our pilot</span>
+                  <span><strong className="font-semibold text-heading">{t("freeToJoin")}</strong> &middot; {t("pilotCost")}</span>
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-xs text-secondary">
                   <TargetIcon />
-                  <span><strong className="font-semibold text-heading">Public RFQs</strong> &middot; sourced from official procurement listings</span>
+                  <span><strong className="font-semibold text-heading">{t("publicRfqs")}</strong> &middot; {t("officialListings")}</span>
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-xs text-secondary">
                   <BellIcon />
-                  <span><strong className="font-semibold text-heading">Weekly updates</strong> &middot; never miss an opportunity</span>
+                  <span><strong className="font-semibold text-heading">{t("weeklyUpdates")}</strong> &middot; {t("neverMiss")}</span>
                 </span>
               </div>
 
@@ -1158,16 +1155,16 @@ export default function OpportunitiesPage() {
                     <SendIcon />
                   </span>
                   <div>
-                    <p className="font-bold text-heading">Not ready yet?</p>
+                    <p className="font-bold text-heading">{t("notReady")}</p>
                     <p className="mt-0.5 text-sm text-secondary">
-                      Get this list emailed to you weekly, no account needed.
+                      {t("weeklyNoAccount")}
                     </p>
                   </div>
                 </div>
                 <div>
                   <DigestSignupForm />
                   <p className="mt-1.5 flex items-center gap-1 text-xs text-muted">
-                    <LockIcon /> We respect your privacy. Unsubscribe anytime.
+                    <LockIcon /> {t("privacyNote")}
                   </p>
                 </div>
               </div>
@@ -1198,7 +1195,7 @@ export default function OpportunitiesPage() {
                         strokeWidth="2"
                       />
                     </svg>
-                    Filters
+                     {t("applyFilters")}
                     {hasActiveFilters && (
                       <span className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[0.6rem] font-bold text-white">
                         {filterBadgeCount}
@@ -1207,22 +1204,20 @@ export default function OpportunitiesPage() {
                   </button>
                   <p className="text-sm text-secondary">
                     {loading
-                      ? "Loading…"
-                      : filtered.length === 1
-                      ? "1 opportunity"
-                      : `${filtered.length} opportunities`}
+                      ? t("loading")
+                      : t("results", { count: filtered.length })}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-secondary">Sort by</label>
+                   <label className="text-xs text-secondary">{t("sort")}</label>
                   <select
                     value={sort}
                     onChange={(e) => setSort(e.target.value as SortKey)}
                     className="rounded-md border border-panel bg-panel px-3 py-1.5 text-xs text-primary outline-none focus:border-accent"
                   >
-                    <option value="deadline">Closing soonest</option>
-                    <option value="newest">Newest first</option>
-                    <option value="value">Highest value</option>
+                     <option value="deadline">{t("closingSoon")}</option>
+                     <option value="newest">{t("newest")}</option>
+                     <option value="value">{t("highestValue")}</option>
                   </select>
                 </div>
               </div>
@@ -1236,16 +1231,16 @@ export default function OpportunitiesPage() {
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-panel bg-card py-16 text-center">
-                  <p className="text-lg font-semibold text-heading">No opportunities found</p>
+                   <p className="text-lg font-semibold text-heading">{t("noResults")}</p>
                   <p className="mt-2 text-sm text-secondary">
-                    Try adjusting your search or clearing active filters
+                     {t("noResultsHint")}
                   </p>
                   {hasActiveFilters && (
                     <button
                       onClick={resetFilters}
                       className="mt-4 rounded-md border border-panel bg-surface px-4 py-2 text-sm font-semibold text-primary transition hover:bg-panel"
                     >
-                      Clear filters
+                       {t("clearFilters")}
                     </button>
                   )}
                 </div>
@@ -1294,11 +1289,10 @@ export default function OpportunitiesPage() {
                 </span>
                 <div>
                   <p className="text-sm font-bold text-[#f8f4ec]">
-                    Respond to tenders and win more contracts
+                    {t("ctaTitle")}
                   </p>
                   <p className="mt-1 text-xs text-[#f8f4ec]/60">
-                    Join thousands of verified South African suppliers, submit quotes, get matched
-                    to opportunities, and grow your business.
+                    {t("ctaBody")}
                   </p>
                 </div>
               </div>
@@ -1308,17 +1302,17 @@ export default function OpportunitiesPage() {
                     href="/auth/signup"
                     className="rounded-md bg-[#c8a060] px-5 py-2.5 text-sm font-semibold text-[#1a3a2a] transition hover:bg-[#b8902e]"
                   >
-                    Register as Supplier
+                    {t("registerSupplier")}
                   </Link>
                   <Link
                     href="/auth/login?role=buyer"
                     className="rounded-md border border-[#f8f4ec]/20 px-5 py-2.5 text-sm font-semibold text-[#f8f4ec] transition hover:border-[#f8f4ec]/40"
                   >
-                    I&apos;m a Buyer
+                    {t("buyerLogin")}
                   </Link>
                 </div>
                 <div className="sm:text-right">
-                  <p className="mb-1.5 text-xs text-[#f8f4ec]/60">Not ready yet? Just get this list weekly:</p>
+                  <p className="mb-1.5 text-xs text-[#f8f4ec]/60">{t("weeklyPrompt")}</p>
                   <DigestSignupForm dark />
                 </div>
               </div>
@@ -1337,7 +1331,7 @@ export default function OpportunitiesPage() {
           <div className="absolute bottom-0 left-0 right-0 max-h-[80vh] overflow-y-auto rounded-t-2xl border-t border-panel bg-card p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-bold uppercase tracking-widest text-secondary">
-                Filters
+                {t("filters")}
               </h2>
               <button
                 onClick={() => setFiltersOpen(false)}
@@ -1351,13 +1345,14 @@ export default function OpportunitiesPage() {
               onClick={() => setFiltersOpen(false)}
               className="mt-6 w-full masthead__btn-primary"
             >
-              {`Show ${filtered.length} results`}
+              {t("showResults", { count: filtered.length })}
             </button>
           </div>
         </div>
       )}
 
-      <PreviewModal rfq={previewRFQ} isAuth={isAuth} onClose={() => setPreviewRFQ(null)} />
+       <p className="sr-only" lang={locale}>{t("sourceLanguage")}</p>
+       <PreviewModal rfq={previewRFQ} isAuth={isAuth} onClose={() => setPreviewRFQ(null)} />
       <PublicFooter />
     </>
   )

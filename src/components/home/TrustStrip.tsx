@@ -1,3 +1,7 @@
+"use client"
+
+import { useTranslations } from "next-intl"
+
 const TRUST_STYLES = `
   .ts-grid {
     display: grid;
@@ -26,8 +30,8 @@ const TRUST_STYLES = `
 
 const TRUST_ITEMS = [
   {
-    title: 'Verified Against Official Records',
-    subtitle: 'CSD, SARS, CIPC and banking evidence — reviewed by our team before any supplier appears.',
+    titleKey: 'trustOfficialTitle',
+    subtitleKey: 'trustOfficialBody',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -36,8 +40,8 @@ const TRUST_ITEMS = [
     ),
   },
   {
-    title: 'Industry & Province Matching',
-    subtitle: 'Open opportunities are matched to supplier profiles by registered industry and province.',
+    titleKey: 'trustMatchingTitle',
+    subtitleKey: 'trustMatchingBody',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="10" />
@@ -48,8 +52,8 @@ const TRUST_ITEMS = [
     ),
   },
   {
-    title: 'Live RFQ Notifications',
-    subtitle: 'Suppliers are alerted within minutes of a matching RFQ being posted.',
+    titleKey: 'trustNotificationsTitle',
+    subtitleKey: 'trustNotificationsBody',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -58,8 +62,8 @@ const TRUST_ITEMS = [
     ),
   },
   {
-    title: 'Audit-Ready Records',
-    subtitle: 'Every quote, award, and transaction logged and exportable for procurement audits.',
+    titleKey: 'trustAuditTitle',
+    subtitleKey: 'trustAuditBody',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <rect x="3" y="11" width="18" height="11" rx="2" />
@@ -67,22 +71,23 @@ const TRUST_ITEMS = [
       </svg>
     ),
   },
-]
+] as const
 
 export default function TrustStrip() {
+  const t = useTranslations("home")
   return (
     <div style={{ background: '#f0ebe0', borderTop: '1px solid #d4c8a8' }}>
       <style dangerouslySetInnerHTML={{ __html: TRUST_STYLES }} />
       <div className="ts-grid" style={{ maxWidth: 1200, margin: '0 auto' }}>
         {TRUST_ITEMS.map((item) => (
-          <div key={item.title} className="ts-item">
+          <div key={item.titleKey} className="ts-item">
             <div style={{ flexShrink: 0, marginTop: 2 }}>{item.icon}</div>
             <div>
               <div className="font-display" style={{ fontSize: 12, fontWeight: 700, color: '#1a2e1a', marginBottom: 4, lineHeight: 1.3 }}>
-                {item.title}
+                {t(item.titleKey)}
               </div>
               <div className="font-serif" style={{ fontSize: 11, color: '#5a6a5a', lineHeight: 1.55 }}>
-                {item.subtitle}
+                {t(item.subtitleKey)}
               </div>
             </div>
           </div>

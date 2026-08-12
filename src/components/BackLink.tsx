@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
-export default function BackLink({ fallback = "/", className }: { fallback?: string; className?: string }) {
+export default function BackLink({ className, label = "Back" }: { className?: string; label?: string }) {
   const router = useRouter()
   const [show, setShow] = useState(false)
 
@@ -21,7 +21,7 @@ export default function BackLink({ fallback = "/", className }: { fallback?: str
       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
       </svg>
-      Back
+      {label}
     </button>
   )
 }

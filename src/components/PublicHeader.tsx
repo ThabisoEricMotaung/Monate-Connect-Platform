@@ -3,31 +3,30 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import BrandMark from "@/components/BrandMark"
 import { useRegistrationStatus } from "@/hooks/useRegistrationStatus"
 import { supabase } from "@/lib/supabase"
 
 const NAV_LINKS = [
-  { label: "About", href: "/about" },
-  { label: "Opportunities", href: "/opportunities" },
-  { label: "Suppliers", href: "/suppliers" },
-  { label: "Trust Centre", href: "/trust" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Contact", href: "/contact" },
-]
+  { key: "about", href: "/about" }, { key: "opportunities", href: "/opportunities" },
+  { key: "suppliers", href: "/suppliers" }, { key: "trustCentre", href: "/trust" },
+  { key: "pricing", href: "/pricing" }, { key: "contact", href: "/contact" },
+] as const
 
 function isActiveLink(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
 export default function PublicHeader() {
+  const t = useTranslations("publicChrome")
   const pathname = usePathname() || "/"
   const [signedOutNotice, setSignedOutNotice] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const registrationStatus = useRegistrationStatus()
   const isIncompleteRegistration = registrationStatus.state === "incomplete"
   const dashboardHref = registrationStatus.state === "complete" ? registrationStatus.dashboardHref : null
-  const dashboardLabel = "Go to Dashboard"
+  const dashboardLabel = t("dashboard")
   const homeHref = dashboardHref ?? "/"
 
   useEffect(() => {
@@ -72,7 +71,7 @@ export default function PublicHeader() {
           CSD · BBBEE · SARS · CIPC · NATIONAL TREASURY
         </span>
         <span style={{ color: "#9FE1CB", fontSize: "11px", letterSpacing: "0.08em" }}>
-          FREE DURING PILOT · UNTIL OCT 31, 2026
+          {t("freePilot")}
         </span>
       </div>
 
@@ -89,7 +88,7 @@ export default function PublicHeader() {
             color: "#555555",
           }}
         >
-          You&apos;ve been signed out.
+          {t("signedOut")}
         </div>
       )}
 
@@ -117,7 +116,7 @@ export default function PublicHeader() {
           {/* Logo */}
           <Link
             href={homeHref}
-            aria-label={dashboardHref ? dashboardLabel : "Go to homepage"}
+            aria-label={dashboardHref ? dashboardLabel : t("homepage")}
             style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}
           >
             <BrandMark className="h-10 w-10" imageClassName="h-6 w-auto" />
@@ -132,7 +131,7 @@ export default function PublicHeader() {
                   lineHeight: 1.2,
                 }}
               >
-                Procurement Suite
+                {t("procurementSuite")}
               </p>
               <p
                 style={{
@@ -150,7 +149,7 @@ export default function PublicHeader() {
 
           {/* Desktop Nav Links — plain text, no borders, no boxes */}
           <nav
-            aria-label="Public navigation"
+            aria-label={t("publicNavigation")}
             className="hidden md:flex"
             style={{ alignItems: "center", gap: "2px" }}
           >
@@ -173,7 +172,7 @@ export default function PublicHeader() {
                     display: "inline-block",
                   }}
                 >
-                  {link.label}
+                  {t(link.key)}
                 </Link>
               )
             })}
@@ -191,7 +190,7 @@ export default function PublicHeader() {
                   padding: "8px 10px",
                 }}
               >
-                ← Start over
+                ← {t("startOver")}
               </button>
             )}
           </nav>
@@ -232,7 +231,7 @@ export default function PublicHeader() {
                       fontFamily: "inherit",
                     }}
                   >
-                    Log out
+                    {t("logout")}
                   </button>
                 )}
               </>
@@ -252,7 +251,7 @@ export default function PublicHeader() {
                     alignItems: "center",
                   }}
                 >
-                  Log in
+                  {t("login")}
                 </Link>
                 <Link
                   href="/auth/signup"
@@ -269,7 +268,7 @@ export default function PublicHeader() {
                     alignItems: "center",
                   }}
                 >
-                  Register free
+                  {t("registerFree")}
                 </Link>
               </>
             )}
@@ -278,7 +277,7 @@ export default function PublicHeader() {
           {/* Mobile Hamburger */}
           <button
             type="button"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-label={menuOpen ? t("closeMenu") : t("openMenu")}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen(!menuOpen)}
             className="flex md:hidden"
@@ -331,7 +330,7 @@ export default function PublicHeader() {
                       display: "block",
                     }}
                   >
-                    {link.label}
+                    {t(link.key)}
                   </Link>
                 )
               })}
@@ -363,7 +362,7 @@ export default function PublicHeader() {
                       padding: "6px 10px",
                     }}
                   >
-                    ← Start over
+                    ← {t("startOver")}
                   </button>
                 ) : dashboardHref ? (
                   <>
@@ -405,7 +404,7 @@ export default function PublicHeader() {
                           width: "100%",
                         }}
                       >
-                        Log out
+                        {t("logout")}
                       </button>
                     )}
                   </>
@@ -426,7 +425,7 @@ export default function PublicHeader() {
                         display: "block",
                       }}
                     >
-                      Log in
+                      {t("login")}
                     </Link>
                     <Link
                       href="/auth/signup"
@@ -444,7 +443,7 @@ export default function PublicHeader() {
                         display: "block",
                       }}
                     >
-                      Register free
+                      {t("registerFree")}
                     </Link>
                   </>
                 )}

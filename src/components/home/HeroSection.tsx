@@ -2,8 +2,10 @@
 
 import Link from "next/link"
 import { useEffect, useRef } from "react"
+import { useTranslations } from "next-intl"
 
 export default function HeroSection() {
+  const t = useTranslations("home")
   const layer1Ref = useRef<SVGGElement>(null)
   const layer2Ref = useRef<SVGGElement>(null)
   const layer3Ref = useRef<SVGGElement>(null)
@@ -253,26 +255,23 @@ export default function HeroSection() {
         {/* Left — headline */}
         <div>
           <p style={{ display: "inline-block", fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#1a3a2a", margin: "0 0 14px", fontWeight: 800, padding: "5px 16px", border: "1.5px solid #c8a060", borderRadius: "30px", background: "rgba(200,160,96,0.15)" }}>
-            South African Procurement Opportunities
+            {t("kicker")}
           </p>
           <h1 style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 900, lineHeight: 1.08, color: "#1a2e1a", margin: "0 0 20px" }}>
-            Where SA Suppliers
-            <span style={{ display: "block" }}>
-              <span style={{ display: "inline-block", fontWeight: 700, fontStyle: "italic", color: "#1a3a2a" }}>
-                <span className="sr-only">&nbsp;</span>Meet Real Procurement.
-                <span aria-hidden="true" style={{ display: "block", height: 3, background: "linear-gradient(90deg, transparent, #c8a060 20%, #c8a060 80%, transparent)", marginTop: 6 }} />
-              </span>
+            <span style={{ display: "inline-block", fontWeight: 700, fontStyle: "italic", color: "#1a3a2a" }}>
+              {t("headline")}
+              <span aria-hidden="true" style={{ display: "block", height: 3, background: "linear-gradient(90deg, transparent, #c8a060 20%, #c8a060 80%, transparent)", marginTop: 6 }} />
             </span>
           </h1>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: "#3a4a3a", maxWidth: 480, margin: "0 0 18px" }}>
-            Browse automatically screened public tenders and RFQs by industry, province and closing date&mdash;with links to original sources.
+            {t("intro")}
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a8a7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
             </svg>
             <span style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7a8a7a" }}>
-              Public opportunities sourced from official procurement listings.
+              {t("sourceNote")}
             </span>
           </div>
         </div>
@@ -296,7 +295,7 @@ export default function HeroSection() {
             AiForm Procure
           </p>
           <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1a2e1a", margin: "0 0 16px", lineHeight: 1.2 }}>
-            Your procurement hub
+            {t("hub")}
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -323,8 +322,12 @@ export default function HeroSection() {
                   </svg>
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1a2e1a", margin: "0 0 2px" }}>{item.label}</p>
-                  <p style={{ fontSize: 11, color: "#5a6a5a", margin: 0, lineHeight: 1.4 }}>{item.body}</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1a2e1a", margin: "0 0 2px" }}>
+                    {item.label === "For Suppliers" ? t("forSuppliers") : item.label === "For Buyers" ? t("forBuyers") : t("smartScoreTitle")}
+                  </p>
+                  <p style={{ fontSize: 11, color: "#5a6a5a", margin: 0, lineHeight: 1.4 }}>
+                    {item.label === "For Suppliers" ? t("supplierBody") : item.label === "For Buyers" ? t("buyerBody") : t("smartScoreBody")}
+                  </p>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8a060" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M5 12h14M12 5l7 7-7 7" />
@@ -334,7 +337,7 @@ export default function HeroSection() {
           </div>
 
           <Link href="/auth/signup" className="hero-gold-btn" style={{ display: "block", marginTop: 14, color: "#1a3a2a", textAlign: "center", padding: "11px 16px", borderRadius: 10, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", textDecoration: "none", boxShadow: "0 4px 16px rgba(200,160,96,0.25), inset 0 1px 0 rgba(255,255,255,0.3)" }}>
-            Explore the platform &rarr;
+            {t("explore")} &rarr;
           </Link>
         </div>
       </div>

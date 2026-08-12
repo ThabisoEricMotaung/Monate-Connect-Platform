@@ -1,5 +1,7 @@
 import Link from "next/link"
 import { getPublicOpportunityStats } from "@/lib/publicOpportunityStats"
+import { getLocale, getTranslations } from "next-intl/server"
+import { localeFormatTag, normalizeLocale } from "@/i18n/config"
 
 function ClockIcon() {
   return (
@@ -103,17 +105,18 @@ const STAT_STYLES = `
 `
 
 export default async function OpportunityStatsBanner() {
-  const stats = await getPublicOpportunityStats()
+  const [stats, locale, t] = await Promise.all([getPublicOpportunityStats(), getLocale(), getTranslations("home")])
   if (!stats) return null
+  const formatLocale = localeFormatTag(normalizeLocale(locale))
 
   const items = [
-    { icon: <SparkleIcon />, value: stats.liveOpportunities.toLocaleString("en-ZA"), label: "Live Opportunities" },
-    { icon: <CalendarIcon />, value: stats.closingThisWeek.toLocaleString("en-ZA"), label: "Closing This Week" },
-    { icon: <ClockIcon />, value: stats.newIn48Hours.toLocaleString("en-ZA"), label: "New in 48 Hours" },
+    { icon: <SparkleIcon />, value: stats.liveOpportunities.toLocaleString(formatLocale), label: t("liveOpportunities") },
+    { icon: <CalendarIcon />, value: stats.closingThisWeek.toLocaleString(formatLocale), label: t("closingWeek") },
+    { icon: <ClockIcon />, value: stats.newIn48Hours.toLocaleString(formatLocale), label: t("new48") },
     {
       icon: <ShieldCheckIcon />,
       value: stats.screenedPercent === null ? "—" : `${stats.screenedPercent}%`,
-      label: "Automatically Screened",
+      label: t("screened"),
     },
   ]
 
@@ -126,14 +129,13 @@ export default async function OpportunityStatsBanner() {
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 18, paddingBottom: 28 }}>
           <div style={{ maxWidth: 560 }}>
             <p className="newspaper-kicker" style={{ margin: "0 0 8px" }}>
-              Public procurement, tracked daily
+              {t("trackedDaily")}
             </p>
             <h2 className="font-display" style={{ fontSize: 26, fontWeight: 700, color: "#1a2e1a", margin: 0, lineHeight: 1.2 }}>
-              A live feed, not a snapshot
+              {t("liveFeed")}
             </h2>
             <p className="font-serif" style={{ fontSize: 14, color: "#5a6a5a", marginTop: 8, lineHeight: 1.6 }}>
-              Every number below is queried from the current opportunity feed at page load — aggregated from
-              official government eTenders and automatically screened for cancelled or already-awarded notices.
+              {t("statsBody")}
             </p>
           </div>
           <Link
@@ -155,7 +157,7 @@ export default async function OpportunityStatsBanner() {
               boxShadow: "0 4px 16px rgba(200,160,96,0.25)",
             }}
           >
-            Browse all opportunities &rarr;
+            {t("browseAll")} &rarr;
           </Link>
         </div>
 

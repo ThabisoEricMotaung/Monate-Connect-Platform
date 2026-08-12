@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 // Tiny client island inside an otherwise server-rendered detail page (and
 // reused on the client-rendered feed page) — just enough to touch the
@@ -9,6 +10,7 @@ import { useState } from "react"
 // link" button leaves, which matters here since the whole point of this
 // page existing is to get forwarded.
 export default function CopyLinkButton({ url, title }: { url: string; title?: string }) {
+  const t = useTranslations("opportunityDetail")
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
@@ -34,8 +36,8 @@ export default function CopyLinkButton({ url, title }: { url: string; title?: st
         href={whatsappHref}
         target="_blank"
         rel="noopener noreferrer"
-        title="Share on WhatsApp"
-        aria-label="Share on WhatsApp"
+        title={t("shareWhatsApp")}
+        aria-label={t("shareWhatsApp")}
         className="flex h-7 w-7 items-center justify-center rounded-full border border-panel bg-surface text-[#25D366] transition hover:border-[#25D366]/40 hover:bg-[#25D366]/10"
       >
         <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
@@ -47,8 +49,8 @@ export default function CopyLinkButton({ url, title }: { url: string; title?: st
         href={linkedinHref}
         target="_blank"
         rel="noopener noreferrer"
-        title="Share on LinkedIn"
-        aria-label="Share on LinkedIn"
+        title={t("shareLinkedIn")}
+        aria-label={t("shareLinkedIn")}
         className="flex h-7 w-7 items-center justify-center rounded-full border border-panel bg-surface text-[#0A66C2] transition hover:border-[#0A66C2]/40 hover:bg-[#0A66C2]/10"
       >
         <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
@@ -57,11 +59,11 @@ export default function CopyLinkButton({ url, title }: { url: string; title?: st
       </a>
       <button
         onClick={handleCopy}
-        title="Copy link"
-        aria-label="Copy link"
+        title={t("copyLink")}
+        aria-label={t("copyLink")}
         className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-panel hover:text-heading"
       >
-        {copied ? "Link copied" : "Copy link"}
+        {copied ? t("linkCopied") : t("copyLink")}
       </button>
     </div>
   )
