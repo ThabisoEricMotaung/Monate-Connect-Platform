@@ -20,6 +20,7 @@ import { supabase } from "@/lib/supabase"
 import {
   activeSupplierDocuments,
   applySupplierDocuments,
+  effectiveSupplierDocumentStatus,
   EXPIRY_ENABLED_DOCUMENT_TYPES,
   fetchSupplierDocumentsForProfile,
   supplierDocumentLabels,
@@ -131,10 +132,25 @@ type DocumentUploadOption = {
   storageType: string
   legacyField?: DocumentField
   hint?: { text: string; linkLabel?: string; linkUrl?: string }
+  // When set, the expiry-date field becomes mandatory for this document type
+  // and defaults to today + this many years (e.g. CIDB grading, valid for 3
+  // years per the CIDB compliance guide).
+  expiryRequiredYears?: number
 }
 
 function hasExpiry(option: DocumentUploadOption): boolean {
   return EXPIRY_ENABLED_DOCUMENT_TYPES.has(option.value)
+}
+
+function isExpiryRequired(option: DocumentUploadOption): boolean {
+  return typeof option.expiryRequiredYears === "number"
+}
+
+function defaultExpiryDate(option: DocumentUploadOption): string {
+  if (typeof option.expiryRequiredYears !== "number") return ""
+  const date = new Date()
+  date.setFullYear(date.getFullYear() + option.expiryRequiredYears)
+  return date.toISOString().slice(0, 10)
 }
 
 // --- Constants ---
@@ -267,8 +283,12 @@ function formatUploadFileSize(size: number) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function documentStatusLabel(status: SupplierDocument["status"], profileStatus: string | null): "Verified" | "Under review" {
-  if (status === "verified" || isVerified(profileStatus)) return "Verified"
+function documentStatusLabel(
+  document: SupplierDocument,
+  profileStatus: string | null,
+): "Verified" | "Under review" | "Expired" {
+  if (effectiveSupplierDocumentStatus(document) === "expired") return "Expired"
+  if (document.status === "verified" || isVerified(profileStatus)) return "Verified"
   return "Under review"
 }
 
@@ -1777,6 +1797,18 @@ const DOCUMENT_UPLOAD_OPTIONS: DocumentUploadOption[] = [
     },
   },
   {
+    value: "cidb",
+    label: supplierDocumentLabels.cidb,
+    storageType: supplierDocumentStorageFolders.cidb,
+    legacyField: "cidb_document_url",
+    expiryRequiredYears: 3,
+    hint: {
+      text: "Only required if you tender for public-sector construction work. Register on the CIDB Register of Contractors to get your grading certificate. A CIDB grade is valid for three years, so the expiry date is required here.",
+      linkLabel: "Open the CIDB Register of Contractors",
+      linkUrl: "https://www.cidb.org.za/contractors/register-of-contractors/overview/",
+    },
+  },
+  {
     value: "bank_letter",
     label: supplierDocumentLabels.bank_letter,
     storageType: supplierDocumentStorageFolders.bank_letter,
@@ -1940,6 +1972,10 @@ function DocumentsTab({
       setUploadError(validation)
       return
     }
+    if (isExpiryRequired(selectedOption) && !expiryDate.trim()) {
+      setUploadError(`Expiry date is required for ${selectedOption.label}.`)
+      return
+    }
     setUploading(true)
     setUploadError("")
     setUploadSuccess("")
@@ -1976,7 +2012,9 @@ function DocumentsTab({
         <p className="py-6 text-center text-sm text-muted">No documents uploaded yet.</p>
       ) : (
         <div className="space-y-3">
-          {activeDocuments.map((document) => (
+          {activeDocuments.map((document) => {
+            const statusLabel = documentStatusLabel(document, profile.verification_status)
+            return (
             <div key={document.id} className="flex flex-wrap items-center gap-3 rounded-md border border-panel bg-card px-4 py-3">
               <svg className="h-5 w-5 shrink-0 text-muted" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -1985,14 +2023,15 @@ function DocumentsTab({
                 {supplierDocumentLabels[document.document_type]}
                 {document.original_filename ? <span className="ml-2 text-xs font-normal text-muted">{document.original_filename}</span> : null}
               </span>
-              <Badge color={documentStatusLabel(document.status, profile.verification_status) === "Verified" ? "green" : "amber"}>
-                {documentStatusLabel(document.status, profile.verification_status)}
+              <Badge color={statusLabel === "Verified" ? "green" : statusLabel === "Expired" ? "red" : "amber"}>
+                {statusLabel}
               </Badge>
               <SignedDocumentLink value={document.file_url} bucket="supplier-documents" className="rounded-md border border-panel bg-surface px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-accent hover:text-accent">
                 Download
               </SignedDocumentLink>
             </div>
-          ))}
+            )
+          })}
           {docUrls.cidb_document_url && (
             <div className="flex flex-wrap items-center gap-3 rounded-md border border-warning/30 bg-warning-soft px-4 py-3">
               <svg className="h-5 w-5 shrink-0 text-warning" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
@@ -2026,11 +2065,13 @@ function DocumentsTab({
             id="doc-category"
             value={uploadCategory}
             onChange={(e) => {
+              const nextOption =
+                DOCUMENT_UPLOAD_OPTIONS.find((option) => option.value === e.target.value) ?? DOCUMENT_UPLOAD_OPTIONS[0]
               setUploadCategory(e.target.value)
               setConfirmedDocumentType(false)
               setUploadSuccess("")
               setUploadError("")
-              setExpiryDate("")
+              setExpiryDate(defaultExpiryDate(nextOption))
             }}
             className={inputCls}
           >
@@ -2041,16 +2082,21 @@ function DocumentsTab({
           {selectedOption.legacyField && !docUrls[selectedOption.legacyField] && <SmartScoreNudge />}
           {hasExpiry(selectedOption) && (
             <div className="mt-3">
-              <label htmlFor="doc-expiry" className={labelCls}>Expiry date (optional)</label>
+              <label htmlFor="doc-expiry" className={labelCls}>
+                Expiry date{isExpiryRequired(selectedOption) ? "" : " (optional)"}
+              </label>
               <input
                 id="doc-expiry"
                 type="date"
+                required={isExpiryRequired(selectedOption)}
                 value={expiryDate}
                 onChange={(e) => setExpiryDate(e.target.value)}
                 className={inputCls}
               />
               <p className="mt-1 text-xs text-muted">
-                Helps us remind you before this {selectedOption.label} lapses. You can leave this blank and add it later.
+                {isExpiryRequired(selectedOption)
+                  ? `Required for ${selectedOption.label} -- defaults to 3 years from today, matching a CIDB grade's validity. Adjust it if your certificate expires sooner.`
+                  : `Helps us remind you before this ${selectedOption.label} lapses. You can leave this blank and add it later.`}
               </p>
             </div>
           )}
@@ -2111,7 +2157,12 @@ function DocumentsTab({
             <button
               type="button"
               onClick={() => void handleNewUpload()}
-              disabled={uploading || !selectedFile || !confirmedDocumentType}
+              disabled={
+                uploading ||
+                !selectedFile ||
+                !confirmedDocumentType ||
+                (isExpiryRequired(selectedOption) && !expiryDate.trim())
+              }
               className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-accent bg-accent px-4 py-2.5 text-sm font-semibold text-button transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
             >
               {uploading ? "Uploading..." : "Upload document"}

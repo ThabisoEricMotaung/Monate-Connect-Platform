@@ -62,7 +62,40 @@ export type LegacyDocumentProfile = {
 // Document types with a meaningful expiry date. Matches the compliance
 // categories that check expiry in deriveSupplierVerificationState and
 // supplier_compliance_base -- banking and the rest have no expiry concept.
-export const EXPIRY_ENABLED_DOCUMENT_TYPES = new Set<SupplierDocumentType>(["csd", "bbbee", "tax_clearance"])
+export const EXPIRY_ENABLED_DOCUMENT_TYPES = new Set<SupplierDocumentType>(["csd", "bbbee", "tax_clearance", "cidb"])
+
+export function isSupplierDocumentExpired(
+  expiryDate: string | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  if (!expiryDate) return false
+  const expiry = new Date(expiryDate)
+  if (Number.isNaN(expiry.getTime())) return false
+  const today = new Date(now)
+  today.setHours(0, 0, 0, 0)
+  expiry.setHours(0, 0, 0, 0)
+  return expiry.getTime() < today.getTime()
+}
+
+// Canonical document status once expiry is taken into account. Only an
+// approved document can lapse into "expired" -- under_review/rejected/
+// superseded are unaffected, same rule deriveSupplierVerificationState
+// applies to csd/bbbee/tax_clearance.
+export function effectiveSupplierDocumentStatus(
+  document: Pick<SupplierDocument, "status" | "document_type" | "expiry_date"> | null | undefined,
+  now: Date = new Date(),
+): CanonicalSupplierDocumentStatus {
+  if (!document) return "under_review"
+  const status = normalizeSupplierDocumentStatus(document.status)
+  if (
+    status === "approved" &&
+    EXPIRY_ENABLED_DOCUMENT_TYPES.has(document.document_type) &&
+    isSupplierDocumentExpired(document.expiry_date, now)
+  ) {
+    return "expired"
+  }
+  return status
+}
 
 export const supplierDocumentLabels: Record<SupplierDocumentType, string> = {
   cipc: "CIPC",

@@ -81,7 +81,7 @@ export async function getCanonicalSupplierSmartScoreBatch({
   const [profileRes, documentRes, bankRes, attestationRes, quoteRes, contractRes, invoiceRes, paymentRes] = await Promise.all([
     profilePromise,
     query<{ data: unknown; error: { message?: string } | null }>(
-      withIds(client.from("supplier_documents").select("id, profile_id, document_type, file_url, storage_path, original_filename, content_type, file_size, uploaded_at, status, reviewed_at, reviewed_by, review_notes")).in?.("profile_id", ids)
+      withIds(client.from("supplier_documents").select("id, profile_id, document_type, file_url, storage_path, original_filename, content_type, file_size, uploaded_at, status, reviewed_at, reviewed_by, review_notes, expiry_date")).in?.("profile_id", ids)
     ),
     bankPromise,
     query<{ data: unknown; error: { message?: string } | null }>(
