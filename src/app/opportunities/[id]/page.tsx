@@ -6,11 +6,18 @@ import BackLink from "@/components/BackLink"
 import PublicBreadcrumbs from "@/components/PublicBreadcrumbs"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
+import OpportunityComplianceChecklist from "@/components/OpportunityComplianceChecklist"
 import CopyLinkButton from "./CopyLinkButton"
 import { normalizeOpportunityTitleCase } from "@/lib/externalOpportunity"
 import { buildOpportunityJsonLd } from "@/lib/opportunityStructuredData"
 import { getLocale, getTranslations } from "next-intl/server"
 import { localeFormatTag, normalizeLocale } from "@/i18n/config"
+import { createSupabaseServerClient } from "@/lib/supabase-server"
+import {
+  calculateSupplierComplianceFit,
+  getRFQComplianceRequirements,
+  type SupplierComplianceFit,
+} from "@/lib/rfqCompliance"
 
 // Server-rendered detail page for a single public opportunity. The main
 // /opportunities page is a client component (search/filter state), which
@@ -47,6 +54,9 @@ type PublicRFQDetail = {
   source_name: string | null
   curation_status: string | null
   external_reference: string | null
+  require_csd?: boolean
+  require_tax_clearance?: boolean
+  require_vat?: boolean
 }
 
 const SITE_URL = "https://www.aiformprocure.co.za"
@@ -179,6 +189,33 @@ export default async function OpportunityDetailPage({ params }: Props) {
   const isClosed = daysLeft !== null && daysLeft < 0
   const isExternal = Boolean(rfq.is_external_opportunity)
   const shareUrl = `${SITE_URL}/opportunities/${rfq.id}`
+  const requirements = getRFQComplianceRequirements(rfq)
+  let supplierComplianceFit: SupplierComplianceFit | null = null
+
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    const authenticatedClient = await createSupabaseServerClient()
+    const { data: { user } } = await authenticatedClient.auth.getUser()
+    if (user?.id) {
+      const { data: supplierProfile } = await authenticatedClient
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .eq("role", "supplier")
+        .maybeSingle()
+
+      if (supplierProfile) {
+        try {
+          supplierComplianceFit = await calculateSupplierComplianceFit(
+            supplierProfile.id,
+            rfq,
+            authenticatedClient,
+          )
+        } catch (error) {
+          console.error("Unable to calculate opportunity compliance readiness", error)
+        }
+      }
+    }
+  }
 
   return (
     <>
@@ -296,6 +333,15 @@ export default async function OpportunityDetailPage({ params }: Props) {
               </>
             )}
           </div>
+
+          <section className="mb-10 rounded-3xl border border-panel bg-card p-6 sm:p-10">
+            <h2 className="mb-6 text-3xl font-bold text-heading">Compliance requirements</h2>
+            <OpportunityComplianceChecklist
+              requirements={requirements}
+              supplierComplianceFit={supplierComplianceFit}
+              rfq={rfq}
+            />
+          </section>
 
           <div className="flex flex-wrap items-center gap-3 border-t border-panel pt-5">
             <p className="text-xs text-muted">{t("sharePrompt")}</p>
