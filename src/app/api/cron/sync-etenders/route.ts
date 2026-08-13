@@ -10,8 +10,6 @@ import {
 } from "@/lib/etendersSync"
 import { toRfqPayload, type RfqUpsertPayload } from "@/lib/etendersTransform"
 
-export const maxDuration = 900
-
 function cronAuthorized(request: Request): boolean {
   const secret = process.env.CRON_SECRET
   if (!secret) return false
