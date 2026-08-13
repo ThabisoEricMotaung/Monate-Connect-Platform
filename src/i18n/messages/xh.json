@@ -52,7 +52,8 @@
     "csdVerified": "CSD iqinisekisiwe",
     "bbbeeCompliant": "I-B-BBEE iyahambelana",
     "sarsCompliant": "I-SARS iyahambelana",
-    "popiaAware": "POPIA uyazi"
+    "popiaAware": "POPIA uyazi",
+    "breadcrumbHome": "Ekhaya"
   },
   "home": {
     "kicker": "Amathuba okuthenga oMzantsi Afrika",

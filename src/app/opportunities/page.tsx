@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
+import PublicBreadcrumbs from "@/components/PublicBreadcrumbs"
 import { fetchPublicOpportunities } from "@/lib/publicOpportunities"
 import OpportunitiesClient from "./OpportunitiesClient"
 
@@ -35,6 +37,22 @@ export function generateMetadata(): Metadata {
 }
 
 export default async function OpportunitiesPage() {
-  const initialRfqs = await fetchPublicOpportunities()
-  return <OpportunitiesClient initialRfqs={initialRfqs} />
+  const [initialRfqs, t] = await Promise.all([
+    fetchPublicOpportunities(),
+    getTranslations("publicChrome"),
+  ])
+
+  return (
+    <OpportunitiesClient
+      initialRfqs={initialRfqs}
+      breadcrumbs={
+        <PublicBreadcrumbs
+          items={[
+            { label: t("breadcrumbHome"), href: "/" },
+            { label: t("opportunities"), href: "/opportunities" },
+          ]}
+        />
+      }
+    />
+  )
 }

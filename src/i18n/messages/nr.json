@@ -52,7 +52,8 @@
     "csdVerified": "I-CSD iqinisekisiwe",
     "bbbeeCompliant": "I-B-BBEE iyahambisana",
     "sarsCompliant": "I-SARS iyahambisana",
-    "popiaAware": "I-POPIA iyazi"
+    "popiaAware": "I-POPIA iyazi",
+    "breadcrumbHome": "Ekhaya"
   },
   "home": {
     "kicker": "Amathuba wokuthenga weSewula Afrika",

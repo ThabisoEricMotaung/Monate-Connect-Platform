@@ -47,7 +47,7 @@
     "disclosure": "Translations may be AI-assisted. Tender information remains in its original source language."
   },
   "publicChrome": {
-    "about": "About", "opportunities": "Opportunities", "suppliers": "Suppliers", "trustCentre": "Trust Centre", "pricing": "Pricing", "contact": "Contact",
+    "about": "About", "opportunities": "Opportunities", "breadcrumbHome": "Home", "suppliers": "Suppliers", "trustCentre": "Trust Centre", "pricing": "Pricing", "contact": "Contact",
     "procurementSuite": "Procurement Suite", "freePilot": "Free during pilot · until Oct 31, 2026", "signedOut": "You've been signed out.",
     "dashboard": "Go to Dashboard", "homepage": "Go to homepage", "publicNavigation": "Public navigation", "startOver": "Start over",
     "login": "Log in", "logout": "Log out", "registerFree": "Register free", "openMenu": "Open menu", "closeMenu": "Close menu",

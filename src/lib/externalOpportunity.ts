@@ -16,6 +16,22 @@ export type TerminalNoticeReason =
   | "unsuccessful_bidder_letter"
   | "tender_cancellation"
 
+export function getOpportunityReference(rfq: {
+  id: number
+  external_reference?: string | null
+}): string {
+  return rfq.external_reference?.trim() || `RFQ-${rfq.id}`
+}
+
+export function getProcurementTypeLabel(rfq: {
+  is_external_opportunity?: boolean | null
+  source_name?: string | null
+}): string {
+  return rfq.is_external_opportunity
+    ? (rfq.source_name?.trim() || "Government tender")
+    : "Platform RFQ"
+}
+
 const SOURCE_BOILERPLATE =
   "Sourced from eTenders.gov.za (National Treasury Transparency Portal). This listing is provided for discovery purposes; refer to the original source for the authoritative tender documents and submission process."
 

@@ -3,10 +3,12 @@ import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import type { Metadata } from "next"
 import BackLink from "@/components/BackLink"
+import PublicBreadcrumbs from "@/components/PublicBreadcrumbs"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import CopyLinkButton from "./CopyLinkButton"
 import { normalizeOpportunityTitleCase } from "@/lib/externalOpportunity"
+import { buildOpportunityJsonLd } from "@/lib/opportunityStructuredData"
 import { getLocale, getTranslations } from "next-intl/server"
 import { localeFormatTag, normalizeLocale } from "@/i18n/config"
 
@@ -44,6 +46,7 @@ type PublicRFQDetail = {
   original_source_url: string | null
   source_name: string | null
   curation_status: string | null
+  external_reference: string | null
 }
 
 const SITE_URL = "https://www.aiformprocure.co.za"
@@ -67,7 +70,7 @@ async function getOpportunity(id: string): Promise<PublicRFQDetail | null> {
   const { data, error } = await supabase
     .from("rfqs")
     .select(
-      "id,title,description,province,provinces,category,industry,budget,estimated_value_min,estimated_value_max,closing_date,published_date,created_at,status,buyer_name,buyer_org,bbbee_requirement,is_external_opportunity,original_source_url,source_name,curation_status"
+      "id,title,description,province,provinces,category,industry,budget,estimated_value_min,estimated_value_max,closing_date,published_date,created_at,status,buyer_name,buyer_org,bbbee_requirement,is_external_opportunity,original_source_url,source_name,curation_status,external_reference"
     )
     .eq("id", numericId)
     .eq("is_public", true)
@@ -165,7 +168,11 @@ export default async function OpportunityDetailPage({ params }: Props) {
   const { id } = await params
   const rfq = await getOpportunity(id)
   if (!rfq) notFound()
-  const [locale, t] = await Promise.all([getLocale(), getTranslations("opportunityDetail")])
+  const [locale, t, tChrome] = await Promise.all([
+    getLocale(),
+    getTranslations("opportunityDetail"),
+    getTranslations("publicChrome"),
+  ])
   const formatLocale = localeFormatTag(normalizeLocale(locale))
 
   const daysLeft = daysUntil(rfq.closing_date)
@@ -175,9 +182,25 @@ export default async function OpportunityDetailPage({ params }: Props) {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(buildOpportunityJsonLd(rfq, locale)).replace(/</g, "\\u003c"),
+        }}
+      />
       <PublicHeader />
       <main className="min-h-screen bg-white text-primary">
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+          <PublicBreadcrumbs
+            items={[
+              { label: tChrome("breadcrumbHome"), href: "/" },
+              { label: tChrome("opportunities"), href: "/opportunities" },
+              {
+                label: rfq.title ? normalizeOpportunityTitleCase(rfq.title) : t("untitled"),
+                href: `/opportunities/${rfq.id}`,
+              },
+            ]}
+          />
           <div className="mb-4">
             <BackLink label={t("backLabel")} />
           </div>

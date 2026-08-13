@@ -4,7 +4,7 @@ import Link from "next/link"
 import BackLink from "@/components/BackLink"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { supabase } from "@/lib/supabase"
 import CopyLinkButton from "./[id]/CopyLinkButton"
@@ -787,7 +787,13 @@ function RFQCard({
 
 // --- Main client component ------------------------------------------------
 
-export default function OpportunitiesClient({ initialRfqs }: { initialRfqs: PublicRFQ[] }) {
+export default function OpportunitiesClient({
+  initialRfqs,
+  breadcrumbs,
+}: {
+  initialRfqs: PublicRFQ[]
+  breadcrumbs: ReactNode
+}) {
   const t = useTranslations("opportunities")
   const locale = useLocale()
   const [rfqs] = useState<PublicRFQ[]>(initialRfqs)
@@ -962,6 +968,7 @@ export default function OpportunitiesClient({ initialRfqs }: { initialRfqs: Publ
         {/* Hero strip */}
         <section className="border-b border-panel bg-white py-10">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {breadcrumbs}
             <div className="mb-4">
               <BackLink label={t("backLabel")} />
             </div>

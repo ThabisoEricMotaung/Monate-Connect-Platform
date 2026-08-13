@@ -1,10 +1,49 @@
 import { describe, expect, it } from "vitest"
 import {
   classifyTerminalNotice,
+  getOpportunityReference,
+  getProcurementTypeLabel,
   normalizeOpportunityTitleCase,
   resolveExternalBuyerName,
   resolveExternalOpportunityTitle,
 } from "@/lib/externalOpportunity"
+
+describe("getOpportunityReference", () => {
+  it("uses a trimmed external reference", () => {
+    expect(getOpportunityReference({ id: 42, external_reference: "  SCM-2026-17  " })).toBe(
+      "SCM-2026-17",
+    )
+  })
+
+  it("falls back when an external reference is missing", () => {
+    expect(getOpportunityReference({ id: 42, external_reference: null })).toBe("RFQ-42")
+  })
+
+  it("uses the RFQ id for an internal opportunity", () => {
+    expect(getOpportunityReference({ id: 42 })).toBe("RFQ-42")
+  })
+})
+
+describe("getProcurementTypeLabel", () => {
+  it("uses a trimmed source name for an external opportunity", () => {
+    expect(
+      getProcurementTypeLabel({
+        is_external_opportunity: true,
+        source_name: "  National Treasury  ",
+      }),
+    ).toBe("National Treasury")
+  })
+
+  it("falls back for an external opportunity without a source", () => {
+    expect(
+      getProcurementTypeLabel({ is_external_opportunity: true, source_name: null }),
+    ).toBe("Government tender")
+  })
+
+  it("labels an internal opportunity as a platform RFQ", () => {
+    expect(getProcurementTypeLabel({ is_external_opportunity: null })).toBe("Platform RFQ")
+  })
+})
 
 describe("classifyTerminalNotice", () => {
   it.each([
