@@ -18,6 +18,40 @@ export type ComplianceGuide = {
 
 export const complianceGuides: ComplianceGuide[] = [
   {
+    slug: "csd",
+    eyebrow: "Supplier registration",
+    title: "CSD registration and status maintenance",
+    description: "Learn how to register on South Africa's Central Supplier Database, complete supplier information, obtain a registration report, and keep your record current.",
+    summary: "The Central Supplier Database is the South African government's single source of key supplier information. Suppliers self-register and maintain the information that organs of state use during procurement.",
+    sections: [
+      {
+        heading: "Before you register",
+        bullets: [
+          "Have a valid email address and cellphone number available for account activation and one-time PINs.",
+          "Gather company or supplier identification, contact, address, tax, banking, director or member, commodity, and relevant accreditation information.",
+          "Use accurate commodity and delivery-location information so procurement officials can find the supplier for relevant requests.",
+        ],
+      },
+      {
+        heading: "Complete and submit the supplier record",
+        bullets: [
+          "Create and activate a CSD user account, then verify access with the requested OTP.",
+          "Add the supplier and complete every applicable information section.",
+          "Review the Overview tab for outstanding information and submit the completed record.",
+          "Keep the supplier number and unique registration reference number issued after successful registration.",
+        ],
+      },
+      {
+        heading: "Maintain your CSD status",
+        paragraphs: ["Update supplier details whenever company, contact, tax, banking, ownership, commodity, or accreditation information changes. Generate a current registration report from the CSD when a buyer or tender requires one."],
+      },
+    ],
+    sources: [
+      { label: "CSD: official registration process", href: "https://secure.csd.gov.za/Account/_RegistrationProcess" },
+      { label: "Office of the Chief Procurement Officer: Central Supplier Database", href: "https://ocpo.treasury.gov.za/Suppliers_Area/Central%20Supplier%20Database/default.aspx" },
+    ],
+  },
+  {
     slug: "pppfa",
     eyebrow: "Tender evaluation",
     title: "PPPFA preference-point scoring",

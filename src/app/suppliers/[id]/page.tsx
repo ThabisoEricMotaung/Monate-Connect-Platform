@@ -622,10 +622,10 @@ export default async function SupplierProfilePage({ params }: Props) {
                     {[supplier.industry, primaryProvince(supplier)].filter(Boolean).join(" | ")}
                   </p>
                 </div>
-                <div className="w-fit rounded-lg border bg-white px-4 py-3 text-center" style={{ borderColor: GOLD }}>
+                <Link href="/guides/smartscore-faq" className="w-fit rounded-lg border bg-white px-4 py-3 text-center transition hover:bg-stone-50" style={{ borderColor: GOLD }}>
                   <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em]" style={{ color: GOLD }}>SmartScore</p>
                   <p className="mt-1 max-w-[240px] text-lg font-bold leading-snug text-[#1a3a2a]">{displayScoreBand(supplier.smart_score, verifiedSupplier, provisionallyVerified)}</p>
-                </div>
+                </Link>
               </div>
 
               <div className="mt-5 flex flex-wrap gap-2">

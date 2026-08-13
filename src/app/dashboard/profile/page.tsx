@@ -3037,11 +3037,13 @@ function SmartScoreCard({ scoreResult }: { scoreResult: SmartScoreResult }) {
 
   return (
     <div className="rounded-md border border-panel bg-card p-5 shadow-panel">
-      <p className="text-[0.67rem] font-bold uppercase tracking-[0.24em] text-accent">SmartScore</p>
-      <div className="mt-4">
-        <ScoreCircle score={score} />
-      </div>
-      <p className="mt-3 text-center text-xs font-semibold text-heading">{levelLabel}</p>
+      <Link href="/guides/smartscore-faq" className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+        <p className="text-[0.67rem] font-bold uppercase tracking-[0.24em] text-accent">SmartScore</p>
+        <div className="mt-4">
+          <ScoreCircle score={score} />
+        </div>
+        <p className="mt-3 text-center text-xs font-semibold text-heading">{levelLabel}</p>
+      </Link>
 
       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-panel">
         <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${score}%` }} />

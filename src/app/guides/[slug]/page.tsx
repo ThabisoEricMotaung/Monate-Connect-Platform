@@ -7,6 +7,39 @@ import { complianceGuides, getComplianceGuide } from "@/lib/complianceGuides"
 
 type GuidePageProps = { params: Promise<{ slug: string }> }
 
+const guideMetadata: Record<string, { title: string; description: string; openGraphTitle: string; openGraphDescription: string }> = {
+  csd: {
+    title: "CSD Registration Guide | How to Register & Maintain CSD Status",
+    description: "Step-by-step guide to CSD registration in South Africa. Learn requirements, verify status, maintain registration, and improve SmartScore. Updated 2026.",
+    openGraphTitle: "CSD Registration Guide",
+    openGraphDescription: "Complete guide to CSD registration, verification, and maintaining status.",
+  },
+  bbbee: {
+    title: "B-BBEE Verification Guide | Levels, Requirements & SmartScore Impact",
+    description: "Complete B-BBEE verification guide: understand levels (1–8), requirements, how verification affects SmartScore, and procurement opportunities.",
+    openGraphTitle: "B-BBEE Verification Guide",
+    openGraphDescription: "Understand B-BBEE levels, requirements, and procurement impact.",
+  },
+  "tax-compliance-status": {
+    title: "SARS Tax Compliance Guide | Verification, TCS PIN & Procurement",
+    description: "Guide to SARS tax compliance verification. Learn TCS PIN lookup, compliance status checking, and how tax clearance affects procurement eligibility.",
+    openGraphTitle: "SARS Tax Compliance Guide",
+    openGraphDescription: "SARS verification, TCS PIN lookup, and tax compliance for procurement.",
+  },
+  "cidb-grading": {
+    title: "CIDB Grading Guide | Contractor Registration & Grades 1–9",
+    description: "CIDB registration and grading guide for construction contractors. Understand grades, requirements, renewal, and procurement eligibility in South Africa.",
+    openGraphTitle: "CIDB Grading Guide",
+    openGraphDescription: "CIDB registration, grading, and contractor eligibility guide.",
+  },
+  "coida-uif": {
+    title: "COIDA & UIF Registration Guide | Employer Compliance in South Africa",
+    description: "Guide to COIDA registration, UIF compliance, and employer obligations in South Africa. Learn requirements, renewal, and verification process.",
+    openGraphTitle: "COIDA & UIF Registration Guide",
+    openGraphDescription: "COIDA registration, UIF compliance, and employer obligations guide.",
+  },
+}
+
 export function generateStaticParams() {
   return complianceGuides.map(({ slug }) => ({ slug }))
 }
@@ -14,16 +47,22 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: GuidePageProps): Promise<Metadata> {
   const guide = getComplianceGuide((await params).slug)
   if (!guide) return {}
+  const targeted = guideMetadata[guide.slug]
   return {
-    title: `${guide.title} | AiForm Procure`,
-    description: guide.description,
+    title: targeted?.title ?? `${guide.title} | AiForm Procure`,
+    description: targeted?.description ?? guide.description,
     alternates: { canonical: `/guides/${guide.slug}` },
+    openGraph: targeted ? {
+      title: targeted.openGraphTitle,
+      description: targeted.openGraphDescription,
+    } : undefined,
   }
 }
 
 export default async function ComplianceGuidePage({ params }: GuidePageProps) {
   const guide = getComplianceGuide((await params).slug)
   if (!guide) notFound()
+  const pageHeading = guideMetadata[guide.slug]?.title.split(" | ")[0] ?? guide.title
 
   return (
     <>
@@ -33,7 +72,7 @@ export default async function ComplianceGuidePage({ params }: GuidePageProps) {
           <div className="mx-auto max-w-4xl">
             <Link href="/guides" className="inline-flex min-h-11 items-center text-sm font-semibold text-[#f8f4ec]/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5DCAA5]">← All compliance guides</Link>
             <p className="mt-6 text-xs font-bold uppercase tracking-[0.24em] text-[#5DCAA5]">{guide.eyebrow}</p>
-            <h1 className="mt-4 font-display text-4xl font-semibold leading-tight md:text-6xl">{guide.title}</h1>
+            <h1 className="mt-4 font-display text-4xl font-semibold leading-tight md:text-6xl">{pageHeading}</h1>
             <p className="mt-5 max-w-3xl text-base leading-7 text-[#f8f4ec]/75">{guide.summary}</p>
           </div>
         </section>

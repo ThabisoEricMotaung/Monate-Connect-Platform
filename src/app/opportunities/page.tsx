@@ -12,9 +12,8 @@ const SITE_URL = "https://www.aiformprocure.co.za"
 export const dynamic = "force-dynamic"
 
 export function generateMetadata(): Metadata {
-  const title = "Open procurement opportunities in South Africa - AiForm Procure"
-  const description =
-    "Browse open public tenders and RFQs across South Africa by industry, province, and closing date. Free to join during the pilot."
+  const title = "506 Live Tender Opportunities | Government & Private Procurement | South Africa"
+  const description = "Browse 506 active government tenders and private RFQs. Filter by location, category, deadline. Verified opportunities with deadline alerts and compliance checklists."
   const url = `${SITE_URL}/opportunities`
 
   return {
@@ -22,8 +21,8 @@ export function generateMetadata(): Metadata {
     description,
     alternates: { canonical: url },
     openGraph: {
-      title,
-      description,
+      title: "Live Tender Opportunities & RFQs",
+      description: "506 active government tenders and RFQs in South Africa. Filter and apply instantly.",
       url,
       siteName: "AiForm Procure",
       type: "website",

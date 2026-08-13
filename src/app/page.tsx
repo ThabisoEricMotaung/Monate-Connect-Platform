@@ -16,16 +16,16 @@ import type { Metadata } from "next"
 
 export const dynamic = "force-dynamic"
 
-const title = "Government Tenders & RFQs in South Africa | AiForm Procure"
-const description = "Find live South African government tenders and RFQs sourced from public procurement listings, with deadlines, provinces, categories, and original-source links."
+const title = "AiForm Procure | Verified Supplier Directory & Government Procurement Platform"
+const description = "Discover verified suppliers & live government tenders on South Africa's trusted procurement platform. Search 500+ opportunities, verify compliance, get matched instantly."
 
 export const metadata: Metadata = {
   title,
   description,
   alternates: { canonical: "/" },
   openGraph: {
-    title,
-    description,
+    title: "AiForm Procure | Verified Supplier Directory",
+    description: "Discover verified suppliers & live government tenders. Search 500+ opportunities instantly.",
     url: "/",
     siteName: "AiForm Procure",
     type: "website",

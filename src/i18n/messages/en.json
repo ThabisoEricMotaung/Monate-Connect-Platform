@@ -57,7 +57,7 @@
     "footerHeadline": "Public procurement intelligence, clearly signposted", "footerBody": "Public information for suppliers, buyers, pilot partners and procurement stakeholders. Legal and policy pages contain professional placeholder language and are not final legal advice.", "trustedInformation": "Trusted information", "clearSignposting": "Clear signposting", "plainLanguage": "Plain language", "saBuilt": "South Africa built", "footerNavigation": "Public footer navigation", "copyrightSuite": "Procurement Suite", "studioProduct": "A product of AiForm Studio", "socialChannels": "AiForm Procure social channels and accessibility", "accessibility": "Accessibility", "csdVerified": "CSD verified", "bbbeeCompliant": "B-BBEE compliant", "sarsCompliant": "SARS compliant", "popiaAware": "POPIA aware"
   },
   "home": {
-    "kicker": "South African Procurement Opportunities", "headline": "Where SA Suppliers Meet Real Procurement.",
+    "kicker": "South African Procurement Opportunities", "headline": "Discover Verified Suppliers & Government Procurement Opportunities",
     "intro": "Browse automatically screened public tenders and RFQs by industry, province and closing date—with links to original sources.",
     "sourceNote": "Public opportunities sourced from official procurement listings.", "hub": "Your procurement hub",
     "forSuppliers": "For Suppliers", "supplierBody": "Find opportunities. Get verified. Grow your business.",
@@ -83,7 +83,7 @@
     "trustAuditTitle": "Audit-Ready Records", "trustAuditBody": "Every quote, award, and transaction is logged and exportable for procurement audits."
   },
   "opportunities": {
-    "title": "Procurement opportunities", "subtitle": "Search open public opportunities across South Africa.", "search": "Search opportunities",
+    "title": "Live Tender Opportunities & RFQs", "subtitle": "Search open public opportunities across South Africa.", "search": "Search opportunities",
     "allCategories": "All categories", "allProvinces": "All provinces", "allBuyers": "All buyers", "allStatuses": "All statuses",
     "sort": "Sort by", "newest": "Newest", "closingSoon": "Closing soon", "highestValue": "Highest value", "applyFilters": "Apply filters",
     "clearFilters": "Clear filters", "results": "{count, plural, one {# opportunity} other {# opportunities}}", "noResults": "No opportunities match your filters.",

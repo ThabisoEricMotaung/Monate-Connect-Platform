@@ -115,7 +115,7 @@ export default function TrustCentrePage() {
                   Built for South African procurement
                 </span>
                 <h1 className="mt-6 font-display text-5xl font-semibold leading-tight text-[#f8f4ec] md:text-6xl">
-                  How trust works on AiForm Procure
+                  About AiForm Procure and how trust works
                 </h1>
                 <p className="mt-5 max-w-lg text-sm leading-7 text-[#f8f4ec]/70">
                   Every supplier on the platform is verified against the Central Supplier Database,

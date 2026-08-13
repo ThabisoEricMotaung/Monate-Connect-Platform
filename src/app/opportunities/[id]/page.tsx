@@ -341,7 +341,22 @@ export default async function OpportunityDetailPage({ params }: Props) {
               supplierComplianceFit={supplierComplianceFit}
               rfq={rfq}
             />
+            <div className="mt-6 flex flex-wrap gap-4 border-t border-panel pt-5 text-sm">
+              {requirements.some((requirement) => requirement.id === "csd" && requirement.status === "Required") && (
+                <Link href="/guides/csd" className="font-semibold text-accent hover:underline">Learn about CSD registration &rarr;</Link>
+              )}
+              {requirements.some((requirement) => requirement.id === "bbbee" && requirement.status === "Required") && (
+                <Link href="/guides/bbbee" className="font-semibold text-accent hover:underline">Learn about B-BBEE verification &rarr;</Link>
+              )}
+            </div>
           </section>
+
+          <div className="mb-8 rounded-md border border-blue-200 bg-blue-50 p-4">
+            <p className="text-sm text-blue-900">
+              <strong>First time responding?</strong>{" "}
+              <Link href="/how-to/respond-to-opportunities" className="font-semibold text-accent hover:underline">See our step-by-step guide &rarr;</Link>
+            </p>
+          </div>
 
           <div className="flex flex-wrap items-center gap-3 border-t border-panel pt-5">
             <p className="text-xs text-muted">{t("sharePrompt")}</p>
