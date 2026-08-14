@@ -267,37 +267,43 @@ export default function ArticlePage() {
                 }
                 return (
                   <p key={i} className="mb-4 text-slate-700 leading-relaxed">
-                    {paragraph.split("**").map((part, idx) =>
-                      idx % 2 === 1 ? (
-                        <strong key={idx}>{part}</strong>
-                      ) : (
-                        part.split("*").map((subpart, subidx) =>
-                          subidx % 2 === 1 ? (
-                            <em key={subidx}>{subpart}</em>
-                          ) : (
-                            subpart.split("[").map((link, lidx) => {
-                              if (lidx === 0) return link
-                              const [text, href] = link.split("](")
-                              if (!href) return link
-                              const [url] = href.split(")")
-                              return (
-                                <span key={lidx}>
-                                  <a
-                                    href={url}
-                                    className="text-blue-600 hover:underline"
-                                    target={url.startsWith("http") ? "_blank" : undefined}
-                                    rel={url.startsWith("http") ? "noopener noreferrer" : undefined}
-                                  >
-                                    {text}
-                                  </a>
-                                  {href.substring(url.length + 1)}
-                                </span>
-                              )
-                            })
-                          ),
-                        ),
-                      ),
-                    )}
+                    {paragraph.split("**").map((part, idx) => (
+                      <span key={idx}>
+                        {idx % 2 === 1 ? (
+                          <strong>{part}</strong>
+                        ) : (
+                          <>
+                            {part.split("*").map((subpart, subidx) => (
+                              <span key={subidx}>
+                                {subidx % 2 === 1 ? (
+                                  <em>{subpart}</em>
+                                ) : (
+                                  <>
+                                    {subpart.split("[").map((link, lidx) => {
+                                      if (lidx === 0) return link
+                                      const [text, href] = link.split("](")
+                                      if (!href) return link
+                                      const [url] = href.split(")")
+                                      return (
+                                        <a
+                                          key={lidx}
+                                          href={url}
+                                          className="text-blue-600 hover:underline"
+                                          target={url.startsWith("http") ? "_blank" : undefined}
+                                          rel={url.startsWith("http") ? "noopener noreferrer" : undefined}
+                                        >
+                                          {text}
+                                        </a>
+                                      )
+                                    })}
+                                  </>
+                                )}
+                              </span>
+                            ))}
+                          </>
+                        )}
+                      </span>
+                    ))}
                   </p>
                 )
               })}

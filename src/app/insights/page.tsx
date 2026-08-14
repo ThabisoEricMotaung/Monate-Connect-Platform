@@ -1,7 +1,7 @@
 import {
   IconBook,
   IconBriefcase,
-  IconCheckCircle,
+  IconCheck,
   IconGavel,
   IconTrendingUp,
   IconUsers,
@@ -65,7 +65,7 @@ const categories = [
     id: "case-studies",
     title: "Case Studies",
     description: "Real stories from buyers and suppliers. See how AiForm helped businesses win contracts and streamline procurement.",
-    icon: IconCheckCircle,
+    icon: IconCheck,
     color: "bg-emerald-50",
     borderColor: "border-emerald-200",
     href: "/insights/case-studies",

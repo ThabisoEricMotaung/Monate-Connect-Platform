@@ -3,8 +3,6 @@
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { IconArrowLeft, IconClock, IconUser, IconArrowRight } from "@tabler/icons-react"
-import fs from "fs"
-import path from "path"
 
 // Article metadata mapping
 const articleMetadata: Record<string, Record<string, { title: string; description: string; author: string; date: string; readTime: string }>> = {

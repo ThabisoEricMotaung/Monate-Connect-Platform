@@ -20,9 +20,8 @@ export async function GET(
     // Read the markdown file
     const content = await fs.readFile(filePath, "utf-8")
 
-    // Extract metadata from the front of the file (after the # heading)
-    const lines = content.split("\n")
-    let markdownContent = content
+    // Return the content
+    const markdownContent = content
 
     // Return the content
     return NextResponse.json({
