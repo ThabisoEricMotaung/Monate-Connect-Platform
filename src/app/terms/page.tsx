@@ -16,7 +16,7 @@ export default function TermsOfService() {
       <PublicHeader />
       <main className="flex-1 bg-canvas">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <BackLink href="/" label="Home" />
+          <BackLink label="Home" />
 
           <article className="prose prose-sm prose-neutral max-w-none dark:prose-invert">
             <h1 className="text-4xl font-bold mb-2 text-content">Terms of Service</h1>
