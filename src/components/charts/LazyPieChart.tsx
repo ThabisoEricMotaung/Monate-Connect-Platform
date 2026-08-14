@@ -4,13 +4,12 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
   Tooltip,
   ResponsiveContainer,
 } from "recharts"
 
 interface LazyPieChartProps {
-  data: any[]
+  data: Record<string, unknown>[]
   dataKey: string
   nameKey?: string
   colors: string[]
@@ -19,7 +18,6 @@ interface LazyPieChartProps {
 export default function LazyPieChart({
   data,
   dataKey,
-  nameKey = "label",
   colors,
 }: LazyPieChartProps) {
   return (

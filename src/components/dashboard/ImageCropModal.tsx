@@ -1,12 +1,10 @@
 "use client"
 
-import { useRef, Dispatch, SetStateAction } from "react"
 import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop"
 
 function centerSquareCrop(
   mediaWidth: number,
-  mediaHeight: number,
-  desiredSize = 150
+  mediaHeight: number
 ): Crop {
   return centerCrop(
     makeAspectCrop(

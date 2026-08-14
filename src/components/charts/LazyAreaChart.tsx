@@ -10,7 +10,7 @@ import {
 } from "recharts"
 
 interface LazyAreaChartProps {
-  data: any[]
+  data: Record<string, unknown>[]
   dataKey: string
   strokeColor?: string
   fillColor?: string

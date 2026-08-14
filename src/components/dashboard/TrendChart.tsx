@@ -7,9 +7,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  defs,
-  linearGradient,
-  stop,
 } from "recharts"
 
 const TICK = "#94a3b8"

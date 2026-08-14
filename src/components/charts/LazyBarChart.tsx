@@ -8,11 +8,10 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  Cell,
 } from "recharts"
 
 interface LazyBarChartProps {
-  data: any[]
+  data: Record<string, unknown>[]
   dataKey: string
   barColor?: string
   xAxisDataKey?: string
