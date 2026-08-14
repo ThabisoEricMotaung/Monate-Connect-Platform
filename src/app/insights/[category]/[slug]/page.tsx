@@ -39,52 +39,6 @@ const categoryLabels: Record<string, string> = {
   "supplier-tips": "Supplier Tips",
 }
 
-// Simple markdown to HTML converter
-function parseMarkdown(content: string): string {
-  let html = content
-
-  // Headings
-  html = html.replace(/^### (.*?)$/gm, '<h3 class="text-xl font-bold text-slate-900 mt-8 mb-4">$1</h3>')
-  html = html.replace(/^## (.*?)$/gm, '<h2 class="text-2xl font-bold text-slate-900 mt-10 mb-6">$1</h2>')
-  html = html.replace(/^# (.*?)$/gm, '<h1 class="text-4xl font-bold text-slate-900 mb-6">$1</h1>')
-
-  // Bold
-  html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
-
-  // Italic
-  html = html.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
-
-  // Links
-  html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-blue-600 hover:underline">$1</a>')
-
-  // Code blocks (backticks)
-  html = html.replace(/`([^`]+)`/g, '<code class="bg-slate-100 px-2 py-1 rounded font-mono text-sm">$1</code>')
-
-  // Code blocks (triple backticks)
-  html = html.replace(/```([^`]*?)```/g, '<pre class="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto my-4"><code>$1</code></pre>')
-
-  // Lists (unordered)
-  html = html.replace(/^\- (.*?)$/gm, '<li class="ml-4">$1</li>')
-  html = html.replace(/(<li.*?<\/li>)/s, '<ul class="list-disc space-y-2 my-4">$1</ul>')
-
-  // Lists (ordered)
-  html = html.replace(/^\d+\. (.*?)$/gm, '<li class="ml-4">$1</li>')
-
-  // Tables (simple)
-  html = html.replace(/\| (.*?) \|/g, '<td class="px-4 py-2 border border-slate-200">$1</td>')
-
-  // Blockquotes
-  html = html.replace(/^> (.*?)$/gm, '<blockquote class="border-l-4 border-blue-500 pl-4 italic text-slate-700 my-4">$1</blockquote>')
-
-  // Line breaks
-  html = html.replace(/\n\n/g, '</p><p class="mb-4">')
-
-  // Wrap in paragraphs
-  html = `<p class="mb-4 text-slate-700 leading-relaxed">${html}</p>`
-
-  return html
-}
-
 export default function ArticlePage() {
   const params = useParams()
   const category = params.category as string
@@ -123,7 +77,7 @@ export default function ArticlePage() {
         <div className="max-w-4xl mx-auto py-16 px-4">
           <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8 text-center">
             <h1 className="text-2xl font-bold text-red-900 mb-4">Article Not Found</h1>
-            <p className="text-red-700 mb-6">The article you're looking for doesn't exist.</p>
+            <p className="text-red-700 mb-6">The article you&apos;re looking for doesn&apos;t exist.</p>
             <Link
               href="/insights"
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
@@ -214,7 +168,7 @@ export default function ArticlePage() {
                       : level === 3
                         ? "text-xl font-bold text-slate-900 mt-6 mb-3"
                         : "text-4xl font-bold text-slate-900 mb-6"
-                  const HeadingTag = (`h${level}` as any) as React.ElementType
+                  const HeadingTag = `h${level}` as unknown as React.ElementType
                   return (
                     <HeadingTag key={i} className={headingClasses}>
                       {text}
