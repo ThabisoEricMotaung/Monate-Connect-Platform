@@ -6,6 +6,7 @@ import { Suspense, useEffect, useRef, useState, lazy } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import dynamic from "next/dynamic"
 import type { Crop, PixelCrop } from "react-image-crop"
+import "react-image-crop/dist/index.css"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 
 const ImageCropModal = dynamic(() => import("@/components/dashboard/ImageCropModal"), { ssr: false })
