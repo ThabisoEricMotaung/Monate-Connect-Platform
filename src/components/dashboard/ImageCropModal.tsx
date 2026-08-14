@@ -2,7 +2,7 @@
 
 import { useRef, Dispatch, SetStateAction } from "react"
 import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop"
-import "react-image-crop/dist/index.css"
+import "react-image-crop/styles.css"
 
 function centerSquareCrop(
   mediaWidth: number,
