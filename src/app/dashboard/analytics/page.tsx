@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, Suspense, lazy } from "react"
 import { useRouter } from "next/navigation"
 import {
   AreaChart,
