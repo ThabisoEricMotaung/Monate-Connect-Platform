@@ -2,31 +2,29 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
-import { Libre_Franklin, Playfair_Display, Source_Serif_4 } from "next/font/google";
+import { Libre_Franklin, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import AppChrome from "@/components/layout/AppChrome";
 
+// Critical path font: UI interactions
+// Preload to prevent blocking render
+const libreFranklin = Libre_Franklin({
+  variable: "--font-ui",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: true,
+});
+
+// Display font: Hero headings, preloaded for LCP
 const playfair = Playfair_Display({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["400", "600", "700"],
   style: ["normal", "italic"],
   display: "swap",
-});
-
-const sourceSerif = Source_Serif_4({
-  variable: "--font-body",
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  display: "swap",
-});
-
-const libreFranklin = Libre_Franklin({
-  variable: "--font-ui",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -82,7 +80,7 @@ export default async function RootLayout({
       data-reading-mode="off"
       data-low-data="off"
       suppressHydrationWarning
-      className={`${playfair.variable} ${sourceSerif.variable} ${libreFranklin.variable} h-full antialiased`}
+      className={`${playfair.variable} ${libreFranklin.variable} h-full antialiased`}
     >
       <head>
         <Script
@@ -92,7 +90,7 @@ export default async function RootLayout({
         />
         <Script
           id="accessibility-script"
-          strategy="beforeInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{ __html: accessibilityScript }}
         />
       </head>

@@ -1,153 +1,405 @@
+import { Metadata } from "next"
 import Link from "next/link"
 import BackLink from "@/components/BackLink"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 
-const termsSections = [
-  {
-    title: "Acceptance of terms",
-    body: "By accessing or using AiForm Procure, users agree to follow these terms and any platform rules made available during onboarding or use.",
-    icon: "M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z",
-  },
-  {
-    title: "Who may use the platform",
-    body: "Supplier accounts are intended for South African-registered entities only. Buyer accounts must be used by registered organisations and authorised representatives.",
-    icon: "M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z",
-  },
-  {
-    title: "Supplier obligations",
-    body: "Suppliers must provide accurate information, maintain a valid CSD registration, and keep BBBEE and tax clearance documentation current where those documents are submitted or required.",
-    icon: "M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z",
-  },
-  {
-    title: "Buyer obligations",
-    body: "Buyers must post legitimate RFQs only, must not publish spam RFQs, and must award or formally close RFQs within a reasonable procurement timeframe.",
-    icon: "M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z",
-  },
-  {
-    title: "Platform rules",
-    body: "Users must not misrepresent their identity, organisation, compliance status, procurement authority, pricing, documents, or banking information. Fraudulent documents are not permitted.",
-    icon: "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z",
-  },
-  {
-    title: "Intellectual property",
-    body: "AiForm Studio owns the AiForm Procure platform, including its product design, software, interface, workflows, brand assets, and related intellectual property.",
-    icon: "M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18",
-  },
-  {
-    title: "Limitation of liability",
-    body: "AiForm Procure facilitates procurement connections and workflows. It is not responsible for contract outcomes, supplier performance, buyer decisions, payment disputes, or commercial results between users.",
-    icon: "M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z",
-  },
-  {
-    title: "Termination",
-    body: "AiForm Procure may suspend or terminate accounts that breach platform rules, submit fraudulent documents, misuse procurement workflows, or otherwise violate these terms.",
-    icon: "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636",
-  },
-  {
-    title: "Governing law",
-    body: "These terms are governed by the laws of the Republic of South Africa.",
-    icon: "M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z",
-  },
-  {
-    title: "Subscriptions, Refunds and Cancellations",
-    body: "AiForm Procure operates on a subscription basis during the pilot period. The platform is currently free for all registered users until October 31, 2026.\n\nCancellation: Users may cancel their account at any time through their account settings. Cancellation takes effect immediately.\n\nRefunds: As the platform is currently free during the pilot period, no payments are collected and no refunds are applicable.\n\nDelivery: AiForm Procure is a digital platform. No physical goods are sold or delivered. All services are delivered electronically.\n\nDisputes: Any billing disputes should be directed to aiformstudio@gmail.com within 30 days of the charge.",
-    icon: "M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z",
-  },
-  {
-    title: "Contact",
-    body: "For questions about these terms, contact aiformstudio@gmail.com.",
-    icon: "M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75",
-  },
-]
+export const metadata: Metadata = {
+  title: "Terms of Service | AiForm Procure",
+  description: "Terms of Service for AiForm Procure. Learn about supplier verification, SmartScore, procurement opportunities, liability, and platform rules under South African law.",
+}
 
-export default function TermsOfServicePage() {
+export default function TermsOfService() {
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <PublicHeader />
-      <main className="min-h-screen bg-page text-primary">
+      <main className="flex-1 bg-canvas">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <BackLink href="/" label="Home" />
 
-        {/* Hero */}
-        <section className="bg-[#1a3a2a] px-6 py-16">
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-4"><BackLink className="text-[#f8f4ec]/70 hover:text-[#f8f4ec]" /></div>
-            <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#c8a060]">Legal Desk &middot; Terms of Service</p>
-            <h1 className="mt-4 font-display text-5xl font-semibold leading-tight text-[#f8f4ec] md:text-6xl">Terms of Service</h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-[#f8f4ec]/70">
-              These terms describe the expected rules for using AiForm Procure as a supplier, buyer, or authorised platform user.
+          <article className="prose prose-sm prose-neutral max-w-none dark:prose-invert">
+            <h1 className="text-4xl font-bold mb-2 text-content">Terms of Service</h1>
+            <p className="text-secondary text-sm mb-8">
+              Effective: 1 November 2026 | Last Updated: 13 August 2026 | Governed by South African law
             </p>
-            <div className="mt-6 flex flex-wrap items-center gap-4">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#c8a060]/30 bg-[#c8a060]/10 px-4 py-1.5 text-xs font-semibold text-[#c8a060]">
-                Effective date: 26 June 2026
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#5DCAA5]/30 bg-[#5DCAA5]/10 px-4 py-1.5 text-xs font-semibold text-[#5DCAA5]">
-                Governed by South African law
-              </span>
-            </div>
-          </div>
-        </section>
 
-        {/* Platform owner card */}
-        <section className="border-b border-panel bg-card px-6 py-8">
-          <div className="mx-auto max-w-7xl flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-accent">Platform owner</p>
-              <h2 className="mt-2 font-display text-2xl font-semibold text-heading">AiForm Studio</h2>
-              <p className="mt-2 max-w-xl text-sm leading-7 text-secondary">
-                AiForm Procure is operated as a procurement platform for verified supplier discovery, RFQ workflows, and buyer-supplier coordination.
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded p-4 mb-8">
+              <p className="text-content font-semibold text-sm mb-2">⚠️ Key Summary</p>
+              <p className="text-secondary text-sm">
+                AiForm Procure is a platform that aggregates procurement opportunities and verifies suppliers. We are not a procurement issuing authority, and we do not guarantee supplier performance, opportunity accuracy, or contract execution. You use AiForm at your own risk. Please read these Terms carefully.
               </p>
             </div>
-            <Link href="/privacy" className="shrink-0 inline-flex items-center gap-2 rounded-md border border-panel bg-panel px-5 py-2.5 text-sm font-semibold text-secondary transition hover:border-accent hover:text-accent">
-              Read Privacy Policy
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-              </svg>
-            </Link>
-          </div>
-        </section>
 
-        {/* Content sections */}
-        <section className="mx-auto max-w-7xl grid gap-5 px-6 py-12 md:grid-cols-2">
-          {termsSections.map((section) => (
-            <article key={section.title} className="rounded-md border border-panel bg-card p-6 shadow-panel">
-              <div className="flex items-center gap-3 border-b border-panel pb-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1a3a2a]/8 text-[#1a3a2a]">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d={section.icon} />
-                  </svg>
-                </span>
-                <h2 className="font-display text-base font-semibold text-heading">{section.title}</h2>
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">1. Acceptance of Terms</h2>
+              <p className="text-content mb-4">
+                By accessing or using AiForm Procure (the "Platform"), you agree to be bound by these Terms of Service, our Privacy Policy, and any other policies posted on the Platform. If you do not agree to these terms, do not use AiForm Procure.
+              </p>
+
+              <div className="bg-panel border border-secondary rounded p-4 mb-4">
+                <h4 className="font-semibold text-content mb-2">1.2 Eligibility</h4>
+                <ul className="list-disc list-inside space-y-1 text-secondary text-sm">
+                  <li>You must be at least 18 years old</li>
+                  <li>You must be a natural person or authorised representative of a legal entity</li>
+                  <li>You must be able to form legally binding contracts under South African law</li>
+                  <li>You represent that all information provided is true and accurate</li>
+                </ul>
               </div>
-              <p className="mt-4 whitespace-pre-line text-sm leading-7 text-secondary">{section.body}</p>
-            </article>
-          ))}
-        </section>
 
-        {/* Footer CTA */}
-        <section className="border-t border-panel bg-card px-6 py-12">
-          <div className="mx-auto max-w-7xl flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1a3a2a]/8 text-[#1a3a2a]">
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                </svg>
-              </span>
-              <div>
-                <p className="text-sm font-bold text-heading">Questions about these terms?</p>
-                <p className="mt-1 text-sm text-secondary">Contact us at <span className="font-semibold text-accent">aiformstudio@gmail.com</span></p>
+              <p className="text-content text-sm italic">
+                AiForm reserves the right to amend these terms at any time. Material changes will be notified via email or platform announcement at least 30 days in advance. Continued use after amendments constitutes acceptance.
+              </p>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">2. Platform Overview</h2>
+
+              <div className="bg-panel border border-secondary rounded p-4 mb-4">
+                <h3 className="font-semibold text-content mb-2">2.1 What AiForm Procure Is</h3>
+                <p className="text-secondary text-sm mb-2">AiForm Procure is a digital platform that:</p>
+                <ul className="list-disc list-inside space-y-1 text-secondary text-sm">
+                  <li>Aggregates procurement opportunities from official public sources (National Treasury eTenders, government portals)</li>
+                  <li>Verifies supplier compliance information (CSD, BBBEE, tax, banking, CIDB, etc.)</li>
+                  <li>Facilitates connections between buyers and suppliers</li>
+                  <li>Manages RFQ workflows, quote submissions, and procurement tracking</li>
+                  <li>Calculates SmartScore as a supplier engagement and compliance indicator</li>
+                  <li>Provides AI-assisted summaries and guidance through Thuso</li>
+                </ul>
               </div>
-            </div>
-            <Link href="/contact" className="inline-flex items-center gap-2 rounded-md bg-[#1a3a2a] px-6 py-3 text-sm font-semibold text-[#c8a060] transition hover:bg-[#123020]">
-              Contact our team
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-              </svg>
-            </Link>
-          </div>
-        </section>
 
+              <div className="bg-panel border border-secondary rounded p-4 mb-4">
+                <h3 className="font-semibold text-content mb-2">2.2 What AiForm Procure Is NOT</h3>
+                <p className="text-secondary text-sm mb-2">AiForm Procure is not:</p>
+                <ul className="list-disc list-inside space-y-1 text-secondary text-sm">
+                  <li>An agent or representative of any procurement issuing authority</li>
+                  <li>A guarantor of supplier performance or capability</li>
+                  <li>A lender or credit provider</li>
+                  <li>A financial or legal advisor</li>
+                  <li>An employment agency</li>
+                  <li>Responsible for contract execution or dispute resolution between users</li>
+                </ul>
+              </div>
+
+              <p className="text-content text-sm italic">
+                AiForm may restrict, suspend, or terminate your access at any time for violation of these terms or illegal conduct. The Platform is provided "as is" with no warranties of uninterrupted service.
+              </p>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">3. Procurement Opportunities and Sourcing Data</h2>
+
+              <div className="mb-6">
+                <h3 className="font-semibold text-content mb-2">3.1 Origin of Opportunities</h3>
+                <p className="text-secondary text-sm">
+                  AiForm aggregates opportunities from National Treasury eTenders portal, published government procurement systems, and other official public sources. These opportunities are published by government departments, municipalities, SOEs, and other procuring entities.
+                </p>
+              </div>
+
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-4 mb-6">
+                <h3 className="font-semibold text-content mb-2">3.2 AiForm's Role: Aggregation, NOT Curation</h3>
+                <p className="text-secondary text-sm mb-2">AiForm retrieves and republishes opportunities to help suppliers find them. AiForm does NOT:</p>
+                <ul className="list-disc list-inside space-y-1 text-secondary text-sm">
+                  <li>Author the opportunities</li>
+                  <li>Guarantee their accuracy, completeness, or currency</li>
+                  <li>Control the procurement process</li>
+                  <li>Guarantee opportunities remain open or unchanged</li>
+                  <li>Act as the issuing authority's agent</li>
+                </ul>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="font-semibold text-content mb-2">3.3 Automated Screening</h3>
+                <p className="text-secondary text-sm mb-2">
+                  AiForm applies automated screening to filter cancelled, awarded, and obviously invalid opportunities. This screening is NOT a manual review, quality assessment, or guarantee of accuracy. <strong>You must independently verify opportunity status</strong> by checking the National Treasury eTenders portal or issuing authority directly before bidding.
+                </p>
+              </div>
+
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded p-4">
+                <h3 className="font-semibold text-content mb-2">3.4–3.5 Liability for Opportunities</h3>
+                <p className="text-secondary text-sm">
+                  You acknowledge that AiForm is not liable for opportunity accuracy, currency, availability, missed deadlines, or changed requirements. All risk of opportunity accuracy rests with you. Opportunities may change after publication without AiForm notification.
+                </p>
+              </div>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">4. Supplier Verification and SmartScore</h2>
+
+              <div className="bg-panel border border-secondary rounded p-4 mb-4">
+                <h3 className="font-semibold text-content mb-2">4.1 What "Verified" Means</h3>
+                <p className="text-secondary text-sm">
+                  "Verified" on AiForm means that AiForm has reviewed specific documentary evidence on a specific date and confirmed it matches stated criteria. Example: A CSD verification means AiForm reviewed the document, confirmed the registration number matches, and confirmed CSD status was "Active" as of that date.
+                </p>
+              </div>
+
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-4 mb-4">
+                <h3 className="font-semibold text-content mb-2">4.2 What Verification Does NOT Mean</h3>
+                <p className="text-secondary text-sm mb-2">Verification does NOT mean:</p>
+                <ul className="list-disc list-inside space-y-1 text-secondary text-sm">
+                  <li>The supplier is recommended, approved, or endorsed by AiForm</li>
+                  <li>The supplier is honest, trustworthy, or ethical</li>
+                  <li>The information remains current or accurate today</li>
+                  <li>The supplier can perform work or deliver successfully</li>
+                  <li>The supplier is solvent, capable, or in good financial standing</li>
+                  <li>The supplier complies with all applicable laws</li>
+                  <li>The supplier is suitable for your specific procurement needs</li>
+                  <li>AiForm stands behind or guarantees the supplier</li>
+                </ul>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="font-semibold text-content mb-2">4.3 Three Verification States</h3>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <p className="font-semibold text-content">Supplier Provided</p>
+                    <p className="text-secondary">Supplier uploaded; AiForm has not reviewed. Confidence: LOW</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-content">Reviewed by AiForm</p>
+                    <p className="text-secondary">AiForm examined the document and confirmed basic matching. Confidence: MEDIUM</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-content">Confirmed from Official Source</p>
+                    <p className="text-secondary">AiForm verified directly with the issuing authority (SARS, CIPC, CSD, CIDB). Confidence: HIGH</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-panel border border-secondary rounded p-4 mb-4">
+                <h3 className="font-semibold text-content mb-2">4.4 SmartScore Explained</h3>
+                <p className="text-secondary text-sm mb-2">SmartScore combines compliance points (up to 60) + activity bonus (up to 8), ranging from 0–100:</p>
+                <ul className="list-disc list-inside space-y-1 text-secondary text-sm mb-3">
+                  <li><strong>0–39:</strong> Emerging</li>
+                  <li><strong>40–59:</strong> Developing</li>
+                  <li><strong>60–74:</strong> Reliable</li>
+                  <li><strong>75–84:</strong> Trusted</li>
+                  <li><strong>85–100:</strong> Elite</li>
+                </ul>
+              </div>
+
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-4 mb-4">
+                <h3 className="font-semibold text-content mb-2">4.5 What SmartScore Is NOT</h3>
+                <p className="text-secondary text-sm mb-2">SmartScore is NOT:</p>
+                <ul className="list-disc list-inside space-y-1 text-secondary text-sm">
+                  <li>A credit score or financial rating</li>
+                  <li>A compliance certificate issued by any authority</li>
+                  <li>A guarantee of supplier performance, honesty, or integrity</li>
+                  <li>A recommendation to award a contract</li>
+                  <li>A substitute for your due diligence</li>
+                  <li>Audited, certified, or endorsed by third parties</li>
+                </ul>
+              </div>
+
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded p-4">
+                <h3 className="font-semibold text-content mb-2">4.6 Buyer Responsibility (CRITICAL)</h3>
+                <p className="text-secondary text-sm mb-2">Before awarding a contract:</p>
+                <ol className="list-decimal list-inside space-y-1 text-secondary text-sm">
+                  <li>Do NOT rely solely on SmartScore</li>
+                  <li>Independently verify current compliance status with authorities</li>
+                  <li>Request references and conduct checks</li>
+                  <li>Assess supplier capability for your work</li>
+                  <li>Make your own procurement decision</li>
+                  <li>Accept full responsibility for your award decision</li>
+                </ol>
+              </div>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">5. Supplier and Buyer Obligations</h2>
+
+              <div className="bg-panel border border-secondary rounded p-4 mb-4">
+                <h3 className="font-semibold text-content mb-2">5.1 Supplier Warranties</h3>
+                <p className="text-secondary text-sm mb-2">You warrant that:</p>
+                <ul className="list-disc list-inside space-y-1 text-secondary text-sm">
+                  <li>All information provided is true and accurate</li>
+                  <li>All compliance documents are genuine and not forged</li>
+                  <li>You own or have authority to share all content and documents</li>
+                  <li>Your business is legitimate and lawful</li>
+                  <li>You will not use the Platform to circumvent procurement regulations</li>
+                </ul>
+              </div>
+
+              <div className="bg-panel border border-secondary rounded p-4 mb-4">
+                <h3 className="font-semibold text-content mb-2">5.2 Buyer Warranties</h3>
+                <p className="text-secondary text-sm mb-2">You warrant that:</p>
+                <ul className="list-disc list-inside space-y-1 text-secondary text-sm">
+                  <li>You are authorised to post procurement opportunities</li>
+                  <li>RFQs are genuine procurement requests (not spam or test)</li>
+                  <li>Procurement is lawful and complies with applicable regulations</li>
+                  <li>You will not harvest or scrape supplier contact information</li>
+                  <li>You will evaluate suppliers fairly</li>
+                </ul>
+              </div>
+
+              <p className="text-content text-sm italic">
+                If you breach these representations, AiForm may suspend or terminate your account, report to law enforcement, and pursue legal action.
+              </p>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">6. Platform Rules and Prohibited Conduct</h2>
+
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-4">
+                <h3 className="font-semibold text-content mb-2">6.1 You Must Not</h3>
+                <ul className="list-disc list-inside space-y-1 text-secondary text-sm">
+                  <li>Misrepresent information (false identity, false compliance status, fraudulent documents)</li>
+                  <li>Engage in fraud, create fake accounts, or collude to rig bids</li>
+                  <li>Abuse the Platform (spam, harassment, automated attacks)</li>
+                  <li>Violate laws (money laundering, corruption, sanctions evasion)</li>
+                  <li>Attempt to exploit or reverse-engineer AiForm's algorithms</li>
+                </ul>
+              </div>
+
+              <div className="mt-4 text-sm">
+                <p className="font-semibold text-content mb-2">6.2–6.3 Account Actions</p>
+                <p className="text-secondary">AiForm may immediately suspend or permanently terminate your account for violations, fraudulent documents, illegal conduct, or credible reports of fraud.</p>
+              </div>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">7. Intellectual Property</h2>
+
+              <div className="bg-panel border border-secondary rounded p-4 mb-4">
+                <h3 className="font-semibold text-content mb-2">7.1 AiForm Ownership</h3>
+                <p className="text-secondary text-sm">AiForm owns all platform software, code, technology, user interface, SmartScore algorithms, matching algorithms, database, branding, and Thuso AI technology.</p>
+              </div>
+
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-4 mb-4">
+                <h3 className="font-semibold text-content mb-2">7.2 Scraping and Data Extraction Prohibited</h3>
+                <p className="text-secondary text-sm mb-2">You cannot:</p>
+                <ul className="list-disc list-inside space-y-1 text-secondary text-sm mb-3">
+                  <li>Use bots or scripts to scrape AiForm data</li>
+                  <li>Bulk-extract supplier information or opportunities</li>
+                  <li>Create a competing supplier directory</li>
+                  <li>Republish AiForm's opportunities or SmartScore scores</li>
+                  <li>Mirror or replicate AiForm's interface</li>
+                </ul>
+                <p className="text-secondary text-sm"><strong>Enforcement:</strong> Account suspension, legal action, and potential law enforcement reporting.</p>
+              </div>
+
+              <p className="text-content text-sm italic">
+                You retain ownership of your uploaded content and can request deletion (subject to legal holds). AiForm may use your content for platform improvement, verification, compliance analysis, and aggregated statistics.
+              </p>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">8. AI and Thuso Assistant</h2>
+
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded p-4">
+                <h3 className="font-semibold text-content mb-2">8.1 Important Limitations</h3>
+                <p className="text-secondary text-sm mb-2">Thuso is informational only and does NOT:</p>
+                <ul className="list-disc list-inside space-y-1 text-secondary text-sm mb-3">
+                  <li>Constitute legal, financial, or professional advice</li>
+                  <li>Guarantee accuracy of summaries or interpretations</li>
+                  <li>Replace reading the original tender document</li>
+                  <li>Guarantee eligibility assessments</li>
+                </ul>
+                <p className="text-secondary text-sm"><strong>AI Risks:</strong> Inaccuracies, missed obligations, outdated information, biased advice, contradictions with original documents.</p>
+                <p className="text-secondary text-sm mt-2"><strong>Your Responsibility:</strong> Always read the original tender document. Verify Thuso outputs. Consult legal counsel. Make all decisions independently. Accept full responsibility.</p>
+              </div>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">9. Liability Limitations (IMPORTANT)</h2>
+
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-4 mb-4">
+                <h3 className="font-semibold text-content mb-2">9.1 AiForm Is NOT Liable For:</h3>
+                <ul className="list-disc list-inside space-y-1 text-secondary text-sm">
+                  <li><strong>Supplier Performance:</strong> Failure to deliver, non-performance, fraud, bankruptcy</li>
+                  <li><strong>Buyer Decisions:</strong> Your award decision, contract terms, unsuccessful bids</li>
+                  <li><strong>Data Accuracy:</strong> Errors in tender data, opportunities that change, fraudulent documents</li>
+                  <li><strong>Verification Reliance:</strong> Your reliance on verification badges or SmartScore</li>
+                  <li><strong>Platform Operations:</strong> Downtime, lost data, email failures</li>
+                  <li><strong>Third-Party Services:</strong> Failures of Supabase, payment processors, email services</li>
+                </ul>
+              </div>
+
+              <div className="bg-panel border border-secondary rounded p-4">
+                <h3 className="font-semibold text-content mb-2">9.2 Liability Cap</h3>
+                <p className="text-secondary text-sm">
+                  Subject to the Consumer Protection Act and non-excludable statutory duties, AiForm's total liability to you for any claim is limited to fees paid to AiForm in the 12 months preceding the claim (or R0 for free users).
+                </p>
+              </div>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">10. Indemnification</h2>
+
+              <p className="text-content mb-4">
+                You will indemnify, defend, and hold harmless AiForm from all claims, damages, liabilities, costs, and expenses (including legal fees) arising from:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-content mb-6">
+                <li>Your use of the Platform</li>
+                <li>Your breach of these Terms</li>
+                <li>Your violation of laws or third-party rights</li>
+                <li>Your contract disputes with other users</li>
+                <li>Fraudulent documents or information you submit</li>
+                <li>AI content reliance or misuse</li>
+              </ul>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">11. Dispute Resolution</h2>
+
+              <p className="text-content mb-4">
+                AiForm does not resolve disputes between users. For disputes:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-content mb-6">
+                <li>Contact the other user directly or through Platform messaging</li>
+                <li>Attempt good faith negotiation</li>
+                <li>If unresolved, pursue legal action in South African courts</li>
+              </ul>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">12. Governing Law</h2>
+
+              <p className="text-content mb-4">
+                These Terms are governed by the laws of the Republic of South Africa, without regard to conflicts of law principles. You consent to the exclusive jurisdiction of South African courts.
+              </p>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">13. Severability and Waiver</h2>
+
+              <p className="text-content mb-4">
+                If any provision of these Terms is found invalid, it will be severed, and the remaining provisions will continue. No waiver of any provision is effective unless in writing and signed by AiForm.
+              </p>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">14. Entire Agreement</h2>
+
+              <p className="text-content mb-4">
+                These Terms, along with the Privacy Policy, Data Protection page, and any other posted policies, constitute the entire agreement between you and AiForm and supersede all prior agreements.
+              </p>
+            </section>
+
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mt-8 mb-4">15. Contact Us</h2>
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-4">
+                <p className="text-secondary text-sm mb-2">
+                  <strong>Questions about these Terms?</strong>
+                </p>
+                <p className="text-secondary text-sm">
+                  Email: <Link href="mailto:support@aiformstudio.com" className="text-accent hover:underline">support@aiformstudio.com</Link>
+                </p>
+                <p className="text-secondary text-sm">
+                  For legal matters: <Link href="mailto:privacy@aiformstudio.com" className="text-accent hover:underline">privacy@aiformstudio.com</Link>
+                </p>
+              </div>
+            </section>
+
+            <section className="pt-8 border-t border-secondary">
+              <p className="text-secondary text-sm italic">
+                <strong>Status:</strong> PRODUCTION — Effective 1 November 2026
+              </p>
+            </section>
+          </article>
+        </div>
       </main>
       <PublicFooter />
-    </>
+    </div>
   )
 }

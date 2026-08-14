@@ -14,7 +14,9 @@ import IncompleteRegistrationBanner from "@/components/IncompleteRegistrationBan
 import DigestSignupForm from "@/app/opportunities/DigestSignupForm"
 import type { Metadata } from "next"
 
-export const dynamic = "force-dynamic"
+// Enable ISR with 5-minute revalidation instead of force-dynamic
+// Stats will be cached and page regenerated every 5 minutes
+export const revalidate = 300
 
 const title = "AiForm Procure | Verified Supplier Directory & Government Procurement Platform"
 const description = "Discover verified suppliers & live government tenders on South Africa's trusted procurement platform. Search 500+ opportunities, verify compliance, get matched instantly."

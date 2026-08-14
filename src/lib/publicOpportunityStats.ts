@@ -1,5 +1,6 @@
 import "server-only"
 
+import { unstable_cache } from "next/cache"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 
 const SOUTH_AFRICA_UTC_OFFSET_MS = 2 * 60 * 60 * 1000
@@ -22,7 +23,7 @@ export function getSouthAfricaClosingWeekEnd(now = new Date()): Date {
   return new Date(startOfDayAfterWindowUtc - SOUTH_AFRICA_UTC_OFFSET_MS - 1)
 }
 
-export async function getPublicOpportunityStats(): Promise<PublicOpportunityStats | null> {
+async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunityStats | null> {
   try {
     const supabase = await createSupabaseServerClient()
     const now = new Date()
@@ -77,3 +78,10 @@ export async function getPublicOpportunityStats(): Promise<PublicOpportunityStat
     return null
   }
 }
+
+// Cache stats for 5 minutes (300 seconds) to enable ISR on homepage
+export const getPublicOpportunityStats = unstable_cache(
+  getPublicOpportunityStatsUncached,
+  ["public-opportunity-stats"],
+  { revalidate: 300 } // 5 minutes
+)

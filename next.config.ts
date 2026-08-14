@@ -9,6 +9,11 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: projectRoot,
+
+  // Performance optimizations
+  compress: true, // Enable gzip compression for static assets
+  productionBrowserSourceMaps: false, // Reduce bundle size in production
+
   images: {
     dangerouslyAllowSVG: true,
     remotePatterns: [
@@ -18,6 +23,9 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/public/**",
       },
     ],
+    // Image optimization settings
+    formats: ["image/avif", "image/webp"], // Modern image formats
+    minimumCacheTTL: 31536000, // 1 year cache for optimized images
   },
 };
 
