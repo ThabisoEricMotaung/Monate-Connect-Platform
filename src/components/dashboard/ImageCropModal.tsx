@@ -28,7 +28,7 @@ interface PendingUpload {
 
 interface ImageCropModalProps {
   pendingUpload: PendingUpload | null
-  crop: Crop
+  crop: Crop | undefined
   completedCrop: PixelCrop | null
   uploading: string | null
   onCropChange: (crop: Crop) => void
@@ -49,6 +49,8 @@ export default function ImageCropModal({
   cropImageRef,
 }: ImageCropModalProps) {
   if (!pendingUpload) return null
+
+  if (!pendingUpload || !crop) return null
 
   return (
     <div
