@@ -4,11 +4,9 @@ import Link from "next/link"
 import Image from "next/image"
 import { Suspense, useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import dynamic from "next/dynamic"
 import type { Crop, PixelCrop } from "react-image-crop"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 
-const ImageCropModal = dynamic(() => import("@/components/dashboard/ImageCropModal"), { ssr: false })
 import SignedDocumentLink from "@/components/SignedDocumentLink"
 import { logEvent } from "@/hooks/useSessionTracking"
 import { logActivity } from "@/lib/activity"
@@ -696,18 +694,6 @@ function ProfileImageUploads({
           </div>
         </div>
       </section>
-
-      <ImageCropModal
-        pendingUpload={pendingUpload}
-        crop={crop}
-        completedCrop={completedCrop}
-        uploading={uploading}
-        onCropChange={setCrop}
-        onCropComplete={setCompletedCrop}
-        onCancel={closeCropModal}
-        onSave={saveCroppedImage}
-        cropImageRef={cropImageRef}
-      />
     </div>
   )
 }
