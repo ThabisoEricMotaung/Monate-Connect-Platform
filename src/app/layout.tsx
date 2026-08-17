@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
-import { Libre_Franklin, Playfair_Display } from "next/font/google";
+import { Libre_Franklin, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import AppChrome from "@/components/layout/AppChrome";
@@ -17,8 +17,9 @@ const libreFranklin = Libre_Franklin({
   preload: true,
 });
 
-// Display font: Hero headings, preloaded for LCP
-const playfair = Playfair_Display({
+// Display font: Editorial serif for hero headings and body copy (printed, authoritative character)
+// Preloaded for LCP
+const sourceSerif = Source_Serif_4({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["400", "600", "700"],
@@ -80,7 +81,7 @@ export default async function RootLayout({
       data-reading-mode="off"
       data-low-data="off"
       suppressHydrationWarning
-      className={`${playfair.variable} ${libreFranklin.variable} h-full antialiased`}
+      className={`${sourceSerif.variable} ${libreFranklin.variable} h-full antialiased`}
     >
       <head>
         <Script

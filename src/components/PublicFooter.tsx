@@ -229,7 +229,7 @@ export default function PublicFooter() {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl border-t border-[#123c2b]/10 px-6 py-6">
-        <div className="grid gap-5 lg:grid-cols-[1fr_minmax(260px,0.8fr)_1fr] lg:items-center">
+        <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <p className="text-sm font-semibold text-[#123c2b]/70">
               &copy; 2026 AiForm Procure &middot; {t("copyrightSuite")}
@@ -245,7 +245,7 @@ export default function PublicFooter() {
               <span>{t("studioProduct")}</span>
             </div>
           </div>
-          <div className="relative flex items-center lg:justify-end">
+          <div className="relative flex items-center justify-end">
             <div className="flex flex-nowrap items-center gap-1 sm:gap-2" role="group" aria-label={t("socialChannels")}>
             <a
               href="https://linkedin.com/company/aiform-procure/"

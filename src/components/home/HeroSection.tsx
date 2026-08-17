@@ -2,10 +2,8 @@
 
 import Link from "next/link"
 import { useEffect, useRef } from "react"
-import { useTranslations } from "next-intl"
 
 export default function HeroSection() {
-  const t = useTranslations("home")
   const layer1Ref = useRef<SVGGElement>(null)
   const layer2Ref = useRef<SVGGElement>(null)
   const layer3Ref = useRef<SVGGElement>(null)
@@ -254,24 +252,42 @@ export default function HeroSection() {
 
         {/* Left — headline */}
         <div>
-          <p style={{ display: "inline-block", fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#1a3a2a", margin: "0 0 14px", fontWeight: 800, padding: "5px 16px", border: "1.5px solid #c8a060", borderRadius: "30px", background: "rgba(200,160,96,0.15)" }}>
-            {t("kicker")}
-          </p>
-          <h1 style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 900, lineHeight: 1.08, color: "#1a2e1a", margin: "0 0 20px" }}>
-            <span style={{ display: "inline-block", fontWeight: 700, fontStyle: "italic", color: "#1a3a2a" }}>
-              {t("headline")}
-              <span aria-hidden="true" style={{ display: "block", height: 3, background: "linear-gradient(90deg, transparent, #c8a060 20%, #c8a060 80%, transparent)", marginTop: 6 }} />
-            </span>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 11, fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#1a3a2a", margin: "0 0 14px", fontWeight: 800, padding: "6px 14px", border: "1.5px solid #c8a060", borderRadius: "30px", background: "rgba(200,160,96,0.15)" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#173D2B" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+              {/* Classical government building with columns */}
+              {/* Pediment/roof */}
+              <path d="M 3 14 L 12 5 L 21 14" />
+              {/* Main structure */}
+              <rect x="4" y="14" width="16" height="8" />
+              {/* Left colonnade */}
+              <line x1="6" y1="14" x2="6" y2="22" />
+              <line x1="8" y1="14" x2="8" y2="22" />
+              {/* Center door */}
+              <rect x="11" y="16" width="2" height="6" />
+              {/* Right colonnade */}
+              <line x1="16" y1="14" x2="16" y2="22" />
+              <line x1="18" y1="14" x2="18" y2="22" />
+            </svg>
+            <span>South African Procurement Opportunities</span>
+          </div>
+          <h1 style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 900, lineHeight: 1.08, color: "#173D2B", margin: 0, fontStyle: "normal" }}>
+            Discover Verified Suppliers &amp;
           </h1>
+          <div style={{ display: "inline-block", marginBottom: 20 }}>
+            <span style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 700, fontStyle: "normal", color: "#173D2B" }}>
+              Government Procurement Opportunities
+            </span>
+            <div aria-hidden="true" style={{ height: 3, background: "linear-gradient(90deg, transparent, #c8a060 20%, #c8a060 80%, transparent)", marginTop: 6 }} />
+          </div>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: "#3a4a3a", maxWidth: 480, margin: "0 0 18px" }}>
-            {t("intro")}
+            Browse automatically screened public tenders and RFQs by industry, province and closing date—with links to original sources.
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a8a7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
             </svg>
             <span style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7a8a7a" }}>
-              {t("sourceNote")}
+              &mdash; PUBLIC OPPORTUNITIES SOURCED FROM OFFICIAL PROCUREMENT LISTINGS.
             </span>
           </div>
         </div>
@@ -295,13 +311,13 @@ export default function HeroSection() {
             AiForm Procure
           </p>
           <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1a2e1a", margin: "0 0 16px", lineHeight: 1.2 }}>
-            {t("hub")}
+            Your procurement hub
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {[
               { label: "For Suppliers", body: "Find opportunities. Get verified. Grow your business.", href: "/auth/signup", icon: "M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z", delay: "0.1s" },
-              { label: "The SmartScore", body: "Built from reviewed compliance evidence and banking confirmation.", href: "/guides/smartscore-faq", icon: "M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z", delay: "0.18s" },
+              { label: "The SmartScore", body: "Built from verified government and banking data.", href: "/trust", icon: "M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z", delay: "0.18s" },
               { label: "For Buyers", body: "Source verified suppliers. Post RFQs. Manage quotes.", href: "/contact", icon: "M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z", delay: "0.26s" },
             ].map((item) => (
               <Link key={item.label} href={item.href} className="hero-glass-card" style={{
@@ -322,12 +338,8 @@ export default function HeroSection() {
                   </svg>
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1a2e1a", margin: "0 0 2px" }}>
-                    {item.label === "For Suppliers" ? t("forSuppliers") : item.label === "For Buyers" ? t("forBuyers") : t("smartScoreTitle")}
-                  </p>
-                  <p style={{ fontSize: 11, color: "#5a6a5a", margin: 0, lineHeight: 1.4 }}>
-                    {item.label === "For Suppliers" ? t("supplierBody") : item.label === "For Buyers" ? t("buyerBody") : t("smartScoreBody")}
-                  </p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1a2e1a", margin: "0 0 2px" }}>{item.label}</p>
+                  <p style={{ fontSize: 11, color: "#5a6a5a", margin: 0, lineHeight: 1.4 }}>{item.body}</p>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8a060" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M5 12h14M12 5l7 7-7 7" />
@@ -337,7 +349,7 @@ export default function HeroSection() {
           </div>
 
           <Link href="/auth/signup" className="hero-gold-btn" style={{ display: "block", marginTop: 14, color: "#1a3a2a", textAlign: "center", padding: "11px 16px", borderRadius: 10, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", textDecoration: "none", boxShadow: "0 4px 16px rgba(200,160,96,0.25), inset 0 1px 0 rgba(255,255,255,0.3)" }}>
-            {t("explore")} &rarr;
+            Explore the platform &rarr;
           </Link>
         </div>
       </div>
