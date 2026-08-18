@@ -9,6 +9,7 @@ import OpportunityStatsBanner from "@/components/home/OpportunityStatsBanner"
 import InfoCards from "@/components/home/InfoCards"
 import CTASection from "@/components/home/CTASection"
 import TrustStrip from "@/components/home/TrustStrip"
+import LiveOpportunitiesSection from "@/components/home/LiveOpportunitiesSection"
 import AccountDeletedNotice from "@/components/AccountDeletedNotice"
 import IncompleteRegistrationBanner from "@/components/IncompleteRegistrationBanner"
 import DigestSignupForm from "@/app/opportunities/DigestSignupForm"
@@ -187,6 +188,7 @@ export default async function Home() {
         <HeroSection />
         <OpportunityStatsBanner />
         <InfoCards />
+        <LiveOpportunitiesSection />
         <MakersMark />
         <CTASection />
         <TrustStrip />
