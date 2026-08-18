@@ -95,7 +95,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: accessibilityScript }}
         />
       </head>
-      <body className="min-h-full bg-page text-primary font-sans">
+      <body className="min-h-full bg-page text-primary font-sans" suppressHydrationWarning>
         <ThemeProvider>
           <NextIntlClientProvider locale={locale} messages={messages} timeZone="Africa/Johannesburg">
             <AppChrome>{children}</AppChrome>

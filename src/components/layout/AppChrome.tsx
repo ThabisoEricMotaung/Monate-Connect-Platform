@@ -6,14 +6,14 @@ import UnifiedSupportCenter from "@/components/UnifiedSupportCenter"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 import { useLocale, useTranslations } from "next-intl"
 
-const chromeFreeRoutes = new Set(["/billing/return", "/billing/cancel"])
+const chromeFreeRoutes = new Set(["/billing/return", "/billing/cancel", "/tenders"])
 const englishAuthoritativePrefixes = ["/privacy", "/terms", "/cookies", "/cookie-policy", "/data-protection", "/guides", "/trust"]
 
 export default function AppChrome({ children }: { children: React.ReactNode }) {
   const locale = useLocale()
   const t = useTranslations("publicChrome")
   const pathname = usePathname() || ""
-  const hideChrome = chromeFreeRoutes.has(pathname)
+  const hideChrome = chromeFreeRoutes.has(pathname) || pathname.startsWith('/tenders')
 
   return (
     <>
