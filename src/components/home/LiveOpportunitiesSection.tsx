@@ -1,5 +1,12 @@
 import Link from 'next/link';
 
+interface RFQRecord {
+  id: string;
+  title: string;
+  buyer_org: string | null;
+  closing_date: string;
+}
+
 interface Opportunity {
   id: string;
   title: string;
@@ -7,7 +14,7 @@ interface Opportunity {
   closing_date: string;
 }
 
-async function fetchLiveOpportunities() {
+async function fetchLiveOpportunities(): Promise<Opportunity[]> {
   try {
     const response = await fetch(
       'https://' + process.env.NEXT_PUBLIC_SUPABASE_URL?.split('https://')[1] + '/rest/v1/rfqs?select=id,title,buyer_org,closing_date&is_public=eq.true&status=eq.open&order=closing_date.asc&limit=3',
@@ -21,8 +28,8 @@ async function fetchLiveOpportunities() {
 
     if (!response.ok) return [];
 
-    const data = await response.json();
-    return data.map((opp: any) => ({
+    const data: RFQRecord[] = await response.json();
+    return data.map((opp): Opportunity => ({
       id: opp.id,
       title: opp.title,
       buyer_normalized: opp.buyer_org || 'Unknown',
