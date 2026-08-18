@@ -151,7 +151,7 @@ export default function TendersPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
             <p className="text-gray-700 mb-4">No opportunities found yet.</p>
             <p className="text-sm text-gray-600">
-              RFQs published on AiForm Procure will appear here automatically when they're marked as <strong>public</strong> and have an <strong>open</strong> status.
+              RFQs published on AiForm Procure will appear here automatically when they&apos;re marked as <strong>public</strong> and have an <strong>open</strong> status.
             </p>
             <p className="text-xs text-gray-500 mt-4">
               Try adjusting your filters, or publish new RFQs on the platform.

@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+interface RFQRecord {
+  id: string;
+  title: string;
+  buyer_org: string | null;
+  closing_date: string;
+  published_date: string;
+  is_public: boolean;
+  source_name: string | null;
+}
+
 // Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -86,7 +96,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform RFQs to match tender format
-    const tenders = (rfqs || []).map((rfq: any) => ({
+    const tenders = (rfqs || []).map((rfq: RFQRecord) => ({
       id: rfq.id,
       reference_number: rfq.id.toString(),
       title: rfq.title,
