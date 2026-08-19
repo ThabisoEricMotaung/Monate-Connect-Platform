@@ -40,8 +40,8 @@ export default function MyBidsPage() {
   const handleStatusChange = async (bidId: number, newStatus: string) => {
     if (!user) return;
     try {
-      await updateTenderResponse(user.id, bidId, { status: newStatus as any });
-      setBids(bids.map((b) => (b.id === bidId ? { ...b, status: newStatus as any } : b)));
+      await updateTenderResponse(user.id, bidId, { status: newStatus as 'draft' | 'submitted' | 'won' | 'lost' });
+      setBids(bids.map((b) => (b.id === bidId ? { ...b, status: newStatus as 'draft' | 'submitted' | 'won' | 'lost' } : b)));
     } catch (error) {
       console.error('Error updating bid:', error);
     }
