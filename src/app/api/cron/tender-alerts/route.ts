@@ -64,22 +64,23 @@ export async function POST(request: NextRequest) {
     }
 
     let emailsSent = 0;
-    const results = [];
+    const results: unknown[] = [];
 
-    for (const search of searches as SavedSearchWithUser[]) {
+    for (const search of searches) {
       try {
-        const userEmail = search.auth?.users?.email;
+        const searchData = search as unknown as SavedSearchWithUser;
+        const userEmail = searchData.auth?.users?.email;
         if (!userEmail) continue;
 
         // Build search query similar to frontend
         const params = new URLSearchParams();
-        if (search.search_query !== '*') {
-          params.append('search', search.search_query);
+        if (searchData.search_query !== '*') {
+          params.append('search', searchData.search_query);
         }
-        if (search.source) {
-          params.append('source', search.source);
+        if (searchData.source) {
+          params.append('source', searchData.source);
         }
-        params.append('daysUntilClose', search.days_until_close?.toString() || '90');
+        params.append('daysUntilClose', searchData.days_until_close?.toString() || '90');
         params.append('limit', '100');
 
         // Query tenders API
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
         );
 
         if (!tenderResponse.ok) {
-          console.error(`Failed to fetch tenders for search ${search.id}`);
+          console.error(`Failed to fetch tenders for search ${searchData.id}`);
           continue;
         }
 
@@ -106,21 +107,21 @@ export async function POST(request: NextRequest) {
 
           const viewUrl = `https://www.aiformprocure.co.za/tenders?${params.toString()}`;
           const emailHtml = generateTenderEmailHTML(
-            search.search_query,
+            searchData.search_query,
             newTenders.slice(0, 10), // Limit to 10 in email
             viewUrl
           );
 
           const sent = await sendEmail({
             to: userEmail,
-            subject: `${newTenders.length} New Tender${newTenders.length !== 1 ? 's' : ''} Matching "${search.search_query}"`,
+            subject: `${newTenders.length} New Tender${newTenders.length !== 1 ? 's' : ''} Matching "${searchData.search_query}"`,
             html: emailHtml,
           });
 
           if (sent) {
             emailsSent++;
             results.push({
-              search_id: search.id,
+              search_id: searchData.id,
               user: userEmail,
               tenders_found: newTenders.length,
               email_sent: true,
@@ -128,9 +129,9 @@ export async function POST(request: NextRequest) {
           }
         }
       } catch (error) {
-        console.error(`Error processing search ${search.id}:`, error);
+        console.error(`Error processing search ${searchData.id}:`, error);
         results.push({
-          search_id: search.id,
+          search_id: searchData.id,
           error: String(error),
         });
       }
