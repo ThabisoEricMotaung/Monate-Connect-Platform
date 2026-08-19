@@ -54,6 +54,7 @@ export default function TendersPage() {
   // Get current user on mount
   useEffect(() => {
     const getUser = async () => {
+      if (!supabase) return;
       const { data } = await supabase.auth.getUser();
       setUser(data.user);
     };

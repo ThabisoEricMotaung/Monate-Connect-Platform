@@ -14,6 +14,10 @@ export default function SavedSearchesPage() {
 
   useEffect(() => {
     const getUser = async () => {
+      if (!supabase) {
+        setLoading(false);
+        return;
+      }
       const { data } = await supabase.auth.getUser();
       if (data.user) {
         setUser(data.user);
