@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
     const results: unknown[] = [];
 
     for (const search of searches) {
+      const searchData = search as unknown as SavedSearchWithUser;
       try {
-        const searchData = search as unknown as SavedSearchWithUser;
         const userEmail = searchData.auth?.users?.email;
         if (!userEmail) continue;
 
