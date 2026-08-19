@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TenderCard } from '@/components/TenderCard';
+import { useAuth } from '@/app/auth/AuthProvider';
+import { saveSearch } from '@/lib/savedSearches';
 
 interface Tender {
   id: number;
@@ -35,6 +37,7 @@ type BudgetRange = '' | '0-5m' | '5-20m' | '20m+' | 'unspecified';
 const ITEMS_PER_PAGE = 50;
 
 export default function TendersPage() {
+  const { user } = useAuth();
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [filteredTenders, setFilteredTenders] = useState<Tender[]>([]);
   const [total, setTotal] = useState(0);
@@ -44,6 +47,8 @@ export default function TendersPage() {
   const [daysFilter, setDaysFilter] = useState(90);
   const [budgetFilter, setBudgetFilter] = useState<BudgetRange>('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [savingSearch, setSavingSearch] = useState(false);
 
   useEffect(() => {
     const loadTenders = async () => {
@@ -95,6 +100,31 @@ export default function TendersPage() {
 
     setFilteredTenders(filtered);
   }, [tenders, budgetFilter]);
+
+  const handleSaveSearch = async () => {
+    if (!user) {
+      alert('Please log in to save searches');
+      return;
+    }
+
+    setSavingSearch(true);
+    try {
+      const query = search || '*';
+      await saveSearch(user.id, {
+        search_query: query,
+        source: source || null,
+        budget_range: budgetFilter || null,
+        days_until_close: daysFilter,
+        email_notifications: true,
+      });
+      setSaveMessage('Search saved! You'll get email alerts for new matches.');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (error) {
+      setSaveMessage(error instanceof Error ? error.message : 'Failed to save search');
+    } finally {
+      setSavingSearch(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -199,7 +229,26 @@ export default function TendersPage() {
               <option value={180}>180 days</option>
             </select>
           </div>
+
+          <button
+            onClick={handleSaveSearch}
+            disabled={savingSearch || !user}
+            className="ml-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition"
+            title={!user ? 'Log in to save searches' : 'Save this search and get email alerts'}
+          >
+            {savingSearch ? '⏳ Saving...' : '💾 Save this search'}
+          </button>
         </div>
+
+        {saveMessage && (
+          <div className={`mb-4 px-4 py-2 rounded-lg text-sm ${
+            saveMessage.includes('saved')
+              ? 'bg-green-100 text-green-800'
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {saveMessage}
+          </div>
+        )}
 
         {/* Tenders List */}
         {loading ? (
