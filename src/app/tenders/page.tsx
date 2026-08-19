@@ -32,6 +32,8 @@ const BUDGET_RANGES = [
 
 type BudgetRange = '' | '0-5m' | '5-20m' | '20m+' | 'unspecified';
 
+const ITEMS_PER_PAGE = 50;
+
 export default function TendersPage() {
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [filteredTenders, setFilteredTenders] = useState<Tender[]>([]);
@@ -41,6 +43,7 @@ export default function TendersPage() {
   const [source, setSource] = useState('');
   const [daysFilter, setDaysFilter] = useState(90);
   const [budgetFilter, setBudgetFilter] = useState<BudgetRange>('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const loadTenders = async () => {
@@ -50,8 +53,8 @@ export default function TendersPage() {
         if (search) params.append('search', search);
         if (source) params.append('source', source);
         params.append('daysUntilClose', daysFilter.toString());
-        params.append('limit', '50');
-        params.append('offset', '0');
+        params.append('limit', ITEMS_PER_PAGE.toString());
+        params.append('offset', ((currentPage - 1) * ITEMS_PER_PAGE).toString());
 
         const response = await fetch(`/api/tenders?${params.toString()}`);
         const json = await response.json();
@@ -66,7 +69,7 @@ export default function TendersPage() {
     };
 
     loadTenders();
-  }, [search, source, daysFilter]);
+  }, [search, source, daysFilter, currentPage]);
 
   // Filter tenders by budget range
   useEffect(() => {
@@ -218,6 +221,33 @@ export default function TendersPage() {
             {filteredTenders.map((tender) => (
               <TenderCard key={tender.id} tender={tender} />
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {total > ITEMS_PER_PAGE && (
+          <div className="mt-8 flex items-center justify-between">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ← Previous
+            </button>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">
+                Page {currentPage} of {Math.ceil(total / ITEMS_PER_PAGE)}
+              </span>
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(p => p + 1)}
+              disabled={currentPage >= Math.ceil(total / ITEMS_PER_PAGE)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next →
+            </button>
           </div>
         )}
 

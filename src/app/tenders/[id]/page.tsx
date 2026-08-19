@@ -29,7 +29,8 @@ export default function TenderDetailPage({ params }: PageProps) {
       try {
         const response = await fetch(`/api/tenders?limit=1000&offset=0`);
         const json = await response.json();
-        const found = (json.data || []).find((t: Tender) => t.id === pageId);
+        const pageIdNum = parseInt(pageId, 10);
+        const found = (json.data || []).find((t: Tender) => t.id === pageIdNum);
         setTender(found || null);
       } catch (error) {
         console.error('Failed to fetch tender:', error);
