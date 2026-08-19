@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TenderCard } from '@/components/TenderCard';
-import { useAuth } from '@/app/auth/AuthProvider';
+import { supabase } from '@/lib/supabase';
 import { saveSearch } from '@/lib/savedSearches';
 
 interface Tender {
@@ -37,7 +37,7 @@ type BudgetRange = '' | '0-5m' | '5-20m' | '20m+' | 'unspecified';
 const ITEMS_PER_PAGE = 50;
 
 export default function TendersPage() {
-  const { user } = useAuth();
+  const [user, setUser] = useState<any>(null);
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [filteredTenders, setFilteredTenders] = useState<Tender[]>([]);
   const [total, setTotal] = useState(0);
@@ -49,6 +49,15 @@ export default function TendersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [saveMessage, setSaveMessage] = useState('');
   const [savingSearch, setSavingSearch] = useState(false);
+
+  // Get current user on mount
+  useEffect(() => {
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+    getUser();
+  }, []);
 
   useEffect(() => {
     const loadTenders = async () => {
@@ -117,7 +126,7 @@ export default function TendersPage() {
         days_until_close: daysFilter,
         email_notifications: true,
       });
-      setSaveMessage('Search saved! You'll get email alerts for new matches.');
+      setSaveMessage('Search saved! You&apos;ll get email alerts for new matches.');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {
       setSaveMessage(error instanceof Error ? error.message : 'Failed to save search');

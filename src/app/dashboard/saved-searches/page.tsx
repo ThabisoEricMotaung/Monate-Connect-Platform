@@ -1,27 +1,32 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/app/auth/AuthProvider';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 import { getSavedSearches, deleteSearch, updateSearch, type SavedSearch } from '@/lib/savedSearches';
 
 export default function SavedSearchesPage() {
-  const { user, loading: authLoading } = useAuth();
+  const [user, setUser] = useState<any>(null);
   const [searches, setSearches] = useState<SavedSearch[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!authLoading && user) {
-      loadSearches();
-    } else if (!authLoading && !user) {
-      setLoading(false);
-    }
-  }, [user, authLoading]);
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        setUser(data.user);
+        loadSearches(data.user.id);
+      } else {
+        setLoading(false);
+      }
+    };
+    getUser();
+  }, []);
 
-  const loadSearches = async () => {
+  const loadSearches = async (userId: string) => {
     try {
-      const data = await getSavedSearches(user!.id);
+      const data = await getSavedSearches(userId);
       setSearches(data);
     } catch (error) {
       console.error('Error loading searches:', error);
