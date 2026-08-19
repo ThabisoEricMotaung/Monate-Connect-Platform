@@ -21,12 +21,10 @@ interface PageProps {
 export default function TenderDetailPage({ params }: PageProps) {
   const [tender, setTender] = useState<Tender | null>(null);
   const [loading, setLoading] = useState(true);
-  const [id, setId] = useState<string>('');
 
   useEffect(() => {
     (async () => {
       const { id: pageId } = await params;
-      setId(pageId);
 
       try {
         const response = await fetch(`/api/tenders?limit=1000&offset=0`);
@@ -41,7 +39,6 @@ export default function TenderDetailPage({ params }: PageProps) {
   }, [params]);
 
   const isAiFormOpportunity = tender?.sources === 'AiForm Platform' || !tender?.sources;
-  const isExternalTender = tender && !isAiFormOpportunity;
 
   const closingDate = tender ? new Date(tender.closing_date) : null;
   const daysUntil = closingDate ? Math.ceil((closingDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
@@ -99,7 +96,7 @@ export default function TenderDetailPage({ params }: PageProps) {
             ) : (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-5 mb-8">
                 <p className="text-sm text-amber-900 mb-3">
-                  <strong>This is a public sector opportunity</strong> posted by {tender.buyer_normalized}. To respond, you'll need to follow their formal procurement process.
+                  <strong>This is a public sector opportunity</strong> posted by {tender.buyer_normalized}. To respond, you&apos;ll need to follow their formal procurement process.
                 </p>
                 <p className="text-xs text-amber-800">
                   Contact the buyer directly or visit their procurement portal for submission instructions and bid requirements.
