@@ -41,6 +41,19 @@ export default function TenderDetailPage({ params }: PageProps) {
 
   const isAiFormOpportunity = tender?.sources === 'AiForm Platform' || !tender?.sources;
 
+  const getBuyerPortalUrl = (source?: string) => {
+    if (!source) return 'https://www.etenders.gov.za';
+
+    const sourceNorm = source.trim().toLowerCase();
+
+    if (sourceNorm.includes('tcta')) return 'https://www.tcta.co.za/tenders/';
+    if (sourceNorm.includes('dbsa')) return 'https://www.dbsa.org/procurement';
+    if (sourceNorm.includes('ekurhuleni')) return 'https://www.ekurhuleni.gov.za/for-my-business/tenders/open-tenders/';
+    if (sourceNorm.includes('etenders') || sourceNorm.includes('treasury')) return 'https://www.etenders.gov.za';
+
+    return 'https://www.etenders.gov.za';
+  };
+
   const closingDate = tender ? new Date(tender.closing_date) : null;
   const daysUntil = closingDate ? Math.ceil((closingDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
   const isClosed = closingDate && daysUntil < 0;
@@ -160,7 +173,7 @@ export default function TenderDetailPage({ params }: PageProps) {
                     Back to Opportunities
                   </Link>
                   <Link
-                    href={`https://www.${tender.sources?.toLowerCase().replace(/\s+/g, '')}.gov.za`}
+                    href={getBuyerPortalUrl(tender.sources)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg"
