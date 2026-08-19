@@ -31,9 +31,16 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
   }
 }
 
+interface Tender {
+  title: string;
+  buyer_normalized: string;
+  closing_date: string;
+  estimated_budget: number | null;
+}
+
 export function generateTenderEmailHTML(
   searchQuery: string,
-  newTenders: any[],
+  newTenders: Tender[],
   viewUrl: string
 ): string {
   const tenderRows = newTenders

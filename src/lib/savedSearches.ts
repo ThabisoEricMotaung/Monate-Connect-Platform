@@ -1,5 +1,3 @@
-import { useAuth } from '@/app/auth/AuthProvider';
-
 export interface SavedSearch {
   id: number;
   user_id: string;

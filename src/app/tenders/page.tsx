@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { TenderCard } from '@/components/TenderCard';
 import { supabase } from '@/lib/supabase';
 import { saveSearch } from '@/lib/savedSearches';
+import type { User } from '@supabase/supabase-js';
 
 interface Tender {
   id: number;
@@ -37,7 +38,7 @@ type BudgetRange = '' | '0-5m' | '5-20m' | '20m+' | 'unspecified';
 const ITEMS_PER_PAGE = 50;
 
 export default function TendersPage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [filteredTenders, setFilteredTenders] = useState<Tender[]>([]);
   const [total, setTotal] = useState(0);

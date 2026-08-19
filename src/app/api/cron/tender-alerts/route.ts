@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     for (const search of searches) {
       try {
-        const userEmail = (search as any).auth?.users?.email;
+        const userEmail = (search as Record<string, any>).auth?.users?.email;
         if (!userEmail) continue;
 
         // Build search query similar to frontend
