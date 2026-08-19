@@ -9,6 +9,7 @@ interface RFQRecord {
   published_date: string;
   is_public: boolean;
   source_name: string | null;
+  estimated_budget: number | null;
 }
 
 // Supabase client
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
     // Build base query
     let baseQuery = supabase
       .from('rfqs')
-      .select('id, title, buyer_org, closing_date, published_date, is_public, source_name');
+      .select('id, title, buyer_org, closing_date, published_date, is_public, source_name, estimated_budget');
 
     // Add filters: only future tenders within the date range, exclude test records
     baseQuery = baseQuery
@@ -105,6 +106,7 @@ export async function GET(request: NextRequest) {
       created_at: rfq.published_date || new Date().toISOString(),
       source_count: 1,
       sources: rfq.source_name || 'AiForm Platform',
+      estimated_budget: rfq.estimated_budget,
     }));
 
     return NextResponse.json({

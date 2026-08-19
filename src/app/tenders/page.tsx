@@ -11,20 +11,36 @@ interface Tender {
   buyer_normalized: string;
   closing_date: string;
   sources: string;
+  estimated_budget?: number;
 }
 
 const SOURCES = [
   { value: '', label: 'All sources' },
   { value: 'eTenders', label: 'eTenders.gov.za' },
+  { value: 'Ekurhuleni', label: 'Ekurhuleni Metropolitan Municipality' },
+  { value: 'DBSA', label: 'Development Bank of Southern Africa' },
+  { value: 'TCTA', label: 'Trans-Caledon Tunnel Authority' },
 ];
+
+const BUDGET_RANGES = [
+  { value: '', label: 'All budgets' },
+  { value: '0-5m', label: 'R0–5M' },
+  { value: '5-20m', label: 'R5–20M' },
+  { value: '20m+', label: 'R20M+' },
+  { value: 'unspecified', label: 'Not specified' },
+];
+
+type BudgetRange = '' | '0-5m' | '5-20m' | '20m+' | 'unspecified';
 
 export default function TendersPage() {
   const [tenders, setTenders] = useState<Tender[]>([]);
+  const [filteredTenders, setFilteredTenders] = useState<Tender[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [source, setSource] = useState('');
   const [daysFilter, setDaysFilter] = useState(90);
+  const [budgetFilter, setBudgetFilter] = useState<BudgetRange>('');
 
   useEffect(() => {
     const loadTenders = async () => {
@@ -51,6 +67,31 @@ export default function TendersPage() {
 
     loadTenders();
   }, [search, source, daysFilter]);
+
+  // Filter tenders by budget range
+  useEffect(() => {
+    let filtered = tenders;
+
+    if (budgetFilter) {
+      filtered = tenders.filter((tender) => {
+        const budget = tender.estimated_budget;
+
+        if (budgetFilter === 'unspecified') {
+          return !budget;
+        } else if (budgetFilter === '0-5m') {
+          return budget && budget < 5_000_000;
+        } else if (budgetFilter === '5-20m') {
+          return budget && budget >= 5_000_000 && budget < 20_000_000;
+        } else if (budgetFilter === '20m+') {
+          return budget && budget >= 20_000_000;
+        }
+
+        return true;
+      });
+    }
+
+    setFilteredTenders(filtered);
+  }, [tenders, budgetFilter]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -128,6 +169,21 @@ export default function TendersPage() {
           </div>
 
           <div>
+            <label className="text-sm font-medium text-gray-700 mr-3">Budget:</label>
+            <select
+              value={budgetFilter}
+              onChange={(e) => setBudgetFilter(e.target.value as BudgetRange)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {BUDGET_RANGES.map((range) => (
+                <option key={range.value} value={range.value}>
+                  {range.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className="text-sm font-medium text-gray-700 mr-3">Closing in:</label>
             <select
               value={daysFilter}
@@ -147,19 +203,19 @@ export default function TendersPage() {
           <div className="text-center py-12">
             <p className="text-gray-500">Loading opportunities...</p>
           </div>
-        ) : tenders.length === 0 ? (
+        ) : filteredTenders.length === 0 ? (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
             <p className="text-gray-700 mb-4">No opportunities found yet.</p>
             <p className="text-sm text-gray-600">
-              RFQs published on AiForm Procure will appear here automatically when they&apos;re marked as <strong>public</strong> and have an <strong>open</strong> status.
+              {tenders.length > 0 ? 'Try adjusting your filters.' : 'RFQs published on AiForm Procure will appear here automatically when they\'re marked as public and have an open status.'}
             </p>
             <p className="text-xs text-gray-500 mt-4">
-              Try adjusting your filters, or publish new RFQs on the platform.
+              {tenders.length > 0 ? '' : 'Publish new RFQs on the platform to get started.'}
             </p>
           </div>
         ) : (
           <div className="space-y-4">
-            {tenders.map((tender) => (
+            {filteredTenders.map((tender) => (
               <TenderCard key={tender.id} tender={tender} />
             ))}
           </div>
@@ -168,9 +224,10 @@ export default function TendersPage() {
         {/* Footer Summary */}
         {total > 0 && (
           <div className="mt-8 text-sm text-gray-600">
-            Showing {tenders.length} of {total} opportunity{total !== 1 ? 'ies' : ''}
+            Showing {filteredTenders.length} of {total} opportunity{total !== 1 ? 'ies' : ''}
             {search && ` matching "${search}"`}
             {source && ` from ${SOURCES.find(s => s.value === source)?.label}`}
+            {budgetFilter && ` with budget ${BUDGET_RANGES.find(b => b.value === budgetFilter)?.label?.toLowerCase()}`}
             {daysFilter && ` closing within ${daysFilter} days`}
           </div>
         )}

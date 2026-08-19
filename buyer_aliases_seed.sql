@@ -1,0 +1,15 @@
+﻿INSERT INTO buyer_aliases (canonical_name, aliases) VALUES
+('City of Johannesburg Metropolitan Municipality', ARRAY['CoJ', 'Joburg', 'City of Johannesburg']),
+('City of Cape Town Metropolitan Municipality', ARRAY['Cape Town', 'CCT', 'City of Cape Town']),
+('eThekwini Metropolitan Municipality', ARRAY['Durban', 'eThekwini', 'Ethekwini']),
+('City of Tshwane Metropolitan Municipality', ARRAY['Tshwane', 'Pretoria', 'City of Tshwane']),
+('Ekurhuleni Metropolitan Municipality', ARRAY['Ekurhuleni', 'East Rand']),
+('Nelson Mandela Bay Metropolitan Municipality', ARRAY['Nelson Mandela Bay', 'Port Elizabeth', 'NMB']),
+('Buffalo City Metropolitan Municipality', ARRAY['Buffalo City', 'East London']),
+('Mangaung Metropolitan Municipality', ARRAY['Mangaung', 'Bloemfontein']),
+('South African National Roads Agency', ARRAY['SANRAL', 'Sanral']),
+('Airports Company South Africa', ARRAY['ACSA', 'Acsa']),
+('Trans-Caledon Tunnel Authority', ARRAY['TCTA', 'Tcta']),
+('Development Bank of Southern Africa', ARRAY['DBSA', 'Dbsa']),
+('City Power Johannesburg', ARRAY['City Power', 'Citypower']),
+('Johannesburg Water', ARRAY['Joburg Water', 'JW']);

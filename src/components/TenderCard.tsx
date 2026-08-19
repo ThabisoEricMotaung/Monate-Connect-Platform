@@ -8,6 +8,7 @@ interface TenderCardProps {
     buyer_normalized: string;
     closing_date: string;
     sources: string;
+    estimated_budget?: number;
   };
 }
 
@@ -81,20 +82,31 @@ export function TenderCard({ tender }: TenderCardProps) {
         </div>
 
         <div>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">Budget</p>
+          <p className="text-sm font-medium text-gray-900">
+            {tender.estimated_budget ? (
+              `R${(tender.estimated_budget / 1_000_000).toFixed(2)}M`
+            ) : (
+              <span className="text-gray-400">Not specified</span>
+            )}
+          </p>
+        </div>
+
+        <div>
           <p className="text-xs text-gray-500 uppercase tracking-wide">Source</p>
           <p className="text-sm font-medium text-gray-900">
             {tender.sources}
           </p>
         </div>
+      </div>
 
-        <div>
-          <a
-            href={`/tenders/${tender.id}`}
-            className="inline-block text-sm font-semibold text-blue-600 hover:text-blue-700 mt-4"
-          >
-            View Details →
-          </a>
-        </div>
+      <div className="pt-4">
+        <a
+          href={`/tenders/${tender.id}`}
+          className="inline-block text-sm font-semibold text-blue-600 hover:text-blue-700"
+        >
+          View Details →
+        </a>
       </div>
     </div>
   );
