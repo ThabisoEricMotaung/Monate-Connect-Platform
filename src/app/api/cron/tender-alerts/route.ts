@@ -7,6 +7,21 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
+interface SavedSearchWithUser {
+  id: number;
+  user_id: string;
+  search_query: string;
+  source: string | null;
+  budget_range: string | null;
+  days_until_close: number;
+  email_notifications: boolean;
+  auth: {
+    users: {
+      email: string;
+    };
+  };
+}
+
 // Security: Check cron secret
 function verifyCronSecret(request: NextRequest): boolean {
   const secret = request.headers.get('x-cron-secret');
@@ -51,9 +66,9 @@ export async function POST(request: NextRequest) {
     let emailsSent = 0;
     const results = [];
 
-    for (const search of searches) {
+    for (const search of searches as SavedSearchWithUser[]) {
       try {
-        const userEmail = (search as Record<string, any>).auth?.users?.email;
+        const userEmail = search.auth?.users?.email;
         if (!userEmail) continue;
 
         // Build search query similar to frontend
