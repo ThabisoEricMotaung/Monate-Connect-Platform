@@ -64,19 +64,30 @@ class EkurhuleniCollector(TenderCollector):
         # Get all text content from article
         text = article.get_text()
 
-        # Extract dates (DD/MM/YYYY format)
-        date_pattern = r'(\d{1,2})/(\d{1,2})/(\d{4})'
-        dates = re.findall(date_pattern, text)
-
         closing_date = None
-        # Look for closing date (usually appears near "Closing" or "Closes")
-        if dates:
-            # Last date found is usually the closing date
-            last_date = dates[-1]
+
+        # Try text format first: "19 Aug 2026" or "19 August 2026"
+        text_date_pattern = r'(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})'
+        text_match = re.search(text_date_pattern, text, re.I)
+        if text_match:
             try:
-                closing_date = datetime(int(last_date[2]), int(last_date[1]), int(last_date[0]))
+                closing_date = datetime.strptime(text_match.group(0), '%d %b %Y')
             except:
-                pass
+                try:
+                    closing_date = datetime.strptime(text_match.group(0), '%d %B %Y')
+                except:
+                    pass
+
+        # Fallback: try numeric format DD/MM/YYYY
+        if not closing_date:
+            date_pattern = r'(\d{1,2})/(\d{1,2})/(\d{4})'
+            dates = re.findall(date_pattern, text)
+            if dates:
+                last_date = dates[-1]
+                try:
+                    closing_date = datetime(int(last_date[2]), int(last_date[1]), int(last_date[0]))
+                except:
+                    pass
 
         # Extract title (often in first line after reference, or in h2/h3)
         # Try to find title in the content
@@ -97,6 +108,7 @@ class EkurhuleniCollector(TenderCollector):
         return {
             'reference_number': reference_number,
             'title': title[:200],  # Truncate to 200 chars
+            'description': title[200:500] if len(title) > 200 else None,  # Use title overflow as description
             'closing_date': closing_date,
             'source_url': self.tender_list_url,
             'buyer': 'Ekurhuleni Metropolitan Municipality',
@@ -140,6 +152,7 @@ class EkurhuleniCollector(TenderCollector):
             return {
                 'reference_number': raw_record.get('reference_number'),
                 'title': raw_record.get('title'),
+                'description': raw_record.get('description'),
                 'closing_date': raw_record.get('closing_date'),
                 'source_url': raw_record.get('source_url'),
                 'buyer_normalized': raw_record.get('buyer'),

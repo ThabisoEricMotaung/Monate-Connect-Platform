@@ -72,12 +72,23 @@ class DBSACollector(TenderCollector):
 
         reference_number = ref_match.group(0).strip()
 
-        # Extract title (text between reference and <br/> or links)
-        # Remove the reference part to get title
-        title_text = col0_text.replace(reference_number, '').strip()
-        # Remove briefing info
-        title_text = re.sub(r'Compulsory.*?Microsoft Teams', '', title_text, flags=re.I | re.DOTALL)
-        title_text = title_text.split('\n')[0].strip()
+        # Extract title and description (text between reference and links)
+        # Remove the reference part to get full text
+        full_text = col0_text.replace(reference_number, '').strip()
+
+        # Extract description (everything before briefing info)
+        description = re.sub(r'Compulsory.*?Microsoft Teams', '', full_text, flags=re.I | re.DOTALL).strip()
+
+        # Title is first line of description
+        lines = description.split('\n')
+        title_text = lines[0].strip() if lines else reference_number
+
+        # Description is everything else (up to first link text)
+        if len(lines) > 1:
+            description = '\n'.join(lines[1:]).strip()[:500]  # Limit to 500 chars
+        else:
+            description = None
+
         if not title_text:
             title_text = reference_number
 
@@ -103,6 +114,7 @@ class DBSACollector(TenderCollector):
         return {
             'reference_number': reference_number,
             'title': title_text[:200],
+            'description': description,
             'closing_date': closing_date,
             'source_url': self.tender_list_url,
             'buyer': 'Development Bank of Southern Africa',
@@ -161,6 +173,7 @@ class DBSACollector(TenderCollector):
             return {
                 'reference_number': raw_record.get('reference_number'),
                 'title': raw_record.get('title'),
+                'description': raw_record.get('description'),
                 'closing_date': raw_record.get('closing_date'),
                 'source_url': raw_record.get('source_url'),
                 'buyer_normalized': raw_record.get('buyer'),

@@ -129,9 +129,13 @@ class TCTACollector(TenderCollector):
                 # Extract budget if available
                 estimated_budget = self._extract_budget(after)
 
+                # Extract description from after text (context)
+                description = after[:500].strip() if after else None
+
                 tenders.append({
                     'reference_number': reference_number,
                     'title': title_text[:200],
+                    'description': description,
                     'closing_date': closing_date,
                     'source_url': self.tender_list_url,
                     'buyer': 'Trans-Caledon Tunnel Authority',
@@ -196,6 +200,7 @@ class TCTACollector(TenderCollector):
             return {
                 'reference_number': raw_record.get('reference_number'),
                 'title': raw_record.get('title'),
+                'description': raw_record.get('description'),
                 'closing_date': raw_record.get('closing_date'),
                 'source_url': raw_record.get('source_url'),
                 'buyer_normalized': raw_record.get('buyer'),
