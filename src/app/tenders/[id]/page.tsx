@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { BidResponseModal } from '@/components/BidResponseModal';
 import { getTenderResponses, type TenderResponse } from '@/lib/tenderResponses';
@@ -25,7 +26,7 @@ interface PageProps {
 export default function TenderDetailPage({ params }: PageProps) {
   const [tender, setTender] = useState<Tender | null>(null);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [bidResponse, setBidResponse] = useState<TenderResponse | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
