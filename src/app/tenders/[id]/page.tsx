@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { supabase } from '@/lib/supabase';
+import { BidResponseModal } from '@/components/BidResponseModal';
+import { getTenderResponses, type TenderResponse } from '@/lib/tenderResponses';
 
 interface Tender {
   id: number;
@@ -22,7 +25,11 @@ interface PageProps {
 export default function TenderDetailPage({ params }: PageProps) {
   const [tender, setTender] = useState<Tender | null>(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [bidResponse, setBidResponse] = useState<TenderResponse | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
+  // Load tender
   useEffect(() => {
     (async () => {
       const { id: pageId } = await params;
@@ -39,6 +46,24 @@ export default function TenderDetailPage({ params }: PageProps) {
       setLoading(false);
     })();
   }, [params]);
+
+  // Load user and their bid response
+  useEffect(() => {
+    const getUser = async () => {
+      if (!supabase) return;
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+
+      if (data.user && tender) {
+        const responses = await getTenderResponses(data.user.id);
+        const myResponse = responses.find((r) => r.tender_id === tender.id);
+        setBidResponse(myResponse || null);
+      }
+    };
+    if (tender) {
+      getUser();
+    }
+  }, [tender]);
 
   const isAiFormOpportunity = tender?.sources === 'AiForm Platform' || !tender?.sources;
 
@@ -156,42 +181,62 @@ export default function TenderDetailPage({ params }: PageProps) {
               </div>
             </div>
 
+            {/* Bid Status */}
+            {bidResponse && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-900">
+                  <strong>Your Bid Status:</strong> {bidResponse.status === 'draft' ? '📝 Draft' : '✓ Submitted'}
+                </p>
+                {bidResponse.notes && <p className="text-xs text-blue-800 mt-2">{bidResponse.notes}</p>}
+              </div>
+            )}
+
             {/* CTA Buttons */}
             <div className="flex gap-4">
+              <Link
+                href="/tenders"
+                className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg"
+              >
+                Back to Opportunities
+              </Link>
+
+              {!isAiFormOpportunity && (
+                <button
+                  onClick={() => setModalOpen(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg"
+                >
+                  {bidResponse ? '📝 Update Bid' : '💼 Track Your Bid'}
+                </button>
+              )}
+
               {isAiFormOpportunity ? (
-                <>
-                  <Link
-                    href="/tenders"
-                    className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg"
-                  >
-                    Back to Opportunities
-                  </Link>
-                  <Link
-                    href="/dashboard"
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg"
-                  >
-                    Go to Dashboard
-                  </Link>
-                </>
+                <Link
+                  href="/dashboard"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg"
+                >
+                  Go to Dashboard
+                </Link>
               ) : (
-                <>
-                  <Link
-                    href="/tenders"
-                    className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg"
-                  >
-                    Back to Opportunities
-                  </Link>
-                  <Link
-                    href={getBuyerPortalUrl(tender.sources)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg"
-                  >
-                    Visit Buyer Portal →
-                  </Link>
-                </>
+                <Link
+                  href={getBuyerPortalUrl(tender.sources)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg"
+                >
+                  Visit Buyer Portal →
+                </Link>
               )}
             </div>
+
+            {/* Bid Response Modal */}
+            <BidResponseModal
+              tenderId={tender.id}
+              tenderTitle={tender.title}
+              userId={user?.id || null}
+              isOpen={modalOpen}
+              onClose={() => setModalOpen(false)}
+              onSuccess={(response) => setBidResponse(response)}
+            />
           </div>
         )}
       </div>
