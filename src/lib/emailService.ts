@@ -6,24 +6,30 @@ export interface EmailPayload {
 
 export async function sendEmail(payload: EmailPayload): Promise<boolean> {
   try {
-    // For now, use a simple email service like Resend or SendGrid
-    // You can integrate with your preferred email provider here
-    console.log('Would send email:', payload);
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('RESEND_API_KEY not configured');
+      return false;
+    }
 
-    // Example: using Resend (uncomment and add API key to .env)
-    // const response = await fetch('https://api.resend.com/emails', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-    //   },
-    //   body: JSON.stringify({
-    //     from: 'noreply@aiformprocure.co.za',
-    //     ...payload,
-    //   }),
-    // });
-    // return response.ok;
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: 'alerts@aiformprocure.co.za',
+        ...payload,
+      }),
+    });
 
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Resend API error:', error);
+      return false;
+    }
+
+    console.log('Email sent successfully to:', payload.to);
     return true;
   } catch (error) {
     console.error('Email send error:', error);
