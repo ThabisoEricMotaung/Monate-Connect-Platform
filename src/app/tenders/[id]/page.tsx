@@ -1,11 +1,51 @@
+'use client';
+
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+
+interface Tender {
+  id: string;
+  reference_number: string;
+  title: string;
+  buyer_normalized: string;
+  closing_date: string;
+  sources: string;
+  estimated_budget?: number;
+}
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function TenderDetailPage({ params }: PageProps) {
-  const { id } = await params;
+export default function TenderDetailPage({ params }: PageProps) {
+  const [tender, setTender] = useState<Tender | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [id, setId] = useState<string>('');
+
+  useEffect(() => {
+    (async () => {
+      const { id: pageId } = await params;
+      setId(pageId);
+
+      try {
+        const response = await fetch(`/api/tenders?limit=1000&offset=0`);
+        const json = await response.json();
+        const found = (json.data || []).find((t: Tender) => t.id === pageId);
+        setTender(found || null);
+      } catch (error) {
+        console.error('Failed to fetch tender:', error);
+      }
+      setLoading(false);
+    })();
+  }, [params]);
+
+  const isAiFormOpportunity = tender?.sources === 'AiForm Platform' || !tender?.sources;
+  const isExternalTender = tender && !isAiFormOpportunity;
+
+  const closingDate = tender ? new Date(tender.closing_date) : null;
+  const daysUntil = closingDate ? Math.ceil((closingDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
+  const isClosed = closingDate && daysUntil < 0;
 
   return (
     <div className="min-h-screen bg-white">
@@ -22,50 +62,118 @@ export default async function TenderDetailPage({ params }: PageProps) {
           href="/tenders"
           className="text-blue-600 hover:text-blue-700 font-semibold text-sm flex items-center gap-1"
         >
-          ← Back
+          ← Back to Opportunities
         </Link>
       </div>
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="mb-8">
-          <span className="inline-block bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded mb-4">
-            ID: {id}
-          </span>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Opportunity Details</h1>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
-            <p className="text-sm text-blue-900">
-              <strong>This opportunity is in your database.</strong> Full details, bidder information, and response management are available in your <Link href="/dashboard" className="text-blue-600 hover:underline font-semibold">Dashboard</Link>.
-            </p>
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">Loading opportunity details...</p>
           </div>
-
-          <div className="grid grid-cols-2 gap-8">
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Opportunity ID</p>
-              <p className="text-lg text-gray-900">{id}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Source</p>
-              <p className="text-lg text-gray-900">AiForm Procure</p>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-8 border-t border-gray-200 flex gap-4">
-            <Link
-              href="/tenders"
-              className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg"
-            >
-              Back to Opportunities
-            </Link>
-            <Link
-              href="/dashboard"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg"
-            >
-              View in Dashboard
+        ) : !tender ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-8 text-center">
+            <p className="text-gray-700 mb-4">Opportunity not found.</p>
+            <Link href="/tenders" className="text-blue-600 hover:text-blue-700 font-semibold">
+              Return to Opportunities
             </Link>
           </div>
-        </div>
+        ) : (
+          <div className="mb-8">
+            <span className="inline-block bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded mb-4">
+              {isAiFormOpportunity ? 'AiForm Posted' : tender.sources}
+            </span>
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">{tender.title}</h1>
+
+            {/* Context-aware info box */}
+            {isAiFormOpportunity ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-8">
+                <p className="text-sm text-blue-900 mb-3">
+                  <strong>Manage your bid on AiForm Procure.</strong> Access full details, upload documents, and track your response in your <Link href="/dashboard" className="text-blue-600 hover:underline font-semibold">Dashboard</Link>.
+                </p>
+                <p className="text-xs text-blue-800">
+                  Already submitted? Track status and communication with the buyer in your responses.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-5 mb-8">
+                <p className="text-sm text-amber-900 mb-3">
+                  <strong>This is a public sector opportunity</strong> posted by {tender.buyer_normalized}. To respond, you'll need to follow their formal procurement process.
+                </p>
+                <p className="text-xs text-amber-800">
+                  Contact the buyer directly or visit their procurement portal for submission instructions and bid requirements.
+                </p>
+              </div>
+            )}
+
+            {/* Tender Details Grid */}
+            <div className="grid grid-cols-2 gap-8 mb-8 pb-8 border-b border-gray-200">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Organization</p>
+                <p className="text-lg text-gray-900">{tender.buyer_normalized}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Source</p>
+                <p className="text-lg text-gray-900">{tender.sources || 'AiForm Platform'}</p>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Closes</p>
+                <p className="text-lg text-gray-900">{closingDate ? format(closingDate, 'dd MMM yyyy, HH:mm') : 'TBD'}</p>
+                {!isClosed && closingDate && (
+                  <p className={`text-xs mt-1 ${daysUntil <= 7 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
+                    {daysUntil} day{daysUntil !== 1 ? 's' : ''} left
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Estimated Budget</p>
+                <p className="text-lg text-gray-900">
+                  {tender.estimated_budget ? `R${(tender.estimated_budget / 1_000_000).toFixed(2)}M` : 'Not specified'}
+                </p>
+              </div>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex gap-4">
+              {isAiFormOpportunity ? (
+                <>
+                  <Link
+                    href="/tenders"
+                    className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg"
+                  >
+                    Back to Opportunities
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg"
+                  >
+                    Go to Dashboard
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/tenders"
+                    className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg"
+                  >
+                    Back to Opportunities
+                  </Link>
+                  <Link
+                    href={`https://www.${tender.sources?.toLowerCase().replace(/\s+/g, '')}.gov.za`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg"
+                  >
+                    Visit Buyer Portal →
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
