@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 
 interface Tender {
-  id: string;
+  id: number;
   reference_number: string;
   title: string;
   buyer_normalized: string;

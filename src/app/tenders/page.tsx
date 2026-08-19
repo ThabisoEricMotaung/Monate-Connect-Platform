@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { TenderCard } from '@/components/TenderCard';
 
 interface Tender {
-  id: string;
+  id: number;
   reference_number: string;
   title: string;
   buyer_normalized: string;
