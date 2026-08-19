@@ -2,7 +2,7 @@ import { format } from 'date-fns';
 
 interface TenderCardProps {
   tender: {
-    id: string;
+    id: number;
     reference_number: string;
     title: string;
     buyer_normalized: string;
