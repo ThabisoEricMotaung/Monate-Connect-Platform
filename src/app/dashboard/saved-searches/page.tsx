@@ -81,7 +81,7 @@ export default function SavedSearchesPage() {
     return `/tenders?${params.toString()}`;
   };
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-white py-12">
         <div className="max-w-4xl mx-auto px-6">
