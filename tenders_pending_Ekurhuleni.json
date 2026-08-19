@@ -833,5 +833,113 @@
     "status": "open",
     "description": null,
     "estimated_budget": null
+  },
+  {
+    "title": "Please note that all bid documents can be downloaded via this website for free. As at 25 November 2016, all information and briefing sessions are no longer compulsory, and no bidder can be disqualifie",
+    "buyer_org": "Ekurhuleni Metropolitan Municipality",
+    "closing_date": "2016-11-25T00:00:00",
+    "published_date": "2026-08-19T08:24:01.161533",
+    "source_name": "Ekurhuleni",
+    "external_reference": "A-WM 06-2026",
+    "is_public": true,
+    "status": "open",
+    "description": "d for not attending these sessions. All bids received timeously will be evaluated.",
+    "estimated_budget": 750.0
+  },
+  {
+    "title": "Bid Number: A-WM 06-2026 Description: THE SUPPLY, DELIVERY, AND OFF-LOADING OF PERSONAL PROTECTIVE CLOTHING FOR WASTE MANAGEMENT BUSINESS UNIT PERSONNEL ON AN AS-AND-WHEN REQUIRED BASIS",
+    "buyer_org": "Ekurhuleni Metropolitan Municipality",
+    "closing_date": "2026-08-18T00:00:00",
+    "published_date": "2026-08-19T08:24:01.734867",
+    "source_name": "Ekurhuleni",
+    "external_reference": "A-WM 06-2026",
+    "is_public": true,
+    "status": "open",
+    "description": null,
+    "estimated_budget": null
+  },
+  {
+    "title": "Bid Number: AS 01-2027 Description: Appointment of Service Providers for the Supply, Delivery and Off-Loading of Petrol and Automotive Diesel on an as-and-when-required basis from",
+    "buyer_org": "Ekurhuleni Metropolitan Municipality",
+    "closing_date": "2026-08-07T00:00:00",
+    "published_date": "2026-08-19T08:24:01.759377",
+    "source_name": "Ekurhuleni",
+    "external_reference": "AS 01-2027",
+    "is_public": true,
+    "status": "open",
+    "description": null,
+    "estimated_budget": null
+  },
+  {
+    "title": "Bid Number: A- ICT 03- 2026 Description: The appointment of service providers for Support, Maintenance, Upgrade, Expansion and Transfer of Skills of the enterprise resource",
+    "buyer_org": "Ekurhuleni Metropolitan Municipality",
+    "closing_date": "2026-08-07T00:00:00",
+    "published_date": "2026-08-19T08:24:01.787419",
+    "source_name": "Ekurhuleni",
+    "external_reference": "A- ICT 03- 2026",
+    "is_public": true,
+    "status": "open",
+    "description": null,
+    "estimated_budget": null
+  },
+  {
+    "title": "Bid Number: A- ICT 04- 2026 Description: The appointment of a Service Provider for Design, Building, Support and Maintenance of a Security Surveillance Capability and",
+    "buyer_org": "Ekurhuleni Metropolitan Municipality",
+    "closing_date": "2026-08-07T00:00:00",
+    "published_date": "2026-08-19T08:24:01.818025",
+    "source_name": "Ekurhuleni",
+    "external_reference": "A- ICT 04- 2026",
+    "is_public": true,
+    "status": "open",
+    "description": null,
+    "estimated_budget": null
+  },
+  {
+    "title": "Bid Number: PS-RL 01-2027 Description: The appointment of Brokers Related To Insurance and Risk Services for the period from date of award until 30 June",
+    "buyer_org": "Ekurhuleni Metropolitan Municipality",
+    "closing_date": "2026-07-31T00:00:00",
+    "published_date": "2026-08-19T08:24:01.844642",
+    "source_name": "Ekurhuleni",
+    "external_reference": "PS-RL 01-2027",
+    "is_public": true,
+    "status": "open",
+    "description": null,
+    "estimated_budget": null
+  },
+  {
+    "title": "Bid Number: A-CS 11-2026 Description: APPOINTMENT OF SERVICE PROVIDERS FOR THE SUPPLY, DELIVERY AND OFF-LOADING OF PERSONAL PROTECTIVE EQUIPMENT (PPE), WORKWEAR AND RELATED SAFETY ITEMS",
+    "buyer_org": "Ekurhuleni Metropolitan Municipality",
+    "closing_date": "2026-07-20T00:00:00",
+    "published_date": "2026-08-19T08:24:01.863737",
+    "source_name": "Ekurhuleni",
+    "external_reference": "A-CS 11-2026",
+    "is_public": true,
+    "status": "open",
+    "description": null,
+    "estimated_budget": null
+  },
+  {
+    "title": "Bid Number: A-CS 06-2026 Description: THE APPOINTMENT OF A PANEL OF PROFESSIONAL VETERINARIANS, FARRIERS AND SHEEP SHEARERS FOR THE CARE AND TREATMENT OF K9 UNIT",
+    "buyer_org": "Ekurhuleni Metropolitan Municipality",
+    "closing_date": "2026-07-20T00:00:00",
+    "published_date": "2026-08-19T08:24:01.885989",
+    "source_name": "Ekurhuleni",
+    "external_reference": "A-CS 06-2026",
+    "is_public": true,
+    "status": "open",
+    "description": null,
+    "estimated_budget": null
+  },
+  {
+    "title": "Bid Number: A-ICT 03-2026 :WITHDRAWAL Description: The appointment of service providers for Support, Maintenance, Upgrade, Expansion and Transfer of Skills of the enterprise resource Planning",
+    "buyer_org": "Ekurhuleni Metropolitan Municipality",
+    "closing_date": "2026-07-07T00:00:00",
+    "published_date": "2026-08-19T08:24:01.912620",
+    "source_name": "Ekurhuleni",
+    "external_reference": "A-ICT 03-2026: WITHDRAWAL",
+    "is_public": true,
+    "status": "open",
+    "description": null,
+    "estimated_budget": null
   }
 ]

@@ -8,6 +8,7 @@ interface Tender {
   id: number;
   reference_number: string;
   title: string;
+  description?: string | null;
   buyer_normalized: string;
   closing_date: string;
   sources: string;
@@ -115,6 +116,14 @@ export default function TenderDetailPage({ params }: PageProps) {
                 <p className="text-xs text-amber-800">
                   Contact the buyer directly or visit their procurement portal for submission instructions and bid requirements.
                 </p>
+              </div>
+            )}
+
+            {/* Description Section */}
+            {tender.description && (
+              <div className="mb-8 pb-8 border-b border-gray-200">
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-3">Description</p>
+                <p className="text-gray-700 leading-relaxed text-sm">{tender.description}</p>
               </div>
             )}
 

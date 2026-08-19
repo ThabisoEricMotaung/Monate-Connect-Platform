@@ -10,6 +10,7 @@ interface RFQRecord {
   is_public: boolean;
   source_name: string | null;
   estimated_budget: number | null;
+  description: string | null;
 }
 
 // Supabase client
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
     // Build base query
     let baseQuery = supabase
       .from('rfqs')
-      .select('id, title, buyer_org, closing_date, published_date, is_public, source_name, estimated_budget');
+      .select('id, title, buyer_org, closing_date, published_date, is_public, source_name, estimated_budget, description');
 
     // Add filters: only future tenders within the date range, exclude test records
     baseQuery = baseQuery
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
       .not('title', 'ilike', '%[TEST]%');
 
     if (search) {
-      baseQuery = baseQuery.or(`title.ilike.%${search}%,external_reference.ilike.%${search}%`);
+      baseQuery = baseQuery.or(`title.ilike.%${search}%,external_reference.ilike.%${search}%,description.ilike.%${search}%`);
     }
 
     if (source) {
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
       .not('title', 'ilike', '%[TEST]%');
 
     if (search) {
-      countQuery = countQuery.or(`title.ilike.%${search}%,external_reference.ilike.%${search}%`);
+      countQuery = countQuery.or(`title.ilike.%${search}%,external_reference.ilike.%${search}%,description.ilike.%${search}%`);
     }
     if (source) {
       if (source === 'null') {
@@ -101,6 +102,7 @@ export async function GET(request: NextRequest) {
       id: rfq.id,
       reference_number: rfq.id.toString(),
       title: rfq.title,
+      description: rfq.description,
       buyer_normalized: rfq.buyer_org || 'Unknown',
       closing_date: rfq.closing_date || new Date().toISOString(),
       created_at: rfq.published_date || new Date().toISOString(),

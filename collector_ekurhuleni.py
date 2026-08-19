@@ -8,6 +8,8 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import logging
 import re
+import pdfplumber
+import io
 
 logger = logging.getLogger(__name__)
 
@@ -105,10 +107,26 @@ class EkurhuleniCollector(TenderCollector):
         # Extract budget if available
         estimated_budget = self._extract_budget(text)
 
+        # Extract document links and try PDF extraction
+        description = None
+        pdf_url = None
+        for link in article.find_all('a'):
+            href = link.get('href', '')
+            if href and ('.pdf' in href.lower() or 'download' in href.lower()):
+                pdf_url = href if href.startswith('http') else self.base_url + href
+                break
+
+        # Try to get PDF description if available, else use title overflow
+        if pdf_url:
+            description = self._extract_pdf_text(pdf_url)
+
+        if not description:
+            description = title[200:500] if len(title) > 200 else None
+
         return {
             'reference_number': reference_number,
             'title': title[:200],  # Truncate to 200 chars
-            'description': title[200:500] if len(title) > 200 else None,  # Use title overflow as description
+            'description': description,
             'closing_date': closing_date,
             'source_url': self.tender_list_url,
             'buyer': 'Ekurhuleni Metropolitan Municipality',
@@ -145,6 +163,31 @@ class EkurhuleniCollector(TenderCollector):
                     continue
 
         return None
+
+    def _extract_pdf_text(self, pdf_url):
+        """Extract text from PDF URL"""
+        if not pdf_url:
+            return None
+
+        try:
+            response = self.session.get(pdf_url, timeout=15)
+            response.raise_for_status()
+
+            # Parse PDF from bytes
+            pdf_file = io.BytesIO(response.content)
+            with pdfplumber.open(pdf_file) as pdf:
+                text = ''
+                # Extract from first 3 pages to avoid huge documents
+                for page in pdf.pages[:3]:
+                    text += page.extract_text() or ''
+                    if len(text) > 1000:  # Stop if we have enough
+                        break
+
+            return text.strip()[:500] if text else None
+
+        except Exception as e:
+            logger.warning(f"Could not extract PDF from {pdf_url}: {e}")
+            return None
 
     def normalize_record(self, raw_record):
         """Normalize Ekurhuleni record to standard format"""

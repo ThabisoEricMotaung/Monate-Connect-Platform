@@ -8,6 +8,8 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import logging
 import re
+import pdfplumber
+import io
 
 logger = logging.getLogger(__name__)
 
@@ -103,13 +105,21 @@ class DBSACollector(TenderCollector):
 
         # Extract document links
         doc_links = []
+        pdf_url = None
         for link in cols[0].find_all('a'):
             href = link.get('href', '')
             if href:
                 doc_links.append(href)
+                # Grab first PDF/document link for description extraction
+                if not pdf_url and ('.pdf' in href.lower() or 'download' in href.lower()):
+                    pdf_url = href if href.startswith('http') else self.base_url + href
 
         # Extract budget if available
         estimated_budget = self._extract_budget(col0_text)
+
+        # Try to get PDF description if no description exists
+        if not description and pdf_url:
+            description = self._extract_pdf_text(pdf_url)
 
         return {
             'reference_number': reference_number,
@@ -152,6 +162,31 @@ class DBSACollector(TenderCollector):
                     continue
 
         return None
+
+    def _extract_pdf_text(self, pdf_url):
+        """Extract text from PDF URL"""
+        if not pdf_url:
+            return None
+
+        try:
+            response = self.session.get(pdf_url, timeout=15)
+            response.raise_for_status()
+
+            # Parse PDF from bytes
+            pdf_file = io.BytesIO(response.content)
+            with pdfplumber.open(pdf_file) as pdf:
+                text = ''
+                # Extract from first 3 pages to avoid huge documents
+                for page in pdf.pages[:3]:
+                    text += page.extract_text() or ''
+                    if len(text) > 1000:  # Stop if we have enough
+                        break
+
+            return text.strip()[:500] if text else None
+
+        except Exception as e:
+            logger.warning(f"Could not extract PDF from {pdf_url}: {e}")
+            return None
 
     def _parse_date(self, date_str):
         """Parse date string like '7 September 2026 at 23H55'"""

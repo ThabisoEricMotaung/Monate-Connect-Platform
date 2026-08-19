@@ -5,6 +5,7 @@ interface TenderCardProps {
     id: number;
     reference_number: string;
     title: string;
+    description?: string | null;
     buyer_normalized: string;
     closing_date: string;
     sources: string;
@@ -54,6 +55,13 @@ export function TenderCard({ tender }: TenderCardProps) {
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             {tender.title}
           </h3>
+
+          {tender.description && (
+            <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+              {tender.description.substring(0, 150)}
+              {tender.description.length > 150 ? '...' : ''}
+            </p>
+          )}
 
           <p className="text-sm text-gray-600 mb-4">
             <strong>Organization:</strong> {tender.buyer_normalized}
