@@ -202,10 +202,10 @@ export async function GET(request: NextRequest) {
     if (supplier.business_name && matches.length > 0) {
       for (let i = 0; i < Math.min(5, matches.length); i++) {
         const tender = tenders.find((t) => t.id === matches[i].tenderId);
-        if (tender && supplier.business_name && tender.scope) {
+        if (tender && supplier.business_name) {
           const { score: semanticBonus, explanation } = await getSemanticScore(
             `${supplier.business_name}. ${supplier.industry || 'General supplier'}`,
-            tender.scope
+            `${tender.title}. Category: ${tender.category}`
           );
           matches[i].matchScore += semanticBonus;
           if (explanation) {
