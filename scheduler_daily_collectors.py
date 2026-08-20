@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from collector_ekurhuleni import EkurhuleniCollector
 from collector_dbsa import DBSACollector
 from collector_tcta import TCTACollector
+from collector_sanral import SANRALCollector
 
 # Load environment variables
 load_dotenv()
@@ -36,6 +37,7 @@ def run_daily_collection():
         ('Ekurhuleni', EkurhuleniCollector()),
         ('DBSA', DBSACollector()),
         ('TCTA', TCTACollector()),
+        ('SANRAL', SANRALCollector()),
     ]
 
     total_scraped = 0
