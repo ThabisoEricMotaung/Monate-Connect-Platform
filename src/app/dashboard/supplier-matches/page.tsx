@@ -204,7 +204,7 @@ export default function SupplierMatchesPage() {
         <div className="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
           <p className="text-sm text-blue-900">
             <strong>How matching works:</strong> We analyze your company profile (industry, location, certifications, B-BBEE level) and match
-            you with tenders you're qualified for. Scores reflect industry match, geographic fit, compliance readiness, and credibility.
+            you with tenders you&apos;re qualified for. Scores reflect industry match, geographic fit, compliance readiness, and credibility.
             Perfect matches meet all key requirements. Qualified matches meet most. Partial matches show potential.
           </p>
         </div>
