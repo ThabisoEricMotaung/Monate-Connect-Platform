@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import OpenAI from 'openai';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -42,6 +43,42 @@ interface MatchScore {
   matchScore: number;
   matchReasons: string[];
   reason: 'perfect_match' | 'qualified' | 'partial_match' | 'no_match';
+}
+
+function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
+  const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
+  const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
+  return magnitudeA && magnitudeB ? dotProduct / (magnitudeA * magnitudeB) : 0;
+}
+
+async function getSemanticScore(supplierDescription: string, tenderScope: string): Promise<{ score: number; explanation: string }> {
+  if (!process.env.OPENAI_API_KEY) {
+    return { score: 0, explanation: '' };
+  }
+
+  try {
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    const [supplierEmbedding, tenderEmbedding] = await Promise.all([
+      client.embeddings.create({ model: 'text-embedding-3-small', input: supplierDescription || 'general supplier' }),
+      client.embeddings.create({ model: 'text-embedding-3-small', input: tenderScope || 'general tender' }),
+    ]);
+
+    const similarity = cosineSimilarity(
+      supplierEmbedding.data[0].embedding,
+      tenderEmbedding.data[0].embedding
+    );
+
+    const semanticScore = Math.round(similarity * 30); // Convert 0-1 to 0-30 point bonus
+    const explanation =
+      similarity > 0.8 ? 'Strong semantic match on scope' : similarity > 0.6 ? 'Moderate semantic match' : similarity > 0.4 ? 'Partial scope alignment' : '';
+
+    return { score: semanticScore, explanation };
+  } catch (error) {
+    console.error('Semantic scoring error:', error);
+    return { score: 0, explanation: '' };
+  }
 }
 
 function calculateMatchScore(supplier: SupplierProfile, tender: Tender): MatchScore {
@@ -155,11 +192,30 @@ export async function GET(request: NextRequest) {
 
     // Calculate matches
     const tenders = tenderData as Tender[];
-    const matches = tenders
+    let matches = tenders
       .map((tender) => calculateMatchScore(supplier, tender))
       .filter((match) => match.matchScore >= minScore)
       .sort((a, b) => b.matchScore - a.matchScore)
       .slice(0, limit);
+
+    // Add semantic scoring for top matches (AI enhancement)
+    if (supplier.business_name && matches.length > 0) {
+      for (let i = 0; i < Math.min(5, matches.length); i++) {
+        const tender = tenders.find((t) => t.id === matches[i].tenderId);
+        if (tender && supplier.business_name && tender.scope) {
+          const { score: semanticBonus, explanation } = await getSemanticScore(
+            `${supplier.business_name}. ${supplier.industry || 'General supplier'}`,
+            tender.scope
+          );
+          matches[i].matchScore += semanticBonus;
+          if (explanation) {
+            matches[i].matchReasons.push(explanation);
+          }
+        }
+      }
+      // Re-sort after semantic boost
+      matches.sort((a, b) => b.matchScore - a.matchScore);
+    }
 
     // Group by match reason
     const grouped = {
