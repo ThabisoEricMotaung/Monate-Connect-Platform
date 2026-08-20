@@ -51,6 +51,7 @@ type SupplierNavigationName =
   | "Settings"
   | "Spend Analysis"
   | "Verification"
+  | "Supplier Matches"
 
 const navigation: {
   name: SupplierNavigationName
@@ -80,6 +81,11 @@ const navigation: {
   {
     name: "Spend Analysis",
     href: "/dashboard/spend-analysis",
+    section: "Work",
+  },
+  {
+    name: "Supplier Matches",
+    href: "/dashboard/supplier-matches",
     section: "Work",
   },
   {
@@ -150,6 +156,7 @@ const navigationIcons: Record<string, ReactNode> = {
   "/dashboard/quotes": <IconMessageCircle size={16} />,
   "/dashboard/purchase-orders": <IconShoppingCart size={16} />,
   "/dashboard/spend-analysis": <IconChartBar size={16} />,
+  "/dashboard/supplier-matches": <IconShoppingCart size={16} />,
   "/dashboard/contracts": <IconFileCheck size={16} />,
   "/dashboard/invoices": <IconReceipt size={16} />,
   "/dashboard/payments": <IconCreditCard size={16} />,
