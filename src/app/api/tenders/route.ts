@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
     baseQuery = baseQuery
       .eq('is_public', true)
       .eq('status', 'open')
+      .not('closing_date', 'is', null)
       .gte('closing_date', today.toISOString())
       .lte('closing_date', targetDate.toISOString())
       .not('title', 'ilike', '%SMOKE TEST%')
@@ -70,6 +71,7 @@ export async function GET(request: NextRequest) {
     countQuery = countQuery
       .eq('is_public', true)
       .eq('status', 'open')
+      .not('closing_date', 'is', null)
       .gte('closing_date', today.toISOString())
       .lte('closing_date', targetDate.toISOString())
       .not('title', 'ilike', '%SMOKE TEST%')

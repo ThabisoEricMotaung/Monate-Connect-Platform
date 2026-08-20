@@ -30,7 +30,7 @@ export default function TenderDetailPage({ params }: PageProps) {
   const [bidResponse, setBidResponse] = useState<TenderResponse | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Load tender
+  // Load tender and track view
   useEffect(() => {
     (async () => {
       const { id: pageId } = await params;
@@ -41,6 +41,18 @@ export default function TenderDetailPage({ params }: PageProps) {
         const pageIdNum = parseInt(pageId, 10);
         const found = (json.data || []).find((t: Tender) => t.id === pageIdNum);
         setTender(found || null);
+
+        // Track tender view
+        if (found) {
+          await fetch('/api/analytics/tender-views', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tender_id: pageIdNum,
+              session_id: `session_${Math.random().toString(36).slice(2, 9)}`,
+            }),
+          }).catch(err => console.error('Analytics tracking error:', err));
+        }
       } catch (error) {
         console.error('Failed to fetch tender:', error);
       }

@@ -7,7 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
-interface SavedSearchWithUser {
+interface SavedSearch {
   id: number;
   user_id: string;
   search_query: string;
@@ -15,11 +15,6 @@ interface SavedSearchWithUser {
   budget_range: string | null;
   days_until_close: number;
   email_notifications: boolean;
-  auth: {
-    users: {
-      email: string;
-    };
-  };
 }
 
 // Security: Check cron secret
@@ -37,21 +32,10 @@ export async function POST(request: NextRequest) {
   try {
     console.log('Starting tender alert job...');
 
-    // Get all enabled saved searches with user emails
+    // Get all enabled saved searches
     const { data: searches, error: searchError } = await supabase
       .from('saved_searches')
-      .select(
-        `
-        id,
-        user_id,
-        search_query,
-        source,
-        budget_range,
-        days_until_close,
-        email_notifications,
-        auth.users(email)
-      `
-      )
+      .select('id,user_id,search_query,source,budget_range,days_until_close,email_notifications')
       .eq('email_notifications', true);
 
     if (searchError) throw searchError;
@@ -67,9 +51,11 @@ export async function POST(request: NextRequest) {
     const results: unknown[] = [];
 
     for (const search of searches) {
-      const searchData = search as unknown as SavedSearchWithUser;
+      const searchData = search as unknown as SavedSearch;
       try {
-        const userEmail = searchData.auth?.users?.email;
+        // Get user email from auth
+        const { data: userData } = await supabase.auth.admin.getUserById(searchData.user_id);
+        const userEmail = userData.user?.email;
         if (!userEmail) continue;
 
         // Build search query similar to frontend
@@ -84,8 +70,11 @@ export async function POST(request: NextRequest) {
         params.append('limit', '100');
 
         // Query tenders API
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ||
+          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3001');
+
         const tenderResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('/rest/v1', '')}/api/tenders?${params.toString()}`,
+          `${appUrl}/api/tenders?${params.toString()}`,
           {
             headers: {
               'Content-Type': 'application/json',

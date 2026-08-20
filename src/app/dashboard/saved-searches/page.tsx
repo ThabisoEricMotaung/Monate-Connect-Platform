@@ -109,6 +109,19 @@ export default function SavedSearchesPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-6 py-12">
+        {/* Navigation tabs */}
+        <div className="flex gap-6 mb-8 border-b border-gray-200 pb-4">
+          <Link href="/dashboard/saved-searches" className="text-blue-600 font-semibold border-b-2 border-blue-600 pb-2">
+            Saved Searches
+          </Link>
+          <Link href="/dashboard/my-bids" className="text-gray-600 hover:text-gray-900">
+            My Bids
+          </Link>
+          <Link href="/dashboard/analytics" className="text-gray-600 hover:text-gray-900">
+            Analytics
+          </Link>
+        </div>
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Saved Searches</h1>
           <p className="text-gray-600">Manage your tender search alerts and filters.</p>

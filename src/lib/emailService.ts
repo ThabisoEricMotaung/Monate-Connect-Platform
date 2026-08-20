@@ -84,7 +84,7 @@ export function generateTenderEmailHTML(
           .content { background: white; padding: 20px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px; }
           .tenders-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
           .tenders-table th { text-align: left; padding: 12px; border-bottom: 2px solid #e5e7eb; font-weight: 600; background: #f9fafb; }
-          .button { display: inline-block; padding: 12px 24px; background: #2563eb; color: white; border-radius: 6px; font-weight: 500; margin: 20px 0; }
+          .button { display: inline-block; padding: 12px 24px; background: #2563eb; color: white !important; border-radius: 6px; font-weight: 500; margin: 20px 0; text-decoration: none !important; }
           .footer { color: #6b7280; font-size: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
         </style>
       </head>
