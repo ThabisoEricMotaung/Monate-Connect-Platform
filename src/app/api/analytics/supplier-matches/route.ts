@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate matches
     const tenders = tenderData as Tender[];
-    let matches = tenders
+    const matches = tenders
       .map((tender) => calculateMatchScore(supplier, tender))
       .filter((match) => match.matchScore >= minScore)
       .sort((a, b) => b.matchScore - a.matchScore)
