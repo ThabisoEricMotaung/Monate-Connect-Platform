@@ -103,13 +103,11 @@ export default function SupplierMatchesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-6 py-12">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Opportunity Matches</h1>
           <p className="text-gray-600">Tenders your company qualifies for, ranked by match quality.</p>
         </div>
 
-        {/* Summary Cards */}
         {summary && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div className="bg-white rounded-lg p-4 shadow border-l-4 border-green-500">
@@ -131,7 +129,6 @@ export default function SupplierMatchesPage() {
           </div>
         )}
 
-        {/* Filter Tabs */}
         <div className="flex gap-2 mb-8 flex-wrap">
           {(['all', 'perfect_match', 'qualified', 'partial_match'] as const).map((f) => (
             <button
@@ -146,10 +143,9 @@ export default function SupplierMatchesPage() {
           ))}
         </div>
 
-        {/* Matches List */}
         {filteredMatches.length === 0 ? (
           <div className="bg-white rounded-lg p-8 text-center border border-gray-200">
-            <p className="text-gray-600">No matches found in this category. Try adjusting your filters.</p>
+            <p className="text-gray-600">No matches found in this category.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -171,7 +167,6 @@ export default function SupplierMatchesPage() {
                       <h3 className="text-lg font-bold text-gray-900 mb-1">{match.tenderTitle}</h3>
                       <p className="text-sm text-gray-600 mb-3">{match.buyer}</p>
 
-                      {/* Match Reasons */}
                       <div className="flex flex-wrap gap-2 mb-3">
                         {match.matchReasons.map((reason, idx) => (
                           <span key={idx} className="inline-block bg-white bg-opacity-60 text-xs text-gray-700 px-2 py-1 rounded">
@@ -180,13 +175,11 @@ export default function SupplierMatchesPage() {
                         ))}
                       </div>
 
-                      {/* Deadline */}
                       <p className={`text-xs font-semibold ${daysUntil <= 7 ? 'text-red-600' : 'text-gray-500'}`}>
                         Closes {closingDate.toLocaleDateString()} ({daysUntil > 0 ? `${daysUntil} days left` : 'Closed'})
                       </p>
                     </div>
 
-                    {/* Action Button */}
                     <Link
                       href={`/tenders/${match.tenderId}`}
                       className="ml-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg whitespace-nowrap"
@@ -200,12 +193,9 @@ export default function SupplierMatchesPage() {
           </div>
         )}
 
-        {/* Info Box */}
         <div className="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
           <p className="text-sm text-blue-900">
-            <strong>How matching works:</strong> We analyze your company profile (industry, location, certifications, B-BBEE level) and match
-            you with tenders you&apos;re qualified for. Scores reflect industry match, geographic fit, compliance readiness, and credibility.
-            Perfect matches meet all key requirements. Qualified matches meet most. Partial matches show potential.
+            <strong>How matching works:</strong> We analyze your company profile and match you with tenders you qualify for. Scores include industry match, geographic fit, compliance readiness, credibility, and semantic relevance (AI-powered).
           </p>
         </div>
       </div>
