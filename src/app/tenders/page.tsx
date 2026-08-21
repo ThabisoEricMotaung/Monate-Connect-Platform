@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { TenderCard } from '@/components/TenderCard';
 import { supabase } from '@/lib/supabase';
 import { saveSearch } from '@/lib/savedSearches';
+import { analyticsEvents } from '@/lib/analyticsEvents';
 import type { User } from '@supabase/supabase-js';
 
 interface Tender {
@@ -129,6 +130,7 @@ export default function TendersPage() {
         days_until_close: daysFilter,
         email_notifications: true,
       });
+      analyticsEvents.trackSavedSearch(query, source || 'all', 'south africa');
       setSaveMessage('Search saved! You&apos;ll get email alerts for new matches.');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {

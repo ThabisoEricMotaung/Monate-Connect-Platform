@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { analyticsEvents } from '@/lib/analyticsEvents';
 import type { User } from '@supabase/supabase-js';
 
 interface Match {
@@ -182,6 +183,12 @@ export default function SupplierMatchesPage() {
 
                     <Link
                       href={`/tenders/${match.tenderId}`}
+                      onClick={() =>
+                        analyticsEvents.trackSupplierDBAccess({
+                          industry: 'procurement',
+                          location: 'south africa',
+                        })
+                      }
                       className="ml-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg whitespace-nowrap"
                     >
                       View Tender →

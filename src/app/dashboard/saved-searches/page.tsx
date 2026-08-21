@@ -33,6 +33,10 @@ export default function SavedSearchesPage() {
     try {
       const data = await getSavedSearches(userId);
       setSearches(data);
+      // Track when user views saved searches
+      if (data.length > 0) {
+        analyticsEvents.trackSavedSearch(data[0].search_query, data[0].source || 'all', 'south africa');
+      }
     } catch (error) {
       console.error('Error loading searches:', error);
     } finally {

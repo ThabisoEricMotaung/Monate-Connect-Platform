@@ -5,7 +5,8 @@
 
 declare global {
   interface Window {
-    gtag?: (command: string, action: string, data: Record<string, unknown>) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    gtag?: (...args: any[]) => void;
   }
 }
 
