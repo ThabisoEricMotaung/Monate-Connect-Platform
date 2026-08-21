@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, type FormEvent } from "react"
+import { analyticsEvents } from "@/lib/analyticsEvents"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { IconArrowLeft } from "@tabler/icons-react"
@@ -678,6 +679,10 @@ export default function SignupPage() {
     }
 
     setLoading(false)
+    // Track signup in GA4
+    if (userId) {
+      analyticsEvents.trackSignup(userId, "email")
+    }
     const onboardingTarget = "/dashboard/onboarding?source=registration-complete"
     router.replace(
       form.role === "buyer"

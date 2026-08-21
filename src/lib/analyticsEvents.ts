@@ -5,7 +5,7 @@
 
 declare global {
   interface Window {
-    gtag?: (...args: any[]) => void;
+    gtag?: (command: string, action: string, data: Record<string, unknown>) => void;
   }
 }
 
