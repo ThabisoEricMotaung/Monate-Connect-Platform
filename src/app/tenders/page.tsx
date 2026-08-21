@@ -23,6 +23,7 @@ const SOURCES = [
   { value: 'Ekurhuleni', label: 'Ekurhuleni Metropolitan Municipality' },
   { value: 'DBSA', label: 'Development Bank of Southern Africa' },
   { value: 'TCTA', label: 'Trans-Caledon Tunnel Authority' },
+  { value: 'SANRAL', label: 'South African National Roads Agency' },
 ];
 
 const BUDGET_RANGES = [
