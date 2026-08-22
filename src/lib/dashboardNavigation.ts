@@ -20,6 +20,7 @@ import {
   IconHistory,
   IconHome,
   IconMap2,
+  IconBuildingFactory2,
   IconMessage2,
   IconMessageCircle,
   IconPlayerPlay,
@@ -131,6 +132,7 @@ export function getAdminNavGroups(isFullAdmin: boolean): DashboardNavGroup[] {
       label: "Supplier operations",
       divider: true,
       items: [
+        { name: "Mine Operations", href: "/dashboard/admin/mine-operations", icon: IconBuildingFactory2 },
         { name: "Contract Renewals", href: "/dashboard/admin/contract-renewals", icon: IconFileCertificate },
         { name: "Supplier Reviews", href: "/dashboard/admin/supplier-reviews", icon: IconStars },
         { name: "Compliance Risk", href: "/dashboard/admin/compliance-risk", icon: IconAlertTriangle },

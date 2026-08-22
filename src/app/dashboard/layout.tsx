@@ -19,6 +19,7 @@ import {
   IconSettings,
   IconMenu2,
   IconX,
+  IconPick,
 } from "@tabler/icons-react"
 import { usePathname, useRouter } from "next/navigation"
 import { ReactNode, useEffect, useState } from "react"
@@ -52,6 +53,7 @@ type SupplierNavigationName =
   | "Spend Analysis"
   | "Verification"
   | "Supplier Matches"
+  | "Mining Opportunities"
 
 const navigation: {
   name: SupplierNavigationName
@@ -86,6 +88,11 @@ const navigation: {
   {
     name: "Supplier Matches",
     href: "/dashboard/supplier-matches",
+    section: "Work",
+  },
+  {
+    name: "Mining Opportunities",
+    href: "/dashboard/mining/opportunities",
     section: "Work",
   },
   {
@@ -157,6 +164,7 @@ const navigationIcons: Record<string, ReactNode> = {
   "/dashboard/purchase-orders": <IconShoppingCart size={16} />,
   "/dashboard/spend-analysis": <IconChartBar size={16} />,
   "/dashboard/supplier-matches": <IconShoppingCart size={16} />,
+  "/dashboard/mining/opportunities": <IconPick size={16} />,
   "/dashboard/contracts": <IconFileCheck size={16} />,
   "/dashboard/invoices": <IconReceipt size={16} />,
   "/dashboard/payments": <IconCreditCard size={16} />,

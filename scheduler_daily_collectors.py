@@ -16,6 +16,7 @@ from collector_ekurhuleni import EkurhuleniCollector
 from collector_dbsa import DBSACollector
 from collector_tcta import TCTACollector
 from collector_sanral import SANRALCollector
+from collector_etenders import ETendersCollector
 
 # Load environment variables
 load_dotenv()
@@ -34,6 +35,7 @@ def run_daily_collection():
     logger.info("="*70)
 
     collectors = [
+        ('eTenders', ETendersCollector()),
         ('Ekurhuleni', EkurhuleniCollector()),
         ('DBSA', DBSACollector()),
         ('TCTA', TCTACollector()),
