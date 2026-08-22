@@ -18,6 +18,7 @@ type EligibilityInputs = {
   profile: MiningSupplierProfile | null
   documents: MiningComplianceDocument[]
   hostCommunityLinks: MiningHostCommunityLink[]
+  verifiedMiningReferenceCount?: number
   now?: Date
 }
 
@@ -69,6 +70,7 @@ export function evaluateMiningEligibility({
   profile,
   documents,
   hostCommunityLinks,
+  verifiedMiningReferenceCount = 0,
   now = new Date(),
 }: EligibilityInputs): EligibilityEvaluation {
   const gaps: MiningEligibilityGap[] = []
@@ -126,9 +128,13 @@ export function evaluateMiningEligibility({
   }
 
   if (numeric(rules.min_mining_references) != null) {
-    // The supplied schema has no mining-reference table or count field. Reporting
-    // zero is deliberately conservative until that data source is added.
-    check("min_mining_references", numeric(rules.min_mining_references)!, 0, false)
+    const required = numeric(rules.min_mining_references)!
+    check(
+      "min_mining_references",
+      required,
+      verifiedMiningReferenceCount,
+      verifiedMiningReferenceCount >= required,
+    )
   }
 
   for (const [key, required] of Object.entries(rules)) {
@@ -172,11 +178,16 @@ export async function computeMiningEligibility(
   client?: SupabaseClient,
 ): Promise<MiningEligibilityResult> {
   const db = requireAdminClient(client)
-  const [opportunityResult, profileResult, documentsResult, linksResult] = await Promise.all([
+  const [opportunityResult, profileResult, documentsResult, linksResult, referencesResult] = await Promise.all([
     db.from("mining_opportunities").select("*").eq("id", opportunityId).maybeSingle(),
     db.from("mining_supplier_profiles").select("*").eq("supplier_id", supplierId).maybeSingle(),
     db.from("mining_compliance_documents").select("*").eq("supplier_id", supplierId).eq("status", "verified"),
     db.from("mining_host_community_links").select("*").eq("supplier_id", supplierId),
+    db
+      .from("mining_project_references")
+      .select("id", { count: "exact", head: true })
+      .eq("supplier_id", supplierId)
+      .eq("status", "verified"),
   ])
 
   if (opportunityResult.error) throw new Error(opportunityResult.error.message)
@@ -184,6 +195,7 @@ export async function computeMiningEligibility(
   if (profileResult.error) throw new Error(profileResult.error.message)
   if (documentsResult.error) throw new Error(documentsResult.error.message)
   if (linksResult.error) throw new Error(linksResult.error.message)
+  if (referencesResult.error) throw new Error(referencesResult.error.message)
 
   const opportunity = opportunityResult.data as MiningOpportunity
   const evaluation = evaluateMiningEligibility({
@@ -192,6 +204,7 @@ export async function computeMiningEligibility(
     profile: profileResult.data as MiningSupplierProfile | null,
     documents: (documentsResult.data ?? []) as MiningComplianceDocument[],
     hostCommunityLinks: (linksResult.data ?? []) as MiningHostCommunityLink[],
+    verifiedMiningReferenceCount: referencesResult.count ?? 0,
   })
 
   const { data, error } = await db

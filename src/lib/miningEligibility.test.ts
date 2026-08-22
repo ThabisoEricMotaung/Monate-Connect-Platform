@@ -33,17 +33,36 @@ describe("evaluateMiningEligibility", () => {
     expect(result.gaps).toEqual([])
   })
 
-  it("reports hard gaps and does not pretend unsupported reference data exists", () => {
+  it("compares verified mining-reference counts to the rule threshold", () => {
     const result = evaluateMiningEligibility({
-      rules: { province: ["Gauteng"], min_mining_references: 2 },
+      rules: { province: ["Limpopo"], min_mining_references: 1 },
       mineOperationId: null,
       profile,
       documents: [],
       hostCommunityLinks: [],
+      verifiedMiningReferenceCount: 1,
     })
 
-    expect(result.match_percentage).toBe(0)
-    expect(result.qualification_status).toBe("not_qualified")
-    expect(result.gaps.map((gap) => gap.requirement)).toEqual(["province", "min_mining_references"])
+    expect(result.match_percentage).toBe(100)
+    expect(result.qualification_status).toBe("qualified")
+    expect(result.gaps).toEqual([])
+  })
+
+  it("reports the verified reference count when it is below the threshold", () => {
+    const result = evaluateMiningEligibility({
+      rules: { min_mining_references: 2 },
+      mineOperationId: null,
+      profile,
+      documents: [],
+      hostCommunityLinks: [],
+      verifiedMiningReferenceCount: 1,
+    })
+
+    expect(result.gaps[0]).toMatchObject({
+      requirement: "min_mining_references",
+      required: 2,
+      actual: 1,
+      severity: "hard",
+    })
   })
 })
