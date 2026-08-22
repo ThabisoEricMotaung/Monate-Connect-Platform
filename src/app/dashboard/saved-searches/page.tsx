@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { analyticsEvents } from '@/lib/analyticsEvents';
 import { getSavedSearches, deleteSearch, updateSearch, type SavedSearch } from '@/lib/savedSearches';
 import type { User } from '@supabase/supabase-js';
 
