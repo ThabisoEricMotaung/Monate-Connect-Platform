@@ -1,5 +1,5 @@
-import { after, NextResponse } from "next/server"
-import { recomputeOpportunityMiningEligibility } from "@/lib/miningEligibility"
+import { NextResponse } from "next/server"
+import { enqueueOpportunityMiningRecomputes } from "@/lib/miningRecomputeQueue"
 import { authenticateMiningRequest } from "@/lib/miningApiAuth"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 
@@ -29,13 +29,7 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
-  after(async () => {
-    try {
-      await recomputeOpportunityMiningEligibility(data.id)
-    } catch (recomputeError) {
-      console.error("Mining opportunity eligibility batch failed", recomputeError)
-    }
-  })
+  const queued = await enqueueOpportunityMiningRecomputes(data.id)
 
-  return NextResponse.json({ opportunity: data, eligibility_recompute: "queued" }, { status: 201 })
+  return NextResponse.json({ opportunity: data, eligibility_recompute: "queued", queued_jobs: queued }, { status: 201 })
 }

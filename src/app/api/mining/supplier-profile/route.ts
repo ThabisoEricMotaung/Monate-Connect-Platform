@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { recomputeSupplierMiningEligibility } from "@/lib/miningEligibility"
+import { enqueueSupplierMiningRecomputes } from "@/lib/miningRecomputeQueue"
 import { authenticateMiningRequest } from "@/lib/miningApiAuth"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 import type { MiningSupplierProfile } from "@/types/mining"
@@ -40,10 +40,10 @@ export async function PUT(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
   try {
-    await recomputeSupplierMiningEligibility(auth.user.id)
-  } catch (recomputeError) {
+    await enqueueSupplierMiningRecomputes(auth.user.id, "profile_updated")
+  } catch (enqueueError) {
     return NextResponse.json(
-      { profile: data, warning: recomputeError instanceof Error ? recomputeError.message : "Eligibility recompute failed." },
+      { profile: data, warning: enqueueError instanceof Error ? enqueueError.message : "Eligibility enqueue failed." },
       { status: 202 },
     )
   }
