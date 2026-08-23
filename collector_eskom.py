@@ -1,7 +1,7 @@
 """
 Eskom Tender Bulletin collector.
 Scrapes: https://tenderbulletin.eskom.co.za/search
-Uses structured HTML from server-rendered pages
+Uses Playwright for JavaScript rendering
 """
 
 from collectors_base_supabase import TenderCollector
@@ -10,12 +10,13 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 import logging
 import re
+from playwright.sync_api import sync_playwright
 
 logger = logging.getLogger(__name__)
 
 
 class EskomCollector(TenderCollector):
-    """Eskom Tender Bulletin collector"""
+    """Eskom Tender Bulletin collector using Playwright for JS rendering"""
 
     def __init__(self):
         super().__init__(
@@ -25,40 +26,71 @@ class EskomCollector(TenderCollector):
         self.search_url = 'https://tenderbulletin.eskom.co.za/search'
 
     def scrape_listings(self):
-        """Scrape Eskom tenders using paginated search"""
+        """Scrape Eskom tenders using Playwright for JavaScript rendering"""
         tenders = []
-        page = 1
-        page_size = 100
 
         try:
-            while True:
-                url = f"{self.search_url}?page={page}&pageSize={page_size}"
-                logger.info(f"Fetching page {page}: {url}")
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                page_obj = browser.new_page()
 
-                response = self.session.get(url, timeout=15)
-                response.raise_for_status()
+                # Start with page 1
+                url = f"{self.search_url}?page=1&pageSize=100"
+                logger.info(f"Loading {url}...")
+                page_obj.goto(url, wait_until='domcontentloaded', timeout=30000)
 
-                soup = BeautifulSoup(response.content, 'html.parser')
+                # Wait for articles to render
+                page_obj.wait_for_timeout(3000)
 
-                # Find all tender articles on the page
-                articles = soup.find_all('article')
+                page_num = 1
+                while True:
+                    logger.info(f"Extracting tenders from page {page_num}...")
 
-                if not articles:
-                    logger.info(f"No tenders found on page {page}, stopping pagination")
-                    break
+                    # Get page content after rendering
+                    html_content = page_obj.content()
 
-                logger.info(f"Found {len(articles)} tenders on page {page}")
+                    # Debug: save HTML for inspection
+                    if page_num == 1:
+                        with open('eskom_debug.html', 'w', encoding='utf-8') as f:
+                            f.write(html_content)
+                        logger.info(f"DEBUG: Saved page HTML to eskom_debug.html ({len(html_content)} bytes)")
 
-                for article in articles:
+                    soup = BeautifulSoup(html_content, 'html.parser')
+
+                    # Find all tender articles
+                    articles = soup.find_all('article')
+                    logger.info(f"Found {len(articles)} <article> elements on page {page_num}")
+
+                    if not articles:
+                        # Check what else is on the page
+                        lists = soup.find_all('ul')
+                        logger.info(f"DEBUG: Found {len(lists)} <ul>, {len(soup.find_all('li'))} <li>")
+
+                    if not articles:
+                        logger.info(f"No more tenders found, stopping pagination")
+                        break
+
+                    for article in articles:
+                        try:
+                            tender = self._extract_tender_from_article(article)
+                            if tender:
+                                tenders.append(tender)
+                        except Exception as e:
+                            logger.debug(f"Error extracting tender: {e}")
+                            continue
+
+                    # Try to click next page or navigate to next page
+                    page_num += 1
+                    next_url = f"{self.search_url}?page={page_num}&pageSize=100"
+
                     try:
-                        tender = self._extract_tender_from_article(article)
-                        if tender:
-                            tenders.append(tender)
+                        page_obj.goto(next_url, wait_until='domcontentloaded', timeout=30000)
+                        page_obj.wait_for_timeout(2000)
                     except Exception as e:
-                        logger.debug(f"Error extracting tender from article: {e}")
-                        continue
+                        logger.info(f"Could not load page {page_num}: {e}")
+                        break
 
-                page += 1
+                browser.close()
 
         except Exception as e:
             logger.error(f"Error scraping Eskom: {e}")
