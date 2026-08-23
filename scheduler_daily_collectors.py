@@ -18,6 +18,7 @@ from collector_tcta import TCTACollector
 from collector_sanral import SANRALCollector
 from collector_etenders import ETendersCollector
 from collector_eskom import EskomCollector
+from collector_capetown import CapeownCollector
 from reconciliation_daily_status import run_reconciliation
 
 # Load environment variables
@@ -41,6 +42,7 @@ def run_daily_collection():
     collectors = [
         ('eTenders', ETendersCollector()),
         ('Eskom', EskomCollector()),
+        ('City of Cape Town', CapeownCollector()),
         ('DBSA', DBSACollector()),
         ('TCTA', TCTACollector()),
         # ('Ekurhuleni', EkurhuleniCollector()),  # DISABLED - stale data
