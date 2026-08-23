@@ -17,6 +17,8 @@ from collector_dbsa import DBSACollector
 from collector_tcta import TCTACollector
 from collector_sanral import SANRALCollector
 from collector_etenders import ETendersCollector
+from collector_eskom import EskomCollector
+from reconciliation_daily_status import run_reconciliation
 
 # Load environment variables
 load_dotenv()
@@ -34,11 +36,14 @@ def run_daily_collection():
     logger.info(f"Starting daily collection run at {datetime.now()}")
     logger.info("="*70)
 
+    # NOTE: Ekurhuleni disabled - website serves stale data
+    # Re-enable when manual audit confirms current open tenders
     collectors = [
         ('eTenders', ETendersCollector()),
-        ('Ekurhuleni', EkurhuleniCollector()),
+        ('Eskom', EskomCollector()),
         ('DBSA', DBSACollector()),
         ('TCTA', TCTACollector()),
+        # ('Ekurhuleni', EkurhuleniCollector()),  # DISABLED - stale data
         ('SANRAL', SANRALCollector()),
     ]
 
@@ -65,6 +70,17 @@ def run_daily_collection():
     logger.info(f"Total scraped: {total_scraped}")
     logger.info(f"Total stored: {total_stored}")
     logger.info(f"Total errors: {total_errors}")
+    logger.info("="*70)
+
+    # Run reconciliation to recalculate all tender statuses
+    logger.info("\nRunning daily status reconciliation...")
+    logger.info("="*70)
+    try:
+        run_reconciliation()
+    except Exception as e:
+        logger.error(f"Failed to run reconciliation: {e}")
+        total_errors += 1
+
     logger.info(f"Completion time: {datetime.now()}")
     logger.info("="*70 + "\n")
 
