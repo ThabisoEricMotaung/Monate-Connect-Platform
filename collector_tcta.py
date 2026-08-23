@@ -6,6 +6,7 @@ Scrapes: https://www.tcta.co.za/tenders/
 from collectors_base_supabase import TenderCollector
 from bs4 import BeautifulSoup
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import logging
 import re
 import pdfplumber
@@ -119,6 +120,7 @@ class TCTACollector(TenderCollector):
 
     def _extract_by_pattern(self, element):
         """Extract tenders by searching for reference patterns"""
+        SAST = ZoneInfo('Africa/Johannesburg')
         tenders = []
         text = element.get_text()
 
@@ -144,7 +146,9 @@ class TCTACollector(TenderCollector):
             closing_date = None
             if date_match:
                 try:
-                    closing_date = datetime.strptime(date_match.group(1), '%d %B %Y')
+                    dt = datetime.strptime(date_match.group(1), '%d %B %Y')
+                    # Set time to 11:00 SAST and localize
+                    closing_date = dt.replace(hour=11, minute=0, second=0, tzinfo=SAST)
                 except:
                     pass
 
@@ -169,7 +173,8 @@ class TCTACollector(TenderCollector):
         return tenders
 
     def _extract_date(self, text):
-        """Extract closing date from text"""
+        """Extract closing date from text and localize to SAST"""
+        SAST = ZoneInfo('Africa/Johannesburg')
         # Look for patterns like "12 August 2026"
         date_patterns = [
             r'Closes?\s*(?:on\s+)?(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4})',
@@ -180,7 +185,9 @@ class TCTACollector(TenderCollector):
             match = re.search(pattern, text, re.I)
             if match:
                 try:
-                    return datetime.strptime(match.group(1), '%d %B %Y')
+                    dt = datetime.strptime(match.group(1), '%d %B %Y')
+                    # Set time to 11:00 SAST and localize
+                    return dt.replace(hour=11, minute=0, second=0, tzinfo=SAST)
                 except:
                     pass
 

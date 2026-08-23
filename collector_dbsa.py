@@ -6,6 +6,7 @@ Scrapes: https://www.dbsa.org/procurement
 from collectors_base_supabase import TenderCollector
 from bs4 import BeautifulSoup
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import logging
 import re
 import pdfplumber
@@ -189,15 +190,35 @@ class DBSACollector(TenderCollector):
             return None
 
     def _parse_date(self, date_str):
-        """Parse date string like '7 September 2026 at 23H55'"""
+        """Parse date string like '7 September 2026 at 23H55' and localize to SAST"""
         if not date_str:
             return None
 
         try:
-            # Remove time part
-            date_part = re.sub(r'\s+at\s+.*', '', date_str).strip()
-            # Parse date
-            return datetime.strptime(date_part, '%d %B %Y')
+            SAST = ZoneInfo('Africa/Johannesburg')
+            cleaned = date_str.strip()
+
+            # Try to parse with time component first (e.g., "7 September 2026 at 23H55")
+            time_match = re.search(r'\s+at\s+(\d+)H(\d+)', cleaned, re.I)
+            if time_match:
+                # Extract time
+                hour = int(time_match.group(1))
+                minute = int(time_match.group(2))
+                # Remove time part from date
+                date_part = re.sub(r'\s+at\s+.*', '', cleaned).strip()
+                try:
+                    dt = datetime.strptime(date_part, '%d %B %Y')
+                    dt = dt.replace(hour=hour, minute=minute, second=0, tzinfo=SAST)
+                    return dt
+                except ValueError:
+                    pass
+
+            # Fallback: parse date only and default to 11:00 SAST
+            date_part = re.sub(r'\s+at\s+.*', '', cleaned).strip()
+            dt = datetime.strptime(date_part, '%d %B %Y')
+            dt = dt.replace(hour=11, minute=0, second=0, tzinfo=SAST)
+            return dt
+
         except Exception as e:
             logger.warning(f"Could not parse date '{date_str}': {e}")
             return None

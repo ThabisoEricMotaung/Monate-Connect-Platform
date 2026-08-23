@@ -17,6 +17,7 @@ from collector_dbsa import DBSACollector
 from collector_tcta import TCTACollector
 from collector_sanral import SANRALCollector
 from collector_etenders import ETendersCollector
+from reconciliation_daily_status import run_reconciliation
 
 # Load environment variables
 load_dotenv()
@@ -34,12 +35,15 @@ def run_daily_collection():
     logger.info(f"Starting daily collection run at {datetime.now()}")
     logger.info("="*70)
 
+    # NOTE: SANRAL and Ekurhuleni are temporarily disabled because their websites
+    # serve mostly expired/archived tenders. Re-enable when source websites have
+    # current open tenders.
     collectors = [
         ('eTenders', ETendersCollector()),
-        ('Ekurhuleni', EkurhuleniCollector()),
+        # ('Ekurhuleni', EkurhuleniCollector()),  # DISABLED - website serves stale data
         ('DBSA', DBSACollector()),
         ('TCTA', TCTACollector()),
-        ('SANRAL', SANRALCollector()),
+        # ('SANRAL', SANRALCollector()),  # DISABLED - website serves stale data
     ]
 
     total_scraped = 0
@@ -60,8 +64,18 @@ def run_daily_collection():
             total_errors += 1
             continue
 
+    # Run reconciliation to recalculate all tender statuses
     logger.info("\n" + "="*70)
-    logger.info(f"Daily collection complete!")
+    logger.info("Running daily status reconciliation...")
+    logger.info("="*70)
+    try:
+        run_reconciliation()
+    except Exception as e:
+        logger.error(f"Failed to run reconciliation: {e}")
+        total_errors += 1
+
+    logger.info("\n" + "="*70)
+    logger.info(f"Daily collection and reconciliation complete!")
     logger.info(f"Total scraped: {total_scraped}")
     logger.info(f"Total stored: {total_stored}")
     logger.info(f"Total errors: {total_errors}")
