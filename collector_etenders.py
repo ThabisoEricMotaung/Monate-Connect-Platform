@@ -6,7 +6,6 @@ Uses OCDS (Open Contracting Data Standard) format - public API, no auth required
 
 from collectors_base_supabase import TenderCollector
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
 import logging
 import requests
 
@@ -165,25 +164,18 @@ class ETendersCollector(TenderCollector):
             return None
 
     def _parse_date(self, date_str):
-        """Parse closing date from ISO format string and localize to SAST"""
+        """Parse closing date from ISO format string"""
         if not date_str:
             return None
 
         try:
-            SAST = ZoneInfo('Africa/Johannesburg')
-
             # eTenders uses ISO 8601 format (YYYY-MM-DD or with time)
             if 'T' in date_str:
-                # Has time component - parse as-is and convert to SAST
-                dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-                # Convert to SAST if timezone-aware
-                if dt.tzinfo is not None:
-                    dt = dt.astimezone(SAST)
-                return dt
+                # Has time component
+                return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
             else:
-                # Date only - default to 11:00 SAST
-                dt = datetime.strptime(date_str, '%Y-%m-%d')
-                return dt.replace(hour=11, minute=0, second=0, tzinfo=SAST)
+                # Date only
+                return datetime.strptime(date_str, '%Y-%m-%d')
         except Exception as e:
             logger.debug(f"Could not parse date '{date_str}': {e}")
             return None

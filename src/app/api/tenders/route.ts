@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     // Add filters: only future tenders within the date range, exclude test records
     baseQuery = baseQuery
       .eq('is_public', true)
-      .eq('status', 'open')
+      .eq('status', 'active')
       .not('closing_date', 'is', null)
       .gte('closing_date', today.toISOString())
       .lte('closing_date', targetDate.toISOString())
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 
     countQuery = countQuery
       .eq('is_public', true)
-      .eq('status', 'open')
+      .eq('status', 'active')
       .not('closing_date', 'is', null)
       .gte('closing_date', today.toISOString())
       .lte('closing_date', targetDate.toISOString())

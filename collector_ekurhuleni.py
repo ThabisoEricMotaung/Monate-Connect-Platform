@@ -6,7 +6,6 @@ Scrapes: https://www.ekurhuleni.gov.za/for-my-business/tenders/open-tenders/
 from collectors_base_supabase import TenderCollector
 from bs4 import BeautifulSoup
 from datetime import datetime
-from zoneinfo import ZoneInfo
 import logging
 import re
 import pdfplumber
@@ -69,20 +68,15 @@ class EkurhuleniCollector(TenderCollector):
 
         closing_date = None
 
-        SAST = ZoneInfo('Africa/Johannesburg')
-
         # Try text format first: "19 Aug 2026" or "19 August 2026"
         text_date_pattern = r'(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})'
         text_match = re.search(text_date_pattern, text, re.I)
         if text_match:
             try:
                 closing_date = datetime.strptime(text_match.group(0), '%d %b %Y')
-                # Set time to 11:00 SAST and localize
-                closing_date = closing_date.replace(hour=11, minute=0, second=0, tzinfo=SAST)
             except:
                 try:
                     closing_date = datetime.strptime(text_match.group(0), '%d %B %Y')
-                    closing_date = closing_date.replace(hour=11, minute=0, second=0, tzinfo=SAST)
                 except:
                     pass
 
@@ -94,15 +88,8 @@ class EkurhuleniCollector(TenderCollector):
                 last_date = dates[-1]
                 try:
                     closing_date = datetime(int(last_date[2]), int(last_date[1]), int(last_date[0]))
-                    # Set time to 11:00 SAST and localize
-                    closing_date = closing_date.replace(hour=11, minute=0, second=0, tzinfo=SAST)
                 except:
                     pass
-
-        # Skip expired tenders (closing date in the past)
-        if closing_date and closing_date < datetime.now():
-            logger.debug(f"Skipping expired Ekurhuleni tender: {reference_number} (closed {closing_date.date()})")
-            return None
 
         # Extract title (often in first line after reference, or in h2/h3)
         # Try to find title in the content
