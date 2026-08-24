@@ -39,10 +39,6 @@
     {
       "path": "/api/cron/contract-expiry",
       "schedule": "45 7 * * *"
-    },
-    {
-      "path": "/api/mining/process-recompute-queue",
-      "schedule": "*/5 * * * *"
     }
   ]
 }
