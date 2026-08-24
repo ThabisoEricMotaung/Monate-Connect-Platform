@@ -45,7 +45,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from("rfqs")
     .select("id,published_date,created_at")
     .eq("is_public", true)
-    .eq("status", "open")
+    .eq("status", "active")
     .gt("closing_date", generatedAt.toISOString())
     .or("is_external_opportunity.is.null,is_external_opportunity.eq.false,curation_status.eq.approved")
     .order("id", { ascending: true })
