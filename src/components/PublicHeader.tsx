@@ -176,6 +176,28 @@ export default function PublicHeader() {
                 </Link>
               )
             })}
+            <Link
+              href="https://aiform-studio.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontSize: "13px",
+                color: "#c8960c",
+                padding: "8px 14px",
+                textDecoration: "none",
+                borderRadius: "6px",
+                background: "transparent",
+                transition: "color 150ms, background 150ms",
+                whiteSpace: "nowrap",
+                display: "inline-block",
+                fontWeight: 600,
+                marginLeft: "8px",
+                borderLeft: "1px solid #eeeeee",
+                paddingLeft: "22px",
+              }}
+            >
+              AiForm Studio
+            </Link>
             {isIncompleteRegistration && (
               <button
                 type="button"
@@ -334,6 +356,27 @@ export default function PublicHeader() {
                   </Link>
                 )
               })}
+              <Link
+                href="https://aiform-studio.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  fontSize: "14px",
+                  color: "#c8960c",
+                  padding: "10px 14px",
+                  textDecoration: "none",
+                  borderRadius: "6px",
+                  background: "transparent",
+                  display: "block",
+                  fontWeight: 600,
+                  borderTop: "1px solid #eeeeee",
+                  marginTop: "4px",
+                  paddingTop: "14px",
+                }}
+              >
+                AiForm Studio
+              </Link>
               <div
                 style={{
                   borderTop: "1px solid #eeeeee",

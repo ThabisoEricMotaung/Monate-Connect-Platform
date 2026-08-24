@@ -234,16 +234,16 @@ export default function PublicFooter() {
             <p className="text-sm font-semibold text-[#123c2b]/70">
               &copy; 2026 AiForm Procure &middot; {t("copyrightSuite")}
             </p>
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#123c2b]/70">
+            <Link href="https://aiform-studio.vercel.app/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-semibold text-[#123c2b]/70 hover:text-[#123c2b] transition-colors">
               <Image
                 src="/aiform-mark.png"
-                alt=""
+                alt="AiForm Studio"
                 width={19}
                 height={24}
                 className="h-6 w-auto"
               />
               <span>{t("studioProduct")}</span>
-            </div>
+            </Link>
           </div>
           <div className="relative flex items-center justify-end">
             <div className="flex flex-nowrap items-center gap-1 sm:gap-2" role="group" aria-label={t("socialChannels")}>

@@ -30,18 +30,23 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    // Calculate date range (today to N days from now)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Calculate date range in SAST (UTC+2)
+    // Since closing_dates are stored with SAST timezone, compare using SAST dates
+    const nowMs = Date.now();
+    const now = new Date(nowMs);
+    const offsetMs = (2 * 60 * 60 * 1000); // SAST is UTC+2
+    const sastNow = new Date(nowMs + offsetMs);
+    const today = new Date(sastNow);
+    today.setUTCHours(0, 0, 0, 0);
     const targetDate = new Date(today);
     targetDate.setDate(targetDate.getDate() + daysUntilClose);
 
     // Build base query
     let baseQuery = supabase
       .from('rfqs')
-      .select('id, title, buyer_org, closing_date, published_date, is_public, source_name, estimated_budget, description');
+      .select('id, title, buyer_org, closing_date, published_date, is_public, source_name, estimated_budget, description, closing_soon');
 
-    // Add filters: only future tenders within the date range, exclude test records
+    // Add filters: status is set by nightly reconciliation (SAST-aware)
     baseQuery = baseQuery
       .eq('is_public', true)
       .eq('status', 'active')
@@ -63,7 +68,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get total count from a fresh query (with same filters)
+    // Get total count from a fresh query (with same filters and SAST timezone)
     let countQuery = supabase
       .from('rfqs')
       .select('id', { count: 'exact', head: true });
