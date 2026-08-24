@@ -1,7 +1,7 @@
 import "server-only"
 
 import { unstable_cache } from "next/cache"
-import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { createClient } from "@supabase/supabase-js"
 
 const SOUTH_AFRICA_UTC_OFFSET_MS = 2 * 60 * 60 * 1000
 
@@ -25,7 +25,11 @@ export function getSouthAfricaClosingWeekEnd(now = new Date()): Date {
 
 async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunityStats | null> {
   try {
-    const supabase = await createSupabaseServerClient()
+    // Use anon key directly (no cookies needed for public stats)
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
     const now = new Date()
     const nowIso = now.toISOString()
     const closingWeekEndIso = getSouthAfricaClosingWeekEnd(now).toISOString()
@@ -35,7 +39,7 @@ async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunitySta
       supabase
         .from("rfqs")
         .select("id", { count: "exact", head: true })
-        .ilike("status", "open")
+        .eq("status", "active")
         .gt("closing_date", nowIso)
         .eq("is_public", true)
         .or("is_external_opportunity.is.null,is_external_opportunity.eq.false,curation_status.eq.approved")
