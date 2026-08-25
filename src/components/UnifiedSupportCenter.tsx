@@ -750,7 +750,7 @@ export default function UnifiedSupportCenter() {
                   <div id="support-tab-assistant" role="tabpanel" className="flex min-h-full flex-col">
                     <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <h3 className="text-2xl font-bold text-[#1a3a2a]">Hi Thabiso! 👋</h3>
+                        <h3 className="text-2xl font-bold text-[#1a3a2a]">Hi {displayName || "there"}! 👋</h3>
                         <p className="mt-1 text-sm leading-6 text-[#53665c]">
                           How can I help you with AiForm Procure today?
                         </p>
