@@ -52,7 +52,6 @@ export async function GET(request: NextRequest) {
       .eq('status', 'active')
       .not('closing_date', 'is', null)
       .gte('closing_date', today.toISOString())
-      .lte('closing_date', targetDate.toISOString())
       .not('title', 'ilike', '%SMOKE TEST%')
       .not('title', 'ilike', '%[TEST]%');
 
@@ -78,7 +77,6 @@ export async function GET(request: NextRequest) {
       .eq('status', 'active')
       .not('closing_date', 'is', null)
       .gte('closing_date', today.toISOString())
-      .lte('closing_date', targetDate.toISOString())
       .not('title', 'ilike', '%SMOKE TEST%')
       .not('title', 'ilike', '%[TEST]%');
 
