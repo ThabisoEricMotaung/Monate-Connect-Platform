@@ -8,6 +8,7 @@ export type MiningCharterCategory =
   | "BEE-compliant"
   | "Not classified"
 export type MiningDocumentStatus = "pending" | "verified" | "expired" | "rejected"
+export type MiningProjectReferenceStatus = "pending" | "verified" | "rejected"
 export type MiningOpportunityStatus = "open" | "closed" | "awarded"
 export type MiningQualificationStatus = "qualified" | "potentially_qualified" | "not_qualified"
 export type MiningGapSeverity = "hard" | "soft"
@@ -88,6 +89,25 @@ export type MiningComplianceDocument = {
   status: MiningDocumentStatus
   reviewed_by: string | null
   reviewed_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type MiningProjectReference = {
+  id: string
+  supplier_id: string
+  mine_operation_id: string | null
+  mine_name: string
+  project_description: string
+  role_performed: string | null
+  start_date: string
+  end_date: string | null
+  contact_name: string | null
+  contact_phone: string | null
+  contact_email: string | null
+  status: MiningProjectReferenceStatus
+  verified_by: string | null
+  verified_at: string | null
   created_at: string
   updated_at: string
 }

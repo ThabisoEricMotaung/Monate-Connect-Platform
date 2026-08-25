@@ -16,6 +16,7 @@ import {
   IconFileCertificate,
   IconFileSearch,
   IconFileText,
+  IconListCheck,
   IconHelpCircle,
   IconHistory,
   IconHome,
@@ -133,6 +134,7 @@ export function getAdminNavGroups(isFullAdmin: boolean): DashboardNavGroup[] {
       divider: true,
       items: [
         { name: "Mine Operations", href: "/dashboard/admin/mine-operations", icon: IconBuildingFactory2 },
+        { name: "Mining References", href: "/dashboard/admin/mining-references", icon: IconListCheck },
         { name: "Contract Renewals", href: "/dashboard/admin/contract-renewals", icon: IconFileCertificate },
         { name: "Supplier Reviews", href: "/dashboard/admin/supplier-reviews", icon: IconStars },
         { name: "Compliance Risk", href: "/dashboard/admin/compliance-risk", icon: IconAlertTriangle },
