@@ -17,15 +17,19 @@ export class CapeownCollector extends TenderCollectorBase {
     const tenders: RawTender[] = []
 
     try {
+      console.log(`[Cape Town] Starting fetch...`)
       const response = await fetch(url, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         },
+        timeout: 30000,
       })
 
+      console.log(`[Cape Town] Response status: ${response.status}`)
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
       const html = await response.text()
+      console.log(`[Cape Town] HTML length: ${html.length}`)
 
       // Parse table rows: <tr class="gridDetails"><td>REF</td><td><pre...>DESC</pre></td>...<td>CLOSING</td>...
       const rowPattern = /<tr\s+class="gridDetails"[^>]*>([\s\S]*?)<\/tr>/gi

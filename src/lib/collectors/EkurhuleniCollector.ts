@@ -17,15 +17,19 @@ export class EkurhuleniCollector extends TenderCollectorBase {
     const tenders: RawTender[] = []
 
     try {
+      console.log(`[Ekurhuleni] Starting fetch...`)
       const response = await fetch(url, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         },
+        timeout: 30000,
       })
 
+      console.log(`[Ekurhuleni] Response status: ${response.status}`)
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
       const html = await response.text()
+      console.log(`[Ekurhuleni] HTML length: ${html.length}`)
 
       // Parse Elementor posts: <article class="elementor-post">...<h3>...<a>REF</a></h3>...<p>DESC</p>...<span class="elementor-post-date">DATE</span>
       const articlePattern = /<article[^>]*class="[^"]*elementor-post[^"]*"[^>]*>([\s\S]*?)<\/article>/gi
