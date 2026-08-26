@@ -197,6 +197,33 @@ export abstract class TenderCollectorBase {
       return obj
     }
 
+    // Handle plain objects (e.g., Supabase errors)
+    if (typeof error === "object" && error !== null) {
+      const obj = error as Record<string, unknown>
+      const result: { name: string; message: string; code?: string; cause?: string } = {
+        name: obj.constructor?.name || "Object",
+        message: "",
+      }
+
+      // Try to extract message from common error properties
+      if ("message" in obj) {
+        result.message = String(obj.message)
+      } else if ("error" in obj) {
+        result.message = String(obj.error)
+      } else if ("msg" in obj) {
+        result.message = String(obj.msg)
+      } else {
+        result.message = JSON.stringify(obj).substring(0, 200)
+      }
+
+      // Extract code if present
+      if ("code" in obj) {
+        result.code = String(obj.code)
+      }
+
+      return result
+    }
+
     return {
       name: typeof error,
       message: String(error),
