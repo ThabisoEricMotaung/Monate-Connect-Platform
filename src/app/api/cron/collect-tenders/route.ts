@@ -21,7 +21,17 @@ export async function GET(request: Request) {
   }
 
   const startTime = Date.now()
-  const results: Record<string, { success: boolean; inserted?: number; updated?: number; skipped?: number; error?: string }> = {}
+  const results: Record<
+    string,
+    {
+      success: boolean
+      inserted?: number
+      updated?: number
+      skipped?: number
+      stage?: string
+      error?: { name: string; message: string; code?: string; cause?: string } | string
+    }
+  > = {}
 
   try {
     console.log("[CRON:collect-tenders] Starting daily collection at", new Date().toISOString())
@@ -41,14 +51,20 @@ export async function GET(request: Request) {
     for (const { name, collector } of collectors) {
       try {
         const result = await collector.collect()
-        results[name] = { success: true, ...result }
-        console.log(`[CRON:${name}] Complete: ${result.inserted} inserted, ${result.skipped} skipped`)
+        if (result.error) {
+          // Collector reported an error
+          results[name] = { success: false, stage: result.stage, error: result.error }
+          console.log(`[CRON:${name}] Failed at stage ${result.stage}`)
+        } else {
+          results[name] = { success: true, ...result }
+          console.log(`[CRON:${name}] Complete: ${result.inserted} inserted, ${result.skipped} skipped`)
+        }
       } catch (error) {
         results[name] = {
           success: false,
           error: error instanceof Error ? error.message : "Unknown error",
         }
-        console.error(`[CRON:${name}] Failed:`, error)
+        console.error(`[CRON:${name}] Exception:`, error)
       }
     }
 
