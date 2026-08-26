@@ -19,31 +19,30 @@ export class EkurhuleniCollector extends TenderCollectorBase {
     try {
       const response = await fetch(url, {
         headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         },
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
       const html = await response.text()
 
-      // Parse HTML using regex (simple approach)
-      // Pattern: Reference number, title, closing date
-      const tenderPattern = /(?:RFQ|TENDER|BID)[\s\-]*(\d+)[^]*?([\w\s]+?)\s+(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})/gi
+      // Parse tender cards from Elementor posts widget
+      // Look for: <h3><a href="...">Reference</a></h3> and <span class="elementor-post-date">DATE</span>
+      const cardPattern = /<h3[^>]*>\s*<a[^>]*>\s*([\w\s\-\/]+?)\s*<\/a>\s*<\/h3>[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>[\s\S]*?<span[^>]*elementor-post-date[^>]*>\s*([\d\/]+)\s*<\/span>/gi
 
       let match
-      while ((match = tenderPattern.exec(html)) !== null) {
-        const referenceNumber = match[1]
-        const title = match[2].trim().substring(0, 200)
-        const dateStr = `${match[3]} ${match[4]} ${match[5]}`
+      while ((match = cardPattern.exec(html)) !== null) {
+        const referenceNumber = match[1].trim()
+        const description = match[2].replace(/<[^>]*>/g, "").trim().substring(0, 200)
+        const dateStr = match[3].trim()
+
+        if (!referenceNumber || !description) continue
 
         tenders.push({
           reference_number: referenceNumber,
-          title,
-          description: title,
+          title: referenceNumber,
+          description,
           closing_date: this.parseDate(dateStr),
           source_url: url,
           buyer: "Ekurhuleni Metropolitan Municipality",
