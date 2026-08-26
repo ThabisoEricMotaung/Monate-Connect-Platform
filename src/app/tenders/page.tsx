@@ -23,6 +23,7 @@ const SOURCES = [
   { value: 'eTenders', label: 'eTenders.gov.za' },
   { value: 'Ekurhuleni', label: 'Ekurhuleni Metropolitan Municipality' },
   { value: 'City of Cape Town', label: 'City of Cape Town Metropolitan Municipality' },
+  { value: 'City of Johannesburg', label: 'City of Johannesburg Metropolitan Municipality' },
   { value: 'DBSA', label: 'Development Bank of Southern Africa' },
   { value: 'TCTA', label: 'Trans-Caledon Tunnel Authority' },
   { value: 'SANRAL', label: 'South African National Roads Agency' },
