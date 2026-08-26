@@ -83,13 +83,36 @@ export abstract class TenderCollectorBase {
   /**
    * Collect and insert tenders into database
    */
-  async collect(): Promise<{ inserted: number; updated: number; skipped: number }> {
+  async collect(): Promise<{
+    inserted: number
+    updated: number
+    skipped: number
+    stage?: string
+    error?: { name: string; message: string; code?: string; cause?: string }
+  }> {
     console.log(`[${this.sourceName}] Starting collection...`)
 
     try {
-      const rawTenders = await this.scrapeListings()
-      console.log(`[${this.sourceName}] Scraped ${rawTenders.length} tenders`)
+      // Stage 1: Fetch listings
+      let rawTenders: RawTender[] = []
+      try {
+        console.log(`[${this.sourceName}] Stage: fetch-list-page`)
+        rawTenders = await this.scrapeListings()
+        console.log(`[${this.sourceName}] Scraped ${rawTenders.length} tenders`)
+      } catch (fetchError) {
+        const errorObj = this.serializeError(fetchError)
+        console.error(`[${this.sourceName}] fetch-list-page failed: ${JSON.stringify(errorObj)}`)
+        return {
+          inserted: 0,
+          updated: 0,
+          skipped: 0,
+          stage: "fetch-list-page",
+          error: errorObj,
+        }
+      }
 
+      // Stage 2: Normalize
+      console.log(`[${this.sourceName}] Stage: normalize`)
       const normalized = rawTenders.map((t) => this.normalizeTender(t))
 
       // Skip closed tenders
@@ -101,23 +124,82 @@ export abstract class TenderCollectorBase {
         return { inserted: 0, updated: 0, skipped }
       }
 
-      // Upsert into Supabase
-      const { data, error } = await this.supabase
-        .from("rfqs")
-        .upsert(openTenders as never[], { onConflict: "external_ocid" })
-        .select("id")
+      // Stage 3: Upsert
+      try {
+        console.log(`[${this.sourceName}] Stage: database-upsert`)
+        const { data, error } = await this.supabase
+          .from("rfqs")
+          .upsert(openTenders as never[], { onConflict: "external_ocid" })
+          .select("id")
 
-      if (error) {
-        throw error
+        if (error) {
+          throw error
+        }
+
+        const count = data?.length || 0
+        console.log(`[${this.sourceName}] Inserted/updated ${count} tenders, skipped ${skipped} closed`)
+
+        return { inserted: count, updated: 0, skipped }
+      } catch (dbError) {
+        const errorObj = this.serializeError(dbError)
+        console.error(`[${this.sourceName}] database-upsert failed: ${JSON.stringify(errorObj)}`)
+        return {
+          inserted: 0,
+          updated: 0,
+          skipped,
+          stage: "database-upsert",
+          error: errorObj,
+        }
+      }
+    } catch (error) {
+      const errorObj = this.serializeError(error)
+      console.error(`[${this.sourceName}] unknown stage failed: ${JSON.stringify(errorObj)}`)
+      return {
+        inserted: 0,
+        updated: 0,
+        skipped: 0,
+        stage: "unknown",
+        error: errorObj,
+      }
+    }
+  }
+
+  /**
+   * Serialize error with all diagnostic details
+   */
+  protected serializeError(error: unknown): {
+    name: string
+    message: string
+    code?: string
+    cause?: string
+  } {
+    if (error instanceof Error) {
+      const obj: { name: string; message: string; code?: string; cause?: string } = {
+        name: error.name,
+        message: error.message,
       }
 
-      const count = data?.length || 0
-      console.log(`[${this.sourceName}] Inserted/updated ${count} tenders, skipped ${skipped} closed`)
+      // Extract cause details
+      if (error.cause) {
+        if (typeof error.cause === "object" && error.cause !== null) {
+          const cause = error.cause as Record<string, unknown>
+          if ("code" in cause) {
+            obj.code = String(cause.code)
+          }
+          if ("errno" in cause || "syscall" in cause) {
+            obj.cause = `${cause.syscall || ""} ${cause.code || cause.errno || ""}`.trim()
+          }
+        } else {
+          obj.cause = String(error.cause)
+        }
+      }
 
-      return { inserted: count, updated: 0, skipped }
-    } catch (error) {
-      console.error(`[${this.sourceName}] Collection failed:`, error)
-      throw error
+      return obj
+    }
+
+    return {
+      name: typeof error,
+      message: String(error),
     }
   }
 
