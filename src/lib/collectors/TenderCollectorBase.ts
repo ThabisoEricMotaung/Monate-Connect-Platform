@@ -124,12 +124,21 @@ export abstract class TenderCollectorBase {
         return { inserted: 0, updated: 0, skipped }
       }
 
-      // Stage 3: Upsert
+      // Stage 3: Deduplicate and upsert
       try {
         console.log(`[${this.sourceName}] Stage: database-upsert`)
+
+        // Deduplicate by external_ocid (keep last occurrence)
+        const uniqueMap = new Map<string, NormalizedTender>()
+        for (const tender of openTenders) {
+          uniqueMap.set(tender.external_ocid, tender)
+        }
+        const uniqueTenders = Array.from(uniqueMap.values())
+        console.log(`[${this.sourceName}] Deduped ${openTenders.length} to ${uniqueTenders.length} unique tenders`)
+
         const { data, error } = await this.supabase
           .from("rfqs")
-          .upsert(openTenders as never[], { onConflict: "external_ocid" })
+          .upsert(uniqueTenders as never[], { onConflict: "external_ocid" })
           .select("id")
 
         if (error) {
