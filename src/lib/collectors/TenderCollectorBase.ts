@@ -22,7 +22,7 @@ export interface NormalizedTender {
   description?: string | null
   closing_date?: string | null // ISO string
   published_date?: string | null // ISO string
-  source_url: string
+  original_source_url: string
   buyer_normalized: string
   source_name: string
   is_external_opportunity: boolean
@@ -70,7 +70,7 @@ export abstract class TenderCollectorBase {
       description: raw.description?.substring(0, 2000) || null,
       closing_date: closingDate?.toISOString() || null,
       published_date: raw.published_date?.toISOString() || null,
-      source_url: raw.source_url,
+      original_source_url: raw.source_url,
       buyer_normalized: raw.buyer || "Unknown",
       source_name: this.sourceName,
       is_external_opportunity: true,
