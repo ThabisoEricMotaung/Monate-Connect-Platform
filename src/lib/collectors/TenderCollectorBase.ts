@@ -104,7 +104,7 @@ export abstract class TenderCollectorBase {
       // Upsert into Supabase
       const { data, error } = await this.supabase
         .from("rfqs")
-        .upsert(openTenders, { onConflict: "external_ocid" })
+        .upsert(openTenders as never[], { onConflict: "external_ocid" })
         .select("id")
 
       if (error) {
