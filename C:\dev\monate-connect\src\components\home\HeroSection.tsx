@@ -37,13 +37,13 @@ export default function HeroSection() {
             <stop offset="0%" stopColor="#c8a060" stopOpacity="0.12" />
             <stop offset="40%" stopColor="#c8a060" stopOpacity="0" />
           </linearGradient>
-          <filter id="blur1"><feGaussianBlur stdDeviation="3" /></filter>
-          <filter id="blur2"><feGaussianBlur stdDeviation="6" /></filter>
-          <filter id="blur3"><feGaussianBlur stdDeviation="1.5" /></filter>
+          <filter id="blur1"><feGaussianBlur stdDeviation="0.6" /></filter>
+          <filter id="blur2"><feGaussianBlur stdDeviation="1.2" /></filter>
+          <filter id="blur3"><feGaussianBlur stdDeviation="0.4" /></filter>
         </defs>
 
         {/* Layer 1 — very distant, extremely faded (3-4% opacity) */}
-        <g ref={layer1Ref} opacity="0.035" filter="url(#blur2)" fill="#5a6a50">
+        <g ref={layer1Ref} opacity="0.16" filter="url(#blur2)" fill="#5a6a50">
           {/* Distant CBD mass */}
           <rect x="100" y="280" width="20" height="140" />
           <rect x="118" y="260" width="28" height="160" />
@@ -76,7 +76,7 @@ export default function HeroSection() {
         </g>
 
         {/* Layer 2 — office towers, government buildings (5-6% opacity) */}
-        <g opacity="0.052" filter="url(#blur1)" fill="#4a6040">
+        <g opacity="0.22" filter="url(#blur1)" fill="#4a6040">
           {/* The Leonardo */}
           <rect x="420" y="140" width="42" height="300" />
           <rect x="424" y="140" width="34" height="280" fill="#4a6040" />
@@ -106,7 +106,7 @@ export default function HeroSection() {
         </g>
 
         {/* Layer 3 — logistics infrastructure (5% opacity) */}
-        <g opacity="0.048" filter="url(#blur3)" fill="#3a5535">
+        <g opacity="0.20" filter="url(#blur3)" fill="#3a5535">
           {/* Harbour cranes — Durban */}
           <rect x="800" y="300" width="8" height="140" />
           <rect x="790" y="300" width="28" height="6" />
@@ -153,7 +153,7 @@ export default function HeroSection() {
         </g>
 
         {/* Layer 4 — foreground terrain */}
-        <g opacity="0.06" fill="#6a7a5a">
+        <g opacity="0.14" fill="#6a7a5a">
           <ellipse cx="200" cy="460" rx="200" ry="50" />
           <ellipse cx="700" cy="470" rx="300" ry="40" />
           <ellipse cx="1200" cy="465" rx="250" ry="45" />
@@ -231,38 +231,63 @@ export default function HeroSection() {
           box-shadow: 0 6px 24px rgba(200,160,96,0.35);
           background-position: right center;
         }
+        .hero-content-grid {
+          gap: 48px;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+        }
         @media (prefers-reduced-motion: reduce) {
           .hero-glass-panel, .hero-glass-card { animation: none; }
           .hero-gold-btn { transition: none; }
         }
+        @media (max-width: 900px) {
+          .hero-content-grid {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 32px;
+          }
+        }
       `}</style>
 
       {/* ── Main content grid ── */}
-      <div style={{ position: "relative", zIndex: 10, maxWidth: 1200, margin: "0 auto", width: "100%", padding: "56px 24px 64px", display: "grid", gridTemplateColumns: "1fr 360px", gap: 48, alignItems: "center" }}>
+      <div className="hero-content-grid" style={{ position: "relative", zIndex: 10, maxWidth: 1200, margin: "0 auto", width: "100%", padding: "56px 24px 64px", display: "grid", alignItems: "center" }}>
 
         {/* Left — headline */}
         <div>
-          <p style={{ display: "inline-block", fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#1a3a2a", margin: "0 0 14px", fontWeight: 800, padding: "5px 16px", border: "1.5px solid #c8a060", borderRadius: "30px", background: "rgba(200,160,96,0.15)" }}>
-            South Africa&#39;s Verified Procurement Network
-          </p>
-          <h1 style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 900, lineHeight: 1.08, color: "#1a2e1a", margin: 0 }}>
-            Where SA Suppliers
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 11, fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#1a3a2a", margin: "0 0 14px", fontWeight: 800, padding: "6px 14px", border: "1.5px solid #c8a060", borderRadius: "30px", background: "rgba(200,160,96,0.15)" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#173D2B" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+              {/* Classical government building with columns */}
+              {/* Pediment/roof */}
+              <path d="M 3 14 L 12 5 L 21 14" />
+              {/* Main structure */}
+              <rect x="4" y="14" width="16" height="8" />
+              {/* Left colonnade */}
+              <line x1="6" y1="14" x2="6" y2="22" />
+              <line x1="8" y1="14" x2="8" y2="22" />
+              {/* Center door */}
+              <rect x="11" y="16" width="2" height="6" />
+              {/* Right colonnade */}
+              <line x1="16" y1="14" x2="16" y2="22" />
+              <line x1="18" y1="14" x2="18" y2="22" />
+            </svg>
+            <span>South African Procurement Opportunities</span>
+          </div>
+          <h1 style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 900, lineHeight: 1.08, color: "#173D2B", margin: 0, fontStyle: "normal" }}>
+            Discover Verified Suppliers &amp;
           </h1>
           <div style={{ display: "inline-block", marginBottom: 20 }}>
-            <span style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 700, fontStyle: "italic", color: "#1a3a2a" }}>
-              Meet Real Procurement.
+            <span style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 700, fontStyle: "normal", color: "#173D2B" }}>
+              Government Procurement Opportunities
             </span>
             <div aria-hidden="true" style={{ height: 3, background: "linear-gradient(90deg, transparent, #c8a060 20%, #c8a060 80%, transparent)", marginTop: 6 }} />
           </div>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: "#3a4a3a", maxWidth: 480, margin: "0 0 18px" }}>
-            Verified RFQs from Eskom, municipalities &amp; parastatals &mdash; matched to your BBBEE level and province.
+            Browse automatically screened public tenders and RFQs by industry, province and closing date—with links to original sources.
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a8a7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
             </svg>
             <span style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7a8a7a" }}>
-              &mdash; Procurement Correspondent &middot; AiForm Procure Gazette
+              &mdash; PUBLIC OPPORTUNITIES SOURCED FROM OFFICIAL PROCUREMENT LISTINGS.
             </span>
           </div>
         </div>
@@ -328,13 +353,6 @@ export default function HeroSection() {
           </Link>
         </div>
       </div>
-
-      {/* Responsive collapse */}
-      <style>{`
-        @media (max-width: 900px) {
-          .hero-glass-panel { display: none !important; }
-        }
-      `}</style>
     </div>
   )
 }
