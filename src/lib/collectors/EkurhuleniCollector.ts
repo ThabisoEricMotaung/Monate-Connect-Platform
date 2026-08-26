@@ -27,33 +27,53 @@ export class EkurhuleniCollector extends TenderCollectorBase {
 
       const html = await response.text()
 
-      // Parse tender cards from Elementor posts widget
-      // Look for: <h3><a href="...">Reference</a></h3> and <span class="elementor-post-date">DATE</span>
-      const cardPattern = /<h3[^>]*>\s*<a[^>]*>\s*([\w\s\-\/]+?)\s*<\/a>\s*<\/h3>[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>[\s\S]*?<span[^>]*elementor-post-date[^>]*>\s*([\d\/]+)\s*<\/span>/gi
+      // Parse Elementor posts: <article class="elementor-post">...<h3>...<a>REF</a></h3>...<p>DESC</p>...<span class="elementor-post-date">DATE</span>
+      const articlePattern = /<article[^>]*class="[^"]*elementor-post[^"]*"[^>]*>([\s\S]*?)<\/article>/gi
+      let articleMatch
 
-      let match
-      while ((match = cardPattern.exec(html)) !== null) {
-        const referenceNumber = match[1].trim()
-        const description = match[2].replace(/<[^>]*>/g, "").trim().substring(0, 200)
-        const dateStr = match[3].trim()
+      while ((articleMatch = articlePattern.exec(html)) !== null) {
+        try {
+          const article = articleMatch[1]
 
-        if (!referenceNumber || !description) continue
+          // Extract reference from <h3 class="elementor-post__title"><a>REF</a></h3>
+          const titleMatch = article.match(/<h3[^>]*elementor-post__title[^>]*>\s*<a[^>]*>\s*([^<]+?)\s*<\/a>/i)
+          const reference = titleMatch ? titleMatch[1].trim() : null
 
-        tenders.push({
-          reference_number: referenceNumber,
-          title: referenceNumber,
-          description,
-          closing_date: this.parseDate(dateStr),
-          source_url: url,
-          buyer: "Ekurhuleni Metropolitan Municipality",
-        })
+          // Extract description from <p> in elementor-post__excerpt
+          const excerptMatch = article.match(/<div[^>]*elementor-post__excerpt[^>]*>([\s\S]*?)<\/div>/i)
+          let description = ""
+          if (excerptMatch) {
+            const pMatch = excerptMatch[1].match(/<p[^>]*>([\s\S]*?)<\/p>/i)
+            if (pMatch) {
+              description = pMatch[1].replace(/<[^>]*>/g, "").trim()
+            }
+          }
+
+          // Extract date from <span class="elementor-post-date">DATE</span>
+          const dateMatch = article.match(/<span[^>]*elementor-post-date[^>]*>\s*([^\s<][^<]*?)\s*<\/span>/i)
+          const dateStr = dateMatch ? dateMatch[1].trim() : ""
+
+          if (!reference || !description) continue
+
+          tenders.push({
+            reference_number: reference,
+            title: reference,
+            description: description.substring(0, 500),
+            closing_date: this.parseDate(dateStr),
+            source_url: url,
+            buyer: "Ekurhuleni Metropolitan Municipality",
+          })
+        } catch (articleError) {
+          console.debug(`[Ekurhuleni] Error parsing article:`, articleError)
+          continue
+        }
       }
 
       console.log(`[Ekurhuleni] Found ${tenders.length} tenders`)
       return tenders
     } catch (error) {
-      console.error("[Ekurhuleni] Scrape failed:", error)
-      return []
+      console.error("[Ekurhuleni] Scrape failed:", error instanceof Error ? error.message : String(error))
+      throw error
     }
   }
 }

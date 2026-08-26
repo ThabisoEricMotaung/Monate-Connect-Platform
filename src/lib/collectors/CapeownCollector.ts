@@ -27,43 +27,59 @@ export class CapeownCollector extends TenderCollectorBase {
 
       const html = await response.text()
 
-      // Parse table rows with tender data
-      // Pattern: <tr><td>Reference</td><td>Title</td>...<td>ClosingDate</td></tr>
-      const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi
+      // Parse table rows: <tr class="gridDetails"><td>REF</td><td><pre...>DESC</pre></td>...<td>CLOSING</td>...
+      const rowPattern = /<tr\s+class="gridDetails"[^>]*>([\s\S]*?)<\/tr>/gi
       let rowMatch
+      let rowCount = 0
 
       while ((rowMatch = rowPattern.exec(html)) !== null) {
-        const rowHtml = rowMatch[1]
-        const cells = rowHtml.match(/<td[^>]*>([\s\S]*?)<\/td>/gi) || []
+        try {
+          const rowHtml = rowMatch[1]
 
-        if (cells.length < 3) continue
+          // Extract all <td>...</td> blocks
+          const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi
+          const cells: string[] = []
+          let cellMatch
 
-        const extractCell = (index: number): string => {
-          const cellMatch = cells[index]?.match(/<td[^>]*>([\s\S]*?)<\/td>/i)
-          return cellMatch ? cellMatch[1].replace(/<[^>]*>/g, "").trim() : ""
+          while ((cellMatch = cellPattern.exec(rowHtml)) !== null) {
+            cells.push(cellMatch[1])
+          }
+
+          if (cells.length < 5) continue
+
+          // Cell 0: Reference (plain text)
+          const ref = cells[0]?.replace(/<[^>]*>/g, "").trim() || ""
+
+          // Cell 1: Description (in <pre> tag)
+          const descMatch = cells[1]?.match(/<pre[^>]*[^>]*>([^<]*)</i)
+          const desc = descMatch ? descMatch[1]?.trim() || "" : cells[1]?.replace(/<[^>]*>/g, "").trim() || ""
+
+          // Cell 4: Closing date (visible date column, ~5th column)
+          const closingDateStr = cells[4]?.replace(/<[^>]*>/g, "").trim() || ""
+
+          if (!ref || !desc) continue
+
+          tenders.push({
+            reference_number: ref,
+            title: ref,
+            description: desc.substring(0, 500),
+            closing_date: this.parseDate(closingDateStr),
+            source_url: url,
+            buyer: "City of Cape Town Metropolitan Municipality",
+          })
+
+          rowCount++
+        } catch (rowError) {
+          console.debug(`[Cape Town] Error parsing row:`, rowError)
+          continue
         }
-
-        const referenceNumber = extractCell(0) || "COT-Unknown"
-        const title = extractCell(1) || ""
-        const closingDate = extractCell(Math.max(0, cells.length - 3)) || ""
-
-        if (!title) continue
-
-        tenders.push({
-          reference_number: referenceNumber,
-          title: title.substring(0, 200),
-          description: title,
-          closing_date: this.parseDate(closingDate),
-          source_url: url,
-          buyer: "City of Cape Town Metropolitan Municipality",
-        })
       }
 
-      console.log(`[Cape Town] Found ${tenders.length} tenders`)
+      console.log(`[Cape Town] Found ${tenders.length} tenders in ${rowCount} rows`)
       return tenders
     } catch (error) {
-      console.error("[Cape Town] Scrape failed:", error)
-      return []
+      console.error("[Cape Town] Scrape failed:", error instanceof Error ? error.message : String(error))
+      throw error
     }
   }
 }
