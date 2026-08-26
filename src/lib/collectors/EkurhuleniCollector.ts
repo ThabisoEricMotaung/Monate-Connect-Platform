@@ -12,51 +12,49 @@ export class EkurhuleniCollector extends TenderCollectorBase {
 
   async scrapeListings(): Promise<RawTender[]> {
     const url = "https://www.ekurhuleni.gov.za/for-my-business/tenders/open-tenders/"
-    console.log(`[Ekurhuleni] Fetching ${url}`)
+    console.log(`[Ekurhuleni] Starting collection from ${url}`)
 
     const tenders: RawTender[] = []
 
     try {
-      console.log(`[Ekurhuleni] Starting fetch...`)
-      const response = await fetch(url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        },
-      })
+      // Fetch with error handling
+      let html = ""
+      try {
+        const response = await fetch(url, {
+          headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+        })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        html = await response.text()
+      } catch (fetchError) {
+        console.error(`[Ekurhuleni] Fetch error:`, fetchError instanceof Error ? fetchError.message : String(fetchError))
+        throw fetchError
+      }
 
-      console.log(`[Ekurhuleni] Response status: ${response.status}`)
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      if (!html || html.length === 0) {
+        console.warn(`[Ekurhuleni] Empty response`)
+        return tenders
+      }
 
-      const html = await response.text()
-      console.log(`[Ekurhuleni] HTML length: ${html.length}`)
+      // Simple pattern: find all <article> with elementor-post, extract data inside
+      const articles = html.match(/<article[^>]*elementor-post[^>]*>[\s\S]*?<\/article>/gi) || []
+      console.log(`[Ekurhuleni] Found ${articles.length} articles`)
 
-      // Parse Elementor posts: <article class="elementor-post">...<h3>...<a>REF</a></h3>...<p>DESC</p>...<span class="elementor-post-date">DATE</span>
-      const articlePattern = /<article[^>]*class="[^"]*elementor-post[^"]*"[^>]*>([\s\S]*?)<\/article>/gi
-      let articleMatch
-
-      while ((articleMatch = articlePattern.exec(html)) !== null) {
+      for (const article of articles) {
         try {
-          const article = articleMatch[1]
+          // Extract title from <a> tag inside <h3>
+          const titleMatch = article.match(/<h3[^>]*>[\s\S]*?<a[^>]*>([^<]+)<\/a>/i)
+          if (!titleMatch) continue
+          const reference = titleMatch[1].trim()
 
-          // Extract reference from <h3 class="elementor-post__title"><a>REF</a></h3>
-          const titleMatch = article.match(/<h3[^>]*elementor-post__title[^>]*>\s*<a[^>]*>\s*([^<]+?)\s*<\/a>/i)
-          const reference = titleMatch ? titleMatch[1].trim() : null
+          // Extract description from <p> tag
+          const descMatch = article.match(/<p[^>]*>([^<]+)<\/p>/i)
+          const description = descMatch ? descMatch[1].trim() : reference
 
-          // Extract description from <p> in elementor-post__excerpt
-          const excerptMatch = article.match(/<div[^>]*elementor-post__excerpt[^>]*>([\s\S]*?)<\/div>/i)
-          let description = ""
-          if (excerptMatch) {
-            const pMatch = excerptMatch[1].match(/<p[^>]*>([\s\S]*?)<\/p>/i)
-            if (pMatch) {
-              description = pMatch[1].replace(/<[^>]*>/g, "").trim()
-            }
-          }
+          // Extract date
+          const dateMatch = article.match(/elementor-post-date[^>]*>\s*(\d{1,2}\/\d{1,2}\/\d{4})/i)
+          const dateStr = dateMatch ? dateMatch[1] : ""
 
-          // Extract date from <span class="elementor-post-date">DATE</span>
-          const dateMatch = article.match(/<span[^>]*elementor-post-date[^>]*>\s*([^\s<][^<]*?)\s*<\/span>/i)
-          const dateStr = dateMatch ? dateMatch[1].trim() : ""
-
-          if (!reference || !description) continue
+          if (!reference) continue
 
           tenders.push({
             reference_number: reference,
@@ -66,16 +64,16 @@ export class EkurhuleniCollector extends TenderCollectorBase {
             source_url: url,
             buyer: "Ekurhuleni Metropolitan Municipality",
           })
-        } catch (articleError) {
-          console.debug(`[Ekurhuleni] Error parsing article:`, articleError)
+        } catch (itemError) {
+          // Skip problematic articles
           continue
         }
       }
 
-      console.log(`[Ekurhuleni] Found ${tenders.length} tenders`)
+      console.log(`[Ekurhuleni] Extracted ${tenders.length} tenders`)
       return tenders
     } catch (error) {
-      console.error("[Ekurhuleni] Scrape failed:", error instanceof Error ? error.message : String(error))
+      console.error(`[Ekurhuleni] Failed:`, error instanceof Error ? error.message : String(error))
       throw error
     }
   }

@@ -12,53 +12,42 @@ export class CapeownCollector extends TenderCollectorBase {
 
   async scrapeListings(): Promise<RawTender[]> {
     const url = "https://web1.capetown.gov.za/web1/tenderportal/Tender"
-    console.log(`[Cape Town] Fetching ${url}`)
+    console.log(`[Cape Town] Starting from ${url}`)
 
     const tenders: RawTender[] = []
 
     try {
-      console.log(`[Cape Town] Starting fetch...`)
-      const response = await fetch(url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        },
-      })
+      // Fetch
+      let html = ""
+      try {
+        const response = await fetch(url, {
+          headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+        })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        html = await response.text()
+      } catch (fetchError) {
+        console.error(`[Cape Town] Fetch error:`, fetchError instanceof Error ? fetchError.message : String(fetchError))
+        throw fetchError
+      }
 
-      console.log(`[Cape Town] Response status: ${response.status}`)
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      if (!html || html.length === 0) {
+        console.warn(`[Cape Town] Empty response`)
+        return tenders
+      }
 
-      const html = await response.text()
-      console.log(`[Cape Town] HTML length: ${html.length}`)
+      // Find rows
+      const rows = html.match(/<tr\s+class="gridDetails"[^>]*>[\s\S]*?<\/tr>/gi) || []
+      console.log(`[Cape Town] Found ${rows.length} rows`)
 
-      // Parse table rows: <tr class="gridDetails"><td>REF</td><td><pre...>DESC</pre></td>...<td>CLOSING</td>...
-      const rowPattern = /<tr\s+class="gridDetails"[^>]*>([\s\S]*?)<\/tr>/gi
-      let rowMatch
-      let rowCount = 0
-
-      while ((rowMatch = rowPattern.exec(html)) !== null) {
+      for (const row of rows) {
         try {
-          const rowHtml = rowMatch[1]
-
-          // Extract all <td>...</td> blocks
-          const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi
-          const cells: string[] = []
-          let cellMatch
-
-          while ((cellMatch = cellPattern.exec(rowHtml)) !== null) {
-            cells.push(cellMatch[1])
-          }
-
+          const cells = row.match(/<td[^>]*>([\s\S]*?)<\/td>/gi) || []
           if (cells.length < 5) continue
 
-          // Cell 0: Reference (plain text)
+          // Extract cell values
           const ref = cells[0]?.replace(/<[^>]*>/g, "").trim() || ""
-
-          // Cell 1: Description (in <pre> tag)
-          const descMatch = cells[1]?.match(/<pre[^>]*[^>]*>([^<]*)</i)
-          const desc = descMatch ? descMatch[1]?.trim() || "" : cells[1]?.replace(/<[^>]*>/g, "").trim() || ""
-
-          // Cell 4: Closing date (visible date column, ~5th column)
-          const closingDateStr = cells[4]?.replace(/<[^>]*>/g, "").trim() || ""
+          const desc = cells[1]?.replace(/<[^>]*>/g, "").trim() || ""
+          const dateStr = cells[4]?.replace(/<[^>]*>/g, "").trim() || ""
 
           if (!ref || !desc) continue
 
@@ -66,22 +55,19 @@ export class CapeownCollector extends TenderCollectorBase {
             reference_number: ref,
             title: ref,
             description: desc.substring(0, 500),
-            closing_date: this.parseDate(closingDateStr),
+            closing_date: this.parseDate(dateStr),
             source_url: url,
             buyer: "City of Cape Town Metropolitan Municipality",
           })
-
-          rowCount++
         } catch (rowError) {
-          console.debug(`[Cape Town] Error parsing row:`, rowError)
           continue
         }
       }
 
-      console.log(`[Cape Town] Found ${tenders.length} tenders in ${rowCount} rows`)
+      console.log(`[Cape Town] Extracted ${tenders.length} tenders`)
       return tenders
     } catch (error) {
-      console.error("[Cape Town] Scrape failed:", error instanceof Error ? error.message : String(error))
+      console.error(`[Cape Town] Failed:`, error instanceof Error ? error.message : String(error))
       throw error
     }
   }
