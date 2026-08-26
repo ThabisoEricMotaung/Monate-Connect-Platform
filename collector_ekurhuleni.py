@@ -25,8 +25,13 @@ class EkurhuleniCollector(TenderCollector):
         self.tender_list_url = 'https://www.ekurhuleni.gov.za/for-my-business/tenders/open-tenders/'
 
     def scrape_listings(self):
-        """Scrape Ekurhuleni open tenders listing page"""
+        """Scrape Ekurhuleni open tenders listing page
+
+        Note: Filters out tenders that have already closed
+        """
         tenders = []
+        now = datetime.now()
+
         try:
             response = self.session.get(self.tender_list_url, timeout=10)
             response.raise_for_status()
@@ -41,6 +46,10 @@ class EkurhuleniCollector(TenderCollector):
                 try:
                     tender = self._extract_tender_from_article(article)
                     if tender:
+                        # Skip if tender has already closed
+                        if tender.get('closing_date') and tender['closing_date'] < now:
+                            logger.debug(f"Skipping closed tender: {tender.get('reference_number')} (closed: {tender['closing_date']})")
+                            continue
                         tenders.append(tender)
                 except Exception as e:
                     logger.warning(f"Error extracting tender from article: {e}")
@@ -49,6 +58,7 @@ class EkurhuleniCollector(TenderCollector):
         except Exception as e:
             logger.error(f"Error scraping Ekurhuleni: {e}")
 
+        logger.info(f"Total Ekurhuleni tenders (open): {len(tenders)}")
         return tenders
 
     def _extract_tender_from_article(self, article):

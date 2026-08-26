@@ -25,9 +25,15 @@ class EskomCollector(TenderCollector):
         )
         self.search_url = 'https://tenderbulletin.eskom.co.za/search'
 
-    def scrape_listings(self):
-        """Scrape Eskom tenders using Playwright for JavaScript rendering"""
+    def scrape_listings(self, max_pages=50, days_back=90):
+        """Scrape Eskom tenders using Playwright for JavaScript rendering
+
+        Args:
+            max_pages: Maximum number of pages to scrape (default 50 = ~5000 tenders)
+            days_back: Only keep tenders published in last N days (default 90 days)
+        """
         tenders = []
+        cutoff_date = datetime.now(ZoneInfo('Africa/Johannesburg')) - __import__('datetime').timedelta(days=days_back)
 
         try:
             with sync_playwright() as p:
@@ -43,8 +49,8 @@ class EskomCollector(TenderCollector):
                 page_obj.wait_for_timeout(3000)
 
                 page_num = 1
-                while True:
-                    logger.info(f"Extracting tenders from page {page_num}...")
+                while page_num <= max_pages:
+                    logger.info(f"Extracting tenders from page {page_num}/{max_pages}...")
 
                     # Get page content after rendering
                     html_content = page_obj.content()
@@ -74,6 +80,10 @@ class EskomCollector(TenderCollector):
                         try:
                             tender = self._extract_tender_from_article(article)
                             if tender:
+                                # Skip if tender has already closed
+                                if tender.get('closing_date') and tender['closing_date'] < datetime.now(ZoneInfo('Africa/Johannesburg')):
+                                    logger.debug(f"Skipping closed tender: {tender.get('reference_number')}")
+                                    continue
                                 tenders.append(tender)
                         except Exception as e:
                             logger.debug(f"Error extracting tender: {e}")
@@ -95,7 +105,7 @@ class EskomCollector(TenderCollector):
         except Exception as e:
             logger.error(f"Error scraping Eskom: {e}")
 
-        logger.info(f"Total Eskom tenders scraped: {len(tenders)}")
+        logger.info(f"Total Eskom tenders scraped: {len(tenders)} (max {max_pages} pages, last {days_back} days)")
         return tenders
 
     def _extract_tender_from_article(self, article):

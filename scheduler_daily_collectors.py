@@ -19,6 +19,7 @@ from collector_sanral import SANRALCollector
 from collector_etenders import ETendersCollector
 from collector_eskom import EskomCollector
 from collector_capetown import CapeownCollector
+from collector_coj import CojCollector
 from reconciliation_daily_status import run_reconciliation
 
 # Load environment variables
@@ -37,15 +38,14 @@ def run_daily_collection():
     logger.info(f"Starting daily collection run at {datetime.now()}")
     logger.info("="*70)
 
-    # NOTE: Ekurhuleni disabled - website serves stale data
-    # Re-enable when manual audit confirms current open tenders
     collectors = [
         ('eTenders', ETendersCollector()),
         ('Eskom', EskomCollector()),
-        ('City of Cape Town', CapeownCollector()),
+        ('City of Cape Town', CapeownCollector()),  # Limited to 50 pages, last 90 days
+        ('City of Johannesburg', CojCollector()),  # NEW - Limited to 50 pages, last 90 days
+        ('Ekurhuleni', EkurhuleniCollector()),  # Re-enabled with closed-tender filtering
         ('DBSA', DBSACollector()),
         ('TCTA', TCTACollector()),
-        # ('Ekurhuleni', EkurhuleniCollector()),  # DISABLED - stale data
         ('SANRAL', SANRALCollector()),
     ]
 

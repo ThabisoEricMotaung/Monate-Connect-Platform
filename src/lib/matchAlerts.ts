@@ -154,9 +154,11 @@ export async function createMatchAlertDrafts(
           user_email: actor.userEmail,
           supplier_id: input.supplier.id,
           supplier_name: supplierName,
-          supplier_phone: formatSouthAfricanPhone(input.supplier.phone) ?? input.supplier.phone ?? null,
+          phone: formatSouthAfricanPhone(input.supplier.phone) ?? input.supplier.phone ?? null,
           alert_type: "RFQ Match Draft",
           message,
+          link: whatsappLink,
+          status: "Draft",
           rfq_id: input.rfq.id,
           metadata: {
             status: "draft",

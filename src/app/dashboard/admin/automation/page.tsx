@@ -25,9 +25,11 @@ type AutomatedNotification = {
 type WhatsAppDraft = {
   id: number
   supplier_id: string | null
-  supplier_phone: string | null
+  phone: string | null
   alert_type: string | null
   message: string | null
+  link: string | null
+  status: string | null
   rfq_id: number | null
   metadata: Record<string, unknown> | null
   created_at: string | null
@@ -107,7 +109,7 @@ export default function AdminAutomationRulesPage() {
         .limit(25),
       supabase
         .from("whatsapp_alerts")
-        .select("id, supplier_id, supplier_phone, alert_type, message, rfq_id, metadata, created_at")
+        .select("id, supplier_id, phone, alert_type, message, link, status, rfq_id, metadata, created_at")
         .contains("metadata", { automation_generated: true })
         .order("created_at", { ascending: false })
         .limit(25),
@@ -127,7 +129,7 @@ export default function AdminAutomationRulesPage() {
       setCounts({
         notificationCount: notificationResult.data?.length ?? 0,
         draftCount: draftRows.length,
-        pendingDrafts: draftRows.filter((draft) => draft.metadata?.draft_status === "Draft").length,
+        pendingDrafts: draftRows.filter((draft) => draft.status?.toLowerCase() === "draft").length,
       })
     }
 
@@ -340,7 +342,7 @@ export default function AdminAutomationRulesPage() {
           ) : (
             <div className="divide-y divide-panel">
               {drafts.map((draft) => {
-                const waLink = typeof draft.metadata?.wa_link === "string" ? draft.metadata.wa_link : null
+                const waLink = draft.link || (typeof draft.metadata?.wa_link === "string" ? draft.metadata.wa_link : null)
 
                 return (
                   <article key={draft.id} className="p-5">
@@ -353,7 +355,7 @@ export default function AdminAutomationRulesPage() {
                           {draft.message || "-"}
                         </p>
                         <p className="mt-2 text-xs text-muted">
-                          Supplier phone: {draft.supplier_phone || "No phone"}
+                          Supplier phone: {draft.phone || "No phone"}
                         </p>
                       </div>
                       <p className="text-xs text-muted">{formatDate(draft.created_at)}</p>

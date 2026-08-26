@@ -25,9 +25,15 @@ class CapeownCollector(TenderCollector):
         )
         self.tender_list_url = 'https://web1.capetown.gov.za/web1/tenderportal/Tender'
 
-    def scrape_listings(self):
-        """Scrape Cape Town tenders using Playwright for JavaScript rendering"""
+    def scrape_listings(self, max_pages=50, days_back=90):
+        """Scrape Cape Town tenders using Playwright for JavaScript rendering
+
+        Args:
+            max_pages: Maximum number of pages to scrape (default 50 = ~450 tenders)
+            days_back: Only keep tenders published in last N days (default 90 days)
+        """
         tenders = []
+        cutoff_date = datetime.now(ZoneInfo('Africa/Johannesburg')) - __import__('datetime').timedelta(days=days_back)
 
         try:
             with sync_playwright() as p:
@@ -41,8 +47,11 @@ class CapeownCollector(TenderCollector):
                 page_obj.wait_for_timeout(3000)
 
                 page_num = 1
-                while True:
-                    logger.info(f"Extracting tenders from page {page_num}...")
+                found_on_this_page = 0
+                found_total = 0
+
+                while page_num <= max_pages:
+                    logger.info(f"Extracting tenders from page {page_num}/{max_pages}...")
 
                     # Get page content after rendering
                     html_content = page_obj.content()
@@ -68,14 +77,23 @@ class CapeownCollector(TenderCollector):
                         logger.info(f"No more tenders found, stopping pagination")
                         break
 
+                    found_on_this_page = 0
                     for row in rows:
                         try:
                             tender = self._extract_tender_from_row(row)
                             if tender:
+                                # Check if published date is within cutoff
+                                if tender.get('published_date') and tender['published_date'] < cutoff_date:
+                                    logger.debug(f"Skipping old tender (published {tender['published_date']}): {tender.get('reference_number')}")
+                                    continue
                                 tenders.append(tender)
+                                found_on_this_page += 1
+                                found_total += 1
                         except Exception as e:
                             logger.debug(f"Error extracting tender: {e}")
                             continue
+
+                    logger.info(f"  → Added {found_on_this_page} new tenders from this page (total: {found_total})")
 
                     # Try to find and click next page button
                     page_num += 1
@@ -97,7 +115,7 @@ class CapeownCollector(TenderCollector):
         except Exception as e:
             logger.error(f"Error scraping Cape Town: {e}")
 
-        logger.info(f"Total Cape Town tenders scraped: {len(tenders)}")
+        logger.info(f"Total Cape Town tenders scraped: {len(tenders)} (max {max_pages} pages, last {days_back} days)")
         return tenders
 
     def _extract_tender_from_row(self, row):

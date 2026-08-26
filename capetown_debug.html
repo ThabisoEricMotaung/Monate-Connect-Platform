@@ -1,0 +1,501 @@
+<!DOCTYPE html><html lang="en" style="" class=" js flexbox flexboxlegacy canvas canvastext webgl no-touch geolocation postmessage no-websqldatabase indexeddb hashchange history draganddrop websockets rgba hsla multiplebgs backgroundsize borderimage borderradius boxshadow textshadow opacity cssanimations csscolumns cssgradients cssreflections csstransforms csstransforms3d csstransitions fontface generatedcontent video audio localstorage sessionstorage webworkers no-applicationcache svg inlinesvg smil svgclippaths"><head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta charset="utf-8">
+    <title>Procurement Administration Portal</title>
+    <link href="/web1/tenderportal/favicon.ico" rel="shortcut icon" type="image/x-icon">
+    <meta name="viewport" content="width=device-width">
+
+    <script type="text/javascript">
+        function getUrl(action, controller) {
+            var url = '/web1/tenderportal/--Controller--/--Action--'.replace("--Action--", action).replace("--Controller--", controller);
+            return url;
+        }
+    </script>
+
+    
+    <script src="/web1/tenderportal/bundles/jquery?v=UgyEMAYOuSB9Bb6HcOEVHpd6fIIp54yF086SRNVcdIY1"></script>
+
+    <link href="/web1/tenderportal/Content/css?v=ZGhJSP3W3N59xYKfyNx3QZW6iHtdEBL2Fy9unTiZqYY1" rel="stylesheet">
+
+    <script src="/web1/tenderportal/bundles/modernizr?v=qVODBytEBVVePTNtSFXgRX0NCEjh9U_Oj8ePaSiRcGg1"></script>
+
+    <link href="/web1/tenderportal/Content/themes/base/css?v=WHDFs5Tqfc1aqq03K-r53IRVxAVZdg_AQ069a2chq9o1" rel="stylesheet">
+
+    <script src="/web1/tenderportal/bundles/jqueryui?v=H5JR8C7P6LOCtPw8V_YAwOjYqjMVkDN7dk4N9v-ab7Q1"></script>
+
+    <script src="/web1/tenderportal/bundles/jqueryval?v=2ghtVqCM8JIEPGxCuZopth4zGa5gMbhnh7aDTCdn_Mw1"></script>
+
+
+    <link href="/web1/tenderportal/Content/City_of_CT.css" rel="stylesheet">
+
+    <script src="/web1/tenderportal/Scripts/jquery-ui-timepicker-addon.js"></script>
+    <link href="/web1/tenderportal/Content/jquery-ui-timepicker-addon.css" rel="stylesheet">
+    <link href="/web1/tenderportal/Content/DataTables-1.9.4/media/css/jquery.dataTables.css" rel="stylesheet">
+    <script src="/web1/tenderportal/Scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
+    <link href="/web1/tenderportal/Content/CustomStyle.css" rel="stylesheet">
+    <link href="/web1/tenderportal/Content/Menu.css" rel="stylesheet">
+
+    <script src="/web1/tenderportal/Scripts/MasterScript.js"></script>
+    <script src="/web1/tenderportal/Scripts/RequiredIf.js"></script>
+
+    <!--[if IE 8]>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("select").each(function () {
+                $(this).mousedown(function () {
+                    $(this).css("width", "auto");
+                });
+                $(this).change(function () {
+                    $(this).width("200px");
+                });
+                $(this).blur(function () {
+                    $(this).width("200px");
+                });
+            });
+        });
+    </script>
+    <![endif]-->
+
+    <script type="text/javascript">
+        $.ajaxSetup({ cache: false });
+    </script>
+
+    
+
+<script>NS_CSM_td=272942266;NS_CSM_pd=275116667;NS_CSM_u="/clm10";NS_CSM_col="AAAAAAVkQ1UrMxRx2isOAteerP6DEF3PMdoDBUfdfu7LO8RNZFOha2A9hVr39Ea9vW2i6NHMLDo09R8B5uLJFSdJO8eJ";</script><script type="text/javascript">function sendTimingInfoInit(){setTimeout(sendTimingInfo,0)}function sendTimingInfo(){var wp=window.performance;if(wp){var c1,c2,t;c1=wp.timing;if(c1){var cm={};cm.ns=c1.navigationStart;if((t=c1.unloadEventStart)>0)cm.us=t;if((t=c1.unloadEventEnd)>0)cm.ue=t;if((t=c1.redirectStart)>0)cm.rs=t;if((t=c1.redirectEnd)>0)cm.re=t;cm.fs=c1.fetchStart;cm.dls=c1.domainLookupStart;cm.dle=c1.domainLookupEnd;cm.cs=c1.connectStart;cm.ce=c1.connectEnd;if((t=c1.secureConnectionStart)>0)cm.scs=t;cm.rqs=c1.requestStart;cm.rss=c1.responseStart;cm.rse=c1.responseEnd;cm.dl=c1.domLoading;cm.di=c1.domInteractive;cm.dcls=c1.domContentLoadedEventStart;cm.dcle=c1.domContentLoadedEventEnd;cm.dc=c1.domComplete;if((t=c1.loadEventStart)>0)cm.ls=t;if((t=c1.loadEventEnd)>0)cm.le=t;cm.tid=NS_CSM_td;cm.pid=NS_CSM_pd;cm.ac=NS_CSM_col;var xhttp=new XMLHttpRequest();if(xhttp){var JSON=JSON||{};JSON.stringify=JSON.stringify||function(ob){var t=typeof(ob);if(t!="object"||ob===null){if(t=="string")ob='"'+ob+'"';return String(ob);}else{var n,v,json=[],arr=(ob&&ob.constructor==Array);for(n in ob){v=ob[n];t=typeof(v);if(t=="string")v='"'+v+'"';else if(t=="object"&&v!==null)v=JSON.stringify(v);json.push((arr?"":'"'+n+'":')+String(v));}return(arr?"[":"{")+String(json)+(arr?"]":"}");}};xhttp.open("POST",NS_CSM_u,true);xhttp.send(JSON.stringify(cm));}}}}if(window.addEventListener)window.addEventListener("load",sendTimingInfoInit,false);else if(window.attachEvent)window.attachEvent("onload",sendTimingInfoInit);else window.onload=sendTimingInfoInit;</script></head>
+<body>
+    <div id="container">
+        <div id="masthead">
+            <div id="left-banner">
+            </div>
+        </div>
+        <div id="navbar-top">
+            <div class="nav-left">
+                &nbsp;| <a class="nav" href="https://www.capetown.gov.za/">CITY&nbsp;Home</a>&nbsp;|&nbsp;
+                <a class="nav" href="https://www.capetown.gov.za/General/Help">Site&nbsp;Guide</a>&nbsp;|&nbsp;&nbsp;
+            </div>
+            <div class="nav-right">
+                <script type="text/javascript">
+
+                    var today = new Date();
+                    var month = new Array(12);
+                    var dayNames = new Array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
+
+                    month[0] = "January";
+                    month[1] = "February";
+                    month[2] = "March";
+                    month[3] = "April";
+                    month[4] = "May";
+                    month[5] = "June";
+                    month[6] = "July";
+                    month[7] = "August";
+                    month[8] = "September";
+                    month[9] = "October";
+                    month[10] = "November";
+                    month[11] = "December";
+
+                    document.write(dayNames[today.getDay()] + "&nbsp;");
+                    document.write(today.getDate() + '&nbsp;');
+                    document.write(month[today.getMonth()] + '&nbsp;');
+                    document.write(today.getFullYear());
+
+                </script>Tuesday&nbsp;25&nbsp;August&nbsp;2026
+            </div>
+        </div>
+        <div id="main_title_box">
+            <div class="main_title leftMargin10 whiteText" style="float: left;">
+                Tender Portal
+            </div>
+            <div id="login" class="main_title whiteText">
+&nbsp;|&nbsp;<a class="nav whiteText" href="/web1/tenderportal/Account/Register">Register</a>&nbsp;|&nbsp;<a class="nav whiteText" href="/web1/tenderportal/Account/LogOn">Log in</a>&nbsp;|&nbsp;            </div>
+        </div>
+
+        <div id="menubar">
+            <ul class="menuTemplate4 decor4_1">
+                <li><a href="/web1/tenderportal/">Home</a></li>
+                <li class="separator"></li>
+                <li><a href="/web1/tenderportal/Tender">Tender</a></li>
+
+
+            </ul>
+        </div>
+
+
+
+        <br>
+
+        <div id="main-content">
+            
+            <section class="content-wrapper main-content clear-fix">
+                
+
+<style>
+    .filter-left {
+        text-align: left;
+    }
+
+    .filter-centre {
+        text-align: center;
+    }
+
+    .filter-right {
+        text-align: right;
+    }
+
+    .filter-input {
+        width: 200px;
+    }
+
+    .filterSubheading {
+        width: 100px;
+        text-align: left;
+    }
+
+    .LoginDetails {
+        font-family: Verdana, Arial, Helvetica, Geneva, Swiss, SunSans-Regular;
+        font: normal normal 100%;
+        font-weight: bold;
+        float: right;
+        color: #DC001E;
+        font-size: 12px;
+        line-height: 18px;
+    }
+</style>
+
+<label class="MainHeadText" for="">Home</label>
+<br>
+<br>
+
+<label class="LoginDetails" for="">In order to access additional detail, suppliers are required to register and log in.                  </label><br>
+<br>
+
+<form action="/web1/tenderportal/Tender" method="post" novalidate="novalidate"><input data-val="true" data-val-required="The IsViewerOnly field is required." id="IsViewerOnly" name="IsViewerOnly" type="hidden" value="False">    <div class="form-controls">
+
+        <div class="filter-container">
+            <div id="filter-visibility">
+                <input type="button" value="&lt;&lt;" id="filterShowHideButton">
+            </div>
+            <div class="filters">
+                <label class="MainHeadText" for="filterHeading">FILTERS:</label>
+
+                <label class="filterSubHeading" for="filterLabel">Tender No./Description:</label>
+                <div>
+                    <br>
+                    <input class="filterControlWidth" id="KeywordOrTenderFilter" name="KeywordOrTenderFilter" type="text" value="">
+                    <input id="FilterButton" type="submit" value="">
+                    <input id="ClearButton" type="button" value="" class="clearFilter filter-right">
+                    <br>
+                </div>
+
+
+                <label class="filterSubHeading" for="">Org Unit:</label>
+                <input class="filterControlWidth ui-autocomplete-input" id="DirectorateDepartmentFilter" name="DirectorateDepartmentFilter" type="text" value="" autocomplete="off"><span role="status" aria-live="polite" class="ui-helper-hidden-accessible"></span>
+                <br>
+
+                <label class="filterSubHeading" for="closingDate">Closing Date:</label>
+                <br>
+                <div id="closingDateDiv">
+                    <b>Start:&nbsp;&nbsp;</b> <input class="datePickerFields" data-val="true" data-val-date="The field ClosingDateStartFilter must be a date." id="ClosingDateStartFilter" name="ClosingDateStartFilter" type="text" value="">
+                    <br>
+                    <b>End:&nbsp;&nbsp;</b> <input class="datePickerFields leftMargin7" data-val="true" data-val-date="The field ClosingDateEndFilter must be a date." id="ClosingDateEndFilter" name="ClosingDateEndFilter" type="text" value="">
+                </div>
+
+                <label class="filterSubHeading" for="postedDate">Posted Date:</label>
+                <br>
+                <div id="postedDateDiv">
+                    <b>Start:&nbsp;&nbsp;</b> <input class="datePickerFields" data-val="true" data-val-date="The field PostedDateStartFilter must be a date." id="PostedDateStartFilter" name="PostedDateStartFilter" type="text" value="">
+                    <br>
+
+                    <b>End:&nbsp;&nbsp;</b> <input class="datePickerFields leftMargin7" data-val="true" data-val-date="The field PostedDateEndFilter must be a date." id="PostedDateEndFilter" name="PostedDateEndFilter" type="text" value="">
+                </div>
+
+
+
+                
+
+                <div>
+                    <label class="filterSubHeading leftFloat" for="isnotice">Show Notices:</label>
+                    <input data-val="true" data-val-required="The IsNotice field is required." id="IsNotice" name="IsNotice" type="checkbox" value="true"><input name="IsNotice" type="hidden" value="false">
+                </div>
+
+
+            </div>
+        </div>
+
+        <div class="listing-container">
+            <div id="rfqsTable_wrapper" class="dataTables_wrapper" role="grid"><div id="rfqsTable_processing" class="dataTables_processing" style="visibility: hidden;">Processing...</div><table id="rfqsTable" class="dataTable" aria-describedby="rfqsTable_info">
+                <thead><tr role="row"><th style="width: 60px;" class="sorting" role="columnheader" tabindex="0" aria-controls="rfqsTable" rowspan="1" colspan="1" aria-label="Tender Number: activate to sort column ascending"><label class="gridHeadings" for="Tender_Number">Tender Number</label></th><th class="sorting" role="columnheader" tabindex="0" aria-controls="rfqsTable" rowspan="1" colspan="1" aria-label="Description: activate to sort column ascending"><label class="gridHeadings" for="Description">Description</label></th><th class="sorting" role="columnheader" tabindex="0" aria-controls="rfqsTable" rowspan="1" colspan="1" aria-label="Directorate: activate to sort column ascending"><label class="gridHeadings" for="Directorate">Directorate</label></th><th class="sorting" role="columnheader" tabindex="0" aria-controls="rfqsTable" rowspan="1" colspan="1" aria-label="Department: activate to sort column ascending"><label class="gridHeadings" for="Department">Department</label></th><th style="width: 60px; padding-right: 10px;" class="sorting" role="columnheader" tabindex="0" aria-controls="rfqsTable" rowspan="1" colspan="1" aria-label="Closing Date: activate to sort column ascending"><label class="gridHeadings" for="Closing_Date">Closing Date</label></th><th style="width: 60px; padding-right: 10px;" class="sorting_desc" role="columnheader" tabindex="0" aria-controls="rfqsTable" rowspan="1" colspan="1" aria-sort="descending" aria-label="Posted Date: activate to sort column ascending"><label class="gridHeadings" for="Posted_Date">Posted Date</label></th><th style="width: 25px; padding-right: 10px;" class="sorting_disabled" role="columnheader" rowspan="1" colspan="1" aria-label=""></th><th style="width: 25px; padding-right: 5px;" class="sorting_disabled" role="columnheader" rowspan="1" colspan="1" aria-label=""></th><th style="width: 25px; padding-right: 5px;" class="sorting_disabled" role="columnheader" rowspan="1" colspan="1" aria-label=""></th></tr></thead>
+            <tbody role="alert" aria-live="polite" aria-relevant="all"><tr class="gridDetails odd"><td style="width: 70px;" class=" ">
+                                34G/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="Supply, delivery and offloading of 80-litre and 770-litre (4-wheeled) refuse containers">Supply, delivery and offloading of 80-litre and 770-litre (4-wheeled) refuse containers</pre></td><td class=" ">
+                                URBAN WASTE MANAGEMENT
+                            </td><td class=" ">
+                                Waste Services
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-08-31 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-24 10:32 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/327256" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/327256" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/327256" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails even"><td style="width: 70px;" class=" ">
+                                050G/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="The supply and delivery of electricity meters">The supply and delivery of electricity meters</pre></td><td class=" ">
+                                ENERGY
+                            </td><td class=" ">
+                                Electricity Generation and Distribution
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-09-28 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-24 08:31 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/327249" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/327249" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/327249" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails odd"><td style="width: 70px;" class=" ">
+                                49S/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="Term tender for the supply and delivery of maintenance, repair, upgrade and refurbishment services for high voltage air insulated switchgear (ais).">Term tender for the supply and delivery of maintenance, repair, upgrade and refurbishment services f...</pre></td><td class=" ">
+                                ENERGY
+                            </td><td class=" ">
+                                Electricity Generation and Distribution
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-10-20 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-21 08:49 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/327165" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/327165" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/327165" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails even"><td style="width: 70px;" class=" ">
+                                47S/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="Framework for the ad-hoc detection and location of underground services and ad-hoc surveying within the city of cape town">Framework for the ad-hoc detection and location of underground services and ad-hoc surveying within ...</pre></td><td class=" ">
+                                URBAN MOBILITY
+                            </td><td class=" ">
+                                Roads Infrastructure Management
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-09-21 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-21 08:48 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/327164" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/327164" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/327164" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails odd"><td style="width: 70px;" class=" ">
+                                046S/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="Appointment of main banker and other financial services
+for the city of cape town">Appointment of main banker and other financial services
+for the city of cape town</pre></td><td class=" ">
+                                FINANCE
+                            </td><td class=" ">
+                                Treasury Services
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-10-23 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-21 08:47 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/327163" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/327163" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/327163" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails even"><td style="width: 70px;" class=" ">
+                                45G/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="Term tender for the supply and delivery of lifeguard equipment and uniforms for the city of cape town">Term tender for the supply and delivery of lifeguard equipment and uniforms for the city of cape tow...</pre></td><td class=" ">
+                                COMMUNITY SERVICES AND HEALTH
+                            </td><td class=" ">
+                                Recreation and Parks
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-09-22 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-21 08:45 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/327162" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/327162" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/327162" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails odd"><td style="width: 70px;" class=" ">
+                                44G/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="Supply, delivery, installation and off- loading of firearm safes">Supply, delivery, installation and off- loading of firearm safes</pre></td><td class=" ">
+                                SAFETY AND SECURITY
+                            </td><td class=" ">
+                                Metropolitan Police Services
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-09-21 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-21 08:44 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/327161" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/327161" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/327161" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails even"><td style="width: 70px;" class=" ">
+                                20S/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="The appointment of a rates based tender for the provision of due diligence, probity audit and professional services for supply chain management and governance services on an ad-hoc basis">The appointment of a rates based tender for the provision of due diligence, probity audit and profes...</pre></td><td class=" ">
+                                FINANCE
+                            </td><td class=" ">
+                                Supply Chain Management
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-08-26 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-20 07:19 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/327110" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/327110" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/327110" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails odd"><td style="width: 70px;" class=" ">
+                                20S/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="The appointment of a rates based tender for the provision of due diligence, probity audit and professional services for supply chain management and governance services on an ad-hoc basis">The appointment of a rates based tender for the provision of due diligence, probity audit and profes...</pre></td><td class=" ">
+                                FINANCE
+                            </td><td class=" ">
+                                Supply Chain Management
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-08-26 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-18 10:14 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/327015" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/327015" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/327015" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails even"><td style="width: 70px;" class=" ">
+                                20S/2026/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="The appointment of a rates based tender for the provision of due diligence, probity audit and professional services for supply chain management and governance services on an ad-hoc basis">The appointment of a rates based tender for the provision of due diligence, probity audit and profes...</pre></td><td class=" ">
+                                FINANCE
+                            </td><td class=" ">
+                                Supply Chain Management
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-08-26 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-17 08:13 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/326927" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/326927" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/326927" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails odd"><td style="width: 70px;" class=" ">
+                                27P/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="Call for proposals for the sale and development of remainder of erf 36554, milnerton situated at 13 oyster street annandale farm, cape town">Call for proposals for the sale and development of remainder of erf 36554, milnerton situated at 13 ...</pre></td><td class=" ">
+                                HUMAN SETTLEMENTS
+                            </td><td class=" ">
+                                Human Settlements Planning
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-10-21 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-14 11:54 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/326898" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/326898" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/326898" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails even"><td style="width: 70px;" class=" ">
+                                43G/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="Manufacture, testing, supply, delivery and offloading of
+insulated hard-drawn copper overhead cable, hard-drawn copper overhead
+conductor and anti-theft earthing conductor">Manufacture, testing, supply, delivery and offloading of
+insulated hard-drawn copper overhead cable...</pre></td><td class=" ">
+                                ENERGY
+                            </td><td class=" ">
+                                Electricity Generation and Distribution
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-09-15 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-14 10:42 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/326893" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/326893" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/326893" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails odd"><td style="width: 70px;" class=" ">
+                                42Q/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="Framework tender: dune rehabilitation, vegetation management and maintenance for the city of cape town.">Framework tender: dune rehabilitation, vegetation management and maintenance for the city of cape to...</pre></td><td class=" ">
+                                SPATIAL PLANNING AND ENVIRONMENT
+                            </td><td class=" ">
+                                Environmental Management
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-09-14 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-14 10:38 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/326892" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/326892" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/326892" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails even"><td style="width: 70px;" class=" ">
+                                RFI175/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="Supplier exhibitors invitation to exhibit at the mobility infrastructure summit 2026">Supplier exhibitors invitation to exhibit at the mobility infrastructure summit 2026</pre></td><td class=" ">
+                                URBAN MOBILITY
+                            </td><td class=" ">
+                                Transport Shared Services
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-09-03 16:00 PM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-14 10:05 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/326891" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/326891" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/326891" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr><tr class="gridDetails odd"><td style="width: 70px;" class=" ">
+                                29S/2026/27
+                            </td><td class=" "><pre class="descriptionColumn gridDetails lineBreaks" title="Supply, installation, maintenance and integration of cctv camera systems, equipment and ancillaries.">Supply, installation, maintenance and integration of cctv camera systems, equipment and ancillaries.</pre></td><td class=" ">
+                                CORPORATE SERVICES
+                            </td><td class=" ">
+                                Facilities Management
+                            </td><td style="width: 70px; padding-right: 10px;" class=" ">
+                                2026-08-25 10:00 AM
+                            </td><td style="width: 70px; padding-right: 10px;" class="  sorting_1">
+                                2026-08-14 08:44 AM
+                            </td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="linkDetails" href="/web1/tenderportal/Tender/Details/326886" title="Details"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="addnotice" href="/web1/tenderportal/Tender/AddNotice/326886" title="Add Notice"></a></td><td style="width: 10px; padding-right: 5px; padding-left: 5px;" class=" "><a class="deleteRFQ" href="/web1/tenderportal/Tender/Delete/326886" onclick="return confirm('Are you sure you want to delete this Tender?')" title="Delete Tender"></a></td></tr></tbody></table><div class="dataTables_info" id="rfqsTable_info">Showing 1 to 15 of 39 entries</div><div class="dataTables_paginate paging_full_numbers" id="rfqsTable_paginate"><a tabindex="0" class="first paginate_button paginate_button_disabled" id="rfqsTable_first">First</a><a tabindex="0" class="previous paginate_button paginate_button_disabled" id="rfqsTable_previous">Previous</a><span><a tabindex="0" class="paginate_active">1</a><a tabindex="0" class="paginate_button">2</a><a tabindex="0" class="paginate_button">3</a></span><a tabindex="0" class="next paginate_button" id="rfqsTable_next">Next</a><a tabindex="0" class="last paginate_button" id="rfqsTable_last">Last</a></div></div>
+        </div>
+
+    </div>
+</form>
+
+<script src="/web1/tenderportal/bundles/PAP"></script>
+
+<script src="/web1/tenderportal/Scripts/Filter.js"></script>
+
+<script type="text/javascript">
+
+    if (!Modernizr.inputtypes.date) {
+        $("#ClosingDateStartFilter").datepicker({
+            dateFormat: "yy/mm/dd", changeMonth: true, changeYear: true, showAnim: "slideDown",
+            onClose: function (selectedDate) {
+                $("#ClosingDateEndFilter").datepicker("option", "minDate", selectedDate);
+                if ($("#ClosingDateStartFilter").val() != "") {
+                    $("form").submit();
+                }
+            }
+        });
+        $("#ClosingDateEndFilter").datepicker({
+            dateFormat: "yy/mm/dd", changeMonth: true, changeYear: true, showAnim: "slideDown",
+            onClose: function (selectedDate) {
+                $("#ClosingDateStartFilter").datepicker("option", "maxDate", selectedDate);
+                if ($("#ClosingDateEndFilter").val() != "") {
+                    $("form").submit();
+                }
+            }
+        });
+
+
+        $("#PostedDateStartFilter").datepicker({
+            dateFormat: "yy/mm/dd", changeMonth: true, changeYear: true, showAnim: "slideDown",
+            onClose: function (selectedDate) {
+                $("#PostedDateEndFilter").datepicker("option", "minDate", selectedDate);
+                if ($("#PostedDateStartFilter").val() != "") {
+                    $("form").submit();
+                }
+            }
+        });
+        $("#PostedDateEndFilter").datepicker({
+            dateFormat: "yy/mm/dd", changeMonth: true, changeYear: true, showAnim: "slideDown",
+            onClose: function (selectedDate) {
+                $("#PostedDateStartFilter").datepicker("option", "maxDate", selectedDate);
+                if ($("#PostedDateEndFilter").val() != "") {
+                    $("form").submit();
+                }
+            }
+        });
+
+    }
+
+    $(document).ready(function () {
+
+        var expr = new RegExp('>[ \t\r\n\v\f]*<', 'g');
+        var tbhtml = $('#rfqsTable').html();
+        $('#rfqsTable').html(tbhtml.replace(expr, '><'));
+
+        $('#rfqsTable').dataTable({
+            "sPaginationType": "full_numbers",
+            "bFilter": false,
+            "bLengthChange": false,
+            "bProcessing": true,
+            "bAutoWidth": false,
+            "iDisplayLength": 15,
+            "bSort": true,
+            "aoColumns": [
+          null,
+          null,
+          null,
+          null,
+          //{ "iDataSort": 4 },
+          { "bVisible": false, "sType": 'date' },
+          { "bVisible": true, "sType": 'date' },
+           { "bVisible": false, "sType": 'date' },
+           { "bVisible": true, "sType": 'date' },
+          { "bSortable": false },
+           { "bSortable": false },
+           { "bSortable": false }
+            ],
+            "aaSorting": [[7, "desc"]]
+
+        });
+    });
+
+    $(function () {
+        var isViewOnly = $("#IsViewerOnly").val();
+        if (isViewOnly == "True") {
+            $('#rfqsTable tr *:nth-child(7)').css('display', 'none');
+            $('#rfqsTable tr *:nth-child(8)').css('display', 'none');
+            $('#rfqsTable tr *:nth-child(9)').css('display', 'none');
+            $('#rfqsTable tr *:nth-child(10)').css('display', 'none');
+        }
+    });
+</script>
+<script type="text/javascript">
+</script>
+
+            </section>
+        </div>
+        <footer>
+            <div id="navbar-bottom">
+                <div class="nav-left">
+                    City of Cape Town, 2026© 
+                </div>
+                <div class="nav-right">
+                    | <a class="nav" href="https://www.capetown.gov.za/termsofuse">Copyright</a>
+                    | <a class="nav" href="https://www.capetown.gov.za/termsofuse">Disclaimer</a> | <a class="nav" href="https://www.capetown.gov.za/termsofuse">Privacy</a> |
+                </div>
+
+            </div>
+        </footer>
+
+    </div>
+
+
+<ul class="ui-autocomplete ui-front ui-menu ui-widget ui-widget-content ui-corner-all" id="ui-id-1" tabindex="0" style="display: none;"></ul></body></html>

@@ -197,9 +197,11 @@ async function createWhatsAppDraft({
   const { error } = await client.from("whatsapp_alerts").insert([
     {
       supplier_id: supplier.id,
-      supplier_phone: supplier.phone ?? null,
+      phone: supplier.phone ?? null,
       alert_type: alertType,
       message,
+      link: waLink,
+      status: "Draft",
       rfq_id: toNumberId(rfqId),
       metadata: {
         ...metadata,
