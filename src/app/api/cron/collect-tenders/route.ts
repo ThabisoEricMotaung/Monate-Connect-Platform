@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   }
 
   const startTime = Date.now()
-  const results: Record<string, any> = {}
+  const results: Record<string, { success: boolean; inserted?: number; updated?: number; skipped?: number; error?: string }> = {}
 
   try {
     console.log("[CRON:collect-tenders] Starting daily collection at", new Date().toISOString())
