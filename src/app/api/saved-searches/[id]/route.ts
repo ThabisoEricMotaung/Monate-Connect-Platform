@@ -9,6 +9,7 @@ const supabase = createClient(
 interface SavedSearchUpdate {
   email_notifications?: boolean;
   days_until_close?: number;
+  sort?: 'recent' | 'closing-soon' | 'closing-later';
 }
 
 // DELETE: Remove a saved search

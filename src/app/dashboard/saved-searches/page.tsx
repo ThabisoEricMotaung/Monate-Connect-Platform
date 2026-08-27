@@ -83,6 +83,8 @@ export default function SavedSearchesPage() {
     if (search.search_query !== '*') params.append('search', search.search_query);
     if (search.source) params.append('source', search.source);
     if (search.budget_range) params.append('budget', search.budget_range);
+    params.append('daysUntilClose', search.days_until_close.toString());
+    params.append('sort', search.sort || 'recent');
     return `/tenders?${params.toString()}`;
   };
 

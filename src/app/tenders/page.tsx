@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { TenderCard } from '@/components/TenderCard';
 import { supabase } from '@/lib/supabase';
 import { saveSearch } from '@/lib/savedSearches';
@@ -39,20 +40,34 @@ const BUDGET_RANGES = [
 ];
 
 type BudgetRange = '' | '0-5m' | '5-20m' | '20m+' | 'unspecified';
+type TenderSort = 'recent' | 'closing-soon' | 'closing-later';
+
+const SORT_OPTIONS: Array<{ value: TenderSort; label: string }> = [
+  { value: 'recent', label: 'Recently added' },
+  { value: 'closing-soon', label: 'Closing soon' },
+  { value: 'closing-later', label: 'Closing later' },
+];
 
 const ITEMS_PER_PAGE = 50;
 
-export default function TendersPage() {
+function TendersPageContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [tenders, setTenders] = useState<Tender[]>([]);
-  const [filteredTenders, setFilteredTenders] = useState<Tender[]>([]);
   const [total, setTotal] = useState(0);
+  const [newCount, setNewCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [source, setSource] = useState('');
-  const [daysFilter, setDaysFilter] = useState(90);
-  const [budgetFilter, setBudgetFilter] = useState<BudgetRange>('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState(() => searchParams.get('search') || '');
+  const [source, setSource] = useState(() => searchParams.get('source') || '');
+  const [daysFilter, setDaysFilter] = useState(() => Number(searchParams.get('daysUntilClose')) || 90);
+  const [budgetFilter, setBudgetFilter] = useState<BudgetRange>(() => (searchParams.get('budget') as BudgetRange) || '');
+  const [sort, setSort] = useState<TenderSort>(() => {
+    const value = searchParams.get('sort');
+    return value === 'closing-soon' || value === 'closing-later' ? value : 'recent';
+  });
+  const [currentPage, setCurrentPage] = useState(() => Math.max(1, Number(searchParams.get('page')) || 1));
   const [saveMessage, setSaveMessage] = useState('');
   const [savingSearch, setSavingSearch] = useState(false);
 
@@ -73,7 +88,9 @@ export default function TendersPage() {
         const params = new URLSearchParams();
         if (search) params.append('search', search);
         if (source) params.append('source', source);
+        if (budgetFilter) params.append('budget', budgetFilter);
         params.append('daysUntilClose', daysFilter.toString());
+        params.append('sort', sort);
         params.append('limit', ITEMS_PER_PAGE.toString());
         params.append('offset', ((currentPage - 1) * ITEMS_PER_PAGE).toString());
 
@@ -81,41 +98,29 @@ export default function TendersPage() {
         const json = await response.json();
         setTenders(json.data || []);
         setTotal(json.total || 0);
+        setNewCount(json.newCount || 0);
       } catch (error) {
         console.error('Failed to fetch tenders:', error);
         setTenders([]);
         setTotal(0);
+        setNewCount(0);
       }
       setLoading(false);
     };
 
     loadTenders();
-  }, [search, source, daysFilter, currentPage]);
+  }, [search, source, budgetFilter, daysFilter, sort, currentPage]);
 
-  // Filter tenders by budget range
   useEffect(() => {
-    let filtered = tenders;
-
-    if (budgetFilter) {
-      filtered = tenders.filter((tender) => {
-        const budget = tender.estimated_budget;
-
-        if (budgetFilter === 'unspecified') {
-          return !budget;
-        } else if (budgetFilter === '0-5m') {
-          return budget && budget < 5_000_000;
-        } else if (budgetFilter === '5-20m') {
-          return budget && budget >= 5_000_000 && budget < 20_000_000;
-        } else if (budgetFilter === '20m+') {
-          return budget && budget >= 20_000_000;
-        }
-
-        return true;
-      });
-    }
-
-    setFilteredTenders(filtered);
-  }, [tenders, budgetFilter]);
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (source) params.set('source', source);
+    if (budgetFilter) params.set('budget', budgetFilter);
+    params.set('daysUntilClose', daysFilter.toString());
+    params.set('sort', sort);
+    if (currentPage > 1) params.set('page', currentPage.toString());
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [search, source, budgetFilter, daysFilter, sort, currentPage, pathname, router]);
 
   const handleSaveSearch = async () => {
     if (!user) {
@@ -131,6 +136,7 @@ export default function TendersPage() {
         source: source || null,
         budget_range: budgetFilter || null,
         days_until_close: daysFilter,
+        sort,
         email_notifications: true,
       });
       analyticsEvents.trackSavedSearch(query, source || 'all', 'south africa');
@@ -173,7 +179,7 @@ export default function TendersPage() {
                 type="text"
                 placeholder="Search opportunities"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                 className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
               />
               <span className="absolute right-4 top-3 text-gray-400">🔍</span>
@@ -187,7 +193,7 @@ export default function TendersPage() {
             </div>
             {total > 0 && (
               <div className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold">
-                • {Math.ceil(total * 0.15)} new in the last 48 hours
+                • {newCount.toLocaleString()} new in the last 48 hours
               </div>
             )}
           </div>
@@ -207,7 +213,7 @@ export default function TendersPage() {
             <label className="text-sm font-medium text-gray-700 mr-3">Source:</label>
             <select
               value={source}
-              onChange={(e) => setSource(e.target.value)}
+              onChange={(e) => { setSource(e.target.value); setCurrentPage(1); }}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {SOURCES.map((src) => (
@@ -222,7 +228,7 @@ export default function TendersPage() {
             <label className="text-sm font-medium text-gray-700 mr-3">Budget:</label>
             <select
               value={budgetFilter}
-              onChange={(e) => setBudgetFilter(e.target.value as BudgetRange)}
+              onChange={(e) => { setBudgetFilter(e.target.value as BudgetRange); setCurrentPage(1); }}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {BUDGET_RANGES.map((range) => (
@@ -237,13 +243,26 @@ export default function TendersPage() {
             <label className="text-sm font-medium text-gray-700 mr-3">Closing in:</label>
             <select
               value={daysFilter}
-              onChange={(e) => setDaysFilter(parseInt(e.target.value))}
+              onChange={(e) => { setDaysFilter(parseInt(e.target.value)); setCurrentPage(1); }}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value={30}>30 days</option>
               <option value={60}>60 days</option>
               <option value={90}>90 days</option>
               <option value={180}>180 days</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 mr-3">Sort by</label>
+            <select
+              value={sort}
+              onChange={(e) => { setSort(e.target.value as TenderSort); setCurrentPage(1); }}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
             </select>
           </div>
 
@@ -272,19 +291,16 @@ export default function TendersPage() {
           <div className="text-center py-12">
             <p className="text-gray-500">Loading opportunities...</p>
           </div>
-        ) : filteredTenders.length === 0 ? (
+        ) : tenders.length === 0 ? (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
             <p className="text-gray-700 mb-4">No opportunities found yet.</p>
             <p className="text-sm text-gray-600">
-              {tenders.length > 0 ? 'Try adjusting your filters.' : 'RFQs published on AiForm Procure will appear here automatically when they\'re marked as public and have an open status.'}
-            </p>
-            <p className="text-xs text-gray-500 mt-4">
-              {tenders.length > 0 ? '' : 'Publish new RFQs on the platform to get started.'}
+              Try adjusting your filters.
             </p>
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredTenders.map((tender) => (
+            {tenders.map((tender) => (
               <TenderCard key={tender.id} tender={tender} />
             ))}
           </div>
@@ -320,7 +336,7 @@ export default function TendersPage() {
         {/* Footer Summary */}
         {total > 0 && (
           <div className="mt-8 text-sm text-gray-600">
-            Showing {filteredTenders.length} of {total} opportunity{total !== 1 ? 'ies' : ''}
+            Showing {tenders.length} of {total} opportunity{total !== 1 ? 'ies' : ''}
             {search && ` matching "${search}"`}
             {source && ` from ${SOURCES.find(s => s.value === source)?.label}`}
             {budgetFilter && ` with budget ${BUDGET_RANGES.find(b => b.value === budgetFilter)?.label?.toLowerCase()}`}
@@ -329,5 +345,13 @@ export default function TendersPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function TendersPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <TendersPageContent />
+    </Suspense>
   );
 }

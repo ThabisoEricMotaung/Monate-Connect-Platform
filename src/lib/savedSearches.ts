@@ -8,6 +8,7 @@ export interface SavedSearch {
   email_notifications: boolean;
   created_at: string;
   updated_at: string;
+  sort: 'recent' | 'closing-soon' | 'closing-later';
 }
 
 export interface SaveSearchRequest {
@@ -16,6 +17,7 @@ export interface SaveSearchRequest {
   budget_range?: string | null;
   days_until_close?: number;
   email_notifications?: boolean;
+  sort?: 'recent' | 'closing-soon' | 'closing-later';
 }
 
 async function getAuthHeaders() {

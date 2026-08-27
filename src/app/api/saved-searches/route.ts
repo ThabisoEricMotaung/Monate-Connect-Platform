@@ -13,6 +13,7 @@ interface SavedSearch {
   budget_range?: string | null;
   days_until_close?: number;
   email_notifications?: boolean;
+  sort?: 'recent' | 'closing-soon' | 'closing-later';
 }
 
 // GET: List user's saved searches
@@ -60,6 +61,7 @@ export async function POST(request: NextRequest) {
         budget_range: body.budget_range || null,
         days_until_close: body.days_until_close || 90,
         email_notifications: body.email_notifications !== false,
+        sort: body.sort || 'recent',
       })
       .select()
       .single();
