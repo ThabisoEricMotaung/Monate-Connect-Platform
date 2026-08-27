@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { EkurhuleniCollector } from "@/lib/collectors/EkurhuleniCollector"
 import { CapeownCollector } from "@/lib/collectors/CapeownCollector"
 import { CojCollector } from "@/lib/collectors/CojCollector"
+import { HealthCollector } from "@/lib/collectors/HealthCollector"
 
 function cronAuthorized(request: Request): boolean {
   const secret = process.env.CRON_SECRET
@@ -42,6 +43,7 @@ export async function GET(request: Request) {
       { name: "Ekurhuleni", collector: new EkurhuleniCollector() },
       { name: "Cape Town", collector: new CapeownCollector() },
       { name: "City of Johannesburg", collector: new CojCollector() },
+      { name: "Department of Health", collector: new HealthCollector() },
       // TODO: Add other collectors as they're migrated
       // { name: "Eskom", collector: new EskomCollector() },
       // { name: "DBSA", collector: new DBSACollector() },
