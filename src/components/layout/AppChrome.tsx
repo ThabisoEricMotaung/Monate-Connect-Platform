@@ -5,6 +5,7 @@ import Navbar from "@/components/layout/Navbar"
 import UnifiedSupportCenter from "@/components/UnifiedSupportCenter"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 import { useLocale, useTranslations } from "next-intl"
+import { useAnalytics } from "@/hooks/useAnalytics"
 
 const chromeFreeRoutes = new Set(["/billing/return", "/billing/cancel", "/tenders"])
 const englishAuthoritativePrefixes = ["/privacy", "/terms", "/cookies", "/cookie-policy", "/data-protection", "/guides", "/trust"]
@@ -14,6 +15,9 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
   const t = useTranslations("publicChrome")
   const pathname = usePathname() || ""
   const hideChrome = chromeFreeRoutes.has(pathname) || pathname.startsWith('/tenders')
+
+  // Initialize analytics and user identification
+  useAnalytics()
 
   return (
     <>

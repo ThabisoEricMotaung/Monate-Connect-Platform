@@ -94,6 +94,26 @@ export default async function RootLayout({
           strategy="lazyOnload"
           dangerouslySetInnerHTML={{ __html: accessibilityScript }}
         />
+        {/* GA4 Analytics */}
+        <Script
+          id="ga4-init"
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G_MEASUREMENT_ID"
+        />
+        <Script
+          id="ga4-config"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G_MEASUREMENT_ID', {
+                page_path: window.location.pathname,
+              });
+            `,
+          }}
+        />
       </head>
       <body className="min-h-full bg-page text-primary font-sans" suppressHydrationWarning>
         <ThemeProvider>
