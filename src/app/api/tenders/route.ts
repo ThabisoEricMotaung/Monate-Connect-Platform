@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getSastAdjustedToday } from '@/lib/opportunityStatsQuery';
 
 interface RFQRecord {
   id: string;
@@ -21,6 +22,19 @@ function parseSort(value: string | null): TenderSort {
   return SORT_VALUES.includes(value as TenderSort) ? (value as TenderSort) : 'recent';
 }
 
+/**
+ * Apply unified base filters for opportunity queries.
+ * Ensures consistency between tenders API and homepage stats.
+ */
+function applyBaseOpportunityFilters(query: any) {
+  return query
+    .eq('is_public', true)
+    .eq('status', 'active')
+    .not('closing_date', 'is', null)
+    .not('title', 'ilike', '%SMOKE TEST%')
+    .not('title', 'ilike', '%[TEST]%');
+}
+
 // Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -40,30 +54,19 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    // Calculate date range in SAST (UTC+2)
-    // Since closing_dates are stored with SAST timezone, compare using SAST dates
-    const nowMs = Date.now();
-    const offsetMs = (2 * 60 * 60 * 1000); // SAST is UTC+2
-    const sastNow = new Date(nowMs + offsetMs);
-    const today = new Date(sastNow);
-    today.setUTCHours(0, 0, 0, 0);
+    // Calculate date range using unified SAST timezone handling
+    const today = getSastAdjustedToday();
     const targetDate = new Date(today);
     targetDate.setDate(targetDate.getDate() + daysUntilClose);
 
-    // Build base query
+    // Build base query with unified filters
     let baseQuery = supabase
       .from('rfqs')
       .select('id, title, buyer_org, closing_date, published_date, created_at, is_public, source_name, estimated_budget, description, closing_soon');
 
-    // Add filters: status is set by nightly reconciliation (SAST-aware)
-    baseQuery = baseQuery
-      .eq('is_public', true)
-      .eq('status', 'active')
-      .not('closing_date', 'is', null)
+    baseQuery = applyBaseOpportunityFilters(baseQuery)
       .gte('closing_date', today.toISOString())
-      .lte('closing_date', targetDate.toISOString())
-      .not('title', 'ilike', '%SMOKE TEST%')
-      .not('title', 'ilike', '%[TEST]%');
+      .lte('closing_date', targetDate.toISOString());
 
     if (search) {
       baseQuery = baseQuery.or(`title.ilike.%${search}%,external_reference.ilike.%${search}%,description.ilike.%${search}%`);
@@ -81,19 +84,14 @@ export async function GET(request: NextRequest) {
     if (budget === '5-20m') baseQuery = baseQuery.gte('estimated_budget', 5_000_000).lt('estimated_budget', 20_000_000);
     if (budget === '20m+') baseQuery = baseQuery.gte('estimated_budget', 20_000_000);
 
-    // Get total count from a fresh query (with same filters and SAST timezone)
+    // Get total count from a fresh query (with same unified filters)
     let countQuery = supabase
       .from('rfqs')
       .select('id', { count: 'exact', head: true });
 
-    countQuery = countQuery
-      .eq('is_public', true)
-      .eq('status', 'active')
-      .not('closing_date', 'is', null)
+    countQuery = applyBaseOpportunityFilters(countQuery)
       .gte('closing_date', today.toISOString())
-      .lte('closing_date', targetDate.toISOString())
-      .not('title', 'ilike', '%SMOKE TEST%')
-      .not('title', 'ilike', '%[TEST]%');
+      .lte('closing_date', targetDate.toISOString());
 
     if (search) {
       countQuery = countQuery.or(`title.ilike.%${search}%,external_reference.ilike.%${search}%,description.ilike.%${search}%`);
@@ -110,18 +108,15 @@ export async function GET(request: NextRequest) {
     if (budget === '5-20m') countQuery = countQuery.gte('estimated_budget', 5_000_000).lt('estimated_budget', 20_000_000);
     if (budget === '20m+') countQuery = countQuery.gte('estimated_budget', 20_000_000);
 
-    const fortyEightHoursAgo = new Date(nowMs - (48 * 60 * 60 * 1000)).toISOString();
+    const fortyEightHoursAgo = new Date(Date.now() - (48 * 60 * 60 * 1000)).toISOString();
     let newCountQuery = supabase
       .from('rfqs')
-      .select('id', { count: 'exact', head: true })
-      .eq('is_public', true)
-      .eq('status', 'active')
-      .not('closing_date', 'is', null)
+      .select('id', { count: 'exact', head: true });
+
+    newCountQuery = applyBaseOpportunityFilters(newCountQuery)
       .gte('closing_date', today.toISOString())
       .lte('closing_date', targetDate.toISOString())
-      .gte('created_at', fortyEightHoursAgo)
-      .not('title', 'ilike', '%SMOKE TEST%')
-      .not('title', 'ilike', '%[TEST]%');
+      .gte('created_at', fortyEightHoursAgo);
 
     if (search) newCountQuery = newCountQuery.or(`title.ilike.%${search}%,external_reference.ilike.%${search}%,description.ilike.%${search}%`);
     if (source === 'null') newCountQuery = newCountQuery.is('source_name', null);

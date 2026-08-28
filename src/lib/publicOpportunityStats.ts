@@ -2,25 +2,13 @@ import "server-only"
 
 import { unstable_cache } from "next/cache"
 import { createClient } from "@supabase/supabase-js"
-
-const SOUTH_AFRICA_UTC_OFFSET_MS = 2 * 60 * 60 * 1000
+import { buildBaseOpportunityQuery, getSouthAfricaClosingWeekEnd } from "./opportunityStatsQuery"
 
 export type PublicOpportunityStats = {
   liveOpportunities: number
   closingThisWeek: number
   newIn48Hours: number
   screenedPercent: number | null
-}
-
-export function getSouthAfricaClosingWeekEnd(now = new Date()): Date {
-  const southAfricaNow = new Date(now.getTime() + SOUTH_AFRICA_UTC_OFFSET_MS)
-  const startOfDayAfterWindowUtc = Date.UTC(
-    southAfricaNow.getUTCFullYear(),
-    southAfricaNow.getUTCMonth(),
-    southAfricaNow.getUTCDate() + 8,
-  )
-
-  return new Date(startOfDayAfterWindowUtc - SOUTH_AFRICA_UTC_OFFSET_MS - 1)
 }
 
 async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunityStats | null> {
@@ -35,14 +23,8 @@ async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunitySta
     const closingWeekEndIso = getSouthAfricaClosingWeekEnd(now).toISOString()
     const ago48HoursIso = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString()
 
-    const eligibleBase = () =>
-      supabase
-        .from("rfqs")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "active")
-        .gt("closing_date", nowIso)
-        .eq("is_public", true)
-        .or("is_external_opportunity.is.null,is_external_opportunity.eq.false,curation_status.eq.approved")
+    // Use unified base query - ensures homepage matches tenders page counts
+    const eligibleBase = () => buildBaseOpportunityQuery(supabase, { now, countOnly: true })
 
     const [liveRes, closingWeekRes, new48Res, screenedTotalRes, screenedDoneRes] = await Promise.all([
       eligibleBase(),
