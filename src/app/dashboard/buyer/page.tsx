@@ -125,22 +125,31 @@ export default function BuyerHomePage() {
       if (!supabase) return
       const client = supabase
 
+      // Get current user to filter RFQs
+      const { data: { user } } = await client.auth.getUser()
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
       const [rfqs, quotes, recentResult, pipelineRows] = await Promise.all([
         readAllRows<{ status: string | null }>((from, to) =>
-          client.from("rfqs").select("id, status").range(from, to),
+          client.from("rfqs").select("id, status").eq("buyer_id", user.id).range(from, to),
         ),
         readAllRows<{ status: string | null }>((from, to) =>
-          client.from("quotes").select("id, status").range(from, to),
+          client.from("quotes").select("id, status").eq("buyer_id", user.id).range(from, to),
         ),
         client
           .from("rfqs")
           .select("id, title, status, created_at")
+          .eq("buyer_id", user.id)
           .order("created_at", { ascending: false })
           .limit(5),
         readAllRows<RfqRow>((from, to) =>
           client
             .from("rfqs")
             .select("id, title, status, category, province, region, budget, deadline, created_at")
+            .eq("buyer_id", user.id)
             .order("created_at", { ascending: false })
             .range(from, to),
         ),

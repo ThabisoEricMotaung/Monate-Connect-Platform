@@ -14,24 +14,24 @@ export function useAnalytics() {
     initializeAnalytics()
 
     // Check if user is already authenticated and identify them
-    if (supabase) {
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (user) {
-          // Get profile info for additional context
-          supabase
-            .from('profiles')
-            .select('email, role, business_name')
-            .eq('id', user.id)
-            .maybeSingle()
-            .then(({ data: profile }) => {
-              identifyAuthenticatedUser(user.id, {
-                email: profile?.email || user.email || undefined,
-                role: profile?.role,
-                businessName: profile?.business_name,
-              })
+    if (!supabase) return
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user && supabase) {
+        // Get profile info for additional context
+        supabase
+          .from('profiles')
+          .select('email, role, business_name')
+          .eq('id', user.id)
+          .maybeSingle()
+          .then(({ data: profile }) => {
+            identifyAuthenticatedUser(user.id, {
+              email: profile?.email || user.email || undefined,
+              role: profile?.role,
+              businessName: profile?.business_name,
             })
-        }
-      })
-    }
+          })
+      }
+    })
   }, [])
 }
