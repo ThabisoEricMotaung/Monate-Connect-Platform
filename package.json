@@ -20,6 +20,7 @@
     "@types/pg": "^8.23.1",
     "africastalking": "^0.7.9",
     "aws4fetch": "^1.0.20",
+    "class-variance-authority": "^0.7.1",
     "date-fns": "^4.4.0",
     "next": "15.5.18",
     "next-intl": "4.13.5",
@@ -31,7 +32,8 @@
     "react-dom": "^18.3.1",
     "react-image-crop": "^11.0.10",
     "recharts": "^3.8.1",
-    "resend": "^6.20.0"
+    "resend": "^6.20.0",
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@types/node": "^20",
