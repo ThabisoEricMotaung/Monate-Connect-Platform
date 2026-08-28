@@ -83,9 +83,9 @@ async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunitySta
   }
 }
 
-// Cache stats for 5 minutes (300 seconds) to enable ISR on homepage
+// Cache stats for 1 minute (60 seconds) to keep homepage stats fresh and in sync with tenders page
 export const getPublicOpportunityStats = unstable_cache(
   getPublicOpportunityStatsUncached,
   ["public-opportunity-stats"],
-  { revalidate: 300 } // 5 minutes
+  { revalidate: 60 } // 1 minute
 )
