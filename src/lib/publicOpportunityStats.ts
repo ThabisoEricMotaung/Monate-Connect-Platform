@@ -19,7 +19,6 @@ async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunitySta
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
     const now = new Date()
-    const nowIso = now.toISOString()
     const closingWeekEndIso = getSouthAfricaClosingWeekEnd(now).toISOString()
     const ago48HoursIso = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString()
 

@@ -234,7 +234,7 @@ export default function PublicFooter() {
             <p className="text-sm font-semibold text-[#123c2b]/70">
               &copy; 2026 AiForm Procure &middot; {t("copyrightSuite")}
             </p>
-            <Link href="https://aiform-studio.vercel.app/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-semibold text-[#123c2b]/70 hover:text-[#123c2b] transition-colors">
+            <Link href="https://www.aiformstudio.co.za/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-semibold text-[#123c2b]/70 hover:text-[#123c2b] transition-colors">
               <Image
                 src="/aiform-mark.png"
                 alt="AiForm Studio"

@@ -23,10 +23,24 @@ function parseSort(value: string | null): TenderSort {
 }
 
 /**
+ * Filterable query builder interface for type safety
+ */
+interface FilterableQuery {
+  eq(column: string, value: unknown): FilterableQuery;
+  not(column: string, operator: string, value: unknown): FilterableQuery;
+  gte(column: string, value: unknown): FilterableQuery;
+  lte(column: string, value: unknown): FilterableQuery;
+  is(column: string, value: unknown): FilterableQuery;
+  ilike(column: string, value: unknown): FilterableQuery;
+  or(filter: string): FilterableQuery;
+  lt(column: string, value: unknown): FilterableQuery;
+}
+
+/**
  * Apply unified base filters for opportunity queries.
  * Ensures consistency between tenders API and homepage stats.
  */
-function applyBaseOpportunityFilters(query: any) {
+function applyBaseOpportunityFilters(query: FilterableQuery): FilterableQuery {
   return query
     .eq('is_public', true)
     .eq('status', 'active')
