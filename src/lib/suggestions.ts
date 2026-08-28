@@ -76,7 +76,6 @@ export async function submitSuggestion(input: SubmitSuggestionInput): Promise<Su
   const payload = {
     user_id: input.userId,
     display_name: input.displayName,
-    email: input.email,
     category: input.category,
     message,
     created_at: new Date().toISOString(),
