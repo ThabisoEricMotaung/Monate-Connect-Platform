@@ -65,6 +65,7 @@ export function buildBaseOpportunityQuery(
 
   return supabase
     .from("rfqs")
+    .select("*")
     .eq("is_public", true)
     .eq("status", "active")
     .gt("closing_date", nowIso)
@@ -96,6 +97,7 @@ export function buildDateRangeOpportunityQuery(
 
   return supabase
     .from("rfqs")
+    .select("*")
     .eq("is_public", true)
     .eq("status", "active")
     .gte("closing_date", fromDate.toISOString())
