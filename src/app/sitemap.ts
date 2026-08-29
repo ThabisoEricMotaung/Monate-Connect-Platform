@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js"
 const SITE_URL = "https://www.aiformprocure.co.za"
 const PUBLIC_ROUTES = [
   "",
-  "/opportunities",
+  "/tenders",
   "/suppliers",
   "/trust",
   "/pricing",
@@ -56,7 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   const opportunityEntries: MetadataRoute.Sitemap = ((data ?? []) as SitemapOpportunity[]).map((opportunity) => ({
-    url: `${SITE_URL}/opportunities/${opportunity.id}`,
+    url: `${SITE_URL}/tenders/${opportunity.id}`,
     lastModified: new Date(opportunity.published_date || opportunity.created_at || generatedAt),
     changeFrequency: "daily",
     priority: 0.8,
