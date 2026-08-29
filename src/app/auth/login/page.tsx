@@ -4,6 +4,7 @@ import { useEffect, useState, type MouseEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import PasswordInput from "@/components/PasswordInput"
+import { FormField, TextInput } from "@/components/ui"
 import { supabase } from "@/lib/supabase"
 
 type LoginProfile = {
@@ -432,28 +433,23 @@ export default function LoginPage() {
               <span className="font-semibold text-accent">*</span> Required fields
             </p>
 
-            <div>
-              <label className="block text-sm font-medium text-secondary">
-                Email address <span className="text-rose-500">*</span>
-              </label>
-              <input
+            <FormField id="email" label="Email address" required>
+              <TextInput
                 type="email"
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setErrorMessage("") }}
-                className="mt-2 w-full rounded-2xl border border-panel bg-surface px-5 py-4 text-primary outline-none transition focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
               />
-            </div>
+            </FormField>
 
             <div>
-              <label className="block text-sm font-medium text-secondary">Password <span className="text-rose-500">*</span>
-              </label>
-              <PasswordInput
-                placeholder="Your password"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setErrorMessage("") }}
-                className="mt-2 w-full rounded-2xl border border-panel bg-surface px-5 py-4 text-primary outline-none transition focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
-              />
+              <FormField id="password" label="Password" required error={errorMessage}>
+                <PasswordInput
+                  placeholder="Your password"
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setErrorMessage("") }}
+                />
+              </FormField>
               <div className="mt-2 text-right">
                 <a
                   href="/auth/forgot-password"
@@ -463,12 +459,6 @@ export default function LoginPage() {
                 </a>
               </div>
             </div>
-
-            {errorMessage && (
-              <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-5 py-4">
-                <p className="text-sm font-semibold text-rose-700">{errorMessage}</p>
-              </div>
-            )}
 
             <button
               type="button"
