@@ -85,7 +85,7 @@ const suggestedQuestions = [
   "How do I respond to an RFQ?",
 ]
 const assistantGreeting =
-  "Dumela! I'm Thuso. Ask me anything about using AiForm Procure or how SA procurement works - CSD, BBBEE, tax clearance, RFQs, anything."
+  "Hello! I am here to help you. Ask me anything about using AiForm Procure, SA procurement, compliance, or how to respond to opportunities."
 const acceptedImageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"]
 const maxImageBytes = 5 * 1024 * 1024
 
