@@ -1218,13 +1218,16 @@ export default function UnifiedSupportCenter() {
           right: -2px;
           width: 20px;
           height: 20px;
-          background: #c8a060;
+          background: #f8f4ec;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 12px;
+          font-weight: bold;
+          color: #c8a060;
           animation: pulse 2s ease-in-out infinite;
+          box-shadow: 0 2px 8px rgba(248, 244, 236, 0.3);
         }
         @keyframes pulse {
           0%, 100% { transform: scale(1); opacity: 0.8; }
