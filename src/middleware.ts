@@ -2,7 +2,13 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname, search } = request.nextUrl
+
+  // SEO: Redirect /opportunities/* to /tenders/* (canonical route consolidation)
+  if (pathname.startsWith("/opportunities")) {
+    const tenderPath = pathname.replace(/^\/opportunities/, "/tenders")
+    return NextResponse.redirect(new URL(tenderPath + search, request.url), { status: 308 })
+  }
 
   // Protected route patterns
   const isDashboard = pathname.startsWith("/dashboard")
@@ -50,5 +56,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/admin/:path*"],
+  matcher: ["/opportunities/:path*", "/dashboard/:path*", "/api/admin/:path*"],
 }
