@@ -1188,33 +1188,106 @@ export default function UnifiedSupportCenter() {
       ) : null}
 
       <style>{`
-        @keyframes thuso-pulse-glow {
-          0%, 100% {
-            box-shadow: 0 16px 40px rgba(10, 32, 32, 0.32), 0 0 0 0 rgba(200, 160, 96, 0.4);
-          }
-          50% {
-            box-shadow: 0 16px 40px rgba(10, 32, 32, 0.32), 0 0 20px 8px rgba(200, 160, 96, 0.15);
-          }
+        @keyframes thuso-lift {
+          0% { transform: translateY(0px); }
+          100% { transform: translateY(-4px); }
         }
-        .thuso-launcher {
-          animation: thuso-pulse-glow 3s ease-in-out infinite;
+        .thuso-launcher-pill {
+          transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
         }
-        .thuso-launcher:hover {
-          animation: none;
+        .thuso-launcher-pill:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 24px 48px rgba(10, 32, 32, 0.4);
+        }
+        .thuso-launcher-pill:hover .thuso-secondary-text {
+          opacity: 1;
+        }
+        .thuso-launcher-pill:hover .thuso-primary-text {
+          opacity: 0;
+        }
+        .thuso-secondary-text {
+          opacity: 0;
+          transition: opacity 200ms ease;
+        }
+        .thuso-primary-text {
+          transition: opacity 200ms ease;
+        }
+        .thuso-sparkle {
+          position: absolute;
+          top: -2px;
+          right: -2px;
+          width: 20px;
+          height: 20px;
+          background: #c8a060;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.1); opacity: 1; }
+        }
+        @media (max-width: 768px) {
+          .thuso-launcher-text { display: none; }
+          .thuso-launcher-pill { width: 56px; height: 56px; }
         }
       `}</style>
       <button
         ref={launcherRef}
         type="button"
-        aria-label={open ? "Close AiForm support centre" : "Open AiForm support centre"}
+        aria-label={open ? "Close Thuso and Help Centre" : "Open Thuso and Help Centre"}
         aria-expanded={open}
         onClick={() => {
           if (open) closePanel()
           else openPanel("assistant")
         }}
-        className={`fixed bottom-[calc(var(--news-ticker-height,56px)+16px)] right-5 z-[210] flex h-14 w-14 items-center justify-center rounded-full border-2 border-[#c8a060] bg-[#1a3a2a] text-[#c8a060] shadow-[0_16px_40px_rgba(10,32,32,0.32)] transition duration-200 hover:scale-110 hover:bg-[#2d6a52] hover:border-[#d9b563] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8a060] ${!open ? 'thuso-launcher' : ''}`}
+        className="thuso-launcher-pill fixed bottom-[calc(var(--news-ticker-height,56px)+16px)] right-5 z-[210] hidden md:flex h-14 px-4 items-center justify-between gap-3 rounded-full border border-[#c8a060]/60 bg-[#1a3a2a] text-[#f8f4ec] shadow-[0_16px_40px_rgba(10,32,32,0.32)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8a060] min-w-max"
       >
-        {open ? <IconX className="h-6 w-6" aria-hidden /> : <IconLifebuoy className="h-6 w-6" aria-hidden />}
+        <div className="relative flex items-center gap-2">
+          <div className="relative">
+            {open ? (
+              <IconX className="h-5 w-5 text-[#c8a060]" aria-hidden />
+            ) : (
+              <>
+                <IconLifebuoy className="h-5 w-5 text-[#c8a060]" aria-hidden />
+                <div className="thuso-sparkle">✨</div>
+              </>
+            )}
+          </div>
+          <div className="thuso-launcher-text flex flex-col gap-0">
+            <span className="thuso-primary-text text-sm font-semibold leading-none">Need help?</span>
+            <span className="thuso-secondary-text text-xs text-[#c8a060] leading-none">Ask Thuso · Help & tools</span>
+          </div>
+        </div>
+        <span className="text-xl text-[#c8a060]">→</span>
+      </button>
+
+      {/* Mobile fallback: circular icon */}
+      <button
+        ref={launcherRef}
+        type="button"
+        aria-label={open ? "Close Thuso and Help Centre" : "Open Thuso and Help Centre"}
+        aria-expanded={open}
+        onClick={() => {
+          if (open) closePanel()
+          else openPanel("assistant")
+        }}
+        className="thuso-launcher-pill md:hidden fixed bottom-[calc(var(--news-ticker-height,56px)+16px)] right-5 z-[210] flex h-14 w-14 items-center justify-center rounded-full border border-[#c8a060]/60 bg-[#1a3a2a] text-[#c8a060] shadow-[0_16px_40px_rgba(10,32,32,0.32)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8a060]"
+        title="Thuso: Ask for help"
+      >
+        <div className="relative">
+          {open ? (
+            <IconX className="h-6 w-6" aria-hidden />
+          ) : (
+            <>
+              <IconLifebuoy className="h-6 w-6" aria-hidden />
+              <div className="thuso-sparkle" style={{ width: '18px', height: '18px', fontSize: '10px' }}>✨</div>
+            </>
+          )}
+        </div>
       </button>
     </>
   )
