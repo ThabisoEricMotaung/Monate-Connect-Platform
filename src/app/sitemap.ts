@@ -30,8 +30,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const generatedAt = new Date()
   const staticEntries: MetadataRoute.Sitemap = PUBLIC_ROUTES.map((path) => ({
     url: `${SITE_URL}${path}`,
-    changeFrequency: path === "" || path === "/opportunities" ? "daily" : "monthly",
-    priority: path === "" ? 1 : path === "/opportunities" ? 0.9 : 0.7,
+    changeFrequency: path === "" || path === "/tenders" ? "daily" : "monthly",
+    priority: path === "" ? 1 : path === "/tenders" ? 0.9 : 0.7,
   }))
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
