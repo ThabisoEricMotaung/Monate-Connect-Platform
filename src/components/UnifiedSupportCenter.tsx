@@ -1187,6 +1187,22 @@ export default function UnifiedSupportCenter() {
         </div>
       ) : null}
 
+      <style>{`
+        @keyframes thuso-pulse-glow {
+          0%, 100% {
+            box-shadow: 0 16px 40px rgba(10, 32, 32, 0.32), 0 0 0 0 rgba(200, 160, 96, 0.4);
+          }
+          50% {
+            box-shadow: 0 16px 40px rgba(10, 32, 32, 0.32), 0 0 20px 8px rgba(200, 160, 96, 0.15);
+          }
+        }
+        .thuso-launcher {
+          animation: thuso-pulse-glow 3s ease-in-out infinite;
+        }
+        .thuso-launcher:hover {
+          animation: none;
+        }
+      `}</style>
       <button
         ref={launcherRef}
         type="button"
@@ -1196,7 +1212,7 @@ export default function UnifiedSupportCenter() {
           if (open) closePanel()
           else openPanel("assistant")
         }}
-        className="fixed bottom-[calc(var(--news-ticker-height,56px)+16px)] right-5 z-[210] flex h-14 w-14 items-center justify-center rounded-full border border-[#c8a060]/40 bg-[#1a3a2a] text-[#c8a060] shadow-[0_16px_40px_rgba(10,32,32,0.32)] transition hover:scale-105 hover:bg-[#244f39] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8a060]"
+        className={`fixed bottom-[calc(var(--news-ticker-height,56px)+16px)] right-5 z-[210] flex h-14 w-14 items-center justify-center rounded-full border-2 border-[#c8a060] bg-[#1a3a2a] text-[#c8a060] shadow-[0_16px_40px_rgba(10,32,32,0.32)] transition duration-200 hover:scale-110 hover:bg-[#2d6a52] hover:border-[#d9b563] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8a060] ${!open ? 'thuso-launcher' : ''}`}
       >
         {open ? <IconX className="h-6 w-6" aria-hidden /> : <IconLifebuoy className="h-6 w-6" aria-hidden />}
       </button>
