@@ -109,7 +109,7 @@ export async function GET(request: Request) {
     title: rfq.title ?? "Untitled opportunity",
     province: provinceLabel(rfq),
     closingLabel: closingLabel(rfq),
-    url: `${base}/opportunities/${rfq.id}`,
+    url: `${base}/tenders/${rfq.id}`,
   }))
 
   // Active (non-unsubscribed) subscribers.

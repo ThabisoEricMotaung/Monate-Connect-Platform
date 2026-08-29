@@ -44,7 +44,7 @@ export function buildOpportunityJsonLd(
     "@type": rfq.is_external_opportunity ? "GovernmentService" : "Service",
     name: rfq.title,
     description: rfq.description,
-    url: `${SITE_URL}/opportunities/${rfq.id}`,
+    url: `${SITE_URL}/tenders/${rfq.id}`,
     identifier: getOpportunityReference(rfq),
     provider: {
       "@type": "Organization",
@@ -63,5 +63,22 @@ export function buildOpportunityJsonLd(
       { name: "B-BBEE Requirement", value: rfq.bbbee_requirement ?? null },
       { name: "Procurement Type", value: getProcurementTypeLabel(rfq) },
     ],
+  }
+}
+
+export function buildOpportunitySearchActionJsonLd(): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "AiForm Procure",
+    url: SITE_URL,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/tenders?search={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
   }
 }

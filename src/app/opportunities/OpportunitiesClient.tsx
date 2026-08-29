@@ -716,7 +716,7 @@ function RFQCard({
             )}
           </div>
           <h3 className="font-semibold text-heading line-clamp-2">
-            <Link href={`/opportunities/${rfq.id}`} className="hover:text-accent-strong hover:underline">
+            <Link href={`/tenders/${rfq.id}`} className="hover:text-accent-strong hover:underline">
               {rfq.title ? normalizeOpportunityTitleCase(rfq.title) : t("untitledOpportunity")}
             </Link>
           </h3>
@@ -744,7 +744,7 @@ function RFQCard({
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-panel pt-3">
         <div className="flex items-center gap-3">
           <p className="text-xs text-muted">{t("closesOn", { date: formatDate(getClosingDate(rfq), formatLocale, t("deadlineTbc")) })}</p>
-          <CopyLinkButton url={`${SITE_URL}/opportunities/${rfq.id}`} title={rfq.title ? normalizeOpportunityTitleCase(rfq.title) : undefined} />
+          <CopyLinkButton url={`${SITE_URL}/tenders/${rfq.id}`} title={rfq.title ? normalizeOpportunityTitleCase(rfq.title) : undefined} />
           {rfq.description && (
             <button
               onClick={() => onPreview(rfq)}

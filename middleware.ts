@@ -8,6 +8,15 @@ const PUBLIC_AUTH_PATHS = ["/auth/callback", "/auth/verify-email"]
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
+  const hostname = req.nextUrl.hostname.toLowerCase()
+
+  if (hostname === "aiformprocure.co.za") {
+    const canonicalUrl = req.nextUrl.clone()
+    canonicalUrl.hostname = "www.aiformprocure.co.za"
+    canonicalUrl.port = ""
+    return NextResponse.redirect(canonicalUrl, 308)
+  }
+
   let response = NextResponse.next({
     request: {
       headers: req.headers,
@@ -17,6 +26,9 @@ export async function middleware(req: NextRequest) {
   if (PUBLIC_AUTH_PATHS.some((p) => pathname.startsWith(p))) {
     return response
   }
+
+  const needsAuthMiddleware = pathname.startsWith(PROTECTED_PREFIX) || AUTH_PATHS.includes(pathname)
+  if (!needsAuthMiddleware) return response
 
   if (
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
@@ -77,5 +89,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/auth/login", "/auth/signup"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)"],
 }

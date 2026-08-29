@@ -2,6 +2,10 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import type { Metadata } from "next"
+
+// Revalidate every 6 hours for SEO crawlers. Tenders don't change frequently,
+// so this balances fresh metadata with reduced server load from search engines.
+export const revalidate = 21600
 import BackLink from "@/components/BackLink"
 import PublicBreadcrumbs from "@/components/PublicBreadcrumbs"
 import PublicFooter from "@/components/PublicFooter"
@@ -9,7 +13,10 @@ import PublicHeader from "@/components/PublicHeader"
 import OpportunityComplianceChecklist from "@/components/OpportunityComplianceChecklist"
 import CopyLinkButton from "./CopyLinkButton"
 import { normalizeOpportunityTitleCase } from "@/lib/externalOpportunity"
-import { buildOpportunityJsonLd } from "@/lib/opportunityStructuredData"
+import {
+  buildOpportunityJsonLd,
+  buildOpportunitySearchActionJsonLd,
+} from "@/lib/opportunityStructuredData"
 import { getLocale, getTranslations } from "next-intl/server"
 import { localeFormatTag, normalizeLocale } from "@/i18n/config"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
@@ -153,7 +160,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const displayTitle = rfq.title ? normalizeOpportunityTitleCase(rfq.title) : "Open tender"
   const title = `${displayTitle} - AiForm Procure`
   const description = plainSummary(rfq)
-  const url = `${SITE_URL}/opportunities/${rfq.id}`
+  const url = `${SITE_URL}/tenders/${rfq.id}`
 
   return {
     title,
@@ -165,6 +172,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url,
       siteName: "AiForm Procure",
       type: "website",
+      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: displayTitle }],
     },
     twitter: {
       card: "summary",
@@ -188,7 +196,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
   const daysLeft = daysUntil(rfq.closing_date)
   const isClosed = daysLeft !== null && daysLeft < 0
   const isExternal = Boolean(rfq.is_external_opportunity)
-  const shareUrl = `${SITE_URL}/opportunities/${rfq.id}`
+  const shareUrl = `${SITE_URL}/tenders/${rfq.id}`
   const requirements = getRFQComplianceRequirements(rfq)
   let supplierComplianceFit: SupplierComplianceFit | null = null
 
@@ -225,16 +233,22 @@ export default async function OpportunityDetailPage({ params }: Props) {
           __html: JSON.stringify(buildOpportunityJsonLd(rfq, locale)).replace(/</g, "\\u003c"),
         }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(buildOpportunitySearchActionJsonLd()).replace(/</g, "\\u003c"),
+        }}
+      />
       <PublicHeader />
       <main className="min-h-screen bg-white text-primary">
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
           <PublicBreadcrumbs
             items={[
               { label: tChrome("breadcrumbHome"), href: "/" },
-              { label: tChrome("opportunities"), href: "/opportunities" },
+              { label: tChrome("opportunities"), href: "/tenders" },
               {
                 label: rfq.title ? normalizeOpportunityTitleCase(rfq.title) : t("untitled"),
-                href: `/opportunities/${rfq.id}`,
+                href: `/tenders/${rfq.id}`,
               },
             ]}
           />
@@ -361,7 +375,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
           <div className="flex flex-wrap items-center gap-3 border-t border-panel pt-5">
             <p className="text-xs text-muted">{t("sharePrompt")}</p>
             <CopyLinkButton url={shareUrl} title={rfq.title ? normalizeOpportunityTitleCase(rfq.title) : undefined} />
-            <Link href="/opportunities" className="text-xs font-semibold text-accent hover:underline">
+            <Link href="/tenders" className="text-xs font-semibold text-accent hover:underline">
               {t("back")} &rarr;
             </Link>
           </div>

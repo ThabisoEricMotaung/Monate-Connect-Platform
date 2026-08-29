@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest"
-import { buildOpportunityJsonLd } from "@/lib/opportunityStructuredData"
+import {
+  buildOpportunityJsonLd,
+  buildOpportunitySearchActionJsonLd,
+} from "@/lib/opportunityStructuredData"
 
 describe("buildOpportunityJsonLd", () => {
   it("builds GovernmentService data for an external opportunity with a source", () => {
@@ -29,7 +32,7 @@ describe("buildOpportunityJsonLd", () => {
       "@type": "GovernmentService",
       name: "Supply of safety equipment",
       description: "Supply and delivery of safety equipment.",
-      url: "https://www.aiformprocure.co.za/opportunities/17",
+      url: "https://www.aiformprocure.co.za/tenders/17",
       identifier: "NT-2026-17",
       provider: { "@type": "Organization", name: "Department of Public Works" },
       areaServed: [
@@ -103,6 +106,19 @@ describe("buildOpportunityJsonLd", () => {
         { name: "B-BBEE Requirement", value: null },
         { name: "Procurement Type", value: "Platform RFQ" },
       ],
+    })
+  })
+
+  it("builds a SearchAction targeting the canonical tender search route", () => {
+    expect(buildOpportunitySearchActionJsonLd()).toMatchObject({
+      "@type": "WebSite",
+      url: "https://www.aiformprocure.co.za",
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          urlTemplate: "https://www.aiformprocure.co.za/tenders?search={search_term_string}",
+        },
+      },
     })
   })
 })
