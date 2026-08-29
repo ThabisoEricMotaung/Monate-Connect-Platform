@@ -1,7 +1,7 @@
 import * as React from "react"
 import { cn } from "@/lib/cn"
 
-export interface FormErrorProps extends React.HTMLAttributes<HTMLParagraphElement> {}
+export type FormErrorProps = React.HTMLAttributes<HTMLParagraphElement>
 
 const FormError = React.forwardRef<HTMLParagraphElement, FormErrorProps>(
   ({ className, children, ...props }, ref) => (
