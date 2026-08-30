@@ -91,7 +91,6 @@ async function getOpportunity(id: string): Promise<PublicRFQDetail | null> {
     )
     .eq("id", numericId)
     .eq("is_public", true)
-    .or("is_external_opportunity.is.null,is_external_opportunity.eq.false,curation_status.eq.approved")
     .maybeSingle()
 
   if (error || !data) return null
