@@ -35,7 +35,7 @@ const PROMPT_PILLS: PromptPill[] = [
   {
     label: "Review Quotes",
     href: "/dashboard/admin/quotes",
-    icon: IconCheckCircle,
+    icon: IconCheck,
     description: "Process supplier responses",
   },
   {

@@ -67,7 +67,7 @@ export default function QuickActions({
     {
       label: "Pending Quotes",
       value: unreviewedQuotes,
-      icon: IconCheckCircle,
+      icon: IconCheck,
       href: "/dashboard/admin/quotes",
       trend: { value: 8, direction: "up" },
       color: "amber",
@@ -86,7 +86,7 @@ export default function QuickActions({
       label: "Issue PO",
       description: "Create a purchase order",
       href: "/dashboard/admin/purchase-orders",
-      icon: IconCheckCircle,
+      icon: IconCheck,
       accent: "from-violet-600 to-violet-700",
     },
     {
