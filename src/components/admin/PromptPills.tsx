@@ -3,10 +3,9 @@
 import Link from "next/link"
 import {
   IconFileText,
-  IconCheckCircle,
+  IconCheck,
   IconUsers,
   IconPlus,
-  IconSearch,
   type TablerIcon,
 } from "@tabler/icons-react"
 import { usePathname } from "next/navigation"

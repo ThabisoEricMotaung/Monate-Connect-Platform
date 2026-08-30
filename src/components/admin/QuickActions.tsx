@@ -3,7 +3,7 @@
 import Link from "next/link"
 import {
   IconFileText,
-  IconCheckCircle,
+  IconCheck,
   IconUsers,
   IconArrowRight,
   IconTrendingUp,
