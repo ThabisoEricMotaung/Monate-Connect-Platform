@@ -91,8 +91,6 @@ async function getOpportunity(id: string): Promise<PublicRFQDetail | null> {
     )
     .eq("id", numericId)
     .eq("is_public", true)
-    .ilike("status", "open")
-    .gt("closing_date", new Date().toISOString())
     .or("is_external_opportunity.is.null,is_external_opportunity.eq.false,curation_status.eq.approved")
     .maybeSingle()
 
@@ -258,7 +256,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
 
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-success/30 bg-success-soft px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-success">
-              {t("overview")}
+              {isClosed ? "Archived" : t("overview")}
             </span>
             {isExternal && (
               <span className="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wide text-accent-strong">
@@ -315,7 +313,14 @@ export default async function OpportunityDetailPage({ params }: Props) {
           </div>
 
           <div className="mb-8 rounded-lg border border-accent/20 bg-accent/5 p-5">
-            {isExternal && rfq.original_source_url ? (
+            {isClosed ? (
+              <>
+                <p className="mb-1.5 text-sm font-semibold text-heading">Opportunity Closed</p>
+                <p className="mb-4 text-sm text-secondary">
+                  This opportunity closed on {formatDate(rfq.closing_date, formatLocale, "unknown date")}. Quotes are no longer being accepted.
+                </p>
+              </>
+            ) : isExternal && rfq.original_source_url ? (
               <>
                 <p className="mb-1.5 text-sm font-semibold text-heading">{t("externalTitle")}</p>
                 <p className="mb-4 text-sm text-secondary">
