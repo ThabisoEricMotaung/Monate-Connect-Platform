@@ -170,17 +170,7 @@ export default function SupplierWorkspacePage() {
           sidebar={<div className="p-4">{/* SupplierSidebar component */}</div>}
           main={
             <div className="p-4 md:p-6">
-              <ThsuoWorkspace
-                rfq={activeRfq}
-                smartScore={smartScore}
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                onFileUpload={handleFileUpload}
-                inputValue={inputValue}
-                onInputChange={setInputValue}
-                isLoading={isLoadingResponse}
-                uploadProgress={uploadProgress}
-              />
+              <ThsuoWorkspace rfqId={rfqId} userId="current-user-id" />
             </div>
           }
         />

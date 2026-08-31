@@ -108,17 +108,7 @@ export default function BuyerWorkspacePage() {
           sidebar={<div className="p-4">{/* BuyerSidebar component */}</div>}
           main={
             <div className="p-4 md:p-6">
-              <ThsuoWorkspace
-                rfq={activeRfq}
-                supplierResponses={supplierResponses}
-                smartScores={smartScores}
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                inputValue={inputValue}
-                onInputChange={setInputValue}
-                isLoading={isLoadingResponse}
-                userRole="buyer"
-              />
+              <ThsuoWorkspace rfqId={rfqId} userId="current-user-id" />
             </div>
           }
         />
