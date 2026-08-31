@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { applyLivePublicOpportunityFilters } from '@/lib/opportunityStatsQuery';
 
+export const dynamic = 'force-dynamic';
+
 interface RFQRecord {
   id: string;
   title: string;

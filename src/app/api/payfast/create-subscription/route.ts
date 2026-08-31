@@ -8,6 +8,8 @@ import {
 } from "@/lib/payfast-server"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 
+export const dynamic = 'force-dynamic';
+
 export const runtime = "nodejs"
 
 export async function POST(request: Request) {
