@@ -165,7 +165,7 @@ export default function SupplierWorkspacePage() {
 
   return (
     <ErrorBoundary>
-      <LoadingState isLoading={loading} error={error?.message} loadingMessage="Loading RFQ...">
+      <LoadingState isLoading={loading} error={error} loadingMessage="Loading RFQ...">
         <ResponsiveLayout
           sidebar={<div className="p-4">{/* SupplierSidebar component */}</div>}
           main={

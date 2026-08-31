@@ -101,7 +101,7 @@ export default function BuyerWorkspacePage() {
     <ErrorBoundary>
       <LoadingState
         isLoading={loading}
-        error={error?.message}
+        error={error}
         loadingMessage="Loading supplier responses..."
       >
         <ResponsiveLayout
