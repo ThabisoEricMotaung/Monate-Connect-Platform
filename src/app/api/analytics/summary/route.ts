@@ -1,12 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
+  if (!supabaseAdmin) {
+    return NextResponse.json(
+      { error: 'Analytics service is not configured' },
+      { status: 503 }
+    );
+  }
+
+  const supabase = supabaseAdmin;
+
   try {
     // Top searched queries
     const { data: topQueries } = await supabase
