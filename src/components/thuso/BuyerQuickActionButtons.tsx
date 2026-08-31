@@ -11,7 +11,7 @@ interface BuyerQuickAction {
   id: string
   label: string
   description: string
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
+  icon: React.ComponentType<any>
   action: () => void
   variant: "primary" | "secondary"
 }
