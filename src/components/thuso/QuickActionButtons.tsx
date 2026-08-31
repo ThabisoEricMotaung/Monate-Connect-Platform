@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { IconUpload, IconFileCheck, IconListCheck, IconSend } from "@tabler/icons-react"
 
 interface QuickActionButtonsProps {
@@ -10,7 +11,7 @@ interface QuickAction {
   id: string
   label: string
   description: string
-  icon: any
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
   action: () => void
   variant: "primary" | "secondary"
 }
