@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getSastAdjustedToday } from '@/lib/opportunityStatsQuery';
+import { applyLivePublicOpportunityFilters } from '@/lib/opportunityStatsQuery';
 
 interface RFQRecord {
   id: string;
@@ -27,16 +27,6 @@ function parseSort(value: string | null): TenderSort {
  * Ensures consistency between tenders API and homepage stats.
  * Uses 'any' to accept Supabase's complex PostgrestFilterBuilder type.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function applyBaseOpportunityFilters(query: any) {
-  return query
-    .eq('is_public', true)
-    .eq('status', 'active')
-    .not('closing_date', 'is', null)
-    .not('title', 'ilike', '%SMOKE TEST%')
-    .not('title', 'ilike', '%[TEST]%');
-}
-
 // Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -50,25 +40,25 @@ export async function GET(request: NextRequest) {
     // Query parameters
     const search = searchParams.get('search') || '';
     const source = searchParams.get('source') || '';
-    const daysUntilClose = parseInt(searchParams.get('daysUntilClose') || '90');
+    const daysParam = searchParams.get('daysUntilClose');
+    const daysUntilClose = daysParam ? parseInt(daysParam) : null;
     const budget = searchParams.get('budget') || '';
     const sort = parseSort(searchParams.get('sort'));
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    // Calculate date range using unified SAST timezone handling
-    const today = getSastAdjustedToday();
-    const targetDate = new Date(today);
-    targetDate.setDate(targetDate.getDate() + daysUntilClose);
+    const now = new Date();
+    const targetDate = daysUntilClose && daysUntilClose > 0
+      ? new Date(now.getTime() + daysUntilClose * 24 * 60 * 60 * 1000)
+      : null;
 
     // Build base query with unified filters
     let baseQuery = supabase
       .from('rfqs')
       .select('id, title, buyer_org, closing_date, published_date, created_at, is_public, source_name, estimated_budget, description, closing_soon');
 
-    baseQuery = applyBaseOpportunityFilters(baseQuery)
-      .gte('closing_date', today.toISOString())
-      .lte('closing_date', targetDate.toISOString());
+    baseQuery = applyLivePublicOpportunityFilters(baseQuery, now);
+    if (targetDate) baseQuery = baseQuery.lte('closing_date', targetDate.toISOString());
 
     if (search) {
       baseQuery = baseQuery.or(`title.ilike.%${search}%,external_reference.ilike.%${search}%,description.ilike.%${search}%`);
@@ -91,9 +81,8 @@ export async function GET(request: NextRequest) {
       .from('rfqs')
       .select('id', { count: 'exact', head: true });
 
-    countQuery = applyBaseOpportunityFilters(countQuery)
-      .gte('closing_date', today.toISOString())
-      .lte('closing_date', targetDate.toISOString());
+    countQuery = applyLivePublicOpportunityFilters(countQuery, now);
+    if (targetDate) countQuery = countQuery.lte('closing_date', targetDate.toISOString());
 
     if (search) {
       countQuery = countQuery.or(`title.ilike.%${search}%,external_reference.ilike.%${search}%,description.ilike.%${search}%`);
@@ -115,10 +104,9 @@ export async function GET(request: NextRequest) {
       .from('rfqs')
       .select('id', { count: 'exact', head: true });
 
-    newCountQuery = applyBaseOpportunityFilters(newCountQuery)
-      .gte('closing_date', today.toISOString())
-      .lte('closing_date', targetDate.toISOString())
+    newCountQuery = applyLivePublicOpportunityFilters(newCountQuery, now)
       .gte('created_at', fortyEightHoursAgo);
+    if (targetDate) newCountQuery = newCountQuery.lte('closing_date', targetDate.toISOString());
 
     if (search) newCountQuery = newCountQuery.or(`title.ilike.%${search}%,external_reference.ilike.%${search}%,description.ilike.%${search}%`);
     if (source === 'null') newCountQuery = newCountQuery.is('source_name', null);

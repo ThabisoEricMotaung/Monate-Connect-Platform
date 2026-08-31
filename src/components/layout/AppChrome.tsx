@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation"
 import Navbar from "@/components/layout/Navbar"
-import UnifiedSupportCenter from "@/components/UnifiedSupportCenter"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 import { useLocale, useTranslations } from "next-intl"
 import { useAnalytics } from "@/hooks/useAnalytics"
@@ -29,7 +28,6 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
         </div>
       ) : null}
       {children}
-      {!hideChrome ? <UnifiedSupportCenter /> : null}
     </>
   )
 }

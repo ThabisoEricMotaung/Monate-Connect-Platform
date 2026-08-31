@@ -14,6 +14,18 @@ import { SupabaseClient } from "@supabase/supabase-js"
 
 const SOUTH_AFRICA_UTC_OFFSET_MS = 2 * 60 * 60 * 1000
 
+/** The canonical definition of a live public opportunity. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function applyLivePublicOpportunityFilters(query: any, now = new Date()) {
+  return query
+    .eq("is_public", true)
+    .eq("status", "active")
+    .not("closing_date", "is", null)
+    .gt("closing_date", now.toISOString())
+    .not("title", "ilike", "%SMOKE TEST%")
+    .not("title", "ilike", "%[TEST]%")
+}
+
 export function getSastAdjustedNow(now = new Date()): Date {
   return new Date(now.getTime() + SOUTH_AFRICA_UTC_OFFSET_MS)
 }
@@ -52,23 +64,14 @@ export function buildBaseOpportunityQuery(
   } = {}
 ) {
   const now = options.now ?? new Date()
-  const nowIso = now.toISOString()
-
   if (options.countOnly) {
-    return supabase
-      .from("rfqs")
-      .select("id", { count: "exact", head: true })
-      .eq("is_public", true)
-      .eq("status", "active")
-      .gt("closing_date", nowIso)
+    return applyLivePublicOpportunityFilters(
+      supabase.from("rfqs").select("id", { count: "exact", head: true }),
+      now,
+    )
   }
 
-  return supabase
-    .from("rfqs")
-    .select("*")
-    .eq("is_public", true)
-    .eq("status", "active")
-    .gt("closing_date", nowIso)
+  return applyLivePublicOpportunityFilters(supabase.from("rfqs").select("*"), now)
 }
 
 /**

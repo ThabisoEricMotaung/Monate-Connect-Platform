@@ -2,7 +2,7 @@ import "server-only"
 
 import { unstable_cache } from "next/cache"
 import { createClient } from "@supabase/supabase-js"
-import { buildBaseOpportunityQuery, getSouthAfricaClosingWeekEnd, getSastAdjustedToday } from "./opportunityStatsQuery"
+import { applyLivePublicOpportunityFilters, buildBaseOpportunityQuery, getSouthAfricaClosingWeekEnd } from "./opportunityStatsQuery"
 
 export type PublicOpportunityStats = {
   liveOpportunities: number
@@ -19,37 +19,22 @@ async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunitySta
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
     const now = new Date()
-    const today = getSastAdjustedToday(now)
     const closingWeekEnd = getSouthAfricaClosingWeekEnd(now)
     const ago48HoursIso = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString()
 
-    // Use same date range as tenders page for consistency (today to today+90 days)
-    const todayIso = today.toISOString()
-    const in90DaysIso = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString()
     const closingWeekEndIso = closingWeekEnd.toISOString()
 
     const [liveRes, closingWeekRes, new48Res, screenedTotalRes, screenedDoneRes] = await Promise.all([
-      supabase
-        .from("rfqs")
-        .select("id", { count: "exact", head: true })
-        .eq("is_public", true)
-        .eq("status", "active")
-        .gte("closing_date", todayIso)
-        .lte("closing_date", in90DaysIso),
-      supabase
-        .from("rfqs")
-        .select("id", { count: "exact", head: true })
-        .eq("is_public", true)
-        .eq("status", "active")
-        .gte("closing_date", todayIso)
+      buildBaseOpportunityQuery(supabase, { now, countOnly: true }),
+      applyLivePublicOpportunityFilters(
+        supabase.from("rfqs").select("id", { count: "exact", head: true }),
+        now,
+      )
         .lte("closing_date", closingWeekEndIso),
-      supabase
-        .from("rfqs")
-        .select("id", { count: "exact", head: true })
-        .eq("is_public", true)
-        .eq("status", "active")
-        .gte("closing_date", todayIso)
-        .lte("closing_date", in90DaysIso)
+      applyLivePublicOpportunityFilters(
+        supabase.from("rfqs").select("id", { count: "exact", head: true }),
+        now,
+      )
         .gte("created_at", ago48HoursIso),
       supabase
         .from("rfqs")

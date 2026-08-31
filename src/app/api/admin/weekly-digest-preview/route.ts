@@ -9,6 +9,7 @@ import {
   type DigestOpenRfq,
   type DigestSupplierProfile,
 } from "@/lib/weeklyDigest"
+import { applyLivePublicOpportunityFilters } from "@/lib/opportunityStatsQuery"
 
 // Lets a logged-in admin/buyer send themselves a live preview of the weekly
 // supplier digest — same content-building code as the real cron, computed
@@ -124,12 +125,10 @@ export async function GET(request: Request) {
   {
     let from = 0
     while (true) {
-      const { data, error } = await supabaseAdmin
+      const query = supabaseAdmin
         .from("rfqs")
-        .select("id, industry, category, province, provinces, created_at")
-        .ilike("status", "open")
-        .eq("is_public", true)
-        .gt("closing_date", now.toISOString())
+        .select("id, title, industry, category, province, provinces, created_at, closing_date")
+      const { data, error } = await applyLivePublicOpportunityFilters(query, now)
         .range(from, from + FETCH_PAGE_SIZE - 1)
 
       if (error) {

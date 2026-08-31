@@ -119,15 +119,19 @@ export default function DashboardPage() {
           supabase
             .from("rfqs")
             .select("id", { count: "exact", head: true })
-            .ilike("status", "open")
+            .eq("status", "active")
             .eq("is_public", true)
-            .gt("closing_date", now.toISOString()),
+            .gt("closing_date", now.toISOString())
+            .not("title", "ilike", "%SMOKE TEST%")
+            .not("title", "ilike", "%[TEST]%"),
           supabase
             .from("rfqs")
             .select("id", { count: "exact", head: true })
-            .ilike("status", "open")
+            .eq("status", "active")
             .eq("is_public", true)
             .gt("closing_date", now.toISOString())
+            .not("title", "ilike", "%SMOKE TEST%")
+            .not("title", "ilike", "%[TEST]%")
             .lte("closing_date", nextWeek.toISOString()),
           supabase.from("quotes").select("id", { count: "exact", head: true }).eq("supplier_id", user.id),
         ])

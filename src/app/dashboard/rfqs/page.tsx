@@ -424,9 +424,11 @@ export default function RFQsPage() {
         .select(
           "id,title,description,buyer_name,buyer_org,industry,category,province,provinces,bbbee_requirement,estimated_value_min,estimated_value_max,closing_date,published_date,status,quote_count,is_external_opportunity,original_source_url,source_name"
         )
-        .ilike("status", "open")
+        .eq("status", "active")
         .eq("is_public", true)
         .gt("closing_date", new Date().toISOString())
+        .not("title", "ilike", "%SMOKE TEST%")
+        .not("title", "ilike", "%[TEST]%")
         .order("closing_date", { ascending: true, nullsFirst: false })
 
       if (rfqError) {

@@ -114,7 +114,11 @@ export default function ProcurementWire({ scope = "public" }: { scope?: Procurem
         const { data } = await supabase
           .from("rfqs")
           .select("id,title,budget,deadline,created_at")
-          .ilike("status", "open")
+          .eq("status", "active")
+          .eq("is_public", true)
+          .gt("closing_date", new Date().toISOString())
+          .not("title", "ilike", "%SMOKE TEST%")
+          .not("title", "ilike", "%[TEST]%")
           .order("created_at", { ascending: false })
           .limit(3)
 
@@ -123,7 +127,14 @@ export default function ProcurementWire({ scope = "public" }: { scope?: Procurem
       }
 
       const [openRfqsResult, pendingQuotesResult, profileResult] = await Promise.all([
-        supabase.from("rfqs").select("id", { count: "exact", head: true }).ilike("status", "open"),
+        supabase
+          .from("rfqs")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "active")
+          .eq("is_public", true)
+          .gt("closing_date", new Date().toISOString())
+          .not("title", "ilike", "%SMOKE TEST%")
+          .not("title", "ilike", "%[TEST]%"),
         supabase
           .from("quotes")
           .select("id", { count: "exact", head: true })

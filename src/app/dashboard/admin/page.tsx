@@ -91,6 +91,10 @@ type DashboardData = {
   suppliers: SupplierProfile[]
 }
 
+type PublicOpportunityStats = {
+  liveOpportunities: number
+}
+
 type PipelineStage = "Draft" | "Open" | "Evaluation" | "Expired" | "Awarded" | "Closed"
 
 const emptyData: DashboardData = {
@@ -269,6 +273,7 @@ export default function AdminOverviewPage() {
   const [dashboardData, setDashboardData] = useState<DashboardData>(emptyData)
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
+  const [livePublicOpportunities, setLivePublicOpportunities] = useState<number | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -288,7 +293,7 @@ export default function AdminOverviewPage() {
       }
       const client = supabase
 
-      const [buyer, rfqs, quotes, contracts, purchaseOrders, invoices] = await Promise.all([
+      const [buyer, rfqs, quotes, contracts, purchaseOrders, invoices, publicStats] = await Promise.all([
         client
           .from("profiles")
           .select("id, business_name, full_name, preferred_name, email")
@@ -335,6 +340,9 @@ export default function AdminOverviewPage() {
             .order("created_at", { ascending: false })
             .range(from, to),
         ),
+        fetch("/api/opportunities/stats", { cache: "no-store" })
+          .then(async (response) => response.ok ? await response.json() as PublicOpportunityStats : null)
+          .catch(() => null),
       ])
 
       const supplierIds = Array.from(
@@ -359,6 +367,7 @@ export default function AdminOverviewPage() {
           : []
 
       if (!cancelled) {
+        setLivePublicOpportunities(publicStats?.liveOpportunities ?? null)
         setDashboardData({
           buyer,
           rfqs,
@@ -588,15 +597,10 @@ export default function AdminOverviewPage() {
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {[
               {
-                label: "Active RFQs",
-                value: derived.activeRfqs.length,
-                sub:
-                  derived.urgentRfqs.length > 0
-                    ? `${derived.urgentRfqs.length} closing in ${Math.min(
-                        ...derived.urgentRfqs.map((rfq) => daysUntil(rfq.deadline) ?? 0),
-                      )} days`
-                    : "No urgent deadlines",
-                tone: derived.urgentRfqs.length > 0 ? "text-warning" : "text-muted",
+                label: "Live public opportunities",
+                value: livePublicOpportunities ?? "—",
+                sub: "Same total as the public website and emails",
+                tone: "text-success",
               },
               {
                 label: "Quotes received",
@@ -640,6 +644,9 @@ export default function AdminOverviewPage() {
                   RFQ stages
                 </p>
                 <h2 className="mt-2 text-xl font-semibold text-heading">Procurement pipeline</h2>
+                <p className="mt-1 text-xs text-muted">
+                  All internal and external RFQ records; these workflow totals are not the public live count.
+                </p>
               </div>
               <Link href="/dashboard/admin/rfqs" className="text-sm font-semibold text-accent transition hover:text-accent-strong">
                 View all

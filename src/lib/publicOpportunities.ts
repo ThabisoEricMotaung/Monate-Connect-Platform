@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
+import { applyLivePublicOpportunityFilters } from "@/lib/opportunityStatsQuery"
 
 // Server-side fetch for the public opportunities list. Uses its own Supabase
 // client (not the browser client from "@/lib/supabase") because this now runs
@@ -50,13 +51,10 @@ export async function fetchPublicOpportunities(): Promise<PublicRFQ[]> {
   const supabase = supabaseServerClient()
   if (!supabase) return []
 
-  const { data, error } = await supabase
+  const query = supabase
     .from("rfqs")
     .select(PUBLIC_RFQ_COLUMNS)
-    .ilike("status", "open")
-    .gt("closing_date", new Date().toISOString())
-    .eq("is_public", true)
-    .or("is_external_opportunity.is.null,is_external_opportunity.eq.false,curation_status.eq.approved")
+  const { data, error } = await applyLivePublicOpportunityFilters(query)
     .order("closing_date", { ascending: true, nullsFirst: false })
 
   if (error) {

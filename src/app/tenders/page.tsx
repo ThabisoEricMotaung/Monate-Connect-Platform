@@ -61,7 +61,7 @@ function TendersPageContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [source, setSource] = useState(() => searchParams.get('source') || '');
-  const [daysFilter, setDaysFilter] = useState(() => Number(searchParams.get('daysUntilClose')) || 90);
+  const [daysFilter, setDaysFilter] = useState(() => Number(searchParams.get('daysUntilClose')) || 0);
   const [budgetFilter, setBudgetFilter] = useState<BudgetRange>(() => (searchParams.get('budget') as BudgetRange) || '');
   const [sort, setSort] = useState<TenderSort>(() => {
     const value = searchParams.get('sort');
@@ -89,7 +89,7 @@ function TendersPageContent() {
         if (search) params.append('search', search);
         if (source) params.append('source', source);
         if (budgetFilter) params.append('budget', budgetFilter);
-        params.append('daysUntilClose', daysFilter.toString());
+        if (daysFilter) params.append('daysUntilClose', daysFilter.toString());
         params.append('sort', sort);
         params.append('limit', ITEMS_PER_PAGE.toString());
         params.append('offset', ((currentPage - 1) * ITEMS_PER_PAGE).toString());
@@ -116,7 +116,7 @@ function TendersPageContent() {
     if (search) params.set('search', search);
     if (source) params.set('source', source);
     if (budgetFilter) params.set('budget', budgetFilter);
-    params.set('daysUntilClose', daysFilter.toString());
+    if (daysFilter) params.set('daysUntilClose', daysFilter.toString());
     params.set('sort', sort);
     if (currentPage > 1) params.set('page', currentPage.toString());
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
@@ -246,6 +246,7 @@ function TendersPageContent() {
               onChange={(e) => { setDaysFilter(parseInt(e.target.value)); setCurrentPage(1); }}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
+              <option value={0}>Any future date</option>
               <option value={30}>30 days</option>
               <option value={60}>60 days</option>
               <option value={90}>90 days</option>

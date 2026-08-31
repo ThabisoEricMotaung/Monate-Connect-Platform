@@ -4,6 +4,7 @@ import { reviewCopyEmail, SUPPLIER_EMAIL_REVIEW_RECIPIENT } from "@/lib/emailSig
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 import { siteUrl } from "@/lib/weeklyDigest"
 import { buildPublicDigestEmail, type DigestHighlight } from "@/lib/publicOpportunityDigest"
+import { applyLivePublicOpportunityFilters } from "@/lib/opportunityStatsQuery"
 
 // Weekly email to everyone who signed up on /opportunities without creating
 // a full account: how many new opportunities showed up this week, a handful
@@ -77,12 +78,10 @@ export async function GET(request: Request) {
   {
     let from = 0
     while (true) {
-      const { data, error } = await supabaseAdmin
+      const query = supabaseAdmin
         .from("rfqs")
         .select("id, title, province, provinces, closing_date, created_at")
-        .ilike("status", "open")
-        .eq("is_public", true)
-        .gt("closing_date", now.toISOString())
+      const { data, error } = await applyLivePublicOpportunityFilters(query, now)
         .order("closing_date", { ascending: true, nullsFirst: false })
         .range(from, from + FETCH_PAGE_SIZE - 1)
 
