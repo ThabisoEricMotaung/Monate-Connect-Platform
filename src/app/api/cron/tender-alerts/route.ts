@@ -4,11 +4,6 @@ import { generateTenderEmailHTML, sendEmail } from '@/lib/emailService';
 
 export const dynamic = 'force-dynamic';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
-
 interface SavedSearch {
   id: number;
   user_id: string;
@@ -33,6 +28,12 @@ export async function POST(request: NextRequest) {
 
   try {
     console.log('Starting tender alert job...');
+
+    // Initialize Supabase client at request time, not at module load
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    );
 
     // Get all enabled saved searches
     const { data: searches, error: searchError } = await supabase
