@@ -95,13 +95,15 @@ export async function deleteSupplierDocument(filePath: string): Promise<UploadRe
 export async function getSupplierDocuments(
   rfqId: number,
   userId: string
-): Promise<{ name: string; url: string; uploadedAt: string }[]> {
-  if (!supabase) {
+): Promise<{ name: string; url: string; uploadedAt: string | null }[]> {
+  const client = supabase
+
+  if (!client) {
     return []
   }
 
   try {
-    const { data, error } = await supabase.storage
+    const { data, error } = await client.storage
       .from("supplier-documents")
       .list(`${rfqId}/${userId}`, { limit: 100, sortBy: { column: "created_at", order: "desc" } })
 
@@ -111,7 +113,7 @@ export async function getSupplierDocuments(
     }
 
     return (data || []).map((file) => {
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = client.storage
         .from("supplier-documents")
         .getPublicUrl(`${rfqId}/${userId}/${file.name}`)
 

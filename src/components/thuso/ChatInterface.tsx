@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 
-interface Message {
+export interface Message {
   role: "user" | "assistant"
   content: string
 }

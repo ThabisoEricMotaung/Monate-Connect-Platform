@@ -48,26 +48,28 @@ export function useThsuoData(rfqId?: number) {
   const [data, setData] = useState<ThsuoDataState>(initialState)
 
   useEffect(() => {
-    if (!supabase) {
+    const client = supabase
+
+    if (!client) {
       setData((prev) => ({ ...prev, loading: false, error: "Supabase not configured" }))
       return
     }
 
     let cancelled = false
 
-    async function loadData() {
+    async function loadData(configuredClient: NonNullable<typeof supabase>) {
       try {
         // Fetch RFQ data
         const rfqQuery = rfqId
-          ? supabase.from("rfqs").select("*").eq("id", rfqId)
-          : supabase.from("rfqs").select("*").eq("is_public", true).limit(50)
+          ? configuredClient.from("rfqs").select("*").eq("id", rfqId)
+          : configuredClient.from("rfqs").select("*").eq("is_public", true).limit(50)
 
         const { data: rfqData, error: rfqError } = await rfqQuery
 
         if (rfqError) throw rfqError
 
         // Fetch responses
-        const { data: responseData, error: responseError } = await supabase
+        const { data: responseData, error: responseError } = await configuredClient
           .from("quotes")
           .select("id, rfq_id, supplier_id, supplier_name, amount, status")
           .limit(100)
@@ -75,7 +77,7 @@ export function useThsuoData(rfqId?: number) {
         if (responseError) throw responseError
 
         // Fetch SmartScores
-        const { data: scoreData, error: scoreError } = await supabase
+        const { data: scoreData, error: scoreError } = await configuredClient
           .from("profiles")
           .select("id, bbbee_level, verification_status")
           .eq("role", "supplier")
@@ -115,7 +117,7 @@ export function useThsuoData(rfqId?: number) {
       }
     }
 
-    loadData()
+    loadData(client)
 
     return () => {
       cancelled = true

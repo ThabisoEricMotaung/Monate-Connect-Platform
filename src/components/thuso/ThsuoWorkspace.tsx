@@ -1,11 +1,12 @@
 "use client"
 
-import { ReactNode, useState } from "react"
+import { useState } from "react"
 import { IconMenu2, IconX } from "@tabler/icons-react"
 import SupplierSidebar from "./SupplierSidebar"
 import ProjectStatusCard from "./ProjectStatusCard"
 import QuickActionButtons from "./QuickActionButtons"
 import ChatInterface from "./ChatInterface"
+import type { Message } from "./ChatInterface"
 import InputBar from "./InputBar"
 
 interface ThsuoWorkspaceProps {
@@ -15,7 +16,7 @@ interface ThsuoWorkspaceProps {
 
 export default function ThsuoWorkspace({ rfqId, userId }: ThsuoWorkspaceProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([
+  const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
       content: "Hi there! 👋 Welcome to your operational command center.",
