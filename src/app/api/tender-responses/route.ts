@@ -53,6 +53,11 @@ export async function GET(request: NextRequest) {
 
 // POST: Create or update a tender response
 export async function POST(request: NextRequest) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  );
+
   try {
     const userId = request.headers.get('x-user-id');
     if (!userId) {
