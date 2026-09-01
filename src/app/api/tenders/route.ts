@@ -29,14 +29,15 @@ function parseSort(value: string | null): TenderSort {
  * Ensures consistency between tenders API and homepage stats.
  * Uses 'any' to accept Supabase's complex PostgrestFilterBuilder type.
  */
-// Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
 
 export async function GET(request: NextRequest) {
   try {
+    // Supabase client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    );
+
     const { searchParams } = new URL(request.url);
 
     // Query parameters
