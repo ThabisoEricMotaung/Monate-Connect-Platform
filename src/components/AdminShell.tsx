@@ -104,7 +104,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="mt-auto border-t border-[#ebebeb] pt-5 space-y-1.5">
-          <NavLink item={{ name: "Help", href: "/dashboard/help", icon: IconHelpCircle }} pathname={pathname} onNavigate={() => setSidebarOpen(false)} />
+          <NavLink item={{ name: "RFQ Action Assistant", href: "/dashboard/help", icon: IconHelpCircle }} pathname={pathname} onNavigate={() => setSidebarOpen(false)} />
           <NavLink item={{ name: "Settings", href: "/dashboard/admin/settings", icon: IconSettings }} pathname={pathname} onNavigate={() => setSidebarOpen(false)} />
         </div>
       </aside>

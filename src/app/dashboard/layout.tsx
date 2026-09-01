@@ -46,7 +46,7 @@ type SupplierNavigationName =
   | "Contracts"
   | "Invoices"
   | "Have Your Say"
-  | "Help"
+  | "RFQ Action Assistant"
   | "Inbox"
   | "Payments"
   | "Settings"
@@ -152,7 +152,7 @@ const navigation: {
     section: "Pinned",
   },
   {
-    name: "Help",
+    name: "RFQ Action Assistant",
     href: "/dashboard/help",
     section: "Pinned",
   },

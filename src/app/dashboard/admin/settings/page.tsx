@@ -522,14 +522,14 @@ export default function AdminSettingsPage() {
             Support & Training
           </p>
           <p className="mt-1 text-sm text-muted">
-            Open the Help Centre for end-user and admin guides, FAQs, and troubleshooting.
+            Open the RFQ Action Assistant for AI-guided help on active RFQs and procurement workflows.
           </p>
         </div>
         <Link
           href="/dashboard/help"
           className="rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition hover:bg-accent-strong"
         >
-          Help Centre
+          RFQ Action Assistant
         </Link>
       </div>
       {errorMessage && (

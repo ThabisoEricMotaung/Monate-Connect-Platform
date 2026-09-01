@@ -376,7 +376,7 @@ export default function AdminDashboardLayout({
           <div className="space-y-1">
             <NavLink
               item={{
-                name: "Help & Support",
+                name: "RFQ Action Assistant",
                 href: "/dashboard/help",
                 icon: IconHelpCircle,
                 iconColorClass: "text-[#666]",

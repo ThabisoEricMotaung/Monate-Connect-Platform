@@ -224,7 +224,7 @@ export function getBuyerNavGroups(): DashboardNavGroup[] {
           icon: IconMessageCircle,
           iconColorClass: "text-violet-600",
         },
-        { name: "Help", href: "/dashboard/help", icon: IconHelpCircle },
+        { name: "RFQ Action Assistant", href: "/dashboard/help", icon: IconHelpCircle },
       ],
     },
   ]
