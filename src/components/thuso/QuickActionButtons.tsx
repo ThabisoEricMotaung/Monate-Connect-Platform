@@ -1,86 +1,34 @@
 "use client"
 
-import React from "react"
-import { IconUpload, IconFileCheck, IconListCheck, IconSend } from "@tabler/icons-react"
+import type { ComponentType } from "react"
+import { IconFileCheck, IconListCheck, IconSend, IconUpload } from "@tabler/icons-react"
 
-interface QuickActionButtonsProps {
-  rfqId?: number
-}
-
+interface QuickActionButtonsProps { rfqId?: number }
 interface QuickAction {
   id: string
   label: string
-  description: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  icon: React.ComponentType<any>
+  icon: ComponentType<{ className?: string; stroke?: string | number }>
   action: () => void
   variant: "primary" | "secondary"
 }
 
 export default function QuickActionButtons({ rfqId }: QuickActionButtonsProps) {
   const actions: QuickAction[] = [
-    {
-      id: "upload",
-      label: "Upload Docs",
-      description: "Add BEE cert, tax docs",
-      icon: IconUpload,
-      action: () => console.log("Upload clicked"),
-      variant: "secondary",
-    },
-    {
-      id: "check-score",
-      label: "Check Score",
-      description: "View SmartScore",
-      icon: IconFileCheck,
-      action: () => console.log("Check score clicked"),
-      variant: "secondary",
-    },
-    {
-      id: "requirements",
-      label: "View Requirements",
-      description: "See RFQ details",
-      icon: IconListCheck,
-      action: () => console.log("Requirements clicked"),
-      variant: "secondary",
-    },
-    {
-      id: "submit",
-      label: "Submit Response",
-      description: "Finalize & send",
-      icon: IconSend,
-      action: () => console.log("Submit clicked"),
-      variant: "primary",
-    },
+    { id: "upload", label: "Upload docs", icon: IconUpload, action: () => console.log("Upload clicked", rfqId), variant: "secondary" },
+    { id: "check-score", label: "Check score", icon: IconFileCheck, action: () => console.log("Check score clicked"), variant: "secondary" },
+    { id: "requirements", label: "View requirements", icon: IconListCheck, action: () => console.log("Requirements clicked"), variant: "secondary" },
+    { id: "submit", label: "Submit response", icon: IconSend, action: () => console.log("Submit clicked"), variant: "primary" },
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+    <div className="flex max-w-full gap-2 overflow-x-auto pb-3" aria-label="RFQ quick actions">
       {actions.map((action) => {
         const Icon = action.icon
         const isPrimary = action.variant === "primary"
-
         return (
-          <button
-            key={action.id}
-            onClick={action.action}
-            className={`group relative overflow-hidden rounded-lg px-4 py-3 text-sm font-semibold transition-all duration-200 ease-out ${
-              isPrimary
-                ? "border border-[#1a3a2a]/30 bg-gradient-to-br from-[#1a3a2a] to-[#244f39] text-white hover:shadow-md hover:from-[#244f39] hover:to-[#2d5f47] hover:scale-105 active:scale-95"
-                : "border border-[#e0e0db] bg-white text-[#1a3a2a] hover:border-[#c8a060]/50 hover:bg-[#f9f8f7] hover:shadow-sm hover:scale-105 active:scale-95"
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Icon
-                className={`h-4 w-4 transition-all duration-200 ${
-                  isPrimary ? "text-white" : "text-[#c8a060] group-hover:text-[#1a3a2a]"
-                }`}
-                stroke={2}
-              />
-              <div className="text-left">
-                <p className="leading-tight">{action.label}</p>
-                <p className="text-[10px] leading-tight opacity-75">{action.description}</p>
-              </div>
-            </div>
+          <button key={action.id} type="button" onClick={action.action} className={`inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3A2B] focus-visible:ring-offset-2 ${isPrimary ? "border border-[#1E3A2B] bg-[#1E3A2B] text-white hover:bg-[#294D39]" : "border border-[#D8D2C5] bg-white text-[#1E3A2B] hover:border-[#1E3A2B]/40 hover:bg-[#F4F0E7]"}`}>
+            <Icon className={`h-4 w-4 ${isPrimary ? "text-white" : "text-[#A67832]"}`} stroke={2} />
+            <span>{action.label}</span>
           </button>
         )
       })}

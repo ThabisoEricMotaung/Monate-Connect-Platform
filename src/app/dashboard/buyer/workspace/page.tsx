@@ -6,7 +6,6 @@ import { generateAIResponse } from "@/lib/thuso/chatIntegration"
 import {
   ThsuoWorkspace,
   ErrorBoundary,
-  ResponsiveLayout,
   LoadingState,
 } from "@/components/thuso"
 import "@/styles/thuso-animations.css"
@@ -104,14 +103,9 @@ export default function BuyerWorkspacePage() {
         error={error}
         loadingMessage="Loading supplier responses..."
       >
-        <ResponsiveLayout
-          sidebar={<div className="p-4">{/* BuyerSidebar component */}</div>}
-          main={
-            <div className="p-4 md:p-6">
-              <ThsuoWorkspace rfqId={rfqId} userId="current-user-id" />
-            </div>
-          }
-        />
+        <div className="min-w-0 px-2 py-4 sm:px-4 lg:px-6">
+          <ThsuoWorkspace rfqId={rfqId} userId="current-user-id" />
+        </div>
       </LoadingState>
     </ErrorBoundary>
   )
