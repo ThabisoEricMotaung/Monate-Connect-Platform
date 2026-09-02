@@ -2,12 +2,13 @@ import "server-only"
 
 import { unstable_cache } from "next/cache"
 import { createClient } from "@supabase/supabase-js"
-import { applyLivePublicOpportunityFilters, buildBaseOpportunityQuery, getSouthAfricaClosingWeekEnd } from "./opportunityStatsQuery"
+import { buildBaseOpportunityQuery } from "./opportunityStatsQuery"
 
 export type PublicOpportunityStats = {
   liveOpportunities: number
   closingThisWeek: number
   newIn48Hours: number
+  underEvaluation: number
   screenedPercent: number | null
 }
 
@@ -19,23 +20,29 @@ async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunitySta
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
     const now = new Date()
-    const closingWeekEnd = getSouthAfricaClosingWeekEnd(now)
     const ago48HoursIso = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString()
+    const sevenDaysFromNowIso = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
 
-    const closingWeekEndIso = closingWeekEnd.toISOString()
-
-    const [liveRes, closingWeekRes, new48Res, screenedTotalRes, screenedDoneRes] = await Promise.all([
+    const [liveRes, closingWeekRes, new48Res, underEvaluationRes, screenedTotalRes, screenedDoneRes] = await Promise.all([
       buildBaseOpportunityQuery(supabase, { now, countOnly: true }),
-      applyLivePublicOpportunityFilters(
-        supabase.from("rfqs").select("id", { count: "exact", head: true }),
-        now,
-      )
-        .lte("closing_date", closingWeekEndIso),
-      applyLivePublicOpportunityFilters(
-        supabase.from("rfqs").select("id", { count: "exact", head: true }),
-        now,
-      )
+      supabase
+        .from("rfqs")
+        .select("id", { count: "exact", head: true })
+        .eq("is_public", true)
+        .in("status", ["open", "active"])
+        .gte("closing_date", now.toISOString())
+        .lte("closing_date", sevenDaysFromNowIso),
+      supabase
+        .from("rfqs")
+        .select("id", { count: "exact", head: true })
+        .eq("is_public", true)
         .gte("created_at", ago48HoursIso),
+      supabase
+        .from("rfqs")
+        .select("id", { count: "exact", head: true })
+        .eq("is_public", true)
+        .lte("closing_date", now.toISOString())
+        .not("status", "in", "(awarded,closed)"),
       supabase
         .from("rfqs")
         .select("id", { count: "exact", head: true })
@@ -49,7 +56,7 @@ async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunitySta
         .in("curation_status", ["approved", "quarantined"]),
     ])
 
-    for (const result of [liveRes, closingWeekRes, new48Res, screenedTotalRes, screenedDoneRes]) {
+    for (const result of [liveRes, closingWeekRes, new48Res, underEvaluationRes, screenedTotalRes, screenedDoneRes]) {
       if (result.error) {
         console.warn("Opportunity stats query failed:", result.error.message)
         return null
@@ -63,6 +70,7 @@ async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunitySta
       liveOpportunities: liveRes.count ?? 0,
       closingThisWeek: closingWeekRes.count ?? 0,
       newIn48Hours: new48Res.count ?? 0,
+      underEvaluation: underEvaluationRes.count ?? 0,
       screenedPercent: screenedTotal > 0 ? Math.round((screenedDone / screenedTotal) * 100) : null,
     }
   } catch (error) {

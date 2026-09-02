@@ -19,11 +19,8 @@ const SOUTH_AFRICA_UTC_OFFSET_MS = 2 * 60 * 60 * 1000
 export function applyLivePublicOpportunityFilters(query: any, now = new Date()) {
   return query
     .eq("is_public", true)
-    .eq("status", "active")
-    .not("closing_date", "is", null)
+    .in("status", ["open", "active"])
     .gt("closing_date", now.toISOString())
-    .not("title", "ilike", "%SMOKE TEST%")
-    .not("title", "ilike", "%[TEST]%")
 }
 
 export function getSastAdjustedNow(now = new Date()): Date {

@@ -93,6 +93,9 @@ type DashboardData = {
 
 type PublicOpportunityStats = {
   liveOpportunities: number
+  closingThisWeek: number
+  newIn48Hours: number
+  underEvaluation: number
 }
 
 type PipelineStage = "Draft" | "Open" | "Evaluation" | "Expired" | "Awarded" | "Closed"
@@ -106,17 +109,6 @@ const emptyData: DashboardData = {
   invoices: [],
   suppliers: [],
 }
-
-const stageDescriptions: Record<PipelineStage, string> = {
-  Draft: "RFQs saved but not yet published",
-  Open: "Published RFQs accepting quotes",
-  Evaluation: "Deadline passed, under review",
-  Expired: "External notices past their closing date",
-  Awarded: "Selected supplier, PO issued",
-  Closed: "Completed or cancelled",
-}
-
-const stageOrder: PipelineStage[] = ["Draft", "Open", "Evaluation", "Expired", "Awarded", "Closed"]
 
 const barColors = [
   "bg-sky-500",
@@ -132,18 +124,6 @@ function normalizeStatus(status: string | null): string {
 
 function formatCurrency(value: string | number | null | undefined): string {
   return formatRand(value)
-}
-
-function formatDate(value: string | null): string {
-  if (!value) return "-"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return "-"
-
-  return date.toLocaleDateString("en-ZA", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
 }
 
 function daysUntil(value: string | null): number | null {
@@ -273,7 +253,7 @@ export default function AdminOverviewPage() {
   const [dashboardData, setDashboardData] = useState<DashboardData>(emptyData)
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
-  const [livePublicOpportunities, setLivePublicOpportunities] = useState<number | null>(null)
+  const [publicOpportunityStats, setPublicOpportunityStats] = useState<PublicOpportunityStats | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -367,7 +347,7 @@ export default function AdminOverviewPage() {
           : []
 
       if (!cancelled) {
-        setLivePublicOpportunities(publicStats?.liveOpportunities ?? null)
+        setPublicOpportunityStats(publicStats)
         setDashboardData({
           buyer,
           rfqs,
@@ -391,18 +371,6 @@ export default function AdminOverviewPage() {
   const derived = useMemo(() => {
     const rfqById = new Map(dashboardData.rfqs.map((rfq) => [rfq.id, rfq]))
     const supplierById = new Map(dashboardData.suppliers.map((supplier) => [supplier.id, supplier]))
-    const quoteCountByRfq = new Map<number, number>()
-    const awardedQuoteByRfq = new Map<number, QuoteRow>()
-
-    dashboardData.quotes.forEach((quote) => {
-      if (quote.rfq_id != null) {
-        quoteCountByRfq.set(quote.rfq_id, (quoteCountByRfq.get(quote.rfq_id) ?? 0) + 1)
-      }
-      if (quote.rfq_id != null && ["awarded", "approved"].includes(normalizeStatus(quote.status))) {
-        awardedQuoteByRfq.set(quote.rfq_id, quote)
-      }
-    })
-
     const activeRfqs = dashboardData.rfqs.filter((rfq) =>
       ["open", "evaluation"].includes(stageForRfq(rfq).toLowerCase()),
     )
@@ -444,11 +412,6 @@ export default function AdminOverviewPage() {
         : ytdSpend > 0
           ? 100
           : 0
-
-    const pipeline = stageOrder.map((stage) => ({
-      stage,
-      rfqs: dashboardData.rfqs.filter((rfq) => stageForRfq(rfq) === stage),
-    }))
 
     const spendByCategoryMap = new Map<string, number>()
     dashboardData.purchaseOrders.forEach((purchaseOrder) => {
@@ -522,8 +485,6 @@ export default function AdminOverviewPage() {
     return {
       rfqById,
       supplierById,
-      quoteCountByRfq,
-      awardedQuoteByRfq,
       activeRfqs,
       urgentRfqs,
       openQuotes,
@@ -532,7 +493,6 @@ export default function AdminOverviewPage() {
       expiringContracts,
       ytdSpend,
       spendChange,
-      pipeline,
       spendByCategory,
       largestCategory,
       spendBuckets,
@@ -598,7 +558,7 @@ export default function AdminOverviewPage() {
             {[
               {
                 label: "Live public opportunities",
-                value: livePublicOpportunities ?? "—",
+                value: publicOpportunityStats?.liveOpportunities ?? "—",
                 sub: "Same total as the public website and emails",
                 tone: "text-success",
               },
@@ -637,99 +597,43 @@ export default function AdminOverviewPage() {
             ))}
           </section>
 
-          <section className="mt-6 overflow-hidden rounded-md border border-panel bg-card p-5 shadow-panel">
-            <div className="mb-5 flex flex-col items-start gap-3 border-b border-panel pb-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-secondary">
-                  RFQ stages
-                </p>
-                <h2 className="mt-2 text-xl font-semibold text-heading">Procurement pipeline</h2>
-                <p className="mt-1 text-xs text-muted">
-                  All internal and external RFQ records; these workflow totals are not the public live count.
-                </p>
-              </div>
-              <Link href="/dashboard/admin/rfqs" className="text-sm font-semibold text-accent transition hover:text-accent-strong">
-                View all
-              </Link>
+          <section className="mt-6" aria-labelledby="public-procurement-metrics">
+            <div className="mb-4 flex flex-col gap-1">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#1E3A2B]">Public procurement</p>
+              <h2 id="public-procurement-metrics" className="text-xl font-semibold text-heading">Opportunity overview</h2>
             </div>
-
-            <div className="pb-2 md:overflow-x-auto">
-              <div className="flex w-full flex-col gap-3 md:min-w-[1040px] md:flex-row">
-                {derived.pipeline.map(({ stage, rfqs }) => (
-                  <div key={stage} className="w-full overflow-hidden rounded-md border border-panel bg-panel p-3 md:flex-1">
-                    <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:justify-between">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-heading">{stage}</p>
-                        <p className="mt-1 break-words text-[0.68rem] leading-5 text-muted">
-                          {stageDescriptions[stage]}
-                        </p>
-                      </div>
-                      <span className="rounded-full border border-panel bg-card px-2 py-0.5 text-xs font-bold text-secondary">
-                        {rfqs.length}
-                      </span>
-                    </div>
-
-                    <div className="space-y-2">
-                      {rfqs.slice(0, 3).map((rfq) => {
-                        const quoteCount = derived.quoteCountByRfq.get(rfq.id) ?? 0
-                        const awardedQuote = derived.awardedQuoteByRfq.get(rfq.id)
-                        const remaining = daysUntil(rfq.deadline)
-
-                        return (
-                          <Link
-                            key={rfq.id}
-                            href={`/dashboard/admin/rfqs/${rfq.id}`}
-                            className="block overflow-hidden rounded-md border border-panel bg-card p-3 transition hover:border-accent/50"
-                          >
-                            <p className="break-words text-sm font-semibold leading-5 text-heading">
-                              {rfq.title ?? `RFQ-${rfq.id}`}
-                            </p>
-                            <p className="mt-2 break-words text-[0.68rem] text-secondary">
-                              {rfq.category ?? "No industry"} · {rfq.province ?? rfq.region ?? "No province"}
-                            </p>
-                            <p className="mt-2 break-words text-xs font-semibold text-heading">
-                              {formatCurrency(rfq.budget)}
-                            </p>
-                            {stage === "Open" && remaining != null && (
-                              <p className={`mt-1 text-[0.68rem] font-semibold ${remaining <= 3 ? "text-warning" : "text-muted"}`}>
-                                {remaining >= 0 ? `${remaining} days left` : "Deadline passed"}
-                              </p>
-                            )}
-                            {stage === "Evaluation" && (
-                              <p className="mt-1 text-[0.68rem] text-muted">
-                                {quoteCount} quote{quoteCount !== 1 ? "s" : ""} received
-                              </p>
-                            )}
-                            {stage === "Expired" && (
-                              <p className="mt-1 text-[0.68rem] text-muted">
-                                Closed {formatDate(rfq.deadline)}
-                              </p>
-                            )}
-                            {stage === "Awarded" && awardedQuote && (
-                              <p className="mt-1 break-words text-[0.68rem] text-success">
-                                {awardedQuote.supplier_name ?? "Supplier"} · {formatCurrency(awardedQuote.amount)}
-                              </p>
-                            )}
-                            {stage === "Closed" && (
-                              <p className="mt-1 text-[0.68rem] text-muted">
-                                Completed {formatDate(rfq.deadline)}
-                              </p>
-                            )}
-                          </Link>
-                        )
-                      })}
-                      {rfqs.length > 3 && (
-                        <Link
-                          href="/dashboard/admin/rfqs"
-                          className="block px-1 pt-1 text-xs font-semibold text-accent transition hover:text-accent-strong"
-                        >
-                          + {rfqs.length - 3} more &rarr;
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                {
+                  label: "Live opportunities",
+                  value: publicOpportunityStats?.liveOpportunities,
+                  description: "Open and accepting responses",
+                },
+                {
+                  label: "Recently posted",
+                  value: publicOpportunityStats?.newIn48Hours,
+                  description: "Published in the last 48 hours",
+                },
+                {
+                  label: "Closing this week",
+                  value: publicOpportunityStats?.closingThisWeek,
+                  description: "Closing within the next 7 days",
+                },
+                {
+                  label: "Under evaluation",
+                  value: publicOpportunityStats?.underEvaluation,
+                  description: "Closed for responses, decision pending",
+                },
+              ].map((metric) => (
+                <article
+                  key={metric.label}
+                  className="min-h-36 overflow-hidden rounded-lg border border-panel border-t-4 border-t-[#1E3A2B] bg-card p-5 shadow-panel"
+                >
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#1E3A2B]">{metric.label}</p>
+                  <p className="mt-4 text-4xl font-bold tabular-nums text-heading">{metric.value ?? "—"}</p>
+                  <p className="mt-2 text-xs leading-5 text-secondary">{metric.description}</p>
+                </article>
+              ))}
             </div>
           </section>
 
