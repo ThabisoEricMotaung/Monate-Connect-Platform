@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { formatRand } from "@/lib/format"
 import { supabase } from "@/lib/supabase"
+import RFQCopilotHero from "@/components/thuso/RFQCopilotHero"
 import ProvinceMap from "../intelligence/regions/province-map"
 
 type RfqRow = {
@@ -21,6 +22,7 @@ type RfqRow = {
 type Metrics = {
   activeRfqs: number
   quotesReceived: number
+  dueSoon: number
 }
 
 type PipelineStage = "Draft" | "Open" | "Evaluation" | "Awarded" | "Closed"
@@ -109,7 +111,7 @@ function statusBadgeClass(status: string | null): string {
 }
 
 export default function BuyerHomePage() {
-  const [metrics, setMetrics] = useState<Metrics>({ activeRfqs: 0, quotesReceived: 0 })
+  const [metrics, setMetrics] = useState<Metrics>({ activeRfqs: 0, quotesReceived: 0, dueSoon: 0 })
   const [recentRfqs, setRecentRfqs] = useState<RfqRow[]>([])
   const [pipelineRfqs, setPipelineRfqs] = useState<RfqRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -132,24 +134,40 @@ export default function BuyerHomePage() {
         return
       }
 
-      const [rfqs, quotes, recentResult, pipelineRows] = await Promise.all([
-        readAllRows<{ status: string | null }>((from, to) =>
-          client.from("rfqs").select("id, status").eq("buyer_id", user.id).range(from, to),
-        ),
-        readAllRows<{ status: string | null }>((from, to) =>
-          client.from("quotes").select("id, status").eq("buyer_id", user.id).range(from, to),
-        ),
+      const now = new Date()
+      const todayStart = new Date(now)
+      todayStart.setUTCHours(0, 0, 0, 0)
+      const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+
+      const [activeRfqsResult, quotesTodayResult, dueSoonResult, recentResult, pipelineRows] = await Promise.all([
+        client
+          .from("rfqs")
+          .select("id", { count: "exact", head: true })
+          .eq("buyer_user_id", user.id)
+          .or("status.ilike.open,status.ilike.active")
+          .gt("closing_date", now.toISOString()),
+        client
+          .from("tender_responses")
+          .select("id, rfqs!inner(id)", { count: "exact", head: true })
+          .eq("rfqs.buyer_user_id", user.id)
+          .gte("created_at", todayStart.toISOString()),
+        client
+          .from("rfqs")
+          .select("id", { count: "exact", head: true })
+          .eq("buyer_user_id", user.id)
+          .gte("closing_date", now.toISOString())
+          .lte("closing_date", sevenDaysFromNow.toISOString()),
         client
           .from("rfqs")
           .select("id, title, status, created_at")
-          .eq("buyer_id", user.id)
+          .eq("buyer_user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(5),
         readAllRows<RfqRow>((from, to) =>
           client
             .from("rfqs")
             .select("id, title, status, category, province, region, budget, deadline, created_at")
-            .eq("buyer_id", user.id)
+            .eq("buyer_user_id", user.id)
             .order("created_at", { ascending: false })
             .range(from, to),
         ),
@@ -158,10 +176,9 @@ export default function BuyerHomePage() {
       if (cancelled) return
 
       setMetrics({
-        activeRfqs: rfqs.filter((r) =>
-          ["open", "evaluation"].includes(String(r.status ?? "").toLowerCase()),
-        ).length,
-        quotesReceived: quotes.length,
+        activeRfqs: activeRfqsResult.count ?? 0,
+        quotesReceived: quotesTodayResult.count ?? 0,
+        dueSoon: dueSoonResult.count ?? 0,
       })
 
       setPipelineRfqs(pipelineRows)
@@ -197,38 +214,15 @@ export default function BuyerHomePage() {
         </div>
       </div>
 
-      {/* Metrics row */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="overflow-hidden rounded-md border border-panel bg-card p-6 shadow-panel">
-          <p className="break-words text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-            Active RFQs
-          </p>
-          <p className="mt-2 break-words text-4xl font-bold text-heading">
-            {loading ? "—" : metrics.activeRfqs}
-          </p>
-          <p className="mt-1 break-words text-xs text-muted">Open &amp; under evaluation</p>
-        </div>
-
-        <div className="overflow-hidden rounded-md border border-panel bg-card p-6 shadow-panel">
-          <p className="break-words text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-            Quotes received
-          </p>
-          <p className="mt-2 break-words text-4xl font-bold text-heading">
-            {loading ? "—" : metrics.quotesReceived}
-          </p>
-          <p className="mt-1 break-words text-xs text-muted">Total across all RFQs</p>
-        </div>
-
-        <div className="flex items-center justify-center overflow-hidden rounded-md border border-accent/30 bg-accent/5 p-6">
-          <Link
-            href="/dashboard/buyer/rfqs/new"
-            className="inline-flex items-center gap-2 rounded-md border border-accent bg-accent px-5 py-3 text-sm font-bold text-button shadow-sm transition hover:bg-accent-strong"
-          >
-            <span className="text-base leading-none">+</span>
-            Create RFQ
-          </Link>
-        </div>
-      </div>
+      <RFQCopilotHero
+        activeRfqCount={metrics.activeRfqs}
+        quotesReceivedTodayCount={metrics.quotesReceived}
+        dueSoonCount={metrics.dueSoon}
+        loading={loading}
+        browseAllHref="/dashboard/buyer/rfqs"
+        viewQuotesHref="/dashboard/buyer/quotes"
+        createRfqHref="/dashboard/buyer/rfqs/new"
+      />
 
       {/* Procurement pipeline */}
       <section className="mb-8 overflow-hidden rounded-md border border-panel bg-card p-5 shadow-panel">
