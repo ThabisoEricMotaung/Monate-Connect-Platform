@@ -85,17 +85,6 @@ export default function BuyerWorkspacePage() {
     }
   }, [inputValue, activeRfq, rfqId, messages, smartScores])
 
-  if (!rfqId) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">No RFQ Selected</h1>
-          <p className="text-gray-600">Please select an RFQ to review</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <ErrorBoundary>
       <LoadingState

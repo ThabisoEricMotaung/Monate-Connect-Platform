@@ -19,6 +19,14 @@ interface Tender {
   estimated_budget?: number;
 }
 
+interface PublicOpportunityStats {
+  totalOpenRfqs: number;
+  liveOpportunities: number;
+  closingThisWeek: number;
+  newIn48Hours: number;
+  underEvaluation: number;
+}
+
 const SOURCES = [
   { value: '', label: 'All sources' },
   { value: 'eTenders', label: 'eTenders.gov.za' },
@@ -57,7 +65,7 @@ function TendersPageContent() {
   const [user, setUser] = useState<User | null>(null);
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [total, setTotal] = useState(0);
-  const [newCount, setNewCount] = useState(0);
+  const [opportunityStats, setOpportunityStats] = useState<PublicOpportunityStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [source, setSource] = useState(() => searchParams.get('source') || '');
@@ -70,6 +78,13 @@ function TendersPageContent() {
   const [currentPage, setCurrentPage] = useState(() => Math.max(1, Number(searchParams.get('page')) || 1));
   const [saveMessage, setSaveMessage] = useState('');
   const [savingSearch, setSavingSearch] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/opportunities/stats', { cache: 'no-store' })
+      .then((response) => response.ok ? response.json() as Promise<PublicOpportunityStats> : null)
+      .then(setOpportunityStats)
+      .catch(() => setOpportunityStats(null));
+  }, []);
 
   // Get current user on mount
   useEffect(() => {
@@ -98,12 +113,10 @@ function TendersPageContent() {
         const json = await response.json();
         setTenders(json.data || []);
         setTotal(json.total || 0);
-        setNewCount(json.newCount || 0);
       } catch (error) {
         console.error('Failed to fetch tenders:', error);
         setTenders([]);
         setTotal(0);
-        setNewCount(0);
       }
       setLoading(false);
     };
@@ -186,16 +199,38 @@ function TendersPageContent() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="flex gap-4 items-center">
-            <div className="inline-block bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-semibold">
-              • {total.toLocaleString()} active tender{total !== 1 ? 's' : ''}
-            </div>
-            {total > 0 && (
-              <div className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold">
-                • {newCount.toLocaleString()} new in the last 48 hours
-              </div>
-            )}
+          {/* Shared public procurement metrics */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                label: 'Total Open RFQs',
+                value: opportunityStats?.totalOpenRfqs,
+                detail: `${opportunityStats?.liveOpportunities ?? '—'} live and accepting bids`,
+              },
+              {
+                label: 'Closing this week',
+                value: opportunityStats?.closingThisWeek,
+                detail: 'Closing within the next 7 days',
+              },
+              {
+                label: 'New in 48 hours',
+                value: opportunityStats?.newIn48Hours,
+                detail: 'Recently posted opportunities',
+              },
+              {
+                label: 'Under evaluation',
+                value: opportunityStats?.underEvaluation,
+                detail: 'Evaluation in progress',
+              },
+            ].map((metric) => (
+              <article key={metric.label} className="rounded-lg border border-gray-200 border-t-4 border-t-[#1E3A2B] bg-white p-5 shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1E3A2B]">{metric.label}</p>
+                <p className="mt-3 text-3xl font-bold tabular-nums text-gray-900">
+                  {metric.value?.toLocaleString() ?? '—'}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-gray-600">{metric.detail}</p>
+              </article>
+            ))}
           </div>
 
           {/* Source Info */}

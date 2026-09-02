@@ -92,6 +92,7 @@ type DashboardData = {
 }
 
 type PublicOpportunityStats = {
+  totalOpenRfqs: number
   liveOpportunities: number
   closingThisWeek: number
   newIn48Hours: number
@@ -557,9 +558,9 @@ export default function AdminOverviewPage() {
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {[
               {
-                label: "Live public opportunities",
-                value: publicOpportunityStats?.liveOpportunities ?? "—",
-                sub: "Same total as the public website and emails",
+                label: "Engaged suppliers",
+                value: dashboardData.suppliers.length,
+                sub: "Suppliers represented in procurement activity",
                 tone: "text-success",
               },
               {
@@ -605,9 +606,9 @@ export default function AdminOverviewPage() {
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {[
                 {
-                  label: "Live opportunities",
-                  value: publicOpportunityStats?.liveOpportunities,
-                  description: "Open and accepting responses",
+                  label: "Total open RFQs",
+                  value: publicOpportunityStats?.totalOpenRfqs,
+                  description: `${publicOpportunityStats?.liveOpportunities ?? "—"} live and accepting bids`,
                 },
                 {
                   label: "Recently posted",
@@ -622,7 +623,7 @@ export default function AdminOverviewPage() {
                 {
                   label: "Under evaluation",
                   value: publicOpportunityStats?.underEvaluation,
-                  description: "Closed for responses, decision pending",
+                  description: "Evaluation in progress",
                 },
               ].map((metric) => (
                 <article

@@ -17,7 +17,6 @@ import {
   IconFileSearch,
   IconFileText,
   IconListCheck,
-  IconHelpCircle,
   IconHistory,
   IconHome,
   IconMap2,
@@ -224,7 +223,7 @@ export function getBuyerNavGroups(): DashboardNavGroup[] {
           icon: IconMessageCircle,
           iconColorClass: "text-violet-600",
         },
-        { name: "RFQ Action Assistant", href: "/dashboard/help", icon: IconHelpCircle },
+        { name: "RFQ Action Assistant", href: "/dashboard/buyer/workspace", icon: IconRobot },
       ],
     },
   ]

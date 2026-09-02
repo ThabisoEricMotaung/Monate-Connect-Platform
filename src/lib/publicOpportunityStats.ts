@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js"
 import { buildBaseOpportunityQuery } from "./opportunityStatsQuery"
 
 export type PublicOpportunityStats = {
+  totalOpenRfqs: number
   liveOpportunities: number
   closingThisWeek: number
   newIn48Hours: number
@@ -23,7 +24,12 @@ async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunitySta
     const ago48HoursIso = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString()
     const sevenDaysFromNowIso = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
 
-    const [liveRes, closingWeekRes, new48Res, underEvaluationRes, screenedTotalRes, screenedDoneRes] = await Promise.all([
+    const [totalOpenRes, liveRes, closingWeekRes, new48Res, underEvaluationRes, screenedTotalRes, screenedDoneRes] = await Promise.all([
+      supabase
+        .from("rfqs")
+        .select("id", { count: "exact", head: true })
+        .eq("is_public", true)
+        .in("status", ["open", "active"]),
       buildBaseOpportunityQuery(supabase, { now, countOnly: true }),
       supabase
         .from("rfqs")
@@ -56,7 +62,7 @@ async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunitySta
         .in("curation_status", ["approved", "quarantined"]),
     ])
 
-    for (const result of [liveRes, closingWeekRes, new48Res, underEvaluationRes, screenedTotalRes, screenedDoneRes]) {
+    for (const result of [totalOpenRes, liveRes, closingWeekRes, new48Res, underEvaluationRes, screenedTotalRes, screenedDoneRes]) {
       if (result.error) {
         console.warn("Opportunity stats query failed:", result.error.message)
         return null
@@ -67,6 +73,7 @@ async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunitySta
     const screenedDone = screenedDoneRes.count ?? 0
 
     return {
+      totalOpenRfqs: totalOpenRes.count ?? 0,
       liveOpportunities: liveRes.count ?? 0,
       closingThisWeek: closingWeekRes.count ?? 0,
       newIn48Hours: new48Res.count ?? 0,

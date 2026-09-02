@@ -110,13 +110,17 @@ export default async function OpportunityStatsBanner() {
   const formatLocale = localeFormatTag(normalizeLocale(locale))
 
   const items = [
-    { icon: <SparkleIcon />, value: stats.liveOpportunities.toLocaleString(formatLocale), label: t("liveOpportunities") },
-    { icon: <CalendarIcon />, value: stats.closingThisWeek.toLocaleString(formatLocale), label: t("closingWeek") },
-    { icon: <ClockIcon />, value: stats.newIn48Hours.toLocaleString(formatLocale), label: t("new48") },
+    {
+      icon: <SparkleIcon />,
+      value: stats.totalOpenRfqs.toLocaleString(formatLocale),
+      label: `Total Open RFQs · ${stats.liveOpportunities.toLocaleString(formatLocale)} live and accepting bids`,
+    },
+    { icon: <CalendarIcon />, value: stats.closingThisWeek.toLocaleString(formatLocale), label: "Closing this week" },
+    { icon: <ClockIcon />, value: stats.newIn48Hours.toLocaleString(formatLocale), label: "New in 48 hours" },
     {
       icon: <ShieldCheckIcon />,
-      value: stats.screenedPercent === null ? "—" : `${stats.screenedPercent}%`,
-      label: t("screened"),
+      value: stats.underEvaluation.toLocaleString(formatLocale),
+      label: "Under evaluation · Evaluation in progress",
     },
   ]
 

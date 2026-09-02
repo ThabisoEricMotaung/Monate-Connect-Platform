@@ -220,16 +220,7 @@ export default function NewsTicker() {
   if (dismissed) return null;
 
   if (collapsed) {
-    return (
-      <button
-        type="button"
-        className="news-ticker-tab"
-        onClick={toggleCollapsed}
-        aria-label="Expand procurement wire"
-      >
-        Procurement Wire ∨
-      </button>
-    );
+    return null;
   }
 
   const sourceItems = liveUpdates?.length ? liveUpdates : updates;
