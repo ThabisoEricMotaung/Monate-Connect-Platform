@@ -7,6 +7,7 @@ import { TenderCard } from '@/components/TenderCard';
 import { supabase } from '@/lib/supabase';
 import { saveSearch } from '@/lib/savedSearches';
 import { analyticsEvents } from '@/lib/analyticsEvents';
+import { useOpportunityStats } from '@/components/home/OpportunityStatsBanner';
 import type { User } from '@supabase/supabase-js';
 
 interface Tender {
@@ -17,14 +18,6 @@ interface Tender {
   closing_date: string;
   sources: string;
   estimated_budget?: number;
-}
-
-interface PublicOpportunityStats {
-  totalOpenRfqs: number;
-  liveOpportunities: number;
-  closingThisWeek: number;
-  newIn48Hours: number;
-  underEvaluation: number;
 }
 
 const SOURCES = [
@@ -65,7 +58,6 @@ function TendersPageContent() {
   const [user, setUser] = useState<User | null>(null);
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [total, setTotal] = useState(0);
-  const [opportunityStats, setOpportunityStats] = useState<PublicOpportunityStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [source, setSource] = useState(() => searchParams.get('source') || '');
@@ -79,12 +71,11 @@ function TendersPageContent() {
   const [saveMessage, setSaveMessage] = useState('');
   const [savingSearch, setSavingSearch] = useState(false);
 
-  useEffect(() => {
-    fetch('/api/opportunities/stats', { cache: 'no-store' })
-      .then((response) => response.ok ? response.json() as Promise<PublicOpportunityStats> : null)
-      .then(setOpportunityStats)
-      .catch(() => setOpportunityStats(null));
-  }, []);
+  const opportunityStats = useOpportunityStats({
+    source,
+    budget: budgetFilter,
+    closing: daysFilter,
+  });
 
   // Get current user on mount
   useEffect(() => {

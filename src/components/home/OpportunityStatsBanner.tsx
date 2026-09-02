@@ -1,7 +1,62 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { getPublicOpportunityStats } from "@/lib/publicOpportunityStats"
-import { getLocale, getTranslations } from "next-intl/server"
+import { useLocale, useTranslations } from "next-intl"
 import { localeFormatTag, normalizeLocale } from "@/i18n/config"
+
+export type OpportunityStatsFilters = {
+  source?: string
+  budget?: string
+  /** Days-until-closing threshold (e.g. 30 for "closing within 30 days"). */
+  closing?: number | string
+}
+
+export type PublicOpportunityStats = {
+  totalOpenRfqs: number
+  liveOpportunities: number
+  closingThisWeek: number
+  newIn48Hours: number
+  underEvaluation: number
+  screenedPercent: number | null
+}
+
+/**
+ * Fetches /api/opportunities/stats, narrowed by the given filters, and
+ * re-fetches whenever any of them change. Passing no filters (or all-empty
+ * ones) reproduces the original global stats.
+ */
+export function useOpportunityStats(filters?: OpportunityStatsFilters): PublicOpportunityStats | null {
+  const [stats, setStats] = useState<PublicOpportunityStats | null>(null)
+  const source = filters?.source || ""
+  const budget = filters?.budget || ""
+  const closing = filters?.closing || ""
+
+  useEffect(() => {
+    let cancelled = false
+
+    const params = new URLSearchParams()
+    if (source) params.set("source", source)
+    if (budget) params.set("budget", budget)
+    if (closing) params.set("closing", String(closing))
+    const query = params.toString()
+
+    fetch(`/api/opportunities/stats${query ? `?${query}` : ""}`, { cache: "no-store" })
+      .then((response) => (response.ok ? (response.json() as Promise<PublicOpportunityStats>) : null))
+      .then((data) => {
+        if (!cancelled) setStats(data)
+      })
+      .catch(() => {
+        if (!cancelled) setStats(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [source, budget, closing])
+
+  return stats
+}
 
 function ClockIcon() {
   return (
@@ -104,8 +159,15 @@ const STAT_STYLES = `
   }
 `
 
-export default async function OpportunityStatsBanner() {
-  const [stats, locale, t] = await Promise.all([getPublicOpportunityStats(), getLocale(), getTranslations("home")])
+interface OpportunityStatsBannerProps {
+  /** Optional filters (e.g. from /tenders' Source/Budget/Closing-in controls). */
+  filters?: OpportunityStatsFilters
+}
+
+export default function OpportunityStatsBanner({ filters }: OpportunityStatsBannerProps) {
+  const stats = useOpportunityStats(filters)
+  const locale = useLocale()
+  const t = useTranslations("home")
   if (!stats) return null
   const formatLocale = localeFormatTag(normalizeLocale(locale))
 
