@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     console.error("Thuso workspace chat: ANTHROPIC_API_KEY missing")
-    return NextResponse.json({ error: "Thuso is taking a breather — please try again." }, { status: 502 })
+    return NextResponse.json({ error: "Thuso workspace: API key not configured. Please contact support." }, { status: 502 })
   }
 
   try {
@@ -111,8 +111,9 @@ export async function POST(request: NextRequest) {
     })
 
     if (!response.ok) {
-      console.error("Anthropic error", response.status, await response.text())
-      return NextResponse.json({ error: "Thuso is taking a breather — please try again." }, { status: 502 })
+      const errorText = await response.text()
+      console.error("Anthropic error", response.status, errorText)
+      return NextResponse.json({ error: `Anthropic API error (${response.status}): ${errorText.slice(0, 100)}` }, { status: 502 })
     }
 
     const data = (await response.json()) as {
@@ -124,7 +125,8 @@ export async function POST(request: NextRequest) {
       message: reply || "I couldn't put together an answer just now — could you try rephrasing that?",
     })
   } catch (error) {
-    console.error(error)
-    return NextResponse.json({ error: "Thuso is taking a breather — please try again." }, { status: 502 })
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    console.error("Thuso chat error:", errorMsg)
+    return NextResponse.json({ error: `Thuso error: ${errorMsg.slice(0, 100)}` }, { status: 502 })
   }
 }
