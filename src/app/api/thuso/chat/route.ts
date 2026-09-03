@@ -89,7 +89,6 @@ export async function POST(request: NextRequest) {
   const systemPrompt = contextBlock ? `${BASE_PROMPTS[role]}\n\n${contextBlock}` : BASE_PROMPTS[role]
 
   const apiKey = process.env.ANTHROPIC_API_KEY
-  const workspaceId = process.env.ANTHROPIC_WORKSPACE_ID
 
   if (!apiKey) {
     console.error("Thuso workspace chat: ANTHROPIC_API_KEY missing")
@@ -97,18 +96,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const headers: Record<string, string> = {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    }
-    if (workspaceId) {
-      headers["anthropic-workspace-id"] = workspaceId
-    }
-
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers,
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
       body: JSON.stringify({
         model: "claude-opus-5",
         max_tokens: 500,
