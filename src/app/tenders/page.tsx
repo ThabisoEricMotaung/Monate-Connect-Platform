@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { TenderCard } from '@/components/TenderCard';
@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { saveSearch } from '@/lib/savedSearches';
 import { analyticsEvents } from '@/lib/analyticsEvents';
 import { useOpportunityStats } from '@/components/home/OpportunityStatsBanner';
+import { exportOpportunitiesAsCSV, exportOpportunitiesAsExcel, exportOpportunitiesAsPDF, type ExportableOpportunity } from '@/lib/exportOpportunities';
 import type { User } from '@supabase/supabase-js';
 
 interface Tender {
@@ -18,6 +19,30 @@ interface Tender {
   closing_date: string;
   sources: string;
   estimated_budget?: number;
+  status?: string | null;
+  province?: string | null;
+  category?: string | null;
+}
+
+type ExportFormat = 'pdf' | 'csv' | 'excel';
+
+const EXPORT_OPTIONS: Array<{ format: ExportFormat; label: string }> = [
+  { format: 'pdf', label: 'Download as PDF' },
+  { format: 'csv', label: 'Download as CSV' },
+  { format: 'excel', label: 'Download as Excel' },
+];
+
+function toExportableOpportunities(tenders: Tender[]): ExportableOpportunity[] {
+  return tenders.map((tender) => ({
+    title: tender.title,
+    buyer: tender.buyer_normalized,
+    closingDate: tender.closing_date,
+    budget: tender.estimated_budget ?? null,
+    status: tender.status ?? null,
+    source: tender.sources,
+    province: tender.province ?? null,
+    category: tender.category ?? null,
+  }));
 }
 
 const SOURCES = [
@@ -70,6 +95,9 @@ function TendersPageContent() {
   const [currentPage, setCurrentPage] = useState(() => Math.max(1, Number(searchParams.get('page')) || 1));
   const [saveMessage, setSaveMessage] = useState('');
   const [savingSearch, setSavingSearch] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
 
   const opportunityStats = useOpportunityStats({
     source,
@@ -125,6 +153,40 @@ function TendersPageContent() {
     if (currentPage > 1) params.set('page', currentPage.toString());
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [search, source, budgetFilter, daysFilter, sort, currentPage, pathname, router]);
+
+  useEffect(() => {
+    if (!exportMenuOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setExportMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [exportMenuOpen]);
+
+  const handleExport = async (exportFormat: ExportFormat) => {
+    setExportMenuOpen(false);
+    if (tenders.length === 0 || exportingFormat) return;
+
+    setExportingFormat(exportFormat);
+    try {
+      const rows = toExportableOpportunities(tenders);
+      const stamp = new Date().toISOString().slice(0, 10);
+      if (exportFormat === 'csv') {
+        exportOpportunitiesAsCSV(rows, `aiform-opportunities-${stamp}.csv`);
+      } else if (exportFormat === 'excel') {
+        await exportOpportunitiesAsExcel(rows, `aiform-opportunities-${stamp}.xlsx`);
+      } else {
+        await exportOpportunitiesAsPDF(rows, `aiform-opportunities-${stamp}.pdf`);
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    } finally {
+      setExportingFormat(null);
+    }
+  };
 
   const handleSaveSearch = async () => {
     if (!user) {
@@ -293,14 +355,48 @@ function TendersPageContent() {
             </select>
           </div>
 
-          <button
-            onClick={handleSaveSearch}
-            disabled={savingSearch || !user}
-            className="ml-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition"
-            title={!user ? 'Log in to save searches' : 'Save this search and get email alerts'}
-          >
-            {savingSearch ? '⏳ Saving...' : '💾 Save this search'}
-          </button>
+          <div className="ml-auto flex items-center gap-3">
+            <div className="relative" ref={exportMenuRef}>
+              <button
+                type="button"
+                onClick={() => setExportMenuOpen((open) => !open)}
+                disabled={tenders.length === 0 || exportingFormat !== null}
+                className="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
+                aria-haspopup="menu"
+                aria-expanded={exportMenuOpen}
+                title="Export the opportunities currently shown"
+              >
+                {exportingFormat ? '⏳ Exporting...' : '⬇️ Export'}
+              </button>
+              {exportMenuOpen && (
+                <div role="menu" className="absolute right-0 z-20 mt-2 w-60 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                  <p className="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
+                    Exports the {tenders.length} opportunit{tenders.length === 1 ? 'y' : 'ies'} shown
+                  </p>
+                  {EXPORT_OPTIONS.map((option) => (
+                    <button
+                      key={option.format}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => handleExport(option.format)}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleSaveSearch}
+              disabled={savingSearch || !user}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition"
+              title={!user ? 'Log in to save searches' : 'Save this search and get email alerts'}
+            >
+              {savingSearch ? '⏳ Saving...' : '💾 Save this search'}
+            </button>
+          </div>
         </div>
 
         {saveMessage && (

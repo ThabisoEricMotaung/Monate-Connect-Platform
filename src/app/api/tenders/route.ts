@@ -15,6 +15,9 @@ interface RFQRecord {
   estimated_budget: number | null;
   description: string | null;
   created_at: string;
+  status: string | null;
+  province: string | null;
+  category: string | null;
 }
 
 const SORT_VALUES = ['recent', 'closing-soon', 'closing-later'] as const;
@@ -58,7 +61,7 @@ export async function GET(request: NextRequest) {
     // Build base query with unified filters
     let baseQuery = supabase
       .from('rfqs')
-      .select('id, title, buyer_org, closing_date, published_date, created_at, is_public, source_name, estimated_budget, description, closing_soon');
+      .select('id, title, buyer_org, closing_date, published_date, created_at, is_public, source_name, estimated_budget, description, closing_soon, status, province, category');
 
     baseQuery = applyLivePublicOpportunityFilters(baseQuery, now);
     if (targetDate) baseQuery = baseQuery.lte('closing_date', targetDate.toISOString());
@@ -152,6 +155,9 @@ export async function GET(request: NextRequest) {
       source_count: 1,
       sources: rfq.source_name || 'AiForm Platform',
       estimated_budget: rfq.estimated_budget,
+      status: rfq.status,
+      province: rfq.province,
+      category: rfq.category,
     }));
 
     return NextResponse.json({

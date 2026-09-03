@@ -63,15 +63,27 @@ export default function RFQCopilotHero({
         </div>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <Link href={browseAllHref} className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E5C98F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E3A2B]">
+          <Link
+            href={browseAllHref}
+            title="Browse and manage all of your open RFQs"
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E5C98F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E3A2B]"
+          >
             <IconListDetails className="h-4 w-4" stroke={1.8} aria-hidden="true" />
             View RFQs
           </Link>
-          <Link href={viewQuotesHref} className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E5C98F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E3A2B]">
+          <Link
+            href={viewQuotesHref}
+            title="See supplier quotes received today"
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E5C98F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E3A2B]"
+          >
             <IconMessage2 className="h-4 w-4" stroke={1.8} aria-hidden="true" />
             Review quotes
           </Link>
-          <Link href={createRfqHref} className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-bold text-[#1E3A2B] transition-colors duration-200 hover:bg-[#F4F0E7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E5C98F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E3A2B]">
+          <Link
+            href={createRfqHref}
+            title="Start a new request for quotes"
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-bold text-[#1E3A2B] transition-colors duration-200 hover:bg-[#F4F0E7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E5C98F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E3A2B]"
+          >
             Create RFQ
             <IconArrowRight className="h-4 w-4" stroke={2} aria-hidden="true" />
           </Link>
