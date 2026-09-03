@@ -88,35 +88,37 @@ export async function POST(request: NextRequest) {
   const contextBlock = typeof rfqContext === "string" ? rfqContext.slice(0, 6000) : ""
   const systemPrompt = contextBlock ? `${BASE_PROMPTS[role]}\n\n${contextBlock}` : BASE_PROMPTS[role]
 
-  const apiKey = process.env.OPENAI_API_KEY
+  const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    console.error("Thuso workspace chat: OPENAI_API_KEY missing")
+    console.error("Thuso workspace chat: ANTHROPIC_API_KEY missing")
     return NextResponse.json({ error: "Thuso is taking a breather — please try again." }, { status: 502 })
   }
 
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "claude-opus-5",
         max_tokens: 500,
-        messages: [{ role: "system", content: systemPrompt }, ...history, { role: "user", content: message }],
+        system: systemPrompt,
+        messages: [...history, { role: "user", content: message }],
       }),
     })
 
     if (!response.ok) {
-      console.error("OpenAI error", response.status, await response.text())
+      console.error("Anthropic error", response.status, await response.text())
       return NextResponse.json({ error: "Thuso is taking a breather — please try again." }, { status: 502 })
     }
 
     const data = (await response.json()) as {
-      choices?: Array<{ message?: { content?: string | null } }>
+      content?: Array<{ type?: string; text?: string }>
     }
-    const reply = data.choices?.[0]?.message?.content?.trim()
+    const reply = data.content?.[0]?.text?.trim()
 
     return NextResponse.json({
       message: reply || "I couldn't put together an answer just now — could you try rephrasing that?",
