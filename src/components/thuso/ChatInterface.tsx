@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react"
 
 export interface Message { role: "user" | "assistant"; content: string }
-interface ChatInterfaceProps { messages: Message[] }
+interface ChatInterfaceProps { messages: Message[]; isTyping?: boolean }
 
 function renderContent(content: string, isUser: boolean) {
   const parts = content.split(/(\[[^\]]+\])/g).filter(Boolean)
@@ -21,12 +21,12 @@ function renderContent(content: string, isUser: boolean) {
   })
 }
 
-export default function ChatInterface({ messages }: ChatInterfaceProps) {
+export default function ChatInterface({ messages, isTyping = false }: ChatInterfaceProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-  }, [messages])
+  }, [messages, isTyping])
 
   return (
     <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-white px-4 py-6 sm:px-6 lg:px-8" aria-live="polite">
@@ -37,6 +37,15 @@ export default function ChatInterface({ messages }: ChatInterfaceProps) {
           </div>
         </div>
       ))}
+      {isTyping ? (
+        <div className="flex justify-start" aria-label="Thuso is typing">
+          <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-md border border-[#E6E0D5] bg-[#F4F0E7] px-4 py-3">
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#1E3A2B]/50 [animation-delay:-0.3s]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#1E3A2B]/50 [animation-delay:-0.15s]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#1E3A2B]/50" />
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

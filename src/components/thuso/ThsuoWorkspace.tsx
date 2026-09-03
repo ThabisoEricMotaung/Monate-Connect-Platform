@@ -1,16 +1,25 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { IconCheck, IconMenu2, IconX } from "@tabler/icons-react"
+import { useEffect, useMemo, useState } from "react"
+import { IconCheck, IconMenu2, IconSearch, IconX } from "@tabler/icons-react"
 import SupplierSidebar from "./SupplierSidebar"
 import QuickActionButtons, { QUICK_ACTIONS } from "./QuickActionButtons"
 import ChatInterface from "./ChatInterface"
 import type { Message } from "./ChatInterface"
 import InputBar from "./InputBar"
+import {
+  buildRfqSearchIndex,
+  buildRfqSystemPromptContext,
+  fetchRfqContext,
+  searchRfqSections,
+  type RfqContext,
+  type RfqSearchSection,
+} from "@/lib/rfqContextProvider"
 
 interface ThsuoWorkspaceProps {
   rfqId?: number
   userId?: string
+  userRole?: "supplier" | "buyer"
 }
 
 const ONBOARDING_DISMISSED_KEY = "thuso-workspace-onboarding-dismissed"
@@ -22,16 +31,19 @@ const ONBOARDING_STEPS = [
   { title: "Submit your response", detail: "Send your complete response to the buyer." },
 ]
 
-export default function ThsuoWorkspace({ rfqId }: ThsuoWorkspaceProps) {
+export default function ThsuoWorkspace({ rfqId, userRole = "supplier" }: ThsuoWorkspaceProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [dontShowAgain, setDontShowAgain] = useState(false)
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set())
+  const [rfqContext, setRfqContext] = useState<RfqContext | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isThinking, setIsThinking] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
       content:
-        "Welcome to your RFQ response workspace. I can help you [upload docs], [view requirements], [check score], and [submit response] — start with the step highlighted below.",
+        "Welcome to your RFQ response workspace. I can help you [upload docs], [view requirements], [check score], and [submit response] — start with the step highlighted below, or ask me anything about this RFQ.",
     },
   ])
 
@@ -42,6 +54,20 @@ export default function ThsuoWorkspace({ rfqId }: ThsuoWorkspaceProps) {
       setShowOnboarding(true)
     }
   }, [])
+
+  useEffect(() => {
+    if (!rfqId) return
+    let cancelled = false
+    fetchRfqContext(rfqId).then((context) => {
+      if (!cancelled && context) setRfqContext(context)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [rfqId])
+
+  const searchIndex = useMemo(() => (rfqContext ? buildRfqSearchIndex(rfqContext) : []), [rfqContext])
+  const searchResults = useMemo(() => searchRfqSections(searchIndex, searchQuery), [searchIndex, searchQuery])
 
   const dismissOnboarding = () => {
     if (dontShowAgain) {
@@ -81,18 +107,44 @@ export default function ThsuoWorkspace({ rfqId }: ThsuoWorkspaceProps) {
     ])
   }
 
-  const handleSendMessage = (message: string) => {
+  const handleSendMessage = async (message: string) => {
+    // Strip the UI's [bracket] chip styling before sending history to the model —
+    // otherwise it mimics the bracket convention and answers with placeholders
+    // like "[insert deadline date]" instead of the real value.
+    const history = messages.slice(-10).map(({ role, content }) => ({ role, content: content.replace(/\[([^\]]+)\]/g, "$1") }))
     setMessages((previous) => [...previous, { role: "user", content: message }])
+    setIsThinking(true)
 
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/thuso/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          message,
+          conversationHistory: history,
+          rfqContext: rfqContext ? buildRfqSystemPromptContext(rfqContext) : undefined,
+          userRole,
+        }),
+      })
+      const data = (await response.json()) as { message?: string; error?: string }
       setMessages((previous) => [
         ...previous,
-        {
-          role: "assistant",
-          content: "I can help you [upload docs], [review requirements], [check your score], or [submit]. What's next?",
-        },
+        { role: "assistant", content: (response.ok && data.message) || data.error || "Sorry, I couldn't process that — please try again." },
       ])
-    }, 500)
+    } catch (error) {
+      console.error("Thuso chat request failed:", error)
+      setMessages((previous) => [
+        ...previous,
+        { role: "assistant", content: "Sorry, I'm having trouble responding right now. Please try again in a moment." },
+      ])
+    } finally {
+      setIsThinking(false)
+    }
+  }
+
+  const handleAskAboutSection = (section: RfqSearchSection) => {
+    setSearchQuery("")
+    void handleSendMessage(`Tell me more about ${section.heading.toLowerCase()} for this RFQ.`)
   }
 
   return (
@@ -209,8 +261,48 @@ export default function ThsuoWorkspace({ rfqId }: ThsuoWorkspaceProps) {
             })}
           </nav>
 
+          {rfqId ? (
+            <div className="border-b border-[#E6E0D5] bg-white px-4 py-3 sm:px-6 lg:px-8">
+              <div className="relative">
+                <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#A67832]" stroke={2} aria-hidden="true" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search RFQ requirements, docs, FAQs"
+                  aria-label="Search RFQ requirements, docs, FAQs"
+                  className="w-full rounded-xl border border-[#D8D2C5] bg-[#FBF9F4] py-2.5 pl-9 pr-3 text-sm text-[#1E3A2B] placeholder-[#857F75] focus:border-[#1E3A2B]/50 focus:outline-none focus:ring-2 focus:ring-[#1E3A2B]/10"
+                />
+              </div>
+
+              {searchQuery.trim() ? (
+                <div className="mt-3 max-h-48 space-y-2 overflow-y-auto">
+                  {searchResults.length === 0 ? (
+                    <p className="text-xs text-[#7B756B]">No matches in this RFQ&apos;s requirements, docs, or FAQs.</p>
+                  ) : (
+                    searchResults.map((section) => (
+                      <div key={section.id} className="rounded-lg border border-[#E6E0D5] bg-[#FBF9F4] p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-xs font-bold uppercase tracking-wide text-[#1E3A2B]">{section.heading}</p>
+                          <button
+                            type="button"
+                            onClick={() => handleAskAboutSection(section)}
+                            className="shrink-0 cursor-pointer text-xs font-semibold text-[#A67832] hover:underline"
+                          >
+                            Ask Thuso →
+                          </button>
+                        </div>
+                        <p className="mt-1 line-clamp-3 text-sm text-[#33463A]">{section.content}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <ChatInterface messages={messages} />
+            <ChatInterface messages={messages} isTyping={isThinking} />
             <div className="border-t border-[#E6E0D5] bg-[#FBF9F4] px-4 pt-3 sm:px-6 lg:px-8">
               <QuickActionButtons rfqId={rfqId} completedIds={completedIds} onActionClick={handleQuickAction} />
             </div>

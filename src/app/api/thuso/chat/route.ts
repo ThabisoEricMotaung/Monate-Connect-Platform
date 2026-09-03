@@ -1,104 +1,128 @@
 import { NextRequest, NextResponse } from "next/server"
-import { generateSystemPrompt } from "@/lib/thuso/chatIntegration"
 
-interface ChatRequest {
-  message: string
-  systemPrompt: string
-  conversationHistory: Array<{ role: string; content: string }>
-  context: {
-    rfqId?: number
-    userRole?: "supplier" | "buyer"
-    rfqTitle?: string
-  }
+const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000
+const RATE_LIMIT_MAX_REQUESTS = 20
+const rateLimits = new Map<string, { count: number; resetAt: number }>()
+
+function getClientIp(request: NextRequest): string {
+  const forwardedFor = request.headers.get("x-forwarded-for")
+  if (forwardedFor) return forwardedFor.split(",")[0]?.trim() || "unknown"
+
+  return request.headers.get("x-real-ip") || request.headers.get("cf-connecting-ip") || "unknown"
 }
 
-/**
- * Chat API Route
- * Handles AI-powered responses for Thuso Workspace
- *
- * POST /api/thuso/chat
- * Body: ChatRequest
- * Response: { message: string }
- */
+function isRateLimited(ip: string): boolean {
+  const now = Date.now()
+  const current = rateLimits.get(ip)
+
+  if (!current || current.resetAt <= now) {
+    rateLimits.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
+    return false
+  }
+
+  if (current.count >= RATE_LIMIT_MAX_REQUESTS) return true
+
+  current.count += 1
+  return false
+}
+
+interface ChatTurn {
+  role: "user" | "assistant"
+  content: string
+}
+
+function validateHistory(value: unknown): ChatTurn[] | null {
+  if (!Array.isArray(value)) return null
+  if (value.length > 20) return null
+
+  const turns: ChatTurn[] = []
+  for (const item of value) {
+    if (!item || typeof item !== "object") return null
+    const { role, content } = item as { role?: unknown; content?: unknown }
+    if (role !== "user" && role !== "assistant") return null
+    if (typeof content !== "string" || content.length > 4000) return null
+    turns.push({ role, content })
+  }
+  return turns
+}
+
+const PLACEHOLDER_WARNING =
+  "Never answer with a bracketed placeholder like [insert deadline date] or [budget amount] — always state the actual value from the RFQ facts below, or say plainly that the buyer hasn't specified it."
+
+const BASE_PROMPTS: Record<"supplier" | "buyer", string> = {
+  supplier: `You are Thuso, an AI assistant inside AiForm Procure's supplier RFQ response workspace. Help the supplier understand and respond to the specific RFQ described below — compliance documents, budget, deadline, scope, and next steps. Be concise, warm, and action-oriented. Write in plain text only, no markdown formatting. ${PLACEHOLDER_WARNING}`,
+  buyer: `You are Thuso, an AI assistant inside AiForm Procure's buyer workspace. Help the buyer evaluate supplier responses and manage the specific RFQ described below. Be analytical and concise. Write in plain text only, no markdown formatting. ${PLACEHOLDER_WARNING}`,
+}
+
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request)
+
+  if (isRateLimited(ip)) {
+    return NextResponse.json({ error: "Thuso needs a quick pause. Please try again in a few minutes." }, { status: 429 })
+  }
+
+  let body: unknown
   try {
-    const body: ChatRequest = await request.json()
-    const { message, systemPrompt, conversationHistory, context } = body
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid request body." }, { status: 400 })
+  }
 
-    // Validate required fields
-    if (!message || !context) {
-      return NextResponse.json(
-        { error: "Missing required fields: message, context" },
-        { status: 400 }
-      )
-    }
+  const { message, conversationHistory, rfqContext, userRole } = (body ?? {}) as {
+    message?: unknown
+    conversationHistory?: unknown
+    rfqContext?: unknown
+    userRole?: unknown
+  }
 
-    // TODO: Replace with actual Claude API call
-    // This is a placeholder that returns mock responses
-    const mockResponses: Record<string, string> = {
-      supplier: `I've processed your request for RFQ #${context.rfqId}. `,
-      buyer: `I've analyzed the supplier responses for RFQ #${context.rfqId}. `,
-    }
+  if (typeof message !== "string" || !message.trim() || message.length > 2000) {
+    return NextResponse.json({ error: "Message is required (max 2000 characters)." }, { status: 400 })
+  }
 
-    const baseResponse =
-      mockResponses[context.userRole || "supplier"] ||
-      "I'm here to help with your procurement workflow. "
+  const history = validateHistory(conversationHistory ?? [])
+  if (!history) {
+    return NextResponse.json({ error: "Send up to 20 prior messages, each under 4000 characters." }, { status: 400 })
+  }
 
-    // In production, integrate with Claude API:
-    /*
-    import Anthropic from "@anthropic-ai/sdk"
+  const role = userRole === "buyer" ? "buyer" : "supplier"
+  const contextBlock = typeof rfqContext === "string" ? rfqContext.slice(0, 6000) : ""
+  const systemPrompt = contextBlock ? `${BASE_PROMPTS[role]}\n\n${contextBlock}` : BASE_PROMPTS[role]
 
-    const client = new Anthropic()
-    const response = await client.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 1024,
-      system: systemPrompt || generateSystemPrompt(context),
-      messages: [
-        ...conversationHistory,
-        { role: "user", content: message }
-      ]
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    console.error("Thuso workspace chat: OPENAI_API_KEY missing")
+    return NextResponse.json({ error: "Thuso is taking a breather — please try again." }, { status: 502 })
+  }
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        max_tokens: 500,
+        messages: [{ role: "system", content: systemPrompt }, ...history, { role: "user", content: message }],
+      }),
     })
 
-    return NextResponse.json({
-      message: response.content[0].type === "text" ? response.content[0].text : ""
-    })
-    */
+    if (!response.ok) {
+      console.error("OpenAI error", response.status, await response.text())
+      return NextResponse.json({ error: "Thuso is taking a breather — please try again." }, { status: 502 })
+    }
+
+    const data = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string | null } }>
+    }
+    const reply = data.choices?.[0]?.message?.content?.trim()
 
     return NextResponse.json({
-      message: baseResponse + "How can I assist you further?",
+      message: reply || "I couldn't put together an answer just now — could you try rephrasing that?",
     })
   } catch (error) {
-    console.error("Chat API error:", error)
-    return NextResponse.json(
-      { error: "Failed to process chat request" },
-      { status: 500 }
-    )
+    console.error(error)
+    return NextResponse.json({ error: "Thuso is taking a breather — please try again." }, { status: 502 })
   }
 }
-
-/**
- * Example: Production implementation with Claude API
- *
- * 1. Install package:
- *    npm install @anthropic-ai/sdk
- *
- * 2. Add environment variable:
- *    ANTHROPIC_API_KEY=sk-ant-...
- *
- * 3. Update route:
- *    import Anthropic from "@anthropic-ai/sdk"
- *
- *    const anthropic = new Anthropic({
- *      apiKey: process.env.ANTHROPIC_API_KEY,
- *    })
- *
- *    const response = await anthropic.messages.create({
- *      model: "claude-3-5-sonnet-20241022",
- *      max_tokens: 1024,
- *      system: systemPrompt,
- *      messages: conversationHistory.map((msg) => ({
- *        role: msg.role as "user" | "assistant",
- *        content: msg.content,
- *      }))
- *    })
- */
