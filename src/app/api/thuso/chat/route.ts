@@ -91,12 +91,15 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY
   const workspaceId = process.env.ANTHROPIC_WORKSPACE_ID
 
+  console.log("Thuso chat: API key present:", !!apiKey, "Workspace ID present:", !!workspaceId, "Workspace ID value:", workspaceId?.slice(0, 8))
+
   if (!apiKey || !workspaceId) {
     console.error("Thuso workspace chat: missing API key or workspace ID")
     return NextResponse.json({ error: "Thuso workspace: configuration incomplete. Please contact support." }, { status: 502 })
   }
 
   try {
+    console.log("Sending request to Anthropic with workspace ID:", workspaceId)
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
