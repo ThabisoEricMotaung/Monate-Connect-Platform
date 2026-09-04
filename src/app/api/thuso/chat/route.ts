@@ -89,10 +89,11 @@ export async function POST(request: NextRequest) {
   const systemPrompt = contextBlock ? `${BASE_PROMPTS[role]}\n\n${contextBlock}` : BASE_PROMPTS[role]
 
   const apiKey = process.env.ANTHROPIC_API_KEY
+  const workspaceId = process.env.ANTHROPIC_WORKSPACE_ID
 
-  if (!apiKey) {
-    console.error("Thuso workspace chat: ANTHROPIC_API_KEY missing")
-    return NextResponse.json({ error: "Thuso workspace: API key not configured. Please contact support." }, { status: 502 })
+  if (!apiKey || !workspaceId) {
+    console.error("Thuso workspace chat: missing API key or workspace ID")
+    return NextResponse.json({ error: "Thuso workspace: configuration incomplete. Please contact support." }, { status: 502 })
   }
 
   try {
@@ -102,6 +103,7 @@ export async function POST(request: NextRequest) {
         "content-type": "application/json",
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
+        "anthropic-workspace-id": workspaceId,
       },
       body: JSON.stringify({
         model: "claude-opus-5",
