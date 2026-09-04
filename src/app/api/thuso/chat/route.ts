@@ -88,51 +88,41 @@ export async function POST(request: NextRequest) {
   const contextBlock = typeof rfqContext === "string" ? rfqContext.slice(0, 6000) : ""
   const systemPrompt = contextBlock ? `${BASE_PROMPTS[role]}\n\n${contextBlock}` : BASE_PROMPTS[role]
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  const workspaceId = process.env.ANTHROPIC_WORKSPACE_ID
-
-  console.log("Thuso chat: API key present:", !!apiKey, "Workspace ID present:", !!workspaceId, "Workspace ID value:", workspaceId?.slice(0, 8))
-
-  if (!apiKey || !workspaceId) {
-    console.error("Thuso workspace chat: missing API key or workspace ID")
-    return NextResponse.json({ error: "Thuso workspace: configuration incomplete. Please contact support." }, { status: 502 })
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    console.error("Thuso workspace chat: OPENAI_API_KEY missing")
+    return NextResponse.json({ error: "Thuso is taking a breather — please try again." }, { status: 502 })
   }
 
   try {
-    console.log("Sending request to Anthropic with workspace ID:", workspaceId)
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-workspace-id": workspaceId,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "claude-opus-5",
+        model: "gpt-4o-mini",
         max_tokens: 500,
-        system: systemPrompt,
-        messages: [...history, { role: "user", content: message }],
+        messages: [{ role: "system", content: systemPrompt }, ...history, { role: "user", content: message }],
       }),
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error("Anthropic error", response.status, errorText)
-      return NextResponse.json({ error: `Anthropic API error (${response.status}): ${errorText.slice(0, 100)}` }, { status: 502 })
+      console.error("OpenAI error", response.status, await response.text())
+      return NextResponse.json({ error: "Thuso is taking a breather — please try again." }, { status: 502 })
     }
 
     const data = (await response.json()) as {
-      content?: Array<{ type?: string; text?: string }>
+      choices?: Array<{ message?: { content?: string | null } }>
     }
-    const reply = data.content?.[0]?.text?.trim()
+    const reply = data.choices?.[0]?.message?.content?.trim()
 
     return NextResponse.json({
       message: reply || "I couldn't put together an answer just now — could you try rephrasing that?",
     })
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error)
-    console.error("Thuso chat error:", errorMsg)
-    return NextResponse.json({ error: `Thuso error: ${errorMsg.slice(0, 100)}` }, { status: 502 })
+    console.error(error)
+    return NextResponse.json({ error: "Thuso is taking a breather — please try again." }, { status: 502 })
   }
 }
