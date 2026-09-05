@@ -225,12 +225,12 @@ export default function BuyerHomePage() {
       />
 
       {/* Thuso AI Assistant for RFQ Management */}
-      <Link href="/dashboard/buyer/workspace" className="mb-8 block">
-        <div className="group rounded-2xl border border-[#1E3A2B]/30 bg-gradient-to-r from-[#1E3A2B]/5 to-[#1E3A2B]/10 p-8 shadow-lg transition-all hover:border-[#1E3A2B]/60 hover:shadow-xl hover:bg-gradient-to-r hover:from-[#1E3A2B]/10 hover:to-[#1E3A2B]/15">
+      <Link href="/dashboard/buyer/workspace" className="group mb-8 block rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1E3A2B]">
+        <div className="rounded-2xl border border-[#1E3A2B]/30 bg-gradient-to-r from-[#1E3A2B]/5 to-[#1E3A2B]/10 p-5 sm:p-8 shadow-lg transition-all hover:border-[#1E3A2B]/60 hover:shadow-xl hover:bg-gradient-to-r hover:from-[#1E3A2B]/10 hover:to-[#1E3A2B]/[0.15]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#1E3A2B] text-sm font-bold text-white">T</span>
+                <span aria-hidden="true" className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1E3A2B] text-sm font-bold text-white">T</span>
                 <h2 className="text-xl font-bold text-heading">Thuso RFQ Workspace</h2>
               </div>
               <p className="mt-2 text-sm leading-6 text-secondary">
@@ -238,7 +238,7 @@ export default function BuyerHomePage() {
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#1E3A2B]/10 px-3 py-1.5 text-xs font-semibold text-[#1E3A2B] group-hover:bg-[#1E3A2B]/20">
+              <span className="inline-flex min-h-11 items-center gap-1 rounded-full border border-[#1E3A2B]/30 bg-[#1E3A2B]/10 px-5 py-2.5 text-sm font-semibold text-[#1E3A2B] transition-colors group-hover:bg-[#1E3A2B]/20 group-focus-visible:bg-[#1E3A2B]/20">
                 Open workspace →
               </span>
             </div>
