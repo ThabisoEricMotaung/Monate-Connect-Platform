@@ -358,6 +358,28 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Thuso AI Assistant - Prominent CTA */}
+      <Link href="/dashboard/supplier/workspace" className="mb-8 block">
+        <div className="group rounded-2xl border border-[#1E3A2B]/30 bg-gradient-to-r from-[#1E3A2B]/5 to-[#1E3A2B]/10 p-8 shadow-lg transition-all hover:border-[#1E3A2B]/60 hover:shadow-xl hover:bg-gradient-to-r hover:from-[#1E3A2B]/10 hover:to-[#1E3A2B]/15">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#1E3A2B] text-sm font-bold text-white">T</span>
+                <h2 className="text-xl font-bold text-heading">Thuso RFQ Assistant</h2>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-secondary">
+                Get AI-powered guidance on RFQ requirements, compliance checklists, budget analysis, and bid strategy. Thuso helps you understand opportunities and respond faster.
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#1E3A2B]/10 px-3 py-1.5 text-xs font-semibold text-[#1E3A2B] group-hover:bg-[#1E3A2B]/20">
+                Launch Thuso →
+              </span>
+            </div>
+          </div>
+        </div>
+      </Link>
+
       {profileLoadError && !statsLoading && (
         <div className="mb-6 rounded-md border border-warning/35 bg-warning-soft px-5 py-4">
           <p className="text-sm font-semibold text-warning">Profile data unavailable</p>
