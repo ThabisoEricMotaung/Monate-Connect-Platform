@@ -42,6 +42,7 @@ export async function fetchRfqContext(rfqId: number): Promise<RfqContext | null>
     .from("rfqs")
     .select(RFQ_CONTEXT_COLUMNS)
     .eq("id", rfqId)
+    .in("status", ["Open", "Closing Soon"])
     .maybeSingle()
 
   if (error || !data) {
@@ -50,6 +51,13 @@ export async function fetchRfqContext(rfqId: number): Promise<RfqContext | null>
   }
 
   const row = data as unknown as RfqRow
+
+  // Additional validation: check closing date is in the future
+  const closingDate = row.closing_date ? new Date(row.closing_date) : null
+  if (closingDate && closingDate < new Date()) {
+    console.warn(`RFQ #${rfqId} has passed closing date, treating as inactive`)
+    return null
+  }
 
   return {
     id: row.id,
