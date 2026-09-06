@@ -43,7 +43,7 @@ export default function ThsuoWorkspace({ rfqId, userRole = "supplier" }: ThsuoWo
     {
       role: "assistant",
       content:
-        "Welcome to your RFQ response workspace. I can help you [upload docs], [view requirements], [check score], and [submit response] — start with the step highlighted below, or ask me anything about this RFQ.",
+        "Hi! I'm Thuso, your AI assistant. I'm here to help you respond to this RFQ. I can help you [upload docs], [view requirements], [check score], and [submit response]. Start with the highlighted step, or ask me anything about this RFQ.",
     },
   ])
 
@@ -167,12 +167,15 @@ export default function ThsuoWorkspace({ rfqId, userRole = "supplier" }: ThsuoWo
         <div className="absolute inset-0 z-[60] flex items-center justify-center bg-[#10261B]/45 p-4">
           <div role="dialog" aria-modal="true" aria-labelledby="onboarding-title" className="w-full max-w-md rounded-2xl border border-[#DDD8CC] bg-white p-6 shadow-xl">
             <div className="flex items-start justify-between gap-4">
-              <h2 id="onboarding-title" className="text-lg font-bold text-[#1E3A2B]">Here&apos;s how to respond to an RFQ</h2>
+              <div className="flex-1">
+                <h2 id="onboarding-title" className="text-lg font-bold text-[#1E3A2B]">Meet Thuso: Your AI RFQ Assistant</h2>
+                <p className="mt-2 text-sm text-[#6F6A61]">Thuso guides you through responding to RFQs. Here&apos;s what you&apos;ll do:</p>
+              </div>
               <button
                 type="button"
                 onClick={dismissOnboarding}
                 aria-label="Close"
-                className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-[#7B756B] transition-colors duration-200 hover:bg-[#F4F0E7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3A2B]"
+                className="mt-0.5 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-[#7B756B] transition-colors duration-200 hover:bg-[#F4F0E7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3A2B]"
               >
                 <IconX className="h-4 w-4" stroke={2} />
               </button>
@@ -222,8 +225,8 @@ export default function ThsuoWorkspace({ rfqId, userRole = "supplier" }: ThsuoWo
           <header className="border-b border-[#E6E0D5] bg-white px-4 py-4 pl-16 sm:px-6 sm:pl-16 lg:px-8">
             <div className="flex min-w-0 items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7B756B]">Thuso workspace</p>
-                <h1 className="mt-1 truncate text-xl font-bold text-[#1E3A2B] sm:text-2xl">RFQ Response Workspace</h1>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#A67832]">AI-Powered Assistant</p>
+                <h1 className="mt-1 truncate text-xl font-bold text-[#1E3A2B] sm:text-2xl">Thuso RFQ Workspace</h1>
                 {rfqId ? <p className="mt-1 text-sm text-[#6F6A61]">Working on RFQ #{rfqId}</p> : null}
               </div>
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D8D2C5] bg-[#F4F0E7] text-sm font-bold text-[#1E3A2B]">T</div>

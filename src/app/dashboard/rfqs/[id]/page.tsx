@@ -11,6 +11,7 @@ import { getRFQMatches, type MatchLevel } from "@/lib/matchingEngine"
 import { checkRFQCompliance } from "@/lib/policyCompliance"
 import { supabase } from "@/lib/supabase"
 import { createRFQWhatsAppMessage, createWhatsAppLink } from "@/lib/whatsapp"
+import { getCurrentProfile } from "@/lib/auth"
 
 type Props = {
   params: Promise<{
@@ -96,6 +97,10 @@ export default async function RFQDetailPage({ params }: Props) {
   const sourceName = rfq.source_name?.trim() || "the original tender source"
   const rfqCompliance = checkRFQCompliance(rfq)
   const recommendedSuppliers = (await getRFQMatches(rfq.id)).slice(0, 5)
+
+  // Check if user has permission to notify suppliers (admin or buyer only)
+  const userProfile = await getCurrentProfile()
+  const canNotify = userProfile?.role === "admin" || userProfile?.role === "buyer"
 
   return (
 
@@ -280,12 +285,14 @@ export default async function RFQDetailPage({ params }: Props) {
               Recommended Suppliers
             </h2>
           </div>
-          <Link
-            href={`/dashboard/rfqs/${rfq.id}/matching`}
-            className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong"
-          >
-            Notify matched suppliers
-          </Link>
+          {canNotify && (
+            <Link
+              href={`/dashboard/rfqs/${rfq.id}/matching`}
+              className="rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-button transition hover:bg-accent-strong"
+            >
+              Notify matched suppliers
+            </Link>
+          )}
           <Link
             href="/dashboard/intelligence/matches"
             className="rounded-md border border-panel bg-surface px-4 py-2 text-sm font-semibold text-secondary transition hover:border-accent hover:text-accent"
@@ -435,19 +442,23 @@ export default async function RFQDetailPage({ params }: Props) {
           Message Buyer/Admin
         </Link>
 
-        <Link
-          href={`/dashboard/rfqs/${rfq.id}/matching`}
-          className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
-        >
-          Notify matched suppliers
-        </Link>
+        {canNotify && (
+          <>
+            <Link
+              href={`/dashboard/rfqs/${rfq.id}/matching`}
+              className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-button transition-colors hover:bg-accent-strong"
+            >
+              Notify matched suppliers
+            </Link>
 
-        <Link
-          href={`/dashboard/admin/whatsapp?rfq_id=${rfq.id}`}
-          className="inline-flex items-center justify-center rounded-md border border-success bg-success-soft px-5 py-2.5 text-sm font-semibold text-success transition hover:bg-success/10"
-        >
-          Send RFQ WhatsApp Alert
-        </Link>
+            <Link
+              href={`/dashboard/admin/whatsapp?rfq_id=${rfq.id}`}
+              className="inline-flex items-center justify-center rounded-md border border-success bg-success-soft px-5 py-2.5 text-sm font-semibold text-success transition hover:bg-success/10"
+            >
+              Send RFQ WhatsApp Alert
+            </Link>
+          </>
+        )}
 
         <Link
           href="/dashboard/rfqs"

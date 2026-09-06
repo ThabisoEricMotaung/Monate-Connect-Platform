@@ -358,27 +358,116 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Thuso AI Assistant - Prominent CTA */}
-      <Link href="/dashboard/supplier/workspace" className="group mb-8 block rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1E3A2B]">
-        <div className="rounded-2xl border border-[#1E3A2B]/30 bg-gradient-to-r from-[#1E3A2B]/5 to-[#1E3A2B]/10 p-5 sm:p-8 shadow-lg transition-all hover:border-[#1E3A2B]/60 hover:shadow-xl hover:bg-gradient-to-r hover:from-[#1E3A2B]/10 hover:to-[#1E3A2B]/[0.15]">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <span aria-hidden="true" className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1E3A2B] text-sm font-bold text-white">T</span>
-                <h2 className="text-xl font-bold text-heading">Thuso RFQ Assistant</h2>
+      {/* Thuso AI Assistant - Premium Hero Section */}
+      <section className="mb-8 rounded-3xl border border-[#1E3A2B]/20 bg-gradient-to-br from-[#1E3A2B]/3 via-white to-[#F4F0E7]/40 overflow-hidden">
+        <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-2 lg:gap-12 lg:items-center">
+          {/* Left Content */}
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-[#A67832] font-semibold">AI PROCUREMENT GUIDE</p>
+            <h2 className="mt-4 text-3xl sm:text-4xl font-bold text-[#1E3A2B] leading-tight">
+              Thuso RFQ Assistant
+            </h2>
+            <p className="mt-4 text-base sm:text-lg leading-8 text-[#33463A]">
+              Get real-time AI guidance on RFQ requirements, compliance checklists, supplier verification, budget analysis and bid strategy — built for South African procurement.
+            </p>
+
+            {/* Feature Grid */}
+            <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-2">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1E3A2B]/10">
+                  <svg className="h-5 w-5 text-[#1E3A2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-[#1E3A2B]">Understand opportunities</p>
+                </div>
               </div>
-              <p className="mt-2 text-sm leading-6 text-secondary">
-                Get AI-powered guidance on RFQ requirements, compliance checklists, budget analysis, and bid strategy. Thuso helps you understand opportunities and respond faster.
-              </p>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1E3A2B]/10">
+                  <svg className="h-5 w-5 text-[#1E3A2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-[#1E3A2B]">Check compliance</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1E3A2B]/10">
+                  <svg className="h-5 w-5 text-[#1E3A2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-[#1E3A2B]">Analyze requirements</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1E3A2B]/10">
+                  <svg className="h-5 w-5 text-[#1E3A2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-[#1E3A2B]">Improve your bid strategy</p>
+                </div>
+              </div>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <span className="inline-flex min-h-11 items-center gap-1 rounded-full border border-[#1E3A2B]/30 bg-[#1E3A2B]/10 px-5 py-2.5 text-sm font-semibold text-[#1E3A2B] transition-colors group-hover:bg-[#1E3A2B]/20 group-focus-visible:bg-[#1E3A2B]/20">
-                Launch Thuso →
-              </span>
+
+            {/* CTA Button */}
+            <div className="mt-8">
+              {recommendedOpportunities.length > 0 ? (
+                <Link
+                  href={`/dashboard/supplier/workspace?rfq_id=${recommendedOpportunities[0].rfq.id}`}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1E3A2B] px-8 py-3.5 font-semibold text-white transition-all hover:bg-[#294D39] hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E3A2B]"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Launch Thuso
+                </Link>
+              ) : (
+                <div className="rounded-lg bg-[#F4F0E7] border border-[#D8D2C5] p-4">
+                  <p className="text-sm font-semibold text-[#1E3A2B]">No active RFQs matched yet</p>
+                  <p className="mt-1 text-sm leading-6 text-[#6F6A61]">
+                    When you're matched to RFQs, you can use Thuso to analyze requirements and strengthen your bid. Check back soon or{' '}
+                    <Link href="/dashboard/rfqs" className="font-semibold text-[#1E3A2B] underline hover:text-[#294D39]">
+                      browse available opportunities
+                    </Link>.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Side - Visual Element */}
+          <div className="relative hidden lg:block">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A2B]/5 to-[#A67832]/5 rounded-2xl" />
+            <div className="relative rounded-2xl border border-[#1E3A2B]/10 bg-white p-6 shadow-xl">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#A67832]/20">
+                  <span className="text-xs font-bold text-[#A67832]">✨</span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-[#1E3A2B]">Hi, I'm Thuso</p>
+                  <p className="mt-1 text-sm text-[#6F6A61] leading-5">
+                    Ask me anything about tenders, compliance, or responding to RFQs.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#A67832]">
+                  <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <p className="text-xs font-medium text-[#6F6A61]">Smarter procurement. Faster decisions.</p>
+              </div>
             </div>
           </div>
         </div>
-      </Link>
+      </section>
 
       {profileLoadError && !statsLoading && (
         <div className="mb-6 rounded-md border border-warning/35 bg-warning-soft px-5 py-4">

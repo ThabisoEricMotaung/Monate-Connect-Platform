@@ -225,26 +225,113 @@ export default function BuyerHomePage() {
       />
 
       {/* Thuso AI Assistant for RFQ Management */}
-      <Link href="/dashboard/buyer/workspace" className="group mb-8 block rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1E3A2B]">
-        <div className="rounded-2xl border border-[#1E3A2B]/30 bg-gradient-to-r from-[#1E3A2B]/5 to-[#1E3A2B]/10 p-5 sm:p-8 shadow-lg transition-all hover:border-[#1E3A2B]/60 hover:shadow-xl hover:bg-gradient-to-r hover:from-[#1E3A2B]/10 hover:to-[#1E3A2B]/[0.15]">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <span aria-hidden="true" className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1E3A2B] text-sm font-bold text-white">T</span>
-                <h2 className="text-xl font-bold text-heading">Thuso RFQ Workspace</h2>
+      <section className="mb-8 rounded-3xl border border-[#1E3A2B]/20 bg-gradient-to-br from-[#1E3A2B]/3 via-white to-[#F4F0E7]/40 overflow-hidden">
+        <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-2 lg:gap-12 lg:items-center">
+          {/* Left Content */}
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-[#A67832] font-semibold">AI RFQ MANAGEMENT</p>
+            <h2 className="mt-4 text-3xl sm:text-4xl font-bold text-[#1E3A2B] leading-tight">
+              Thuso RFQ Workspace
+            </h2>
+            <p className="mt-4 text-base sm:text-lg leading-8 text-[#33463A]">
+              Get AI-powered insights on supplier bids, compliance scoring, risk analysis, and negotiation strategies. Streamline your procurement decisions.
+            </p>
+
+            {/* Feature Grid */}
+            <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-2">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1E3A2B]/10">
+                  <svg className="h-5 w-5 text-[#1E3A2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-[#1E3A2B]">Analyze supplier bids</p>
+                </div>
               </div>
-              <p className="mt-2 text-sm leading-6 text-secondary">
-                AI-powered RFQ management and buyer workspace. Get insights on supplier bids, compliance scoring, risk analysis, and negotiation strategies.
-              </p>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1E3A2B]/10">
+                  <svg className="h-5 w-5 text-[#1E3A2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-[#1E3A2B]">Evaluate compliance</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1E3A2B]/10">
+                  <svg className="h-5 w-5 text-[#1E3A2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-[#1E3A2B]">Assess risk & value</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1E3A2B]/10">
+                  <svg className="h-5 w-5 text-[#1E3A2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m0 0l-2-1m2 1v2.5M14 4l-2 1m0 0l-2-1m2 1v2.5" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-[#1E3A2B]">Strengthen negotiation</p>
+                </div>
+              </div>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <span className="inline-flex min-h-11 items-center gap-1 rounded-full border border-[#1E3A2B]/30 bg-[#1E3A2B]/10 px-5 py-2.5 text-sm font-semibold text-[#1E3A2B] transition-colors group-hover:bg-[#1E3A2B]/20 group-focus-visible:bg-[#1E3A2B]/20">
-                Open workspace →
-              </span>
+
+            {/* CTA Button */}
+            <div className="mt-8">
+              <Link
+                href="/dashboard/buyer/workspace"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1E3A2B] px-8 py-3.5 font-semibold text-white transition-all hover:bg-[#294D39] hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E3A2B]"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                Open Workspace
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Side - Visual Element */}
+          <div className="relative hidden lg:block">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A2B]/5 to-[#A67832]/5 rounded-2xl" />
+            <div className="relative rounded-2xl border border-[#1E3A2B]/10 bg-white p-6 shadow-xl">
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100">
+                    <svg className="h-4 w-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                  <span className="text-sm font-medium text-[#6F6A61]">Requirements reviewed</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100">
+                    <svg className="h-4 w-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                  <span className="text-sm font-medium text-[#6F6A61]">Compliance scored</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100">
+                    <svg className="h-4 w-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                  <span className="text-sm font-medium text-[#6F6A61]">Strategy optimized</span>
+                </div>
+              </div>
+              <div className="rounded-lg bg-[#1E3A2B]/5 px-3 py-2">
+                <p className="text-xs font-medium text-[#1E3A2B]">Better procurement decisions, faster.</p>
+              </div>
             </div>
           </div>
         </div>
-      </Link>
+      </section>
 
       {/* Procurement pipeline */}
       <section className="mb-8 overflow-hidden rounded-md border border-panel bg-card p-5 shadow-panel">
