@@ -431,7 +431,7 @@ export default function DashboardPage() {
                 <div className="rounded-lg bg-[#F4F0E7] border border-[#D8D2C5] p-4">
                   <p className="text-sm font-semibold text-[#1E3A2B]">No active RFQs matched yet</p>
                   <p className="mt-1 text-sm leading-6 text-[#6F6A61]">
-                    When you're matched to RFQs, you can use Thuso to analyze requirements and strengthen your bid. Check back soon or{' '}
+                    When you&apos;re matched to RFQs, you can use Thuso to analyze requirements and strengthen your bid. Check back soon or{' '}
                     <Link href="/dashboard/rfqs" className="font-semibold text-[#1E3A2B] underline hover:text-[#294D39]">
                       browse available opportunities
                     </Link>.
@@ -450,7 +450,7 @@ export default function DashboardPage() {
                   <span className="text-xs font-bold text-[#A67832]">✨</span>
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-[#1E3A2B]">Hi, I'm Thuso</p>
+                  <p className="font-semibold text-[#1E3A2B]">Hi, I&apos;m Thuso</p>
                   <p className="mt-1 text-sm text-[#6F6A61] leading-5">
                     Ask me anything about tenders, compliance, or responding to RFQs.
                   </p>
