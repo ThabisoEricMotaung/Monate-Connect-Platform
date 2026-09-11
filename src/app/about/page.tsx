@@ -4,7 +4,6 @@ import {
   IconBrandInstagram,
   IconBrandLinkedin,
   IconBrandOpenai,
-  IconBrandReddit,
   IconBrandSupabase,
   IconBrandTiktok,
   IconBrandVercel,
@@ -101,13 +100,6 @@ const socialChannels = [
     href: "https://www.instagram.com/aiformprocure/",
     icon: IconBrandInstagram,
     iconClassName: "bg-[#e4405f]/10 text-[#e4405f]",
-  },
-  {
-    name: "Reddit",
-    description: "Join the discussion on South African procurement and tenders.",
-    href: "https://www.reddit.com/user/AiForm-Procure/",
-    icon: IconBrandReddit,
-    iconClassName: "bg-[#ff4500]/10 text-[#ff4500]",
   },
 ]
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { IconAccessible, IconBrandInstagram, IconBrandReddit, IconBrandTiktok, IconBrandX } from "@tabler/icons-react"
+import { IconAccessible, IconBrandInstagram, IconBrandTiktok, IconBrandX } from "@tabler/icons-react"
 import Image from "next/image"
 import Link from "next/link"
 import { type CSSProperties } from "react"
@@ -302,16 +302,6 @@ export default function PublicFooter() {
               title="X"
             >
               <IconBrandX className="h-4 w-4" stroke={2} aria-hidden />
-            </a>
-            <a
-              href="https://www.reddit.com/user/AiForm-Procure/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footer-social-button footer-social-link"
-              aria-label="Follow AiForm Procure on Reddit"
-              title="Reddit"
-            >
-              <IconBrandReddit className="h-4 w-4" stroke={2} aria-hidden />
             </a>
             <a
               href="https://www.instagram.com/aiformprocure/"
