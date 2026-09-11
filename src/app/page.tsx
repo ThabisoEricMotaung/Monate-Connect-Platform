@@ -4,15 +4,16 @@ import Image from "next/image"
 import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import GazetteHeader from "@/components/home/GazetteHeader"
-import HeroSection from "@/components/home/HeroSection"
+import HeroSectionWithMap from "@/components/home/HeroSectionWithMap"
+import PublicInformationSection from "@/components/home/PublicInformationSection"
 import OpportunityStatsBanner from "@/components/home/OpportunityStatsBanner"
 import InfoCards from "@/components/home/InfoCards"
-import CTASection from "@/components/home/CTASection"
 import TrustStrip from "@/components/home/TrustStrip"
 import LiveOpportunitiesSection from "@/components/home/LiveOpportunitiesSection"
 import AccountDeletedNotice from "@/components/AccountDeletedNotice"
 import IncompleteRegistrationBanner from "@/components/IncompleteRegistrationBanner"
 import DigestSignupForm from "@/app/opportunities/DigestSignupForm"
+import { fetchPublicOpportunities } from "@/lib/publicOpportunities"
 import type { Metadata } from "next"
 
 // Enable ISR with 5-minute revalidation instead of force-dynamic
@@ -178,6 +179,9 @@ function MakersMark() {
 }
 
 export default async function Home() {
+  // Fetch live opportunities for the hero section map
+  const opportunities = await fetchPublicOpportunities({ limit: 500 }).catch(() => [])
+
   return (
     <>
       <AccountDeletedNotice />
@@ -185,12 +189,12 @@ export default async function Home() {
       <PublicHeader />
       <main className="min-h-screen bg-page text-primary">
         <IncompleteRegistrationBanner />
-        <HeroSection />
+        <HeroSectionWithMap opportunities={opportunities} />
+        <PublicInformationSection />
         <OpportunityStatsBanner />
         <InfoCards />
         <LiveOpportunitiesSection />
         <MakersMark />
-        <CTASection />
         <TrustStrip />
         <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-10 sm:px-6 lg:py-14">
 
