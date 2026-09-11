@@ -192,14 +192,7 @@ function MarkdownContent({ lines }: { lines: string[] }) {
 }
 
 export default function LongFormGuidePage({ title, eyebrow, draftPath, canonicalPath, schemaKind, description }: Props) {
-  let markdown: string = ""
-  try {
-    markdown = readFileSync(path.join(process.cwd(), draftPath), "utf8")
-  } catch (error) {
-    console.error(`Failed to read file: ${draftPath}`, error)
-    return <div className="min-h-screen bg-page p-6"><p className="text-red-600">Failed to load guide content</p></div>
-  }
-
+  const markdown = readFileSync(path.join(process.cwd(), draftPath), "utf8")
   const lines = cleanDraft(markdown)
   const schema = buildLongFormSchema(schemaKind, title, description, canonicalPath, lines)
 
