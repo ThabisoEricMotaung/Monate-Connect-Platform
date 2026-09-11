@@ -17,7 +17,7 @@ interface Opportunity {
 async function fetchLiveOpportunities(): Promise<Opportunity[]> {
   try {
     const response = await fetch(
-      'https://' + process.env.NEXT_PUBLIC_SUPABASE_URL?.split('https://')[1] + '/rest/v1/rfqs?select=id,title,buyer_org,closing_date&is_public=eq.true&status=eq.open&order=closing_date.asc&limit=3',
+      'https://' + process.env.NEXT_PUBLIC_SUPABASE_URL?.split('https://')[1] + '/rest/v1/rfqs?select=id,title,buyer_org,closing_date&is_public=eq.true&status=eq.open&closing_date.gt=now()&order=closing_date.asc&limit=3',
       {
         headers: {
           'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY || '',
@@ -64,14 +64,14 @@ export default async function LiveOpportunitiesSection() {
             <Link
               key={opp.id}
               href={`/tenders/${opp.id}`}
-              className="block rounded-lg border border-[#e8e0cc] bg-white p-4 transition hover:border-accent hover:shadow-md sm:p-5"
+              className="block rounded-none border border-[#e8e0cc] bg-white p-4 transition hover:border-accent hover:shadow-md sm:p-5"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="font-semibold text-heading line-clamp-2">{opp.title}</h3>
                     {isUrgent && (
-                      <span className="inline-block text-xs font-bold text-red-700 bg-red-100 px-2 py-1 rounded whitespace-nowrap">
+                      <span className="inline-block text-xs font-bold text-red-700 bg-red-100 px-2 py-1 rounded-none whitespace-nowrap">
                         {daysLeft} days
                       </span>
                     )}

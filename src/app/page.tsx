@@ -203,10 +203,10 @@ export default async function Home() {
               {audienceCards.map((card) => (
                 <article
                   key={card.title}
-                  className={`relative overflow-hidden rounded-xl border border-[#e8e0cc] ${card.className} p-6 shadow-md transition hover:border-accent`}
+                  className={`relative overflow-hidden rounded-none border border-[#e8e0cc] ${card.className} p-6 shadow-md transition hover:border-accent`}
                 >
                   <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#e8dcc8]/60 to-transparent" />
-                  <div className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-full ${card.badgeClassName}`}>
+                  <div className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-none ${card.badgeClassName}`}>
                     <EntryIcon icon={card.icon} />
                   </div>
                   <h3 className="relative z-10 mt-5 font-display text-2xl font-semibold text-heading">{card.title}</h3>
@@ -214,7 +214,7 @@ export default async function Home() {
                   <ul className="relative z-10 mt-4 space-y-2 border-t border-[#e8e0cc]/80 pt-4">
                     {card.points.map((point) => (
                       <li key={point} className="flex items-center gap-2 text-xs font-semibold text-secondary">
-                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${card.badgeClassName}`}>
+                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-none ${card.badgeClassName}`}>
                           <CheckBulletIcon />
                         </span>
                         {point}
@@ -242,11 +242,11 @@ export default async function Home() {
                 <Link
                   key={tile.href}
                   href={tile.href}
-                  className="relative overflow-hidden rounded-xl border border-[#e8e0cc] bg-[#faf7f2] p-5 text-primary shadow-md transition hover:bg-muted"
+                  className="relative overflow-hidden rounded-none border border-[#e8e0cc] bg-[#faf7f2] p-5 text-primary shadow-md transition hover:bg-muted"
                 >
                   <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#e8dcc8]/60 to-transparent" />
                   <div className="relative z-10 flex items-center gap-3">
-                    <span className={`flex h-10 w-10 items-center justify-center rounded-full ${tile.badgeClassName}`}>
+                    <span className={`flex h-10 w-10 items-center justify-center rounded-none ${tile.badgeClassName}`}>
                       <EntryIcon icon={tile.icon} />
                     </span>
                     <span className="text-base font-bold text-heading">{tile.title}</span>
@@ -257,9 +257,9 @@ export default async function Home() {
             </div>
           </section>
 
-          <section className="flex flex-col gap-5 rounded-xl border border-[#e8e0cc] bg-[#faf7f2] p-6 shadow-md sm:flex-row sm:items-center sm:justify-between">
+          <section className="flex flex-col gap-5 rounded-none border border-[#e8e0cc] bg-[#faf7f2] p-6 shadow-md sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3 sm:max-w-xs">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#5DCAA5]/15 text-[#168567]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none bg-[#5DCAA5]/15 text-[#168567]">
                 <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
                   <path d="M4 6h16v12H4V6Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
                   <path d="m4 7 8 6 8-6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
@@ -281,19 +281,19 @@ export default async function Home() {
             <div className="flex flex-wrap items-center gap-2 border-t border-[#e8e0cc] pt-4 sm:border-t-0 sm:border-l sm:pl-5 sm:pt-0">
               <Link
                 href="/auth/signup"
-                className="rounded-md bg-accent px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--button-text)] transition hover:opacity-90"
+                className="rounded-none bg-accent px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--button-text)] transition hover:opacity-90"
               >
                 Register free
               </Link>
               <Link
                 href="/auth/login"
-                className="rounded-md border border-strong px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-primary transition hover:border-accent hover:text-accent"
+                className="rounded-none border border-strong px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-primary transition hover:border-accent hover:text-accent"
               >
                 Log in
               </Link>
               <Link
                 href="/contact"
-                className="rounded-md border border-accent px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-accent transition hover:bg-accent/10"
+                className="rounded-none border border-accent px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-accent transition hover:bg-accent/10"
               >
                 I&apos;m a buyer
               </Link>

@@ -212,7 +212,7 @@ export default function OpportunityStatsBanner({ filters }: OpportunityStatsBann
               alignItems: "center",
               gap: 8,
               padding: "13px 22px",
-              borderRadius: 10,
+              borderRadius: 0,
               color: "#1a3a2a",
               fontSize: 12,
               fontWeight: 800,
@@ -238,7 +238,7 @@ export default function OpportunityStatsBanner({ filters }: OpportunityStatsBann
                   justifyContent: "center",
                   width: 44,
                   height: 44,
-                  borderRadius: "50%",
+                  borderRadius: 0,
                   background: "#1a3a2a",
                   boxShadow: "0 2px 8px rgba(26,58,42,0.25)",
                 }}

@@ -14,7 +14,7 @@ const INFO_STYLES = `
   }
   .ic-register-box {
     border: 1px solid #d4c8a8;
-    border-radius: 4px;
+    border-radius: 0;
     background: white;
     padding: 10px 14px;
     display: flex;
@@ -40,7 +40,7 @@ const INFO_STYLES = `
   }
   .ic-source-box {
     border: 1px solid #d4c8a8;
-    border-radius: 4px;
+    border-radius: 0;
     background: white;
     padding: 8px 6px;
     text-align: center;
@@ -65,7 +65,7 @@ function CardHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
     <div style={{ marginBottom: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-        <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#1a3a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 0, background: '#1a3a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {icon}
         </div>
         <h3 className="font-display" style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#1a2e1a', margin: 0 }}>
@@ -121,7 +121,7 @@ export default function InfoCards() {
           </div>
 
           <Link href="/auth/signup" className="ic-register-box ic-register-box--primary" style={{ textDecoration: 'none' }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#f0ebe0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 0, background: '#f0ebe0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a3a2a" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
@@ -209,7 +209,7 @@ export default function InfoCards() {
             {t("smartScoreRank")}
           </p>
 
-          <div style={{ background: '#f0ebe0', border: '1px solid #d4c8a8', borderRadius: 4, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div style={{ background: '#f0ebe0', border: '1px solid #d4c8a8', borderRadius: 0, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 7 }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c8a060" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="12" cy="8" r="6" />
               <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12" />

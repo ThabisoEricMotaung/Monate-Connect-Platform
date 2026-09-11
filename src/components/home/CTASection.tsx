@@ -15,7 +15,7 @@ const CTA_STYLES = `
     background: #c8a060;
     color: #1a3a2a;
     border: 2px solid #c8a060;
-    border-radius: 2px;
+    border-radius: 0;
     padding: 8px 20px;
     font-size: 11px;
     font-weight: 500;
@@ -36,7 +36,7 @@ const CTA_STYLES = `
     background: transparent;
     color: #c8a060;
     border: 1.5px solid #c8a060;
-    border-radius: 2px;
+    border-radius: 0;
     padding: 8px 20px;
     font-size: 11px;
     font-weight: 500;
@@ -73,7 +73,7 @@ export default function CTASection() {
       <style dangerouslySetInnerHTML={{ __html: CTA_STYLES }} />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1 }}>
-        <div style={{ width: 36, height: 36, borderRadius: '50%', border: '1.5px solid #5DCAA5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 0, border: '1.5px solid #5DCAA5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             <path d="M9 12l2 2 4-4" />
