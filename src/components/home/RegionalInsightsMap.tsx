@@ -278,7 +278,7 @@ export default function RegionalInsightsMap({
               return (
                 <div
                   key={province.id}
-                  onClick={() => router.push(`/opportunities?province=${province.name}`)}
+                  onClick={() => router.push(`/tenders?province=${encodeURIComponent(province.name)}`)}
                   style={{
                     background: cardBg,
                     border: isTopThree ? '1px solid #d4c4a8' : '1px solid #e8e0cc',

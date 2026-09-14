@@ -86,6 +86,7 @@ function TendersPageContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [source, setSource] = useState(() => searchParams.get('source') || '');
+  const [province, setProvince] = useState(() => searchParams.get('province') || '');
   const [daysFilter, setDaysFilter] = useState(() => Number(searchParams.get('daysUntilClose')) || 0);
   const [budgetFilter, setBudgetFilter] = useState<BudgetRange>(() => (searchParams.get('budget') as BudgetRange) || '');
   const [sort, setSort] = useState<TenderSort>(() => {
@@ -122,6 +123,7 @@ function TendersPageContent() {
         const params = new URLSearchParams();
         if (search) params.append('search', search);
         if (source) params.append('source', source);
+        if (province) params.append('province', province);
         if (budgetFilter) params.append('budget', budgetFilter);
         if (daysFilter) params.append('daysUntilClose', daysFilter.toString());
         params.append('sort', sort);
@@ -141,18 +143,19 @@ function TendersPageContent() {
     };
 
     loadTenders();
-  }, [search, source, budgetFilter, daysFilter, sort, currentPage]);
+  }, [search, source, province, budgetFilter, daysFilter, sort, currentPage]);
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (source) params.set('source', source);
+    if (province) params.set('province', province);
     if (budgetFilter) params.set('budget', budgetFilter);
     if (daysFilter) params.set('daysUntilClose', daysFilter.toString());
     params.set('sort', sort);
     if (currentPage > 1) params.set('page', currentPage.toString());
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [search, source, budgetFilter, daysFilter, sort, currentPage, pathname, router]);
+  }, [search, source, province, budgetFilter, daysFilter, sort, currentPage, pathname, router]);
 
   useEffect(() => {
     if (!exportMenuOpen) return;

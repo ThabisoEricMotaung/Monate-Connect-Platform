@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
     // Query parameters
     const search = searchParams.get('search') || '';
     const source = searchParams.get('source') || '';
+    const province = searchParams.get('province') || '';
     const daysParam = searchParams.get('daysUntilClose');
     const daysUntilClose = daysParam ? parseInt(daysParam) : null;
     const budget = searchParams.get('budget') || '';
@@ -77,6 +78,9 @@ export async function GET(request: NextRequest) {
         baseQuery = baseQuery.ilike('source_name', `%${source}%`);
       }
     }
+    if (province) {
+      baseQuery = baseQuery.eq('province', province);
+    }
     if (budget === 'unspecified') baseQuery = baseQuery.is('estimated_budget', null);
     if (budget === '0-5m') baseQuery = baseQuery.gte('estimated_budget', 0).lt('estimated_budget', 5_000_000);
     if (budget === '5-20m') baseQuery = baseQuery.gte('estimated_budget', 5_000_000).lt('estimated_budget', 20_000_000);
@@ -100,6 +104,9 @@ export async function GET(request: NextRequest) {
         countQuery = countQuery.ilike('source_name', `%${source}%`);
       }
     }
+    if (province) {
+      countQuery = countQuery.eq('province', province);
+    }
     if (budget === 'unspecified') countQuery = countQuery.is('estimated_budget', null);
     if (budget === '0-5m') countQuery = countQuery.gte('estimated_budget', 0).lt('estimated_budget', 5_000_000);
     if (budget === '5-20m') countQuery = countQuery.gte('estimated_budget', 5_000_000).lt('estimated_budget', 20_000_000);
@@ -117,6 +124,9 @@ export async function GET(request: NextRequest) {
     if (search) newCountQuery = newCountQuery.or(`title.ilike.%${search}%,external_reference.ilike.%${search}%,description.ilike.%${search}%`);
     if (source === 'null') newCountQuery = newCountQuery.is('source_name', null);
     else if (source) newCountQuery = newCountQuery.ilike('source_name', `%${source}%`);
+    if (province) {
+      newCountQuery = newCountQuery.eq('province', province);
+    }
     if (budget === 'unspecified') newCountQuery = newCountQuery.is('estimated_budget', null);
     if (budget === '0-5m') newCountQuery = newCountQuery.gte('estimated_budget', 0).lt('estimated_budget', 5_000_000);
     if (budget === '5-20m') newCountQuery = newCountQuery.gte('estimated_budget', 5_000_000).lt('estimated_budget', 20_000_000);
