@@ -8,12 +8,13 @@ import { useAnalytics } from "@/hooks/useAnalytics"
 
 const chromeFreeRoutes = new Set(["/billing/return", "/billing/cancel", "/tenders"])
 const englishAuthoritativePrefixes = ["/privacy", "/terms", "/cookies", "/cookie-policy", "/data-protection", "/guides", "/trust"]
+const chromeFreePrefixes = ["/guides", "/how-to"]
 
 export default function AppChrome({ children }: { children: React.ReactNode }) {
   const locale = useLocale()
   const t = useTranslations("publicChrome")
   const pathname = usePathname() || ""
-  const hideChrome = chromeFreeRoutes.has(pathname) || pathname.startsWith('/tenders')
+  const hideChrome = chromeFreeRoutes.has(pathname) || pathname.startsWith('/tenders') || chromeFreePrefixes.some((prefix) => pathname.startsWith(prefix))
 
   // Initialize analytics and user identification
   useAnalytics()

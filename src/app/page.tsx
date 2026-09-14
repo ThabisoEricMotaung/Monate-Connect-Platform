@@ -6,13 +6,14 @@ import PublicHeader from "@/components/PublicHeader"
 import GazetteHeader from "@/components/home/GazetteHeader"
 import HeroSection from "@/components/home/HeroSection"
 import OpportunityStatsBanner from "@/components/home/OpportunityStatsBanner"
-import InfoCards from "@/components/home/InfoCards"
+import RegionalInsightsMap from "@/components/home/RegionalInsightsMap"
 import CTASection from "@/components/home/CTASection"
 import TrustStrip from "@/components/home/TrustStrip"
 import LiveOpportunitiesSection from "@/components/home/LiveOpportunitiesSection"
 import AccountDeletedNotice from "@/components/AccountDeletedNotice"
 import IncompleteRegistrationBanner from "@/components/IncompleteRegistrationBanner"
 import DigestSignupForm from "@/app/opportunities/DigestSignupForm"
+import { fetchPublicOpportunities } from "@/lib/publicOpportunities"
 import type { Metadata } from "next"
 
 // Enable ISR with 5-minute revalidation instead of force-dynamic
@@ -178,6 +179,8 @@ function MakersMark() {
 }
 
 export default async function Home() {
+  const opportunities = await fetchPublicOpportunities().catch(() => [])
+
   return (
     <>
       <AccountDeletedNotice />
@@ -186,8 +189,8 @@ export default async function Home() {
       <main className="min-h-screen bg-page text-primary">
         <IncompleteRegistrationBanner />
         <HeroSection />
-        <OpportunityStatsBanner />
-        <InfoCards />
+        <OpportunityStatsBanner opportunities={opportunities} />
+        <RegionalInsightsMap opportunities={opportunities} totalGovernmentOpportunities={2087} />
         <LiveOpportunitiesSection />
         <MakersMark />
         <CTASection />

@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { localeFormatTag, normalizeLocale } from "@/i18n/config"
+import type { PublicRFQ } from "@/lib/publicOpportunities"
 
 export type OpportunityStatsFilters = {
   source?: string
@@ -162,12 +163,46 @@ const STAT_STYLES = `
 interface OpportunityStatsBannerProps {
   /** Optional filters (e.g. from /tenders' Source/Budget/Closing-in controls). */
   filters?: OpportunityStatsFilters
+  /** Optional opportunities data to calculate stats from. */
+  opportunities?: PublicRFQ[]
 }
 
-export default function OpportunityStatsBanner({ filters }: OpportunityStatsBannerProps) {
-  const stats = useOpportunityStats(filters)
+export default function OpportunityStatsBanner({ filters, opportunities }: OpportunityStatsBannerProps) {
+  const apiStats = useOpportunityStats(filters)
   const locale = useLocale()
   const t = useTranslations("home")
+
+  // Calculate stats from opportunities data if provided, otherwise use API stats
+  const stats = useMemo(() => {
+    if (!opportunities) return apiStats
+
+    const now = new Date()
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
+
+    let live = 0
+    let closing = 0
+    let newIn48 = 0
+
+    opportunities.forEach((opp) => {
+      const closingDate = opp.closing_date ? new Date(opp.closing_date) : null
+      const publishedDate = opp.published_date ? new Date(opp.published_date) : null
+
+      live++
+      if (closingDate && closingDate <= sevenDaysFromNow && closingDate > now) closing++
+      if (publishedDate && publishedDate >= twoDaysAgo) newIn48++
+    })
+
+    return {
+      totalOpenRfqs: opportunities.length,
+      liveOpportunities: live,
+      closingThisWeek: closing,
+      newIn48Hours: newIn48,
+      underEvaluation: 0,
+      screenedPercent: null,
+    }
+  }, [opportunities, apiStats])
+
   if (!stats) return null
   const formatLocale = localeFormatTag(normalizeLocale(locale))
 
@@ -175,7 +210,7 @@ export default function OpportunityStatsBanner({ filters }: OpportunityStatsBann
     {
       icon: <SparkleIcon />,
       value: stats.totalOpenRfqs.toLocaleString(formatLocale),
-      label: `Total Open RFQs · ${stats.liveOpportunities.toLocaleString(formatLocale)} live and accepting bids`,
+      label: `Total Open RFQs · ${stats.liveOpportunities.toLocaleString(formatLocale)} live and accepting bids and ${stats.closingThisWeek.toLocaleString(formatLocale)}`,
     },
     { icon: <CalendarIcon />, value: stats.closingThisWeek.toLocaleString(formatLocale), label: "Closing this week" },
     { icon: <ClockIcon />, value: stats.newIn48Hours.toLocaleString(formatLocale), label: "New in 48 hours" },

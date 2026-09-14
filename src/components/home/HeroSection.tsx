@@ -231,27 +231,16 @@ export default function HeroSection() {
           box-shadow: 0 6px 24px rgba(200,160,96,0.35);
           background-position: right center;
         }
-        .hero-content-grid {
-          gap: 48px;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
-        }
         @media (prefers-reduced-motion: reduce) {
           .hero-glass-panel, .hero-glass-card { animation: none; }
           .hero-gold-btn { transition: none; }
         }
-        @media (max-width: 900px) {
-          .hero-content-grid {
-            grid-template-columns: minmax(0, 1fr);
-            gap: 32px;
-          }
-        }
       `}</style>
 
-      {/* ── Main content grid ── */}
-      <div className="hero-content-grid" style={{ position: "relative", zIndex: 10, maxWidth: 1200, margin: "0 auto", width: "100%", padding: "56px 24px 64px", display: "grid", alignItems: "center" }}>
+      {/* ── Main content ── */}
+      <div style={{ position: "relative", zIndex: 10, maxWidth: 800, margin: "0 auto", width: "100%", padding: "56px 24px 64px" }}>
 
-        {/* Left — headline */}
-        <div>
+        {/* Headline */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: 11, fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#1a3a2a", margin: "0 0 14px", fontWeight: 800, padding: "6px 14px", border: "1.5px solid #c8a060", borderRadius: "30px", background: "rgba(200,160,96,0.15)" }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#173D2B" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
               {/* Classical government building with columns */}
@@ -290,68 +279,8 @@ export default function HeroSection() {
               &mdash; PUBLIC OPPORTUNITIES SOURCED FROM OFFICIAL PROCUREMENT LISTINGS.
             </span>
           </div>
-        </div>
 
-        {/* Right — liquid glass panel */}
-        <div className="hero-glass-panel" style={{
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          background: "linear-gradient(145deg, rgba(255,255,255,0.72) 0%, rgba(240,235,224,0.58) 50%, rgba(220,235,225,0.52) 100%)",
-          border: "1px solid rgba(255,255,255,0.55)",
-          borderRadius: 20,
-          padding: 24,
-          boxShadow: "0 8px 40px rgba(26,58,42,0.10), 0 2px 8px rgba(26,58,42,0.06), inset 0 1px 0 rgba(255,255,255,0.8)",
-          position: "relative",
-          overflow: "hidden",
-        }}>
-          {/* Inner highlight */}
-          <div aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.9) 30%, rgba(255,255,255,0.9) 70%, transparent)" }} />
 
-          <p style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: "#5DCAA5", marginBottom: 8, fontWeight: 700 }}>
-            AiForm Procure
-          </p>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1a2e1a", margin: "0 0 16px", lineHeight: 1.2 }}>
-            Your procurement hub
-          </h2>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {[
-              { label: "For Suppliers", body: "Find opportunities. Get verified. Grow your business.", href: "/auth/signup", icon: "M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z", delay: "0.1s" },
-              { label: "The SmartScore", body: "Built from verified government and banking data.", href: "/trust", icon: "M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z", delay: "0.18s" },
-              { label: "For Buyers", body: "Source verified suppliers. Post RFQs. Manage quotes.", href: "/contact", icon: "M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z", delay: "0.26s" },
-            ].map((item) => (
-              <Link key={item.label} href={item.href} className="hero-glass-card" style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                background: "rgba(255,255,255,0.50)",
-                border: "1px solid rgba(255,255,255,0.60)",
-                borderRadius: 14,
-                padding: "12px 14px",
-                textDecoration: "none",
-                animationDelay: item.delay,
-                boxShadow: "0 2px 8px rgba(26,58,42,0.06), inset 0 1px 0 rgba(255,255,255,0.7)",
-              }}>
-                <span style={{ flexShrink: 0, width: 36, height: 36, borderRadius: "50%", background: "rgba(26,58,42,0.10)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(93,202,165,0.15)" }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a3a2a" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d={item.icon} />
-                  </svg>
-                </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1a2e1a", margin: "0 0 2px" }}>{item.label}</p>
-                  <p style={{ fontSize: 11, color: "#5a6a5a", margin: 0, lineHeight: 1.4 }}>{item.body}</p>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c8a060" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </Link>
-            ))}
-          </div>
-
-          <Link href="/auth/signup" className="hero-gold-btn" style={{ display: "block", marginTop: 14, color: "#1a3a2a", textAlign: "center", padding: "11px 16px", borderRadius: 10, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", textDecoration: "none", boxShadow: "0 4px 16px rgba(200,160,96,0.25), inset 0 1px 0 rgba(255,255,255,0.3)" }}>
-            Explore the platform &rarr;
-          </Link>
-        </div>
       </div>
     </div>
   )
