@@ -43,7 +43,7 @@ export function normalizeProvinceGeoJSON(data: GeoJSONData) {
       const name =
         rawName === "KwaZulu Natal"
           ? "KwaZulu-Natal"
-          : rawName
+          : rawName ?? "Unknown"
 
       return {
         type: "Feature",
