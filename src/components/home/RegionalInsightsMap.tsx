@@ -30,6 +30,7 @@ export default function RegionalInsightsMap({
 }: RegionalInsightsMapProps) {
   const router = useRouter()
   const [activeMetric, setActiveMetric] = useState<Metric>('total')
+  const [isExpanded, setIsExpanded] = useState(false)
 
   // Calculate province data with ranking
   const rankedProvinces = useMemo(() => {
@@ -44,12 +45,18 @@ export default function RegionalInsightsMap({
       data[id] = { name, total: 0, closing: 0, recent: 0 }
     })
 
-    // Aggregate opportunities
+    // Aggregate opportunities - ensure every opportunity is counted exactly once
+    let opportunitiesWithoutProvince = 0
+
     opportunities.forEach((opp, idx) => {
       let provs = opp.provinces || (opp.province ? [opp.province] : [])
 
+      // Filter out invalid provinces like "National" that don't match SA provinces
+      provs = provs.filter(p => Object.keys(PROVINCE_IDS).includes(p))
+
       // Mock: if no province data, distribute for demo
-      if (provs.length === 0 && opportunities.length > 0) {
+      if (provs.length === 0) {
+        opportunitiesWithoutProvince++
         const provinceNames = Object.keys(PROVINCE_IDS)
         provs = [provinceNames[idx % provinceNames.length]]
       }
@@ -64,9 +71,15 @@ export default function RegionalInsightsMap({
           data[provId].total += 1
           if (isRecent) data[provId].recent += 1
           if (isClosing) data[provId].closing += 1
+        } else if (!provId) {
+          console.warn(`⚠️ Unknown province: "${prov}" for opportunity ${opp.id}`)
         }
       })
     })
+
+    if (opportunitiesWithoutProvince > 0) {
+      console.log(`ℹ️ ${opportunitiesWithoutProvince} opportunities had no province - distributed via mock`)
+    }
 
     // Convert to array with ranking
     const maxVal = Math.max(...Object.values(data).map(d => d.total), 1)
@@ -132,17 +145,66 @@ export default function RegionalInsightsMap({
 
   const maxMetricValue = Math.max(...rankedProvinces.map(p => p.metricValue), 1)
 
+  // Verify numbers match API stats
+  useMemo(() => {
+    const sumProvinces = rankedProvinces.reduce((sum, p) => sum + p.total, 0)
+    const match = totalOpportunities === sumProvinces
+    console.log('📊 RegionalInsightsMap Stats Verification:')
+    console.log(`  Total Gov. Opportunities: ${totalGovernmentOpportunities}`)
+    console.log(`  Live & Accepting: ${totalOpportunities}`)
+    console.log(`  Closing This Week: ${closingCount}`)
+    console.log(`  New in 48h: ${recentCount}`)
+    console.log(`  Sum of provinces (total): ${sumProvinces}`)
+    console.log(`  Match: ${match ? '✅' : '❌ MISMATCH'}`)
+  }, [totalOpportunities, closingCount, recentCount, rankedProvinces, totalGovernmentOpportunities])
+
   return (
     <section className="border-y border-[#e3d8c5] bg-white px-6 py-16 sm:py-20">
       <div className="mx-auto max-w-6xl">
         <div className="rounded-none border border-[#ebebeb] p-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-          {/* Header */}
-          <div className="flex items-start justify-between mb-6">
-            <div>
+          {/* Header with Toggle - Styled as Accordion */}
+          <div
+            className="flex items-center justify-between p-4 mb-6 cursor-pointer transition-all duration-200 rounded-none border border-[#e8e0cc]"
+            style={{
+              background: isExpanded ? '#faf9f5' : '#f9f8f6',
+              borderBottom: isExpanded ? '1px solid #e8e0cc' : '1px solid #d4c4a8',
+            }}
+            onClick={() => setIsExpanded(!isExpanded)}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = isExpanded ? '#f5f3f0' : '#f5f3f0'
+              e.currentTarget.style.borderColor = '#c8a060'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = isExpanded ? '#faf9f5' : '#f9f8f6'
+              e.currentTarget.style.borderColor = isExpanded ? '#e8e0cc' : '#d4c4a8'
+            }}
+          >
+            <div className="flex-1">
               <h2 className="text-lg font-semibold text-[#1a3a2a]">Regional Insights</h2>
-              <p className="text-sm text-[#5a6a5a] mt-1">Procurement activity by province</p>
+              <p className="text-sm text-[#7a7066] mt-1">
+                {isExpanded ? 'Procurement activity by province' : 'Click to view province breakdown'}
+              </p>
             </div>
+            <svg
+              className="w-6 h-6 text-[#1a3a2a] transition-transform duration-300 flex-shrink-0 ml-4"
+              style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
           </div>
+
+          {/* Collapsible Content */}
+          {isExpanded && (
+            <div style={{ animation: 'fadeIn 200ms ease-out' }}>
+              <style>{`
+                @keyframes fadeIn {
+                  from { opacity: 0; max-height: 0; overflow: hidden; }
+                  to { opacity: 1; max-height: 2000px; overflow: visible; }
+                }
+              `}</style>
 
           {/* Stats Banner */}
           <div className="grid grid-cols-4 gap-3 mb-6">
@@ -313,6 +375,8 @@ export default function RegionalInsightsMap({
           }}>
             <span style={{ fontWeight: 600, color: '#1a3a2a' }}>Top 3 provinces</span> account for {topThreeInsight.percentage}% of currently tracked opportunities.
           </div>
+            </div>
+          )}
         </div>
       </div>
     </section>

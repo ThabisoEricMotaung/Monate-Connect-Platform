@@ -238,7 +238,7 @@ export default function HeroSection() {
       `}</style>
 
       {/* ── Main content ── */}
-      <div style={{ position: "relative", zIndex: 10, maxWidth: 800, margin: "0 auto", width: "100%", padding: "56px 24px 64px" }}>
+      <div style={{ position: "relative", zIndex: 10, maxWidth: 1200, margin: "0 auto", width: "100%", padding: "56px 40px 64px" }}>
 
         {/* Headline */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: 11, fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#1a3a2a", margin: "0 0 14px", fontWeight: 800, padding: "6px 14px", border: "1.5px solid #c8a060", borderRadius: "30px", background: "rgba(200,160,96,0.15)" }}>
