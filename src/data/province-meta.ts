@@ -22,10 +22,19 @@ export const provinceMeta = {
   EC: { name: "Eastern Cape" },
 }
 
-export function normalizeProvinceGeoJSON(data: any) {
+interface GeoJSONFeature {
+  properties: Record<string, string | undefined>
+  geometry: unknown
+}
+
+interface GeoJSONData {
+  features: GeoJSONFeature[]
+}
+
+export function normalizeProvinceGeoJSON(data: GeoJSONData) {
   return {
     type: "FeatureCollection",
-    features: data.features.map((feature: any) => {
+    features: data.features.map((feature: GeoJSONFeature) => {
       const rawName =
         feature.properties.shapeName ??
         feature.properties.name ??
