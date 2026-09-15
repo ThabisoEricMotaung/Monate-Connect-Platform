@@ -268,96 +268,109 @@ export default function RegionalInsightsMap({
           </div>
 
           {/* Province Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '2rem' }}>
             {rankedProvinces.map((province) => {
-              const isTopThree = province.rank <= 3
-              const cardBg = isTopThree
-                ? '#f9f8f6' // Warm neutral for top 3
-                : '#faf9f7' // Slightly cooler neutral for rest
+              // Color scheme by rank
+              const rankColors = {
+                1: { primary: '#378ADD', accent: '#185FA5', gold: '#c9a13b' },
+                2: { primary: '#5DCAA5', accent: '#0F6E56', gold: '#c9a13b' },
+                3: { primary: '#c9a13b', accent: '#854F0B', gold: '#c9a13b' },
+              }
+              const colors = rankColors[province.rank as keyof typeof rankColors] || rankColors[3]
+              const closingCount = activeMetric === 'total' ? province.closing : (activeMetric === 'closing' ? 0 : 0)
+              const recentCount = activeMetric === 'total' ? province.recent : (activeMetric === 'closing' ? 0 : province.recent)
 
               return (
                 <div
                   key={province.id}
                   onClick={() => router.push(`/tenders?province=${encodeURIComponent(province.name)}`)}
                   style={{
-                    background: cardBg,
-                    border: isTopThree ? '1px solid #d4c4a8' : '1px solid #e8e0cc',
-                    borderLeft: isTopThree ? '3px solid #1a3a2a' : '1px solid #e8e0cc',
-                    borderRadius: '6px',
-                    padding: '20px',
+                    background: 'white',
+                    border: 'none',
+                    borderRadius: '0',
+                    padding: '0',
                     transition: 'all 160ms ease-out',
                     cursor: 'pointer',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.borderColor = '#c8a060'
-                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.08)'
+                    e.currentTarget.style.transform = 'translateY(-1px)'
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.borderColor = isTopThree ? '#d4c4a8' : '#e8e0cc'
-                    e.currentTarget.style.boxShadow = 'none'
+                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'
                   }}
                 >
-                  {/* Top Row: Abbreviation + Rank */}
-                  <div className="flex justify-between items-center mb-3">
-                    <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: '#6b5a3f', textTransform: 'uppercase' }}>
-                      {province.abbreviation}
-                    </span>
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#a0946f', textTransform: 'uppercase' }}>
-                      #{province.rank}
-                    </span>
-                  </div>
+                  {/* Header with Gradient */}
+                  <div style={{
+                    background: 'linear-gradient(135deg, #f5f3f0 0%, #faf9f5 100%)',
+                    padding: '0.75rem',
+                    borderBottom: '1px solid #e8dcc8',
+                  }}>
+                    {/* Header Row: Rank + Icon */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.05em', color: '#7a7066', textTransform: 'uppercase' }}>
+                        {province.abbreviation} #{province.rank}
+                      </span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
+                    </div>
 
-                  {/* Province Name */}
-                  <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1a3a2a', margin: '0 0 12px 0', lineHeight: 1.2 }}>
-                    {province.name}
-                  </h3>
+                    {/* Province Name */}
+                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#1a3a2a', margin: '0', lineHeight: 1.1 }}>
+                      {province.name}
+                    </p>
 
-                  {/* Count + Label */}
-                  <div className="mb-3">
-                    <p style={{ fontSize: '36px', fontWeight: 800, color: '#1a3a2a', margin: '0 0 4px 0', lineHeight: 1 }}>
+                    {/* Big Number */}
+                    <p style={{ fontSize: '24px', fontWeight: 700, color: colors.primary, margin: '0.35rem 0 0', lineHeight: 1 }}>
                       {province.metricValue}
                     </p>
-                    <p style={{ fontSize: '12px', color: '#7a7066', margin: 0, fontWeight: 500 }}>
-                      {activeMetric === 'total' ? 'Open opportunities' : activeMetric === 'closing' ? 'Closing soon' : 'New in 48h'}
-                    </p>
+                  </div>
+
+                  {/* Metrics Grid */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '0.5rem',
+                    borderBottom: '1px solid #e8dcc8',
+                    padding: '0.5rem 0.75rem',
+                  }}>
+                    <div>
+                      <p style={{ fontSize: '8px', color: '#7a7066', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>Closing</p>
+                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#c9a13b', margin: '0.25rem 0 0', lineHeight: 1 }}>
+                        {province.closing}
+                      </p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '8px', color: '#7a7066', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>New</p>
+                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#5DCAA5', margin: '0.25rem 0 0', lineHeight: 1 }}>
+                        {province.recent}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Activity Bar */}
-                  <div className="mb-4">
+                  <div style={{ padding: '0.5rem 0.75rem' }}>
                     <div style={{
-                      height: '3px',
-                      background: '#e8dcc8',
-                      borderRadius: '2px',
+                      height: '2px',
+                      background: '#f0f0f0',
+                      borderRadius: '0',
                       overflow: 'hidden',
+                      marginBottom: '0.25rem',
                     }}>
                       <div
                         style={{
                           height: '100%',
-                          background: isTopThree ? '#1a3a2a' : '#c8a060',
-                          width: `${(province.metricValue / maxMetricValue) * 100}%`,
+                          background: colors.primary,
+                          width: `${province.relativeActivity * 100}%`,
                           transition: 'width 300ms ease-out',
                         }}
                       />
                     </div>
                   </div>
-
-                  {/* Top 3 Badge */}
-                  {isTopThree && (
-                    <div style={{
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      color: '#1a3a2a',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      opacity: 0.6,
-                    }}>
-                      {province.rank === 1 && 'Highest activity'}
-                      {province.rank === 2 && 'Second highest'}
-                      {province.rank === 3 && 'Third highest'}
-                    </div>
-                  )}
                 </div>
               )
             })}

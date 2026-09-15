@@ -1,10 +1,8 @@
 "use client"
 
-import { IconAccessible, IconBrandInstagram, IconBrandTiktok, IconBrandX } from "@tabler/icons-react"
 import Image from "next/image"
 import Link from "next/link"
-import { type CSSProperties } from "react"
-import { useTranslations } from "next-intl"
+import type { CSSProperties } from "react"
 
 const footerSections = [
   {
@@ -42,6 +40,20 @@ const footerVars = {
   "--procure-ivory": "#f8f3e7",
   "--procure-border": "rgba(18, 60, 43, 0.14)",
 } as CSSProperties
+
+const trustChips = [
+  "Trusted information",
+  "Verified network",
+  "Transparent procurement",
+  "Better outcomes for SA",
+]
+
+const complianceBadges = [
+  "CSD Verified",
+  "BBBEE Compliant",
+  "SARS Compliant",
+  "POPIA Aware",
+]
 
 const sectionIconPaths: Record<string, { tone: string; path: string }> = {
   Platform: {
@@ -154,16 +166,6 @@ function CardPattern() {
 }
 
 export default function PublicFooter() {
-  const t = useTranslations("publicChrome")
-  const translated = (label: string) => ({
-    Platform: t("platform"), Support: t("support"), Legal: t("legal"), About: t("about"),
-    Opportunities: t("opportunities"), "Supplier Marketplace": t("supplierMarketplace"),
-    "Trust Centre": t("trustCentre"), Pricing: t("pricing"), "Help Centre": t("helpCentre"),
-    Contact: t("contact"), Privacy: t("privacy"), Terms: t("terms"),
-    "Cookie Policy": t("cookiePolicy"), "Data Protection": t("dataProtection"),
-  } as Record<string, string>)[label] ?? label
-  const translatedTrustChips = [t("trustedInformation"), t("clearSignposting"), t("plainLanguage"), t("saBuilt")]
-  const translatedComplianceBadges = [t("csdVerified"), t("bbbeeCompliant"), t("sarsCompliant"), t("popiaAware")]
   function openAccessibility() {
     window.dispatchEvent(new Event("monate:open-accessibility"))
   }
@@ -178,13 +180,16 @@ export default function PublicFooter() {
           </p>
           <div className="mt-3 h-0.5 w-16 rounded-full bg-[#c8a060]" />
           <h2 className="mt-5 font-display text-4xl font-bold leading-tight text-[#123c2b] md:text-5xl">
-            {t("footerHeadline")}
+            Public procurement intelligence, clearly{" "}
+            <span className="italic text-[#c8a060]">signposted</span>
           </h2>
           <p className="mt-5 max-w-2xl text-base leading-7 text-[#123c2b]/70">
-            {t("footerBody")}
+            Public information for suppliers, buyers, pilot partners and procurement stakeholders.
+            Legal and policy pages contain professional placeholder language and are not final legal
+            advice.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            {translatedTrustChips.map((chip, index) => (
+            {trustChips.map((chip, index) => (
               <span key={chip} className="footer-trust-chip">
                 <span className={index % 2 === 0 ? "footer-chip-icon footer-chip-icon-green" : "footer-chip-icon footer-chip-icon-gold"}>
                   <SvgIcon path="M9 12.75l2 2 4-4" className="h-3.5 w-3.5" />
@@ -195,7 +200,7 @@ export default function PublicFooter() {
           </div>
         </div>
 
-        <nav className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label={t("footerNavigation")}>
+        <nav className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Public footer navigation">
           {footerSections.map((section) => {
             const sectionIcon = sectionIconPaths[section.title]
 
@@ -206,7 +211,7 @@ export default function PublicFooter() {
                   <SvgIcon path={sectionIcon.path} className="h-5 w-5" />
                 </span>
                 <p className="mt-5 text-xs font-extrabold uppercase tracking-[0.22em] text-[#123c2b]">
-                  {translated(section.title)}
+                  {section.title}
                 </p>
                 <div className="mt-2 h-0.5 w-10 rounded-full bg-[#c8a060]" />
                 <div className="relative z-10 mt-5 grid gap-2.5">
@@ -215,7 +220,7 @@ export default function PublicFooter() {
                       <span className="footer-link-icon">
                         <SvgIcon path={linkIconPaths[link.label]} className="h-4 w-4" />
                       </span>
-                      <span className="min-w-0 flex-1">{translated(link.label)}</span>
+                      <span className="min-w-0 flex-1">{link.label}</span>
                       <svg className="footer-link-arrow h-4 w-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.3} viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M9 5l7 7-7 7" />
                       </svg>
@@ -229,105 +234,61 @@ export default function PublicFooter() {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl border-t border-[#123c2b]/10 px-6 py-6">
-        <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div className="grid gap-5 lg:grid-cols-[1fr_minmax(260px,0.8fr)_1fr] lg:items-center">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <p className="text-sm font-semibold text-[#123c2b]/70">
-              &copy; 2026 AiForm Procure &middot; {t("copyrightSuite")}
+              &copy; 2026 AiForm Procure &middot; Procurement Suite
             </p>
-            <Link href="https://www.aiformstudio.co.za/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-semibold text-[#123c2b]/70 hover:text-[#123c2b] transition-colors">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#123c2b]/70">
               <Image
                 src="/aiform-mark.png"
-                alt="AiForm Studio"
+                alt=""
                 width={19}
                 height={24}
                 className="h-6 w-auto"
               />
-              <span>{t("studioProduct")}</span>
-            </Link>
+              <span>A product of AiForm Studio</span>
+            </div>
           </div>
-          <div className="relative flex items-center justify-end">
-            <div className="flex flex-nowrap items-center gap-1 sm:gap-2" role="group" aria-label={t("socialChannels")}>
-            <a
-              href="https://linkedin.com/company/aiform-procure/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footer-social-button footer-social-link"
-              aria-label="Follow AiForm Procure on LinkedIn"
-              title="LinkedIn"
-            >
+
+          <div className="footer-wire-wrap">
+            <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#c8a060]/40" />
+            <Link href="/opportunities" className="footer-wire-pill">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3v3m0 12v3m9-9h-3M6 12H3m14.25-5.25l-2.12 2.12M8.87 15.13l-2.12 2.12m10.5 0l-2.12-2.12M8.87 8.87L6.75 6.75M9.75 12a2.25 2.25 0 104.5 0 2.25 2.25 0 00-4.5 0z" />
+              </svg>
+              <span>AIFORMS PROCUREMENT WIRE</span>
+            </Link>
+            <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#c8a060]/40" />
+          </div>
+
+          <div className="flex items-center gap-2 lg:justify-end">
+            <a href="https://www.linkedin.com" className="footer-social-button" aria-label="LinkedIn">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M6.5 8.75H3.25v11H6.5v-11zM4.88 7.25a1.88 1.88 0 100-3.76 1.88 1.88 0 000 3.76zM20.75 13.41c0-2.95-1.57-4.91-4.13-4.91a3.56 3.56 0 00-3.21 1.77V8.75h-3.12v11h3.25v-5.44c0-1.44.27-2.83 2.05-2.83 1.76 0 1.78 1.64 1.78 2.92v5.35h3.25l.13-6.34z" />
               </svg>
             </a>
-            <a
-              href="https://www.facebook.com/profile.php?id=61592730084230"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footer-social-button footer-social-link"
-              aria-label="Follow AiForm Procure on Facebook"
-              title="Facebook"
-            >
+            <a href="https://www.facebook.com" className="footer-social-button" aria-label="Facebook">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M14.2 21v-7.3h2.45l.37-2.84H14.2V9.05c0-.82.23-1.38 1.41-1.38h1.5V5.13A20.03 20.03 0 0014.92 5c-2.16 0-3.64 1.32-3.64 3.74v2.12H8.84v2.84h2.44V21h2.92z" />
               </svg>
             </a>
-            <a
-              href="https://aiformprocure.substack.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footer-social-button footer-social-link"
-              aria-label="Subscribe to AiForm Procure on Substack"
-              title="Substack"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M4 4h16v2.25H4V4zm0 4h16v2.25H4V8zm0 4h16v8l-8-4.5L4 20v-8z" />
-              </svg>
-            </a>
-            <a
-              href="https://www.tiktok.com/@aiformprocure"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footer-social-button footer-social-link"
-              aria-label="Follow AiForm Procure on TikTok"
-              title="TikTok"
-            >
-              <IconBrandTiktok className="h-4 w-4" stroke={2} aria-hidden />
-            </a>
-            <a
-              href="https://x.com/aiformprocure"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footer-social-button footer-social-link"
-              aria-label="Follow AiForm Procure on X"
-              title="X"
-            >
-              <IconBrandX className="h-4 w-4" stroke={2} aria-hidden />
-            </a>
-            <a
-              href="https://www.instagram.com/aiformprocure/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footer-social-button footer-social-link"
-              aria-label="Follow AiForm Procure on Instagram"
-              title="Instagram"
-            >
-              <IconBrandInstagram className="h-4 w-4" stroke={2} aria-hidden />
-            </a>
             <button
               type="button"
               onClick={openAccessibility}
-              className="footer-social-button footer-social-link footer-access-button shrink-0"
-              aria-label={t("accessibility")}
-              title={t("accessibility")}
+              className="footer-social-button footer-access-button"
+              aria-label="Accessibility"
             >
-              <IconAccessible className="h-4 w-4" stroke={2} aria-hidden />
+              <svg className="h-4 w-4 sm:hidden" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 4.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM4.5 7.5h15M12 7.5v13.5m-4.5 0L12 12l4.5 9" />
+              </svg>
+              <span className="hidden sm:inline">Accessibility</span>
             </button>
-            </div>
           </div>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-3">
-          {translatedComplianceBadges.map((badge, index) => (
+          {complianceBadges.map((badge, index) => (
             <span key={badge} className="footer-compliance-chip">
               <span className={index % 2 === 0 ? "footer-chip-icon footer-chip-icon-green" : "footer-chip-icon footer-chip-icon-gold"}>
                 <SvgIcon path={index === 3 ? linkIconPaths.Privacy : "M9 12.75l2 2 4-4"} className="h-3.5 w-3.5" />
@@ -501,6 +462,38 @@ export default function PublicFooter() {
           color: rgba(18, 60, 43, 0.055);
           pointer-events: none;
         }
+
+        .footer-wire-wrap {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
+          min-width: 0;
+        }
+
+        .footer-wire-pill {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          white-space: nowrap;
+          border: 1px solid rgba(201, 161, 59, 0.35);
+          border-radius: 999px;
+          background: var(--procure-green);
+          padding: 0.72rem 1rem;
+          color: var(--procure-gold);
+          font-size: 0.72rem;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          box-shadow: 0 14px 32px rgba(18, 60, 43, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+          transition: transform 240ms ease, box-shadow 240ms ease;
+        }
+
+        .footer-wire-pill:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 18px 38px rgba(18, 60, 43, 0.22), 0 0 0 4px rgba(201, 161, 59, 0.08);
+        }
+
         .footer-social-button {
           display: inline-flex;
           min-width: 2.5rem;
@@ -526,19 +519,6 @@ export default function PublicFooter() {
           color: var(--procure-gold);
         }
 
-        .footer-social-link {
-          border-color: #1a2535;
-          background: #1a2535;
-          color: #fff8ea;
-          box-shadow: none;
-        }
-
-        .footer-social-link:hover {
-          border-color: #c9a84c;
-          background: #c9a84c;
-          color: #1a2535;
-        }
-
         .footer-access-button {
           cursor: pointer;
         }
@@ -556,6 +536,14 @@ export default function PublicFooter() {
           .footer-skyline {
             opacity: 0.45;
           }
+
+          .footer-wire-wrap {
+            justify-content: flex-start;
+          }
+
+          .footer-wire-wrap > span {
+            display: none;
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -563,6 +551,7 @@ export default function PublicFooter() {
           .footer-nav-card,
           .footer-nav-link,
           .footer-link-arrow,
+          .footer-wire-pill,
           .footer-social-button {
             animation: none;
             transition: none;
@@ -570,6 +559,7 @@ export default function PublicFooter() {
 
           .footer-nav-card:hover,
           .footer-nav-link:hover,
+          .footer-wire-pill:hover,
           .footer-social-button:hover {
             transform: none;
           }
@@ -578,4 +568,3 @@ export default function PublicFooter() {
     </footer>
   )
 }
-
