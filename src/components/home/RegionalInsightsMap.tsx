@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import type { PublicRFQ } from "@/lib/publicOpportunities"
 import { PROVINCE_IDS } from '@/data/province-meta'
 
@@ -24,13 +25,19 @@ interface RegionalInsightsMapProps {
   totalGovernmentOpportunities?: number
 }
 
+// Rank-based color system
+const getRankColor = (rank: number) => {
+  if (rank === 1) return { primary: '#185FA5', accent: '#378ADD' } // Blue
+  if (rank === 2) return { primary: '#0F6E56', accent: '#5DCAA5' } // Green
+  return { primary: '#854F0B', accent: '#c9a13b' } // Gold
+}
+
 export default function RegionalInsightsMap({
   opportunities,
   totalGovernmentOpportunities
 }: RegionalInsightsMapProps) {
   const router = useRouter()
   const [activeMetric, setActiveMetric] = useState<Metric>('total')
-  const [isExpanded, setIsExpanded] = useState(false)
 
   // Calculate province data with ranking
   const rankedProvinces = useMemo(() => {
@@ -143,8 +150,6 @@ export default function RegionalInsightsMap({
     }).length
   }, [opportunities])
 
-  const maxMetricValue = Math.max(...rankedProvinces.map(p => p.metricValue), 1)
-
   // Verify numbers match API stats
   useMemo(() => {
     const sumProvinces = rankedProvinces.reduce((sum, p) => sum + p.total, 0)
@@ -158,240 +163,234 @@ export default function RegionalInsightsMap({
     console.log(`  Match: ${match ? '✅' : '❌ MISMATCH'}`)
   }, [totalOpportunities, closingCount, recentCount, rankedProvinces, totalGovernmentOpportunities])
 
+  // Split provinces: top 5 and remaining 4
+  const topProvinces = rankedProvinces.slice(0, 5)
+  const remainingProvinces = rankedProvinces.slice(5, 9)
+
   return (
-    <section className="border-y border-[#e3d8c5] bg-white px-6 py-16 sm:py-20">
-      <div className="mx-auto max-w-6xl">
-        <div className="rounded-none border border-[#ebebeb] p-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-          {/* Header with Toggle - Styled as Accordion */}
-          <div
-            className="flex items-center justify-between p-4 mb-6 cursor-pointer transition-all duration-200 rounded-none border border-[#e8e0cc]"
-            style={{
-              background: isExpanded ? '#faf9f5' : '#f9f8f6',
-              borderBottom: isExpanded ? '1px solid #e8e0cc' : '1px solid #d4c4a8',
-            }}
-            onClick={() => setIsExpanded(!isExpanded)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = isExpanded ? '#f5f3f0' : '#f5f3f0'
-              e.currentTarget.style.borderColor = '#c8a060'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = isExpanded ? '#faf9f5' : '#f9f8f6'
-              e.currentTarget.style.borderColor = isExpanded ? '#e8e0cc' : '#d4c4a8'
-            }}
-          >
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold text-[#1a3a2a]">Regional Insights</h2>
-              <p className="text-sm text-[#7a7066] mt-1">
-                {isExpanded ? 'Procurement activity by province' : 'Click to view province breakdown'}
+    <section id="regional-insights" className="border-y border-[#e3d8c5] bg-white px-6 py-20 sm:py-24">
+      <div className="mx-auto max-w-7xl">
+        {/* Top Composition */}
+        <div className="mb-16">
+          {/* Eyebrow + Heading */}
+          <div className="mb-8">
+            <p className="text-xs uppercase tracking-widest font-semibold text-[#7a7066] mb-3">
+              Opportunity Insights
+            </p>
+            <h2 className="text-4xl sm:text-5xl font-semibold text-[#1a3a2a] mb-4">
+              Province activity
+            </h2>
+            <p className="text-sm text-[#7a7066] font-medium mb-6 max-w-2xl">
+              Ranked by open opportunities
+            </p>
+            <p className="text-base text-[#5a6a5a] max-w-3xl leading-relaxed">
+              Explore how current procurement opportunities are distributed across South Africa. Click any province to view its open opportunities.
+            </p>
+          </div>
+
+          {/* Map + Summary */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            {/* SA Map */}
+            <div className="lg:col-span-2">
+              <div className="relative bg-[#f9f8f6] p-8 border border-[#e8dcc8]" style={{ minHeight: '280px' }}>
+                <Image
+                  src="/assets/south-africa-provinces-aiform.svg"
+                  alt="South Africa provinces map showing opportunity distribution"
+                  width={400}
+                  height={280}
+                  className="w-full h-auto max-w-md mx-auto object-contain opacity-90"
+                  priority
+                />
+              </div>
+            </div>
+
+            {/* Summary Card */}
+            <div className="bg-gradient-to-b from-[#f5f3f0] to-[#faf9f5] border border-[#e8dcc8] p-8">
+              <p className="text-xs uppercase tracking-widest font-semibold text-[#7a7066] mb-6">
+                Coverage
               </p>
-            </div>
-            <svg
-              className="w-6 h-6 text-[#1a3a2a] transition-transform duration-300 flex-shrink-0 ml-4"
-              style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </div>
-
-          {/* Collapsible Content */}
-          {isExpanded && (
-            <div style={{ animation: 'fadeIn 200ms ease-out' }}>
-              <style>{`
-                @keyframes fadeIn {
-                  from { opacity: 0; max-height: 0; overflow: hidden; }
-                  to { opacity: 1; max-height: 2000px; overflow: visible; }
-                }
-              `}</style>
-
-          {/* Stats Banner */}
-          <div className="grid grid-cols-4 gap-3 mb-6">
-            <div className="rounded-none bg-[#f9f7f4] p-4 border border-[#e8e0cc]">
-              <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">
-                {totalGovernmentOpportunities ? 'Total Gov. RFQs' : 'Live & Accepting'}
-              </p>
-              <p className="text-2xl font-bold text-[#1a3a2a] mt-1">
-                {totalGovernmentOpportunities
-                  ? totalGovernmentOpportunities.toLocaleString()
-                  : totalOpportunities.toLocaleString()}
-              </p>
-              {totalGovernmentOpportunities && (
-                <p className="text-xs text-[#7a7066] mt-2">
-                  {totalOpportunities.toLocaleString()} live & accepting
-                </p>
-              )}
-            </div>
-            <div className="rounded-none bg-[#f9f7f4] p-4 border border-[#e8e0cc]">
-              <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Closing Soon</p>
-              <p className="text-2xl font-bold text-[#1a3a2a] mt-1">{closingCount.toLocaleString()}</p>
-            </div>
-            <div className="rounded-none bg-[#f9f7f4] p-4 border border-[#e8e0cc]">
-              <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">New in 48h</p>
-              <p className="text-2xl font-bold text-[#1a3a2a] mt-1">{recentCount.toLocaleString()}</p>
-            </div>
-            <div className="rounded-none bg-[#f9f7f4] p-4 border border-[#e8e0cc]">
-              <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Tracked by Province</p>
-              <p className="text-2xl font-bold text-[#1a3a2a] mt-1">9 regions</p>
-            </div>
-          </div>
-
-          {/* Metric Tabs */}
-          <div className="flex gap-2 mb-8">
-            {[
-              { key: 'total' as const, label: 'All Opportunities' },
-              { key: 'closing' as const, label: 'Closing Soon' },
-              { key: 'recent' as const, label: 'Recently Available' },
-            ].map(m => (
-              <button
-                key={m.key}
-                onClick={() => setActiveMetric(m.key)}
-                className={`text-sm px-4 py-2 rounded-none transition-colors font-medium ${
-                  activeMetric === m.key
-                    ? 'bg-[#1a3a2a] text-white'
-                    : 'bg-[#f0f0f0] text-[#5a6a5a] hover:bg-[#e0e0e0]'
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Grid Header */}
-          <div className="mb-4 flex justify-between items-baseline">
-            <div>
-              <p className="text-sm font-semibold text-[#1a3a2a]">Province activity</p>
-              <p className="text-xs text-[#5a6a5a] mt-0.5">Ranked by {activeMetric === 'total' ? 'open opportunities' : activeMetric === 'closing' ? 'closing soon' : 'recently available'}</p>
-            </div>
-            <p className="text-xs text-[#5a6a5a] font-medium">9 provinces</p>
-          </div>
-
-          {/* Province Cards Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '2rem' }}>
-            {rankedProvinces.map((province) => {
-              // Color scheme by rank
-              const rankColors = {
-                1: { primary: '#378ADD', accent: '#185FA5', gold: '#c9a13b' },
-                2: { primary: '#5DCAA5', accent: '#0F6E56', gold: '#c9a13b' },
-                3: { primary: '#c9a13b', accent: '#854F0B', gold: '#c9a13b' },
-              }
-              const colors = rankColors[province.rank as keyof typeof rankColors] || rankColors[3]
-              const closingCount = activeMetric === 'total' ? province.closing : (activeMetric === 'closing' ? 0 : 0)
-              const recentCount = activeMetric === 'total' ? province.recent : (activeMetric === 'closing' ? 0 : province.recent)
-
-              return (
-                <div
-                  key={province.id}
-                  onClick={() => router.push(`/tenders?province=${encodeURIComponent(province.name)}`)}
-                  style={{
-                    background: 'white',
-                    border: 'none',
-                    borderRadius: '0',
-                    padding: '0',
-                    transition: 'all 160ms ease-out',
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-1px)'
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'
-                  }}
-                >
-                  {/* Header with Gradient */}
-                  <div style={{
-                    background: 'linear-gradient(135deg, #f5f3f0 0%, #faf9f5 100%)',
-                    padding: '0.75rem',
-                    borderBottom: '1px solid #e8dcc8',
-                  }}>
-                    {/* Header Row: Rank + Icon */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.05em', color: '#7a7066', textTransform: 'uppercase' }}>
-                        {province.abbreviation} #{province.rank}
-                      </span>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                      </svg>
-                    </div>
-
-                    {/* Province Name */}
-                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#1a3a2a', margin: '0', lineHeight: 1.1 }}>
-                      {province.name}
-                    </p>
-
-                    {/* Big Number */}
-                    <p style={{ fontSize: '24px', fontWeight: 700, color: colors.primary, margin: '0.35rem 0 0', lineHeight: 1 }}>
-                      {province.metricValue}
-                    </p>
-                  </div>
-
-                  {/* Metrics Grid */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '0.5rem',
-                    borderBottom: '1px solid #e8dcc8',
-                    padding: '0.5rem 0.75rem',
-                  }}>
-                    <div>
-                      <p style={{ fontSize: '8px', color: '#7a7066', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>Closing</p>
-                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#c9a13b', margin: '0.25rem 0 0', lineHeight: 1 }}>
-                        {province.closing}
-                      </p>
-                    </div>
-                    <div>
-                      <p style={{ fontSize: '8px', color: '#7a7066', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>New</p>
-                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#5DCAA5', margin: '0.25rem 0 0', lineHeight: 1 }}>
-                        {province.recent}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Activity Bar */}
-                  <div style={{ padding: '0.5rem 0.75rem' }}>
-                    <div style={{
-                      height: '2px',
-                      background: '#f0f0f0',
-                      borderRadius: '0',
-                      overflow: 'hidden',
-                      marginBottom: '0.25rem',
-                    }}>
-                      <div
-                        style={{
-                          height: '100%',
-                          background: colors.primary,
-                          width: `${province.relativeActivity * 100}%`,
-                          transition: 'width 300ms ease-out',
-                        }}
-                      />
-                    </div>
-                  </div>
+              <div className="space-y-6">
+                <div>
+                  <p className="text-4xl font-bold text-[#1a3a2a] mb-1">9</p>
+                  <p className="text-sm text-[#7a7066]">provinces</p>
                 </div>
+                <div className="pt-6 border-t border-[#e8dcc8]">
+                  <p className="text-3xl font-bold text-[#1a3a2a] mb-1">{totalOpportunities.toLocaleString()}</p>
+                  <p className="text-sm text-[#7a7066]">Currently tracked</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Metric Toggle */}
+        <div className="flex gap-2 mb-8">
+          {[
+            { key: 'total' as const, label: 'All Opportunities' },
+            { key: 'closing' as const, label: 'Closing Soon' },
+            { key: 'recent' as const, label: 'Recently Available' },
+          ].map(m => (
+            <button
+              key={m.key}
+              onClick={() => setActiveMetric(m.key)}
+              className={`text-sm px-4 py-2 transition-colors font-medium ${
+                activeMetric === m.key
+                  ? 'bg-[#1a3a2a] text-white'
+                  : 'bg-[#f0f0f0] text-[#5a6a5a] hover:bg-[#e0e0e0]'
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Province Cards Grid */}
+        <div className="space-y-8">
+          {/* Top 5 Provinces */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+            {topProvinces.map((province) => {
+              const colors = getRankColor(province.rank)
+              return (
+                <ProvincCard
+                  key={province.id}
+                  province={province}
+                  colors={colors}
+                  onNavigate={() => router.push(`/tenders?province=${encodeURIComponent(province.name)}`)}
+                />
               )
             })}
           </div>
 
-          {/* Insight Strip */}
-          <div style={{
-            background: '#faf9f5',
-            border: '1px solid #e8dcc8',
-            borderRadius: '6px',
-            padding: '16px 18px',
-            fontSize: '13px',
-            color: '#5a6a5a',
-            lineHeight: 1.5,
-          }}>
-            <span style={{ fontWeight: 600, color: '#1a3a2a' }}>Top 3 provinces</span> account for {topThreeInsight.percentage}% of currently tracked opportunities.
-          </div>
+          {/* Bottom Row: 4 Cards + Insight Panel */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+            {remainingProvinces.map((province) => {
+              const colors = getRankColor(province.rank)
+              return (
+                <ProvincCard
+                  key={province.id}
+                  province={province}
+                  colors={colors}
+                  onNavigate={() => router.push(`/tenders?province=${encodeURIComponent(province.name)}`)}
+                />
+              )
+            })}
+
+            {/* Insight Panel */}
+            <div className="bg-[#1a3a2a] text-white p-8 flex flex-col justify-center lg:col-span-1">
+              <p className="text-xs uppercase tracking-widest font-semibold text-[#c8a060] mb-4">
+                Key Insight
+              </p>
+              <p className="text-sm leading-relaxed mb-4">
+                Top 3 provinces account for
+              </p>
+              <p className="text-4xl font-bold text-[#c8a060] mb-4">
+                {topThreeInsight.percentage}%
+              </p>
+              <p className="text-xs text-[#e8dcc8]">
+                of currently tracked opportunities
+              </p>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </section>
+  )
+}
+
+// Province Card Component
+function ProvincCard({
+  province,
+  colors,
+  onNavigate,
+}: {
+  province: ProvinceStats
+  colors: { primary: string; accent: string }
+  onNavigate: () => void
+}) {
+  return (
+    <div
+      onClick={onNavigate}
+      className="bg-white border border-[#e8dcc8] cursor-pointer transition-all duration-200 overflow-hidden hover:border-[#c8a060] hover:shadow-lg group"
+      style={{
+        minHeight: '240px',
+      }}
+    >
+      {/* Header with Gradient */}
+      <div
+        style={{
+          background: `linear-gradient(135deg, ${colors.accent}15 0%, ${colors.accent}08 100%)`,
+          borderBottom: `1px solid ${colors.accent}20`,
+        }}
+        className="p-4"
+      >
+        {/* Rank Badge + Navigation */}
+        <div className="flex justify-between items-start mb-3">
+          <div
+            style={{
+              background: colors.accent,
+              color: 'white',
+            }}
+            className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+          >
+            {province.rank}
+          </div>
+          <svg
+            className="w-5 h-5 text-[#7a7066] group-hover:text-[#1a3a2a] transition-colors"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+
+        {/* Province Info */}
+        <div className="mb-3">
+          <p className="text-xs uppercase font-semibold text-[#7a7066] tracking-wide mb-1">
+            {province.abbreviation}
+          </p>
+          <p className="text-sm font-semibold text-[#1a3a2a]">{province.name}</p>
+        </div>
+
+        {/* Hero Number */}
+        <p
+          style={{ color: colors.primary }}
+          className="text-3xl font-bold mb-1"
+        >
+          {province.metricValue}
+        </p>
+        <p className="text-xs text-[#7a7066]">open</p>
+      </div>
+
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-2 gap-3 border-b border-[#e8dcc8] p-4">
+        <div>
+          <p className="text-xs uppercase font-semibold text-[#7a7066] tracking-wide mb-2">
+            Closing
+          </p>
+          <p className="text-xl font-bold text-[#c9a13b]">{province.closing}</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase font-semibold text-[#7a7066] tracking-wide mb-2">
+            New 48h
+          </p>
+          <p className="text-xl font-bold text-[#5DCAA5]">{province.recent}</p>
+        </div>
+      </div>
+
+      {/* Activity Bar */}
+      <div className="p-4">
+        <div className="bg-[#f0f0f0] h-1.5 mb-2" style={{ borderRadius: '1px' }}>
+          <div
+            style={{
+              width: `${province.relativeActivity * 100}%`,
+              background: colors.accent,
+              borderRadius: '1px',
+            }}
+            className="h-full transition-all duration-300"
+          />
+        </div>
+      </div>
+    </div>
   )
 }

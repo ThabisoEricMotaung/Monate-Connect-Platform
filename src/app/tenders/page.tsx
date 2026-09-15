@@ -226,10 +226,29 @@ function TendersPageContent() {
           <nav className="flex items-center gap-2 text-sm text-gray-600">
             <Link href="/" className="hover:text-gray-900">Home</Link>
             <span>/</span>
+            {province && (
+              <>
+                <Link href="/?section=regional-insights" className="hover:text-gray-900">Regional Insights</Link>
+                <span>/</span>
+              </>
+            )}
             <span className="text-gray-900 font-medium">Opportunities</span>
           </nav>
-          <button onClick={() => window.history.back()} className="text-blue-600 hover:text-blue-700 ml-4 flex items-center gap-1">
-            ← Back
+          <button
+            onClick={() => {
+              if (province) {
+                router.push('/?section=regional-insights');
+                setTimeout(() => {
+                  const element = document.getElementById('regional-insights');
+                  element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+              } else {
+                window.history.back();
+              }
+            }}
+            className="text-blue-600 hover:text-blue-700 ml-4 flex items-center gap-1"
+          >
+            ← {province ? 'Back to Regional Insights' : 'Back'}
           </button>
         </div>
       </div>

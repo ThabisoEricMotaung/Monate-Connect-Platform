@@ -236,49 +236,28 @@ export default function HeroSection() {
         }
       `}</style>
 
-      {/* ── Main content ── */}
-      <div style={{ position: "relative", zIndex: 10, maxWidth: 1200, margin: "0 auto", width: "100%", padding: "56px 40px 64px" }}>
+      {/* ── Main content (minimalist) ── */}
+      <div style={{ position: "relative", zIndex: 10, maxWidth: 800, margin: "0 auto", width: "100%", padding: "80px 40px", textAlign: "center" }}>
 
-        {/* Headline */}
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 11, fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#1a3a2a", margin: "0 0 14px", fontWeight: 800, padding: "6px 14px", border: "1.5px solid #c8a060", borderRadius: "30px", background: "rgba(200,160,96,0.15)" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#173D2B" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
-              {/* Classical government building with columns */}
-              {/* Pediment/roof */}
-              <path d="M 3 14 L 12 5 L 21 14" />
-              {/* Main structure */}
-              <rect x="4" y="14" width="16" height="8" />
-              {/* Left colonnade */}
-              <line x1="6" y1="14" x2="6" y2="22" />
-              <line x1="8" y1="14" x2="8" y2="22" />
-              {/* Center door */}
-              <rect x="11" y="16" width="2" height="6" />
-              {/* Right colonnade */}
-              <line x1="16" y1="14" x2="16" y2="22" />
-              <line x1="18" y1="14" x2="18" y2="22" />
-            </svg>
-            <span>South African Procurement Opportunities</span>
-          </div>
-          <h1 style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 900, lineHeight: 1.08, color: "#173D2B", margin: 0, fontStyle: "normal" }}>
-            Discover Verified Suppliers &amp;
-          </h1>
-          <div style={{ display: "inline-block", marginBottom: 20 }}>
-            <span style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 700, fontStyle: "normal", color: "#173D2B" }}>
-              Government Procurement Opportunities
-            </span>
-            <div aria-hidden="true" style={{ height: 3, background: "linear-gradient(90deg, transparent, #c8a060 20%, #c8a060 80%, transparent)", marginTop: 6 }} />
-          </div>
-          <p style={{ fontSize: 16, lineHeight: 1.6, color: "#3a4a3a", maxWidth: 480, margin: "0 0 18px" }}>
-            Browse automatically screened public tenders and RFQs by industry, province and closing date—with links to original sources.
-          </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a8a7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
-            </svg>
-            <span style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7a8a7a" }}>
-              &mdash; PUBLIC OPPORTUNITIES SOURCED FROM OFFICIAL PROCUREMENT LISTINGS.
-            </span>
-          </div>
+        {/* Eyebrow */}
+        <div style={{ fontSize: 12, letterSpacing: "2px", textTransform: "uppercase", color: "#7a7066", marginBottom: 12, fontWeight: 500 }}>
+          Aiform Procure
+        </div>
 
+        {/* Title */}
+        <h1 style={{ fontSize: "clamp(36px, 5vw, 48px)", fontWeight: 600, lineHeight: 1.1, color: "#1a3a2a", margin: "0 0 20px" }}>
+          Public procurement intelligence
+        </h1>
+
+        {/* Subtitle */}
+        <p style={{ fontSize: 16, lineHeight: 1.6, color: "#7a7066", maxWidth: 500, margin: "0 auto 40px" }}>
+          Trusted market data for suppliers and buyers across South Africa. Clear, verified, transparent.
+        </p>
+
+        {/* CTA Button */}
+        <a href="/tenders" className="hero-gold-btn" style={{ display: "inline-block", background: "#1a3a2a", color: "white", padding: "14px 32px", borderRadius: "6px", textDecoration: "none", fontWeight: 500, transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "translateY(0)"; }}>
+          Explore opportunities
+        </a>
 
       </div>
     </div>
