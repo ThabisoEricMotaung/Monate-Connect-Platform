@@ -236,25 +236,29 @@ export default function HeroSection() {
         }
       `}</style>
 
-      {/* ── Main content (minimalist) ── */}
-      <div style={{ position: "relative", zIndex: 10, maxWidth: 900, margin: "0 auto", width: "100%", padding: "60px 40px" }}>
+      {/* ── Main content (minimalist, centered) ── */}
+      <div style={{ position: "relative", zIndex: 10, maxWidth: 800, margin: "0 auto", width: "100%", padding: "60px 40px", textAlign: "center" }}>
 
-        {/* Eyebrow - simplified badge */}
-        <div style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#7a7066", marginBottom: 20, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 12, color: "#1a3a2a" }}>↓</span> South African Procurement Opportunities
+        {/* Eyebrow - with building icon */}
+        <div style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#7a7066", marginBottom: 20, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          South African Procurement Opportunities
         </div>
 
-        {/* Main heading - clean, simple */}
+        {/* Main heading - clean, centered */}
         <h1 style={{ fontSize: "clamp(32px,5vw,52px)", fontWeight: 700, lineHeight: 1.15, color: "#1a3a2a", margin: "0 0 16px" }}>
           Discover Verified Suppliers &amp; Government Procurement Opportunities
         </h1>
 
-        {/* Subtitle */}
-        <p style={{ fontSize: 16, lineHeight: 1.6, color: "#5a6a5a", maxWidth: 620, margin: "0 0 20px" }}>
+        {/* Subtitle - centered */}
+        <p style={{ fontSize: 16, lineHeight: 1.6, color: "#5a6a5a", maxWidth: 700, margin: "0 auto 20px" }}>
           Browse automatically screened public tenders and RFQs by industry, province and closing date—with links to original sources.
         </p>
 
-        {/* Trust indicator - minimal */}
+        {/* Trust indicator - minimal, centered */}
         <p style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7a7066", margin: 0, fontWeight: 500 }}>
           ✓ Public opportunities sourced from official procurement listings
         </p>

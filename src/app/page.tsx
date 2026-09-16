@@ -206,15 +206,14 @@ export default async function Home() {
               {audienceCards.map((card) => (
                 <article
                   key={card.title}
-                  className={`relative overflow-hidden rounded-none border border-[#e8e0cc] ${card.className} p-6 shadow-md transition hover:border-accent`}
+                  className={`rounded-none border border-[#e8e0cc] ${card.className} p-6 transition hover:border-accent hover:shadow-sm`}
                 >
-                  <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#e8dcc8]/60 to-transparent" />
-                  <div className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-none ${card.badgeClassName}`}>
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-none ${card.badgeClassName}`}>
                     <EntryIcon icon={card.icon} />
                   </div>
-                  <h3 className="relative z-10 mt-5 font-display text-2xl font-semibold text-heading">{card.title}</h3>
-                  <p className="relative z-10 mt-3 font-serif text-sm leading-7 text-secondary">{card.description}</p>
-                  <ul className="relative z-10 mt-4 space-y-2 border-t border-[#e8e0cc]/80 pt-4">
+                  <h3 className="mt-5 font-display text-2xl font-semibold text-heading">{card.title}</h3>
+                  <p className="mt-3 font-serif text-sm leading-7 text-secondary">{card.description}</p>
+                  <ul className="mt-4 space-y-2 border-t border-[#e8e0cc]/80 pt-4">
                     {card.points.map((point) => (
                       <li key={point} className="flex items-center gap-2 text-xs font-semibold text-secondary">
                         <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-none ${card.badgeClassName}`}>
@@ -226,7 +225,7 @@ export default async function Home() {
                   </ul>
                   <Link
                     href={card.href}
-                    className="relative z-10 mt-5 inline-flex text-sm font-bold text-accent transition hover:text-accent-strong"
+                    className="mt-5 inline-flex text-sm font-bold text-accent transition hover:text-accent-strong"
                   >
                     {card.cta}
                   </Link>
@@ -245,16 +244,15 @@ export default async function Home() {
                 <Link
                   key={tile.href}
                   href={tile.href}
-                  className="relative overflow-hidden rounded-none border border-[#e8e0cc] bg-[#faf7f2] p-5 text-primary shadow-md transition hover:bg-muted"
+                  className="rounded-none border border-[#e8e0cc] bg-[#faf7f2] p-5 text-primary transition hover:shadow-sm hover:bg-muted"
                 >
-                  <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#e8dcc8]/60 to-transparent" />
-                  <div className="relative z-10 flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                     <span className={`flex h-10 w-10 items-center justify-center rounded-none ${tile.badgeClassName}`}>
                       <EntryIcon icon={tile.icon} />
                     </span>
                     <span className="text-base font-bold text-heading">{tile.title}</span>
                   </div>
-                  <p className="relative z-10 mt-3 font-serif text-sm leading-6 text-secondary">{tile.description}</p>
+                  <p className="mt-3 font-serif text-sm leading-6 text-secondary">{tile.description}</p>
                 </Link>
               ))}
             </div>
