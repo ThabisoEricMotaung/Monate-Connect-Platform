@@ -159,25 +159,13 @@ export default function RegionalInsightsMap({
   }, [totalOpportunities, closingCount, recentCount, rankedProvinces, totalGovernmentOpportunities])
 
   return (
-    <section className="border-y border-[#e3d8c5] bg-white px-6 py-16 sm:py-20">
+    <section className="border-y border-[#e3d8c5] bg-[#f9f9fa] px-6 py-16 sm:py-20">
       <div className="mx-auto max-w-6xl">
-        <div className="rounded-none border border-[#ebebeb] p-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+        <div className="rounded-none border border-[#e5e5e7] p-5 bg-white">
           {/* Header with Toggle - Styled as Accordion */}
           <div
-            className="flex items-center justify-between p-4 mb-6 cursor-pointer transition-all duration-200 rounded-none border border-[#e8e0cc]"
-            style={{
-              background: isExpanded ? '#faf9f5' : '#f9f8f6',
-              borderBottom: isExpanded ? '1px solid #e8e0cc' : '1px solid #d4c4a8',
-            }}
+            className="flex items-center justify-between p-4 mb-5 cursor-pointer transition-all duration-200 rounded-none border-b border-[#e8e0cc] bg-white hover:bg-[#fafafa]"
             onClick={() => setIsExpanded(!isExpanded)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = isExpanded ? '#f5f3f0' : '#f5f3f0'
-              e.currentTarget.style.borderColor = '#c8a060'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = isExpanded ? '#faf9f5' : '#f9f8f6'
-              e.currentTarget.style.borderColor = isExpanded ? '#e8e0cc' : '#d4c4a8'
-            }}
           >
             <div className="flex-1">
               <h2 className="text-lg font-semibold text-[#1a3a2a]">Regional Insights</h2>
@@ -208,32 +196,32 @@ export default function RegionalInsightsMap({
 
           {/* Stats Banner */}
           <div className="grid grid-cols-4 gap-3 mb-6">
-            <div className="rounded-none bg-[#f9f7f4] p-4 border border-[#e8e0cc]">
+            <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
               <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">
                 {totalGovernmentOpportunities ? 'Total Gov. RFQs' : 'Live & Accepting'}
               </p>
-              <p className="text-2xl font-bold text-[#1a3a2a] mt-1">
+              <p className="text-xl font-bold text-[#1a3a2a] mt-1">
                 {totalGovernmentOpportunities
                   ? totalGovernmentOpportunities.toLocaleString()
                   : totalOpportunities.toLocaleString()}
               </p>
               {totalGovernmentOpportunities && (
-                <p className="text-xs text-[#7a7066] mt-2">
+                <p className="text-xs text-[#7a7066] mt-1.5">
                   {totalOpportunities.toLocaleString()} live & accepting
                 </p>
               )}
             </div>
-            <div className="rounded-none bg-[#f9f7f4] p-4 border border-[#e8e0cc]">
+            <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
               <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Closing Soon</p>
-              <p className="text-2xl font-bold text-[#1a3a2a] mt-1">{closingCount.toLocaleString()}</p>
+              <p className="text-xl font-bold text-[#1a3a2a] mt-1">{closingCount.toLocaleString()}</p>
             </div>
-            <div className="rounded-none bg-[#f9f7f4] p-4 border border-[#e8e0cc]">
+            <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
               <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">New in 48h</p>
-              <p className="text-2xl font-bold text-[#1a3a2a] mt-1">{recentCount.toLocaleString()}</p>
+              <p className="text-xl font-bold text-[#1a3a2a] mt-1">{recentCount.toLocaleString()}</p>
             </div>
-            <div className="rounded-none bg-[#f9f7f4] p-4 border border-[#e8e0cc]">
+            <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
               <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Tracked by Province</p>
-              <p className="text-2xl font-bold text-[#1a3a2a] mt-1">9 regions</p>
+              <p className="text-xl font-bold text-[#1a3a2a] mt-1">9 regions</p>
             </div>
           </div>
 
@@ -270,11 +258,11 @@ export default function RegionalInsightsMap({
           {/* Province Cards Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '2rem' }}>
             {rankedProvinces.map((province) => {
-              // Color scheme by rank
+              // Color scheme by rank - muted blue and grey
               const rankColors = {
-                1: { primary: '#378ADD', accent: '#185FA5', gold: '#c9a13b' },
-                2: { primary: '#5DCAA5', accent: '#0F6E56', gold: '#c9a13b' },
-                3: { primary: '#c9a13b', accent: '#854F0B', gold: '#c9a13b' },
+                1: { primary: '#6b7280', accent: '#374151', gold: '#1f2937' },
+                2: { primary: '#9ca3af', accent: '#4b5563', gold: '#374151' },
+                3: { primary: '#d1d5db', accent: '#6b7280', gold: '#4b5563' },
               }
               const colors = rankColors[province.rank as keyof typeof rankColors] || rankColors[3]
               const closingCount = activeMetric === 'total' ? province.closing : (activeMetric === 'closing' ? 0 : 0)
@@ -286,31 +274,30 @@ export default function RegionalInsightsMap({
                   onClick={() => router.push(`/tenders?province=${encodeURIComponent(province.name)}`)}
                   style={{
                     background: 'white',
-                    border: 'none',
+                    border: '1px solid #e5e5e7',
                     borderRadius: '0',
                     padding: '0',
                     transition: 'all 160ms ease-out',
                     cursor: 'pointer',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-1px)'
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'
+                    e.currentTarget.style.borderColor = '#d4d0c4'
+                    e.currentTarget.style.background = '#fafafa'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'
+                    e.currentTarget.style.borderColor = '#e5e5e7'
+                    e.currentTarget.style.background = 'white'
                   }}
                 >
-                  {/* Header with Gradient */}
+                  {/* Header */}
                   <div style={{
-                    background: 'linear-gradient(135deg, #f5f3f0 0%, #faf9f5 100%)',
+                    background: 'white',
                     padding: '0.75rem',
-                    borderBottom: '1px solid #e8dcc8',
+                    borderBottom: '2px solid #2c3e50',
                   }}>
                     {/* Header Row: Rank + Icon */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.05em', color: '#7a7066', textTransform: 'uppercase' }}>
+                      <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.05em', color: '#6b7280', textTransform: 'uppercase' }}>
                         {province.abbreviation} #{province.rank}
                       </span>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -320,12 +307,12 @@ export default function RegionalInsightsMap({
                     </div>
 
                     {/* Province Name */}
-                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#1a3a2a', margin: '0', lineHeight: 1.1 }}>
+                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#1f2937', margin: '0', lineHeight: 1.1 }}>
                       {province.name}
                     </p>
 
                     {/* Big Number */}
-                    <p style={{ fontSize: '24px', fontWeight: 700, color: colors.primary, margin: '0.35rem 0 0', lineHeight: 1 }}>
+                    <p style={{ fontSize: '18px', fontWeight: 600, color: colors.primary, margin: '0.35rem 0 0', lineHeight: 1 }}>
                       {province.metricValue}
                     </p>
                   </div>
@@ -335,18 +322,18 @@ export default function RegionalInsightsMap({
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: '0.5rem',
-                    borderBottom: '1px solid #e8dcc8',
+                    borderBottom: '1px solid #e5e5e7',
                     padding: '0.5rem 0.75rem',
                   }}>
                     <div>
-                      <p style={{ fontSize: '8px', color: '#7a7066', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>Closing</p>
-                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#c9a13b', margin: '0.25rem 0 0', lineHeight: 1 }}>
+                      <p style={{ fontSize: '8px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>Closing</p>
+                      <p style={{ fontSize: '14px', fontWeight: 600, color: '#6b7280', margin: '0.25rem 0 0', lineHeight: 1 }}>
                         {province.closing}
                       </p>
                     </div>
                     <div>
-                      <p style={{ fontSize: '8px', color: '#7a7066', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>New</p>
-                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#5DCAA5', margin: '0.25rem 0 0', lineHeight: 1 }}>
+                      <p style={{ fontSize: '8px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>New</p>
+                      <p style={{ fontSize: '14px', fontWeight: 600, color: '#6b7280', margin: '0.25rem 0 0', lineHeight: 1 }}>
                         {province.recent}
                       </p>
                     </div>

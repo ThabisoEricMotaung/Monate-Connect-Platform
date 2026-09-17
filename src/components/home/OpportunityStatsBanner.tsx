@@ -222,7 +222,7 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
   ]
 
   return (
-    <section style={{ position: "relative", overflow: "hidden", background: "#faf7f2", borderTop: "1px solid #e8e0cc", borderBottom: "1px solid #e8e0cc" }}>
+    <section style={{ position: "relative", overflow: "hidden", background: "white", borderTop: "1px solid #e8e0cc", borderBottom: "1px solid #e8e0cc" }}>
       <style dangerouslySetInnerHTML={{ __html: STAT_STYLES }} />
       <SkylineBackdrop />
 

@@ -54,28 +54,30 @@ export default function PublicFooter() {
   }
 
   return (
-    <footer className="public-footer border-t border-[#123c2b]/10 bg-[#f8f3e7] text-[#123c2b]" style={footerVars}>
-      <div className="relative z-10 mx-auto max-w-7xl px-6 py-10 lg:py-12">
-        <div className="mb-8 pb-6 border-b border-[#123c2b]/10">
-          <p className="text-[0.75rem] font-bold uppercase tracking-[0.2em] text-[#1a3a2a]">
+    <footer className="public-footer bg-[#1a2a3a] text-white" style={footerVars}>
+      <div className="mx-auto max-w-7xl px-6 py-6">
+        <div className="mb-5 pb-4 border-b border-white/20">
+          <p className="text-[0.7rem] font-bold uppercase tracking-[0.2em] text-white/80">
             AIFORM PROCURE
           </p>
-          <p className="mt-2 text-sm leading-6 text-[#123c2b]/70 max-w-2xl">
-            Public procurement intelligence, clearly signposted. Public information for suppliers, buyers, pilot partners and procurement stakeholders.
+          <p className="mt-1.5 text-xs leading-5 text-white/60 max-w-2xl">
+            Public procurement intelligence, clearly signposted
           </p>
         </div>
 
         <nav className="grid gap-8 md:grid-cols-3" aria-label="Public footer navigation">
           {footerSections.map((section) => (
             <div key={section.title}>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#123c2b] mb-3">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/80 mb-3">
                 {section.title}
               </p>
               <div className="space-y-2">
                 {section.links.map((link) => (
-                  <Link key={link.href} href={link.href} className="text-sm text-[#123c2b]/70 hover:text-[#c8a060] transition">
-                    {link.label}
-                  </Link>
+                  <div key={link.href}>
+                    <Link href={link.href} className="text-xs text-white/60 hover:text-[#c8a060] transition block">
+                      {link.label}
+                    </Link>
+                  </div>
                 ))}
               </div>
             </div>
@@ -83,45 +85,48 @@ export default function PublicFooter() {
         </nav>
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl border-t border-[#123c2b]/10 px-6 py-6">
-        <div className="grid gap-5 lg:grid-cols-[1fr_minmax(260px,0.8fr)_1fr] lg:items-center">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <p className="text-sm font-semibold text-[#123c2b]/70">
+      <div className="mx-auto max-w-7xl border-t border-white/10 px-6 py-5">
+        <div className="space-y-4">
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold text-white/50">
               &copy; 2026 AiForm Procure &middot; Procurement Suite
             </p>
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#123c2b]/70">
+            <div className="flex items-center gap-2 text-xs font-semibold text-white/50">
               <Image
                 src="/aiform-mark.png"
                 alt=""
                 width={19}
                 height={24}
-                className="h-6 w-auto"
+                className="h-5 w-auto"
               />
-              <span>A product of AiForm Studio</span>
+              <span>AiForm Studio</span>
             </div>
           </div>
 
-          <div className="footer-wire-wrap">
-            <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#c8a060]/40" />
-            <Link href="/opportunities" className="footer-wire-pill">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3v3m0 12v3m9-9h-3M6 12H3m14.25-5.25l-2.12 2.12M8.87 15.13l-2.12 2.12m10.5 0l-2.12-2.12M8.87 8.87L6.75 6.75M9.75 12a2.25 2.25 0 104.5 0 2.25 2.25 0 00-4.5 0z" />
-              </svg>
-              <span>AIFORMS PROCUREMENT WIRE</span>
-            </Link>
-            <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#c8a060]/40" />
-          </div>
-
-          <div className="flex items-center gap-2 lg:justify-end">
+          <div className="flex flex-wrap items-center gap-3">
             <a href="https://www.linkedin.com" className="footer-social-button" aria-label="LinkedIn">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M6.5 8.75H3.25v11H6.5v-11zM4.88 7.25a1.88 1.88 0 100-3.76 1.88 1.88 0 000 3.76zM20.75 13.41c0-2.95-1.57-4.91-4.13-4.91a3.56 3.56 0 00-3.21 1.77V8.75h-3.12v11h3.25v-5.44c0-1.44.27-2.83 2.05-2.83 1.76 0 1.78 1.64 1.78 2.92v5.35h3.25l.13-6.34z" />
               </svg>
+              <span>LinkedIn</span>
             </a>
             <a href="https://www.facebook.com" className="footer-social-button" aria-label="Facebook">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M14.2 21v-7.3h2.45l.37-2.84H14.2V9.05c0-.82.23-1.38 1.41-1.38h1.5V5.13A20.03 20.03 0 0014.92 5c-2.16 0-3.64 1.32-3.64 3.74v2.12H8.84v2.84h2.44V21h2.92z" />
               </svg>
+              <span>Facebook</span>
+            </a>
+            <a href="https://www.instagram.com" className="footer-social-button" aria-label="Instagram">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.266.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.265-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1112.324 0 6.162 6.162 0 01-12.324 0zM12 16a4 4 0 100-8 4 4 0 000 8zm4.965-10.322a1.44 1.44 0 112.881.001 1.44 1.44 0 01-2.881-.001z" />
+              </svg>
+              <span>Instagram</span>
+            </a>
+            <a href="https://www.tiktok.com" className="footer-social-button" aria-label="TikTok">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M19.321 5.562a5.122 5.122 0 01-2.961 2.965v8.875a4 4 0 11-5.464-3.746v3.052a2 2 0 10.977 1.77v-7.776A5.122 5.122 0 1119.32 5.562z" />
+              </svg>
+              <span>TikTok</span>
             </a>
             <button
               type="button"
@@ -129,64 +134,31 @@ export default function PublicFooter() {
               className="footer-social-button footer-access-button"
               aria-label="Accessibility"
             >
-              <svg className="h-4 w-4 sm:hidden" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 4.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM4.5 7.5h15M12 7.5v13.5m-4.5 0L12 12l4.5 9" />
               </svg>
-              <span className="hidden sm:inline">Accessibility</span>
+              <span className="text-xs">Accessibility</span>
             </button>
           </div>
         </div>
 
-        <div className="mt-5 text-xs text-[#123c2b]/60">
+        <div className="mt-3 text-[0.7rem] text-white/40">
           {complianceBadges.join(" • ")}
         </div>
       </div>
 
       <style jsx global>{`
-        .footer-wire-wrap {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.75rem;
-          min-width: 0;
-        }
-
-        .footer-wire-pill {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          white-space: nowrap;
-          border: 1px solid rgba(201, 161, 59, 0.35);
-          border-radius: 0;
-          background: var(--procure-green);
-          padding: 0.72rem 1rem;
-          color: var(--procure-gold);
-          font-size: 0.72rem;
-          font-weight: 900;
-          letter-spacing: 0.08em;
-          transition: background-color 220ms ease;
-        }
-
-        .footer-wire-pill:hover {
-          background: rgba(18, 60, 43, 1);
-        }
-
         .footer-social-button {
           display: inline-flex;
-          min-width: 2.5rem;
-          height: 2.5rem;
           align-items: center;
-          justify-content: center;
-          gap: 0.45rem;
-          border: 1px solid rgba(18, 60, 43, 0.16);
+          gap: 0.5rem;
+          border: none;
           border-radius: 0;
           background: transparent;
-          padding-inline: 0.75rem;
-          color: var(--procure-green);
+          color: white/60;
           font-size: 0.8rem;
-          font-weight: 600;
-          transition: color 220ms ease, background-color 220ms ease;
+          font-weight: 500;
+          transition: color 220ms ease;
         }
 
         .footer-social-button:hover {
@@ -195,16 +167,6 @@ export default function PublicFooter() {
 
         .footer-access-button {
           cursor: pointer;
-        }
-
-        @media (max-width: 640px) {
-          .footer-wire-wrap {
-            justify-content: flex-start;
-          }
-
-          .footer-wire-wrap > span {
-            display: none;
-          }
         }
       `}</style>
     </footer>

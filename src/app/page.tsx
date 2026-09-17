@@ -51,8 +51,8 @@ const audienceCards = [
     points: ["Create your supplier profile", "Respond to relevant RFQs", "Get verified & increase visibility"],
     cta: "Register free →",
     href: "/auth/signup",
-    className: "bg-[#f5f0e8]",
-    badgeClassName: "bg-[#c8a060]/15 text-[#8c6a2f]",
+    className: "bg-white border-l-4 border-[#1f2937]",
+    badgeClassName: "bg-[#c8a060]/12 text-[#8c6a2f]",
   },
   {
     icon: "briefcase",
@@ -61,8 +61,8 @@ const audienceCards = [
     points: ["Post RFQs in minutes", "Compare quotes side-by-side", "Manage suppliers & contracts"],
     cta: "Request a pilot →",
     href: "/contact",
-    className: "bg-[#f0f5f0]",
-    badgeClassName: "bg-[#5DCAA5]/15 text-[#168567]",
+    className: "bg-white border-l-4 border-[#1f2937]",
+    badgeClassName: "bg-[#5DCAA5]/12 text-[#168567]",
   },
   {
     icon: "shield",
@@ -71,8 +71,8 @@ const audienceCards = [
     points: ["Verified & compliant suppliers", "BBBEE & CSD insights", "Secure & reliable data"],
     cta: "Learn more →",
     href: "/trust",
-    className: "bg-[#f0f0f5]",
-    badgeClassName: "bg-[#8497A6]/20 text-[#315A78]",
+    className: "bg-white border-l-4 border-[#1f2937]",
+    badgeClassName: "bg-[#8497A6]/12 text-[#315A78]",
   },
 ]
 
@@ -153,7 +153,7 @@ function CheckBulletIcon() {
 
 function MakersMark() {
   return (
-    <section className="bg-page px-6 py-12 text-center">
+    <section className="bg-white px-6 py-12 text-center">
       <div className="mx-auto flex max-w-3xl flex-col items-center">
         <Image
           src="/aiform-mark.png"
@@ -186,7 +186,7 @@ export default async function Home() {
       <AccountDeletedNotice />
       <GazetteHeader />
       <PublicHeader />
-      <main className="min-h-screen bg-page text-primary">
+      <main className="min-h-screen bg-white text-primary">
         <IncompleteRegistrationBanner />
         <HeroSection />
         <OpportunityStatsBanner />
@@ -195,7 +195,7 @@ export default async function Home() {
         <MakersMark />
         <CTASection />
         <TrustStrip />
-        <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-10 sm:px-6 lg:py-14">
+        <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-10 sm:px-6 lg:py-14 bg-white">
 
           <section>
             <div className="flex flex-col gap-3 border-t border-strong pt-8">
@@ -206,17 +206,17 @@ export default async function Home() {
               {audienceCards.map((card) => (
                 <article
                   key={card.title}
-                  className={`rounded-none border border-[#e8e0cc] ${card.className} p-6 transition hover:border-accent hover:shadow-sm`}
+                  className={`rounded-none border border-[#e8e0cc] ${card.className} p-4 transition hover:border-accent`}
                 >
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-none ${card.badgeClassName}`}>
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-none ${card.badgeClassName}`}>
                     <EntryIcon icon={card.icon} />
                   </div>
-                  <h3 className="mt-5 font-display text-2xl font-semibold text-heading">{card.title}</h3>
-                  <p className="mt-3 font-serif text-sm leading-7 text-secondary">{card.description}</p>
-                  <ul className="mt-4 space-y-2 border-t border-[#e8e0cc]/80 pt-4">
+                  <h3 className="mt-4 font-display text-lg font-medium text-heading">{card.title}</h3>
+                  <p className="mt-2 font-serif text-xs leading-6 text-secondary">{card.description}</p>
+                  <ul className="mt-3 space-y-1.5 border-t border-[#e8e0cc]/80 pt-3">
                     {card.points.map((point) => (
                       <li key={point} className="flex items-center gap-2 text-xs font-semibold text-secondary">
-                        <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-none ${card.badgeClassName}`}>
+                        <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-none ${card.badgeClassName}`}>
                           <CheckBulletIcon />
                         </span>
                         {point}
@@ -225,7 +225,7 @@ export default async function Home() {
                   </ul>
                   <Link
                     href={card.href}
-                    className="mt-5 inline-flex text-sm font-bold text-accent transition hover:text-accent-strong"
+                    className="mt-3 inline-flex text-xs font-bold text-accent transition hover:text-accent-strong"
                   >
                     {card.cta}
                   </Link>
@@ -244,21 +244,21 @@ export default async function Home() {
                 <Link
                   key={tile.href}
                   href={tile.href}
-                  className="rounded-none border border-[#e8e0cc] bg-[#faf7f2] p-5 text-primary transition hover:shadow-sm hover:bg-muted"
+                  className="rounded-none border border-[#d4d0c4] bg-white p-4 text-primary transition hover:bg-white"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className={`flex h-10 w-10 items-center justify-center rounded-none ${tile.badgeClassName}`}>
+                  <div className="flex items-center gap-2">
+                    <span className={`flex h-8 w-8 items-center justify-center rounded-none ${tile.badgeClassName}`}>
                       <EntryIcon icon={tile.icon} />
                     </span>
-                    <span className="text-base font-bold text-heading">{tile.title}</span>
+                    <span className="text-sm font-bold text-heading">{tile.title}</span>
                   </div>
-                  <p className="mt-3 font-serif text-sm leading-6 text-secondary">{tile.description}</p>
+                  <p className="mt-2 font-serif text-xs leading-5 text-secondary">{tile.description}</p>
                 </Link>
               ))}
             </div>
           </section>
 
-          <section className="flex flex-col gap-5 rounded-none border border-[#e8e0cc] bg-[#faf7f2] p-6 shadow-md sm:flex-row sm:items-center sm:justify-between">
+          <section className="flex flex-col gap-5 rounded-none border border-[#d4d0c4] bg-white p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3 sm:max-w-xs">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none bg-[#5DCAA5]/15 text-[#168567]">
                 <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">

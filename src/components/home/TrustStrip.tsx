@@ -76,7 +76,7 @@ const TRUST_ITEMS = [
 export default function TrustStrip() {
   const t = useTranslations("home")
   return (
-    <div style={{ background: '#f0ebe0', borderTop: '1px solid #d4c8a8' }}>
+    <div style={{ background: 'white', borderTop: '1px solid #d4c8a8' }}>
       <style dangerouslySetInnerHTML={{ __html: TRUST_STYLES }} />
       <div className="ts-grid" style={{ maxWidth: 1200, margin: '0 auto' }}>
         {TRUST_ITEMS.map((item) => (
