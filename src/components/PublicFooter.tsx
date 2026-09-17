@@ -124,9 +124,15 @@ export default function PublicFooter() {
             </a>
             <a href="https://www.tiktok.com" className="footer-social-button" aria-label="TikTok">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M19.321 5.562a5.122 5.122 0 01-2.961 2.965v8.875a4 4 0 11-5.464-3.746v3.052a2 2 0 10.977 1.77v-7.776A5.122 5.122 0 1119.32 5.562z" />
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v19.34a2.86 2.86 0 0 1-5.08 1.9A2.87 2.87 0 0 1 12.3 12.1a2.87 2.87 0 0 1 5.64.64v-3.54a5.74 5.74 0 0 0-3.77-1.35A5.71 5.71 0 0 0 6.5 18.35a5.71 5.71 0 0 0 8.56 4.86 5.71 5.71 0 0 0 1.42-3.91h-3.44a2.88 2.88 0 0 1-.46 1.29 2.92 2.92 0 0 1-5.44-1.06z" />
               </svg>
               <span>TikTok</span>
+            </a>
+            <a href="https://substack.com" className="footer-social-button" aria-label="Substack">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M22.539 8.242H1.46V4h21.079v4.242zM1.46 10.353h21.079v7.794H1.46zM1.46 19.147h21.079V24H1.46z"/>
+              </svg>
+              <span>Substack</span>
             </a>
             <button
               type="button"
