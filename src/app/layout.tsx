@@ -6,6 +6,7 @@ import { Libre_Franklin, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import AppChrome from "@/components/layout/AppChrome";
+import ThusoWidget from "@/components/ThusoWidget";
 
 // Critical path font: UI interactions
 // Preload to prevent blocking render
@@ -119,6 +120,7 @@ export default async function RootLayout({
         <ThemeProvider>
           <NextIntlClientProvider locale={locale} messages={messages} timeZone="Africa/Johannesburg">
             <AppChrome>{children}</AppChrome>
+            <ThusoWidget />
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>
