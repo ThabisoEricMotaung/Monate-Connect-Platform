@@ -61,7 +61,7 @@ export default function PublicFooter() {
             AIFORM PROCURE
           </p>
           <p className="mt-1.5 text-xs leading-5 text-white/60 max-w-2xl">
-            Public procurement intelligence, clearly signposted
+            Public procurement intelligence, clearly signposted. Built by AiForm Studio
           </p>
         </div>
 
@@ -86,21 +86,22 @@ export default function PublicFooter() {
       </div>
 
       <div className="mx-auto max-w-7xl border-t border-white/10 px-6 py-5">
-        <div className="space-y-4">
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-semibold text-white/50">
+        <div className="space-y-3">
+          <div className="flex flex-col gap-2 text-xs text-white/50">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 flex items-center justify-center">
+                <svg viewBox="0 0 100 100" fill="#7B5BA4" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M50 10L15 85L30 70L50 55L70 70L85 85Z"/>
+                </svg>
+              </div>
+              <span className="font-semibold">Built by AiForm Studio</span>
+            </div>
+            <p className="font-semibold">
               &copy; 2026 AiForm Procure &middot; Procurement Suite
             </p>
-            <div className="flex items-center gap-2 text-xs font-semibold text-white/50">
-              <Image
-                src="/aiform-mark.png"
-                alt=""
-                width={19}
-                height={24}
-                className="h-5 w-auto"
-              />
-              <span>AiForm Studio</span>
-            </div>
+            <p className="text-[0.65rem] text-white/40">
+              CSD Verified • BBBEE Compliant • SARS Compliant • POPIA Aware
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -124,13 +125,13 @@ export default function PublicFooter() {
             </a>
             <a href="https://www.tiktok.com" className="footer-social-button" aria-label="TikTok">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v19.34a2.86 2.86 0 0 1-5.08 1.9A2.87 2.87 0 0 1 12.3 12.1a2.87 2.87 0 0 1 5.64.64v-3.54a5.74 5.74 0 0 0-3.77-1.35A5.71 5.71 0 0 0 6.5 18.35a5.71 5.71 0 0 0 8.56 4.86 5.71 5.71 0 0 0 1.42-3.91h-3.44a2.88 2.88 0 0 1-.46 1.29 2.92 2.92 0 0 1-5.44-1.06z" />
+                <path d="M12.525.02C7.1.02 2.735 5.384 2.735 10.9c0 5.514 4.365 10.88 9.765 10.88 5.401 0 9.766-5.366 9.766-10.88C21.77 5.384 17.405.02 12.525.02zm0 3.96c1.305 0 2.35 1.045 2.35 2.35s-1.045 2.35-2.35 2.35-2.35-1.045-2.35-2.35 1.045-2.35 2.35-2.35zm0 14.035c-3.29 0-6.075-2.31-6.075-5.16 0-2.85 2.785-5.16 6.075-5.16s6.075 2.31 6.075 5.16c0 2.85-2.785 5.16-6.075 5.16z" />
               </svg>
               <span>TikTok</span>
             </a>
             <a href="https://substack.com" className="footer-social-button" aria-label="Substack">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M22.539 8.242H1.46V4h21.079v4.242zM1.46 10.353h21.079v7.794H1.46zM1.46 19.147h21.079V24H1.46z"/>
+                <rect x="2" y="3" width="20" height="4"/><polygon points="2,9 2,21 14,18 14,9"/><polygon points="16,9 16,18 22,16 22,9"/>
               </svg>
               <span>Substack</span>
             </a>
