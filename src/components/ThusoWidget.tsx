@@ -15,13 +15,13 @@ export default function ThusoWidget() {
     {
       id: "1",
       type: "bot",
-      text: "Hi! 👋 I'm Thuso. I can help answer questions about AiForm Procure and public procurement opportunities.",
+      text: "Hi! 👋 I'm Thuso. I can help answer questions about procurement, opportunities, and how to use AiForm Procure.",
       timestamp: new Date(),
     },
     {
       id: "2",
       type: "bot",
-      text: "Ask me about how to find opportunities, supplier verification, or getting started on the platform.",
+      text: "Ask me about: finding opportunities, supplier verification, getting started, pricing, or general procurement topics.",
       timestamp: new Date(),
     },
   ])
@@ -36,6 +36,38 @@ export default function ThusoWidget() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  const getBotResponse = (userInput: string): string => {
+    const input = userInput.toLowerCase()
+
+    // RFQ & Opportunities
+    if (input.includes("rfq") || input.includes("tender") || input.includes("opportunity")) {
+      return "RFQs and tenders are public procurement opportunities posted by government and private organizations. You can browse all available opportunities on our Opportunities page, filtered by industry, province, and closing date."
+    }
+
+    // Supplier verification
+    if (input.includes("verif") || input.includes("compliance") || input.includes("bbbee") || input.includes("csd")) {
+      return "We verify suppliers against key compliance standards including BBBEE level, CSD status, tax compliance (SARS), and POPIA awareness. Our Trust Centre has detailed information on how verification works."
+    }
+
+    // Getting started
+    if (input.includes("start") || input.includes("register") || input.includes("sign up") || input.includes("begin")) {
+      return "To get started: 1) Visit the Supplier Directory to browse verified businesses, 2) Register free to post RFQs or create your supplier profile, 3) Set up alerts for opportunities in your industry."
+    }
+
+    // Pricing
+    if (input.includes("price") || input.includes("cost") || input.includes("plan")) {
+      return "We offer flexible pricing for different needs. Check our Pricing page for details on supplier profiles, RFQ posting, and enterprise features. We also offer pilot programs for teams."
+    }
+
+    // General procurement
+    if (input.includes("procure") || input.includes("sourcing") || input.includes("supplier") || input.includes("purchase")) {
+      return "AiForm Procure connects buyers with verified suppliers and brings transparency to government procurement. We screen public tenders, help you source suppliers, and ensure compliance standards are met."
+    }
+
+    // Default response
+    return "I can help with questions about finding opportunities, supplier verification, getting started, pricing, or general procurement topics. What would you like to know?"
+  }
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return
@@ -54,15 +86,16 @@ export default function ThusoWidget() {
 
     // Simulate bot response delay
     setTimeout(() => {
+      const botResponse = getBotResponse(inputValue)
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "bot",
-        text: "Thanks for your message! For detailed assistance, I recommend emailing our team at aiformstudio@gmail.com and we'll get back to you shortly.",
+        text: botResponse,
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, botMessage])
       setIsLoading(false)
-    }, 1000)
+    }, 800)
   }
 
   const handleEmailWithContext = () => {
@@ -191,7 +224,7 @@ export default function ThusoWidget() {
                 onClick={handleEmailWithContext}
                 className="w-full rounded-none border border-[#d4d0c4] bg-white px-3 py-2 text-xs font-semibold text-[#123c2b] transition hover:bg-[#f3f4f6]"
               >
-                📧 Email Support
+                📧 Contact Support Team
               </button>
             </div>
           </div>
