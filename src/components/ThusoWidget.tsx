@@ -15,13 +15,13 @@ export default function ThusoWidget() {
     {
       id: "1",
       type: "bot",
-      text: "Hi! 👋 I'm Thuso. How can I help you today?",
+      text: "Hi! 👋 I'm Thuso. I can help answer questions about AiForm Procure and public procurement opportunities.",
       timestamp: new Date(),
     },
     {
       id: "2",
       type: "bot",
-      text: "I can help with pricing, feature questions, supplier registration, or connecting you with our team.",
+      text: "Ask me about how to find opportunities, supplier verification, or getting started on the platform.",
       timestamp: new Date(),
     },
   ])
@@ -83,7 +83,7 @@ export default function ThusoWidget() {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#7B5BA4] text-white shadow-lg transition hover:bg-[#6b4a94] active:scale-95"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#123c2b] text-white shadow-lg transition hover:bg-[#0f2e21] active:scale-95"
         aria-label="Open chat"
       >
         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -105,7 +105,7 @@ export default function ThusoWidget() {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-[#e5e5e7] bg-[#f9f9fa] p-4 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#7B5BA4] to-[#6b4a94] flex items-center justify-center text-white text-sm font-bold">
+                <div className="h-10 w-10 rounded-full bg-[#123c2b] flex items-center justify-center text-white text-sm font-bold">
                   T
                 </div>
                 <div>
@@ -138,7 +138,7 @@ export default function ThusoWidget() {
                   <div
                     className={`max-w-xs rounded-lg p-3 ${
                       message.type === "user"
-                        ? "bg-[#7B5BA4] text-white"
+                        ? "bg-[#123c2b] text-white"
                         : "bg-[#f3f4f6] text-[#1f2937]"
                     }`}
                   >
@@ -148,14 +148,14 @@ export default function ThusoWidget() {
               ))}
               {isLoading && (
                 <div className="flex gap-2">
-                  <div className="h-8 w-8 flex-shrink-0 rounded-full bg-gradient-to-br from-[#7B5BA4] to-[#6b4a94] flex items-center justify-center text-white text-xs font-bold">
+                  <div className="h-8 w-8 flex-shrink-0 rounded-full bg-[#123c2b] flex items-center justify-center text-white text-xs font-bold">
                     T
                   </div>
                   <div className="bg-[#f3f4f6] text-[#1f2937] rounded-lg p-3">
                     <div className="flex gap-1">
-                      <div className="h-2 w-2 bg-[#7B5BA4] rounded-full animate-bounce"></div>
-                      <div className="h-2 w-2 bg-[#7B5BA4] rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                      <div className="h-2 w-2 bg-[#7B5BA4] rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+                      <div className="h-2 w-2 bg-[#123c2b] rounded-full animate-bounce"></div>
+                      <div className="h-2 w-2 bg-[#123c2b] rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                      <div className="h-2 w-2 bg-[#123c2b] rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                     </div>
                   </div>
                 </div>
@@ -177,19 +177,19 @@ export default function ThusoWidget() {
                     }
                   }}
                   disabled={isLoading}
-                  className="flex-1 rounded-none border border-[#d4d0c4] bg-white px-3 py-2 text-sm text-[#1f2937] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#7B5BA4] disabled:bg-[#f3f4f6]"
+                  className="flex-1 rounded-none border border-[#d4d0c4] bg-white px-3 py-2 text-sm text-[#1f2937] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#123c2b] disabled:bg-[#f3f4f6]"
                 />
                 <button
                   onClick={handleSendMessage}
                   disabled={isLoading || !inputValue.trim()}
-                  className="inline-flex items-center justify-center rounded-none bg-[#7B5BA4] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#6b4a94] disabled:bg-[#9ca3af] disabled:cursor-not-allowed"
+                  className="inline-flex items-center justify-center rounded-none bg-[#123c2b] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0f2e21] disabled:bg-[#9ca3af] disabled:cursor-not-allowed"
                 >
                   Send
                 </button>
               </div>
               <button
                 onClick={handleEmailWithContext}
-                className="w-full rounded-none border border-[#d4d0c4] bg-white px-3 py-2 text-xs font-semibold text-[#7B5BA4] transition hover:bg-[#f3f4f6]"
+                className="w-full rounded-none border border-[#d4d0c4] bg-white px-3 py-2 text-xs font-semibold text-[#123c2b] transition hover:bg-[#f3f4f6]"
               >
                 📧 Email Support
               </button>
