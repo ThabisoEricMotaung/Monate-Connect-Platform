@@ -235,23 +235,21 @@ export default async function Home() {
           </section>
 
           <section>
-            <div className="flex flex-col gap-3 border-t border-strong pt-8">
-              <p className="newspaper-kicker">Explore the platform</p>
-              <h2 className="font-display text-3xl font-semibold text-heading">Start with the public pages</h2>
+            <div className="flex flex-col gap-2 mb-8">
+              <p className="newspaper-kicker">EXPLORE THE PLATFORM</p>
+              <h2 className="font-display text-2xl font-semibold text-heading">Start with the public pages</h2>
             </div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {platformTiles.map((tile) => (
                 <Link
                   key={tile.href}
                   href={tile.href}
-                  className="rounded-none border border-[#d4d0c4] bg-white p-4 text-primary transition hover:bg-white"
+                  className="rounded-none border border-[#e5e5e7] bg-white p-5 text-primary transition hover:border-[#d4d0c4]"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className={`flex h-8 w-8 items-center justify-center rounded-none ${tile.badgeClassName}`}>
-                      <EntryIcon icon={tile.icon} />
-                    </span>
-                    <span className="text-sm font-bold text-heading">{tile.title}</span>
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-none ${tile.badgeClassName} mb-3`}>
+                    <EntryIcon icon={tile.icon} />
                   </div>
+                  <p className="font-display text-base font-semibold text-heading">{tile.title}</p>
                   <p className="mt-2 font-serif text-xs leading-5 text-secondary">{tile.description}</p>
                 </Link>
               ))}
