@@ -237,7 +237,7 @@ export default function HeroSection() {
       `}</style>
 
       {/* ── Main content (minimalist, centered) ── */}
-      <div style={{ position: "relative", zIndex: 10, maxWidth: 800, margin: "0 auto", width: "100%", padding: "60px 40px", textAlign: "center" }}>
+      <div style={{ position: "relative", zIndex: 10, maxWidth: 1050, margin: "0 auto", width: "100%", padding: "60px 40px", textAlign: "center" }}>
 
         {/* Eyebrow - with building icon */}
         <div style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#7a7066", marginBottom: 20, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
