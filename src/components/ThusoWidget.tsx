@@ -1,9 +1,82 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
+
+type Message = {
+  id: string
+  type: "user" | "bot"
+  text: string
+  timestamp: Date
+}
 
 export default function ThusoWidget() {
   const [isOpen, setIsOpen] = useState(false)
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "1",
+      type: "bot",
+      text: "Hi! 👋 I'm Thuso. How can I help you today?",
+      timestamp: new Date(),
+    },
+    {
+      id: "2",
+      type: "bot",
+      text: "I can help with pricing, feature questions, supplier registration, or connecting you with our team.",
+      timestamp: new Date(),
+    },
+  ])
+  const [inputValue, setInputValue] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  const handleSendMessage = async () => {
+    if (!inputValue.trim()) return
+
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: "user",
+      text: inputValue,
+      timestamp: new Date(),
+    }
+
+    setMessages((prev) => [...prev, userMessage])
+    setInputValue("")
+    setIsLoading(true)
+
+    // Simulate bot response delay
+    setTimeout(() => {
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "bot",
+        text: "Thanks for your message! For detailed assistance, I recommend emailing our team at aiformstudio@gmail.com and we'll get back to you shortly.",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, botMessage])
+      setIsLoading(false)
+    }, 1000)
+  }
+
+  const handleEmailWithContext = () => {
+    const emailBody = messages
+      .filter((msg) => msg.type === "user")
+      .map((msg) => `- ${msg.text}`)
+      .join("\n")
+
+    const mailtoLink = `mailto:aiformstudio@gmail.com?subject=Support Request from AiForm Procure&body=${encodeURIComponent(
+      `Hi Thuso team,\n\nI have the following question(s):\n\n${emailBody}\n\nPlease help me with this.\n\nThanks!`
+    )}`
+
+    window.location.href = mailtoLink
+  }
 
   return (
     <>
@@ -28,16 +101,16 @@ export default function ThusoWidget() {
           />
 
           {/* Chat Box */}
-          <div className="relative w-full max-w-sm rounded-none border border-[#e5e5e7] bg-white shadow-xl sm:max-h-[500px]">
+          <div className="relative w-full max-w-sm rounded-none border border-[#e5e5e7] bg-white shadow-xl sm:max-h-[600px] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#e5e5e7] bg-[#f9f9fa] p-4">
+            <div className="flex items-center justify-between border-b border-[#e5e5e7] bg-[#f9f9fa] p-4 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#7B5BA4] to-[#6b4a94] flex items-center justify-center text-white text-sm font-bold">
                   T
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-[#1f2937]">Thuso</p>
-                  <p className="text-xs text-[#6b7280]">Typically replies instantly</p>
+                  <p className="text-xs text-[#6b7280]">Support Assistant</p>
                 </div>
               </div>
               <button
@@ -51,51 +124,75 @@ export default function ThusoWidget() {
             </div>
 
             {/* Messages */}
-            <div className="flex h-64 flex-col gap-4 overflow-y-auto bg-white p-4">
-              <div className="flex gap-2">
-                <div className="h-8 w-8 flex-shrink-0 rounded-full bg-gradient-to-br from-[#7B5BA4] to-[#6b4a94] flex items-center justify-center text-white text-xs font-bold">
-                  T
+            <div className="flex-1 overflow-y-auto bg-white p-4 flex flex-col gap-3">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex gap-2 ${message.type === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  {message.type === "bot" && (
+                    <div className="h-8 w-8 flex-shrink-0 rounded-full bg-gradient-to-br from-[#7B5BA4] to-[#6b4a94] flex items-center justify-center text-white text-xs font-bold">
+                      T
+                    </div>
+                  )}
+                  <div
+                    className={`max-w-xs rounded-lg p-3 ${
+                      message.type === "user"
+                        ? "bg-[#7B5BA4] text-white"
+                        : "bg-[#f3f4f6] text-[#1f2937]"
+                    }`}
+                  >
+                    <p className="text-sm">{message.text}</p>
+                  </div>
                 </div>
-                <div className="max-w-xs rounded-lg bg-[#f3f4f6] p-3">
-                  <p className="text-sm text-[#1f2937]">
-                    Hi! 👋 I&apos;m Thuso. How can I help you today?
-                  </p>
+              ))}
+              {isLoading && (
+                <div className="flex gap-2">
+                  <div className="h-8 w-8 flex-shrink-0 rounded-full bg-gradient-to-br from-[#7B5BA4] to-[#6b4a94] flex items-center justify-center text-white text-xs font-bold">
+                    T
+                  </div>
+                  <div className="bg-[#f3f4f6] text-[#1f2937] rounded-lg p-3">
+                    <div className="flex gap-1">
+                      <div className="h-2 w-2 bg-[#7B5BA4] rounded-full animate-bounce"></div>
+                      <div className="h-2 w-2 bg-[#7B5BA4] rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                      <div className="h-2 w-2 bg-[#7B5BA4] rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <div className="flex gap-2">
-                <div className="h-8 w-8 flex-shrink-0 rounded-full bg-gradient-to-br from-[#7B5BA4] to-[#6b4a94] flex items-center justify-center text-white text-xs font-bold">
-                  T
-                </div>
-                <div className="max-w-xs rounded-lg bg-[#f3f4f6] p-3">
-                  <p className="text-sm text-[#1f2937]">
-                    I can help with pricing, feature questions, supplier registration, or connecting you with our team.
-                  </p>
-                </div>
-              </div>
+              )}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Input Area */}
-            <div className="border-t border-[#e5e5e7] bg-[#f9f9fa] p-4">
-              <div className="flex gap-2">
+            <div className="border-t border-[#e5e5e7] bg-[#f9f9fa] p-4 flex-shrink-0">
+              <div className="flex gap-2 mb-2">
                 <input
                   type="text"
                   placeholder="Type your message..."
-                  className="flex-1 rounded-none border border-[#d4d0c4] bg-white px-3 py-2 text-sm text-[#1f2937] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#7B5BA4]"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" && !isLoading) {
+                      handleSendMessage()
+                    }
+                  }}
+                  disabled={isLoading}
+                  className="flex-1 rounded-none border border-[#d4d0c4] bg-white px-3 py-2 text-sm text-[#1f2937] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#7B5BA4] disabled:bg-[#f3f4f6]"
                 />
-                <a
-                  href="mailto:aiformstudio@gmail.com"
-                  className="inline-flex items-center justify-center rounded-none bg-[#7B5BA4] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#6b4a94]"
+                <button
+                  onClick={handleSendMessage}
+                  disabled={isLoading || !inputValue.trim()}
+                  className="inline-flex items-center justify-center rounded-none bg-[#7B5BA4] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#6b4a94] disabled:bg-[#9ca3af] disabled:cursor-not-allowed"
                 >
-                  Email
-                </a>
+                  Send
+                </button>
               </div>
-              <p className="mt-2 text-xs text-[#6b7280]">
-                For immediate support, email us at{" "}
-                <a href="mailto:aiformstudio@gmail.com" className="font-semibold text-[#7B5BA4] hover:underline">
-                  aiformstudio@gmail.com
-                </a>
-              </p>
+              <button
+                onClick={handleEmailWithContext}
+                className="w-full rounded-none border border-[#d4d0c4] bg-white px-3 py-2 text-xs font-semibold text-[#7B5BA4] transition hover:bg-[#f3f4f6]"
+              >
+                📧 Email Support
+              </button>
             </div>
           </div>
         </div>
