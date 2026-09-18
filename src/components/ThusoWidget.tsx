@@ -84,7 +84,7 @@ export default function ThusoWidget() {
                   className="flex-1 rounded-none border border-[#d4d0c4] bg-white px-3 py-2 text-sm text-[#1f2937] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#7B5BA4]"
                 />
                 <a
-                  href="mailto:support@aiformprocure.co.za"
+                  href="mailto:aiformstudio@gmail.com"
                   className="inline-flex items-center justify-center rounded-none bg-[#7B5BA4] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#6b4a94]"
                 >
                   Email
@@ -92,8 +92,8 @@ export default function ThusoWidget() {
               </div>
               <p className="mt-2 text-xs text-[#6b7280]">
                 For immediate support, email us at{" "}
-                <a href="mailto:support@aiformprocure.co.za" className="font-semibold text-[#7B5BA4] hover:underline">
-                  support@aiformprocure.co.za
+                <a href="mailto:aiformstudio@gmail.com" className="font-semibold text-[#7B5BA4] hover:underline">
+                  aiformstudio@gmail.com
                 </a>
               </p>
             </div>

@@ -149,8 +149,11 @@ export default function PublicFooter() {
           </div>
         </div>
 
-        <div className="mt-3 text-[0.7rem] text-white/40">
-          {complianceBadges.join(" • ")}
+        <div className="mt-3 flex items-center gap-2 text-[0.75rem] text-white/50">
+          <span>Questions? Email us:</span>
+          <a href="mailto:aiformstudio@gmail.com" className="font-semibold text-[#c8a060] hover:underline">
+            aiformstudio@gmail.com
+          </a>
         </div>
       </div>
 
