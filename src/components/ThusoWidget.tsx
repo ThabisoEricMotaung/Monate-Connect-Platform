@@ -58,7 +58,7 @@ export default function ThusoWidget() {
                 </div>
                 <div className="max-w-xs rounded-lg bg-[#f3f4f6] p-3">
                   <p className="text-sm text-[#1f2937]">
-                    Hi! 👋 I'm Thuso. How can I help you today?
+                    Hi! 👋 I&apos;m Thuso. How can I help you today?
                   </p>
                 </div>
               </div>

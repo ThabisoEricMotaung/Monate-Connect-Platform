@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import type { CSSProperties } from "react"
 
@@ -41,12 +40,6 @@ const footerVars = {
   "--procure-border": "rgba(18, 60, 43, 0.14)",
 } as CSSProperties
 
-const complianceBadges = [
-  "CSD Verified",
-  "BBBEE Compliant",
-  "SARS Compliant",
-  "POPIA Aware",
-]
 
 export default function PublicFooter() {
   function openAccessibility() {
@@ -88,14 +81,14 @@ export default function PublicFooter() {
       <div className="mx-auto max-w-7xl border-t border-white/10 px-6 py-5">
         <div className="space-y-3">
           <div className="flex flex-col gap-2 text-xs text-white/50">
-            <div className="flex items-center gap-2">
+            <a href="https://aiformstudio.co.za" className="flex items-center gap-2 hover:text-[#c8a060] transition">
               <div className="w-5 h-5 flex items-center justify-center">
                 <svg viewBox="0 0 100 100" fill="#7B5BA4" xmlns="http://www.w3.org/2000/svg">
                   <path d="M50 10L15 85L30 70L50 55L70 70L85 85Z"/>
                 </svg>
               </div>
               <span className="font-semibold">Built by AiForm Studio</span>
-            </div>
+            </a>
             <p className="font-semibold">
               &copy; 2026 AiForm Procure &middot; Procurement Suite
             </p>
