@@ -51,7 +51,7 @@ const audienceCards = [
     points: ["Create your supplier profile", "Respond to relevant RFQs", "Get verified & increase visibility"],
     cta: "Register free →",
     href: "/auth/signup",
-    className: "bg-white border-l-4 border-[#185fa5]",
+    className: "bg-white",
     badgeClassName: "bg-[#185fa5]/12 text-[#185fa5]",
   },
   {
@@ -61,7 +61,7 @@ const audienceCards = [
     points: ["Post RFQs in minutes", "Compare quotes side-by-side", "Manage suppliers & contracts"],
     cta: "Request a pilot →",
     href: "/contact",
-    className: "bg-white border-l-4 border-[#185fa5]",
+    className: "bg-white",
     badgeClassName: "bg-[#185fa5]/12 text-[#185fa5]",
   },
   {
@@ -71,7 +71,7 @@ const audienceCards = [
     points: ["Verified & compliant suppliers", "BBBEE & CSD insights", "Secure & reliable data"],
     cta: "Learn more →",
     href: "/trust",
-    className: "bg-white border-l-4 border-[#185fa5]",
+    className: "bg-white",
     badgeClassName: "bg-[#185fa5]/12 text-[#185fa5]",
   },
 ]
@@ -206,7 +206,19 @@ export default async function Home() {
               {audienceCards.map((card) => (
                 <article
                   key={card.title}
-                  className={`rounded-none border border-[#e8e0cc] ${card.className} p-4 transition hover:border-accent`}
+                  className={`rounded-none border border-[#e8e0cc] ${card.className} p-4 transition`}
+                  style={{
+                    boxShadow: '0 0 0 0px rgba(24, 95, 165, 0)',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = '0 0 20px 2px rgba(24, 95, 165, 0.4), 0 0 40px 4px rgba(24, 95, 165, 0.2)'
+                    e.currentTarget.style.borderColor = '#e8e0cc'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = '0 0 0 0px rgba(24, 95, 165, 0)'
+                    e.currentTarget.style.borderColor = '#e8e0cc'
+                  }}
                 >
                   <div className={`flex h-10 w-10 items-center justify-center rounded-none ${card.badgeClassName}`}>
                     <EntryIcon icon={card.icon} />
@@ -244,7 +256,16 @@ export default async function Home() {
                 <Link
                   key={tile.href}
                   href={tile.href}
-                  className="rounded-none border border-[#e5e5e7] bg-white p-5 text-primary transition hover:border-[#d4d0c4]"
+                  className="rounded-none border border-[#e5e5e7] bg-white p-5 text-primary transition"
+                  style={{
+                    boxShadow: '0 0 0 0px rgba(24, 95, 165, 0)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = '0 0 20px 2px rgba(24, 95, 165, 0.4), 0 0 40px 4px rgba(24, 95, 165, 0.2)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = '0 0 0 0px rgba(24, 95, 165, 0)'
+                  }}
                 >
                   <div className={`flex h-12 w-12 items-center justify-center rounded-none ${tile.badgeClassName} mb-3`}>
                     <EntryIcon icon={tile.icon} />

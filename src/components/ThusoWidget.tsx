@@ -191,7 +191,7 @@ export default function ThusoWidget({
 
       {/* Chat Modal/Panel */}
       {isOpen && (
-        <div className={displayMode === "modal" ? "fixed inset-0 z-50 flex items-end justify-end p-4 sm:items-center sm:justify-center" : ""}>
+        <div className={displayMode === "modal" ? "fixed inset-0 z-50 flex items-end justify-end p-4 sm:items-center sm:justify-center" : "fixed bottom-6 right-6 z-40"}>
           {/* Backdrop - only for modal mode */}
           {displayMode === "modal" && (
             <div
@@ -201,7 +201,7 @@ export default function ThusoWidget({
           )}
 
           {/* Chat Box */}
-          <div className="relative w-full max-w-sm rounded-none border border-[#e5e5e7] bg-white shadow-xl sm:max-h-[600px] flex flex-col">
+          <div className="relative w-full max-w-sm rounded-none border border-[#e5e5e7] bg-white shadow-xl sm:max-h-[600px] flex flex-col" style={displayMode === "floating" ? { width: "360px" } : {}}>
             {/* Header */}
             <div className="flex items-center justify-between border-b border-[#e5e5e7] bg-[#f9f9fa] p-4 flex-shrink-0">
               <div className="flex items-center gap-3">

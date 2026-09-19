@@ -186,11 +186,13 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
 
     opportunities.forEach((opp) => {
       const closingDate = opp.closing_date ? new Date(opp.closing_date) : null
-      const publishedDate = opp.published_date ? new Date(opp.published_date) : null
+      const publishedDate = opp.published_date
+        ? (typeof opp.published_date === 'string' ? new Date(opp.published_date) : opp.published_date)
+        : null
 
       live++
       if (closingDate && closingDate <= sevenDaysFromNow && closingDate > now) closing++
-      if (publishedDate && publishedDate >= twoDaysAgo) newIn48++
+      if (publishedDate && publishedDate >= twoDaysAgo && !isNaN(publishedDate.getTime())) newIn48++
     })
 
     return {
