@@ -210,14 +210,14 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
     {
       icon: <SparkleIcon />,
       value: stats.totalOpenRfqs.toLocaleString(formatLocale),
-      label: `Total Open RFQs · ${stats.liveOpportunities.toLocaleString(formatLocale)} live and accepting bids and ${stats.closingThisWeek.toLocaleString(formatLocale)}`,
+      label: "Total Open RFQs",
     },
     { icon: <CalendarIcon />, value: stats.closingThisWeek.toLocaleString(formatLocale), label: "Closing this week" },
     { icon: <ClockIcon />, value: stats.newIn48Hours.toLocaleString(formatLocale), label: "New in 48 hours" },
     {
       icon: <ShieldCheckIcon />,
       value: stats.underEvaluation.toLocaleString(formatLocale),
-      label: "Under evaluation · Evaluation in progress",
+      label: "Under evaluation",
     },
   ]
 
