@@ -258,19 +258,8 @@ export default function RegionalInsightsMap({
           {/* Province Cards Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '2rem' }}>
             {rankedProvinces.map((province) => {
-              // Color palette for provinces - unique color per province
-              const provinceColors: Record<string, { accent: string; border: string }> = {
-                'Gauteng': { accent: '#1a3a2a', border: '#1a3a2a' },
-                'Western Cape': { accent: '#c8a060', border: '#c8a060' },
-                'KwaZulu-Natal': { accent: '#6b7280', border: '#6b7280' },
-                'Northern Cape': { accent: '#4b5563', border: '#4b5563' },
-                'Mpumalanga': { accent: '#d4a843', border: '#d4a843' },
-                'Limpopo': { accent: '#5DCAA5', border: '#5DCAA5' },
-                'Eastern Cape': { accent: '#4b7a7a', border: '#4b7a7a' },
-                'North West': { accent: '#8497A6', border: '#8497A6' },
-                'Free State': { accent: '#b8860b', border: '#b8860b' },
-              }
-              const colors = provinceColors[province.name] || { accent: '#6b7280', border: '#6b7280' }
+              // Blue color palette for all provinces
+              const colors = { accent: '#185fa5', label: '#4b7a7a', secondary: '#378add', border: '#185fa5' }
               const closingCount = activeMetric === 'total' ? province.closing : (activeMetric === 'closing' ? 0 : 0)
               const recentCount = activeMetric === 'total' ? province.recent : (activeMetric === 'closing' ? 0 : province.recent)
 
@@ -306,7 +295,7 @@ export default function RegionalInsightsMap({
                   }}>
                     {/* Header Row: Rank + Icon */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.05em', color: '#6b7280', textTransform: 'uppercase' }}>
+                      <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.05em', color: colors.label, textTransform: 'uppercase' }}>
                         {province.abbreviation} #{province.rank}
                       </span>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -335,14 +324,14 @@ export default function RegionalInsightsMap({
                     padding: '0.5rem 0.75rem',
                   }}>
                     <div>
-                      <p style={{ fontSize: '8px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>Closing</p>
-                      <p style={{ fontSize: '14px', fontWeight: 600, color: '#6b7280', margin: '0.25rem 0 0', lineHeight: 1 }}>
+                      <p style={{ fontSize: '8px', color: colors.label, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>Closing</p>
+                      <p style={{ fontSize: '14px', fontWeight: 600, color: colors.secondary, margin: '0.25rem 0 0', lineHeight: 1 }}>
                         {province.closing}
                       </p>
                     </div>
                     <div>
-                      <p style={{ fontSize: '8px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>New</p>
-                      <p style={{ fontSize: '14px', fontWeight: 600, color: '#6b7280', margin: '0.25rem 0 0', lineHeight: 1 }}>
+                      <p style={{ fontSize: '8px', color: colors.label, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>New</p>
+                      <p style={{ fontSize: '14px', fontWeight: 600, color: colors.secondary, margin: '0.25rem 0 0', lineHeight: 1 }}>
                         {province.recent}
                       </p>
                     </div>
