@@ -270,20 +270,18 @@ export default function RegionalInsightsMap({
                   style={{
                     background: 'white',
                     border: '1px solid #e5e5e7',
-                    borderLeft: `4px solid ${colors.border}`,
                     borderRadius: '0',
                     padding: '0',
                     transition: 'all 160ms ease-out',
                     cursor: 'pointer',
+                    boxShadow: '0 0 0 0px rgba(24, 95, 165, 0)',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#d4d0c4'
-                    e.currentTarget.style.borderLeftColor = colors.border
+                    e.currentTarget.style.boxShadow = '0 0 20px 2px rgba(24, 95, 165, 0.4), 0 0 40px 4px rgba(24, 95, 165, 0.2)'
                     e.currentTarget.style.background = '#fafafa'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#e5e5e7'
-                    e.currentTarget.style.borderLeftColor = colors.border
+                    e.currentTarget.style.boxShadow = '0 0 0 0px rgba(24, 95, 165, 0)'
                     e.currentTarget.style.background = 'white'
                   }}
                 >
