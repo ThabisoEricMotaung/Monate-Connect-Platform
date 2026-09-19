@@ -98,46 +98,41 @@ export default function PublicFooter() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <a href="https://www.linkedin.com" className="footer-social-button" aria-label="LinkedIn">
+            <a href="https://www.linkedin.com" className="footer-social-button" aria-label="LinkedIn" title="LinkedIn">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M6.5 8.75H3.25v11H6.5v-11zM4.88 7.25a1.88 1.88 0 100-3.76 1.88 1.88 0 000 3.76zM20.75 13.41c0-2.95-1.57-4.91-4.13-4.91a3.56 3.56 0 00-3.21 1.77V8.75h-3.12v11h3.25v-5.44c0-1.44.27-2.83 2.05-2.83 1.76 0 1.78 1.64 1.78 2.92v5.35h3.25l.13-6.34z" />
               </svg>
-              <span>LinkedIn</span>
             </a>
-            <a href="https://www.facebook.com" className="footer-social-button" aria-label="Facebook">
+            <a href="https://www.facebook.com" className="footer-social-button" aria-label="Facebook" title="Facebook">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M14.2 21v-7.3h2.45l.37-2.84H14.2V9.05c0-.82.23-1.38 1.41-1.38h1.5V5.13A20.03 20.03 0 0014.92 5c-2.16 0-3.64 1.32-3.64 3.74v2.12H8.84v2.84h2.44V21h2.92z" />
               </svg>
-              <span>Facebook</span>
             </a>
-            <a href="https://www.instagram.com" className="footer-social-button" aria-label="Instagram">
+            <a href="https://www.instagram.com" className="footer-social-button" aria-label="Instagram" title="Instagram">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.266.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.265-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1112.324 0 6.162 6.162 0 01-12.324 0zM12 16a4 4 0 100-8 4 4 0 000 8zm4.965-10.322a1.44 1.44 0 112.881.001 1.44 1.44 0 01-2.881-.001z" />
               </svg>
-              <span>Instagram</span>
             </a>
-            <a href="https://www.tiktok.com" className="footer-social-button" aria-label="TikTok">
+            <a href="https://www.tiktok.com" className="footer-social-button" aria-label="TikTok" title="TikTok">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12.525.02C7.1.02 2.735 5.384 2.735 10.9c0 5.514 4.365 10.88 9.765 10.88 5.401 0 9.766-5.366 9.766-10.88C21.77 5.384 17.405.02 12.525.02zm0 3.96c1.305 0 2.35 1.045 2.35 2.35s-1.045 2.35-2.35 2.35-2.35-1.045-2.35-2.35 1.045-2.35 2.35-2.35zm0 14.035c-3.29 0-6.075-2.31-6.075-5.16 0-2.85 2.785-5.16 6.075-5.16s6.075 2.31 6.075 5.16c0 2.85-2.785 5.16-6.075 5.16z" />
               </svg>
-              <span>TikTok</span>
             </a>
-            <a href="https://substack.com" className="footer-social-button" aria-label="Substack">
+            <a href="https://substack.com" className="footer-social-button" aria-label="Substack" title="Substack">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <rect x="2" y="3" width="20" height="4"/><polygon points="2,9 2,21 14,18 14,9"/><polygon points="16,9 16,18 22,16 22,9"/>
               </svg>
-              <span>Substack</span>
             </a>
             <button
               type="button"
               onClick={openAccessibility}
               className="footer-social-button footer-access-button"
               aria-label="Accessibility"
+              title="Accessibility"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 4.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM4.5 7.5h15M12 7.5v13.5m-4.5 0L12 12l4.5 9" />
               </svg>
-              <span className="text-xs">Accessibility</span>
             </button>
           </div>
         </div>
@@ -154,14 +149,13 @@ export default function PublicFooter() {
         .footer-social-button {
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
+          justify-content: center;
           border: none;
           border-radius: 0;
           background: transparent;
           color: white/60;
-          font-size: 0.8rem;
-          font-weight: 500;
           transition: color 220ms ease;
+          padding: 0.25rem;
         }
 
         .footer-social-button:hover {
