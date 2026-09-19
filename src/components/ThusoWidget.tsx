@@ -9,22 +9,58 @@ type Message = {
   timestamp: Date
 }
 
-export default function ThusoWidget() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      type: "bot",
-      text: "Hi! 👋 I'm Thuso. I can help answer questions about procurement, opportunities, and how to use AiForm Procure.",
-      timestamp: new Date(),
-    },
-    {
-      id: "2",
-      type: "bot",
-      text: "Ask me about: finding opportunities, supplier verification, getting started, pricing, or general procurement topics.",
-      timestamp: new Date(),
-    },
-  ])
+type ThusoContext = "general" | "rfq"
+type DisplayMode = "floating" | "modal"
+
+interface ThusoWidgetProps {
+  context?: ThusoContext
+  displayMode?: DisplayMode
+  isOpen?: boolean
+  onClose?: () => void
+}
+
+export default function ThusoWidget({
+  context = "general",
+  displayMode = "floating",
+  isOpen: externalIsOpen,
+  onClose
+}: ThusoWidgetProps) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false)
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
+  const getInitialMessages = () => {
+    if (context === "rfq") {
+      return [
+        {
+          id: "1",
+          type: "bot" as const,
+          text: "Hi! 👋 I'm Thuso. I'm here to help you analyze RFQs, evaluate supplier responses, and manage your procurement workflow.",
+          timestamp: new Date(),
+        },
+        {
+          id: "2",
+          type: "bot" as const,
+          text: "Ask me about: RFQ requirements, supplier evaluation, bid analysis, compliance checks, or next steps.",
+          timestamp: new Date(),
+        },
+      ]
+    }
+    return [
+      {
+        id: "1",
+        type: "bot" as const,
+        text: "Hi! 👋 I'm Thuso. I can help answer questions about procurement, opportunities, and how to use AiForm Procure.",
+        timestamp: new Date(),
+      },
+      {
+        id: "2",
+        type: "bot" as const,
+        text: "Ask me about: finding opportunities, supplier verification, getting started, pricing, or general procurement topics.",
+        timestamp: new Date(),
+      },
+    ]
+  }
+
+  const [messages, setMessages] = useState<Message[]>(getInitialMessages())
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -40,6 +76,28 @@ export default function ThusoWidget() {
   const getBotResponse = (userInput: string): string => {
     const input = userInput.toLowerCase()
 
+    // RFQ-specific responses
+    if (context === "rfq") {
+      // RFQ evaluation
+      if (input.includes("evaluat") || input.includes("assess") || input.includes("score") || input.includes("bid")) {
+        return "To evaluate bids: 1) Check supplier compliance (BBBEE, CSD, SARS status), 2) Compare pricing and delivery timelines, 3) Review past performance, 4) Use scoring criteria for objective ranking. Visit the Verifications section for supplier details."
+      }
+
+      // RFQ requirements
+      if (input.includes("require") || input.includes("spec") || input.includes("criteria") || input.includes("must have")) {
+        return "Clear RFQ requirements should include: scope of work, delivery timeline, budget, compliance requirements, evaluation criteria, and submission deadlines. Ensure all terms are documented to avoid disputes during execution."
+      }
+
+      // Supplier response analysis
+      if (input.includes("response") || input.includes("quote") || input.includes("proposal") || input.includes("submit")) {
+        return "Review each supplier response against your RFQ criteria. Check: completeness of submission, pricing breakdown, timeline feasibility, compliance documentation, and references. Flag any gaps or unclear items for clarification."
+      }
+
+      // Default RFQ help
+      return "I can help with: bid evaluation, supplier scoring, compliance verification, RFQ best practices, or next steps in your procurement process. What would you like help with?"
+    }
+
+    // General procurement responses
     // RFQ & Opportunities - check this FIRST (before general procure)
     if (input.includes("opportunit") || input.includes("available") || input.includes("rfq") || input.includes("tender")) {
       return "You can browse all live opportunities on our Opportunities page, filtered by industry, province, and closing date. Click 'Opportunities' in the menu to see what's available today. All opportunities are sourced from official government and private procurement listings."
@@ -99,27 +157,47 @@ export default function ThusoWidget() {
   }
 
 
+  const handleClose = () => {
+    if (displayMode === "modal" && onClose) {
+      onClose()
+    } else {
+      setInternalIsOpen(false)
+    }
+  }
+
+  const handleOpen = () => {
+    setInternalIsOpen(true)
+  }
+
+  // For modal mode, don't show floating button
+  if (displayMode === "modal" && !isOpen) {
+    return null
+  }
+
   return (
     <>
-      {/* Floating Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#123c2b] text-white shadow-lg transition hover:bg-[#0f2e21] active:scale-95"
-        aria-label="Open chat"
-      >
+      {/* Floating Button - only for floating mode */}
+      {displayMode === "floating" && !isOpen && (
+        <button
+          onClick={handleOpen}
+          className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#123c2b] text-white shadow-lg transition hover:bg-[#0f2e21] active:scale-95"
+          aria-label="Open chat"
+        >
         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
       </button>
 
-      {/* Chat Modal */}
+      {/* Chat Modal/Panel */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:items-center sm:justify-center">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/20"
-            onClick={() => setIsOpen(false)}
-          />
+        <div className={displayMode === "modal" ? "fixed inset-0 z-50 flex items-end justify-end p-4 sm:items-center sm:justify-center" : ""}>
+          {/* Backdrop - only for modal mode */}
+          {displayMode === "modal" && (
+            <div
+              className="absolute inset-0 bg-black/20"
+              onClick={handleClose}
+            />
+          )}
 
           {/* Chat Box */}
           <div className="relative w-full max-w-sm rounded-none border border-[#e5e5e7] bg-white shadow-xl sm:max-h-[600px] flex flex-col">
@@ -131,11 +209,11 @@ export default function ThusoWidget() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-[#1f2937]">Thuso</p>
-                  <p className="text-xs text-[#6b7280]">Support Assistant</p>
+                  <p className="text-xs text-[#6b7280]">{context === "rfq" ? "RFQ Assistant" : "Support Assistant"}</p>
                 </div>
               </div>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 className="text-[#6b7280] hover:text-[#1f2937]"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
