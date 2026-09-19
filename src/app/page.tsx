@@ -51,8 +51,8 @@ const audienceCards = [
     points: ["Create your supplier profile", "Respond to relevant RFQs", "Get verified & increase visibility"],
     cta: "Register free →",
     href: "/auth/signup",
-    className: "bg-white border-l-4 border-[#1f2937]",
-    badgeClassName: "bg-[#c8a060]/12 text-[#8c6a2f]",
+    className: "bg-white border-l-4 border-[#185fa5]",
+    badgeClassName: "bg-[#185fa5]/12 text-[#185fa5]",
   },
   {
     icon: "briefcase",
@@ -61,8 +61,8 @@ const audienceCards = [
     points: ["Post RFQs in minutes", "Compare quotes side-by-side", "Manage suppliers & contracts"],
     cta: "Request a pilot →",
     href: "/contact",
-    className: "bg-white border-l-4 border-[#1f2937]",
-    badgeClassName: "bg-[#5DCAA5]/12 text-[#168567]",
+    className: "bg-white border-l-4 border-[#185fa5]",
+    badgeClassName: "bg-[#185fa5]/12 text-[#185fa5]",
   },
   {
     icon: "shield",
@@ -71,8 +71,8 @@ const audienceCards = [
     points: ["Verified & compliant suppliers", "BBBEE & CSD insights", "Secure & reliable data"],
     cta: "Learn more →",
     href: "/trust",
-    className: "bg-white border-l-4 border-[#1f2937]",
-    badgeClassName: "bg-[#8497A6]/12 text-[#315A78]",
+    className: "bg-white border-l-4 border-[#185fa5]",
+    badgeClassName: "bg-[#185fa5]/12 text-[#185fa5]",
   },
 ]
 
@@ -82,28 +82,28 @@ const platformTiles = [
     title: "Opportunities",
     description: "Live RFQs and tenders",
     href: "/opportunities",
-    badgeClassName: "bg-[#8497A6]/20 text-[#315A78]",
+    badgeClassName: "bg-[#185fa5]/15 text-[#185fa5]",
   },
   {
     icon: "shop",
     title: "Supplier directory",
     description: "Verified SA businesses",
     href: "/suppliers",
-    badgeClassName: "bg-[#5DCAA5]/15 text-[#168567]",
+    badgeClassName: "bg-[#185fa5]/15 text-[#185fa5]",
   },
   {
     icon: "shield",
     title: "Trust centre",
     description: "How verification works",
     href: "/trust",
-    badgeClassName: "bg-[#8497A6]/20 text-[#315A78]",
+    badgeClassName: "bg-[#185fa5]/15 text-[#185fa5]",
   },
   {
     icon: "pricing",
     title: "Pricing",
     description: "Plans and pilot options",
     href: "/pricing",
-    badgeClassName: "bg-[#c8a060]/15 text-[#8c6a2f]",
+    badgeClassName: "bg-[#185fa5]/15 text-[#185fa5]",
   },
 ]
 
@@ -258,7 +258,7 @@ export default async function Home() {
 
           <section className="flex flex-col gap-5 rounded-none border border-[#d4d0c4] bg-white p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3 sm:max-w-xs">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none bg-[#5DCAA5]/15 text-[#168567]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none bg-[#185fa5]/15 text-[#185fa5]">
                 <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
                   <path d="M4 6h16v12H4V6Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
                   <path d="m4 7 8 6 8-6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
