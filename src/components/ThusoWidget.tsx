@@ -40,29 +40,29 @@ export default function ThusoWidget() {
   const getBotResponse = (userInput: string): string => {
     const input = userInput.toLowerCase()
 
-    // RFQ & Opportunities
-    if (input.includes("rfq") || input.includes("tender") || input.includes("opportunity")) {
-      return "RFQs and tenders are public procurement opportunities posted by government and private organizations. You can browse all available opportunities on our Opportunities page, filtered by industry, province, and closing date."
+    // RFQ & Opportunities - check this FIRST (before general procure)
+    if (input.includes("opportunit") || input.includes("available") || input.includes("rfq") || input.includes("tender")) {
+      return "You can browse all live opportunities on our Opportunities page, filtered by industry, province, and closing date. Click 'Opportunities' in the menu to see what's available today. All opportunities are sourced from official government and private procurement listings."
     }
 
     // Supplier verification
-    if (input.includes("verif") || input.includes("compliance") || input.includes("bbbee") || input.includes("csd")) {
-      return "We verify suppliers against key compliance standards including BBBEE level, CSD status, tax compliance (SARS), and POPIA awareness. Our Trust Centre has detailed information on how verification works."
+    if (input.includes("verif") || input.includes("compliance") || input.includes("bbbee") || input.includes("csd") || input.includes("trust")) {
+      return "We verify suppliers against BBBEE level, CSD status, SARS tax compliance, and POPIA awareness. Visit our Trust Centre to learn how verification works and what each compliance badge means."
     }
 
-    // Getting started
-    if (input.includes("start") || input.includes("register") || input.includes("sign up") || input.includes("begin")) {
-      return "To get started: 1) Visit the Supplier Directory to browse verified businesses, 2) Register free to post RFQs or create your supplier profile, 3) Set up alerts for opportunities in your industry."
+    // Getting started / Registration
+    if (input.includes("start") || input.includes("register") || input.includes("sign up") || input.includes("begin") || input.includes("how do i")) {
+      return "To get started: 1) Browse the Opportunities page to see live tenders, 2) Register free to post RFQs or create a supplier profile, 3) Set up alerts for opportunities in your industry, 4) Verify your business to increase visibility."
     }
 
     // Pricing
-    if (input.includes("price") || input.includes("cost") || input.includes("plan")) {
-      return "We offer flexible pricing for different needs. Check our Pricing page for details on supplier profiles, RFQ posting, and enterprise features. We also offer pilot programs for teams."
+    if (input.includes("price") || input.includes("cost") || input.includes("plan") || input.includes("pricing")) {
+      return "Check our Pricing page for flexible plans. We offer free listings for suppliers, plus paid options for RFQ posting, advanced features, and enterprise accounts. We also run pilot programs for procurement teams."
     }
 
-    // General procurement
-    if (input.includes("procure") || input.includes("sourcing") || input.includes("supplier") || input.includes("purchase")) {
-      return "AiForm Procure connects buyers with verified suppliers and brings transparency to government procurement. We screen public tenders, help you source suppliers, and ensure compliance standards are met."
+    // General procurement / Platform info
+    if (input.includes("procure") || input.includes("sourcing") || input.includes("supplier") || input.includes("purchase") || input.includes("how")) {
+      return "AiForm Procure connects buyers with verified suppliers, bringing transparency to government procurement. We screen public tenders, help you source verified businesses, and ensure compliance standards are met."
     }
 
     // Default response
@@ -98,18 +98,6 @@ export default function ThusoWidget() {
     }, 800)
   }
 
-  const handleEmailWithContext = () => {
-    const emailBody = messages
-      .filter((msg) => msg.type === "user")
-      .map((msg) => `- ${msg.text}`)
-      .join("\n")
-
-    const mailtoLink = `mailto:aiformstudio@gmail.com?subject=Support Request from AiForm Procure&body=${encodeURIComponent(
-      `Hi Thuso team,\n\nI have the following question(s):\n\n${emailBody}\n\nPlease help me with this.\n\nThanks!`
-    )}`
-
-    window.location.href = mailtoLink
-  }
 
   return (
     <>
@@ -220,12 +208,12 @@ export default function ThusoWidget() {
                   Send
                 </button>
               </div>
-              <button
-                onClick={handleEmailWithContext}
-                className="w-full rounded-none border border-[#d4d0c4] bg-white px-3 py-2 text-xs font-semibold text-[#123c2b] transition hover:bg-[#f3f4f6]"
+              <a
+                href="mailto:aiformstudio@gmail.com?subject=Question about AiForm Procure"
+                className="block w-full rounded-none border border-[#d4d0c4] bg-white px-3 py-2 text-xs font-semibold text-[#123c2b] transition hover:bg-[#f3f4f6] text-center"
               >
                 📧 Contact Support Team
-              </button>
+              </a>
             </div>
           </div>
         </div>
