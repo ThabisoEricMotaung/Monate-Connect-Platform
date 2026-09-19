@@ -360,7 +360,7 @@ export default function RegionalInsightsMap({
                       <div
                         style={{
                           height: '100%',
-                          background: colors.primary,
+                          background: colors.accent,
                           width: `${province.relativeActivity * 100}%`,
                           transition: 'width 300ms ease-out',
                         }}
