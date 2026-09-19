@@ -136,10 +136,14 @@ export default function RegionalInsightsMap({
   }, [opportunities])
 
   const recentCount = useMemo(() => {
-    const twoDaysAgo = new Date(new Date().getTime() - 2 * 24 * 60 * 60 * 1000)
+    const now = new Date()
+    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
     return opportunities.filter(opp => {
-      const publishedDate = opp.published_date ? new Date(opp.published_date) : null
-      return publishedDate && publishedDate >= twoDaysAgo
+      if (!opp.published_date) return false
+      const publishedDate = typeof opp.published_date === 'string'
+        ? new Date(opp.published_date)
+        : opp.published_date
+      return publishedDate && publishedDate >= twoDaysAgo && !isNaN(publishedDate.getTime())
     }).length
   }, [opportunities])
 
@@ -197,17 +201,13 @@ export default function RegionalInsightsMap({
           {/* Stats Banner */}
           <div className="grid grid-cols-4 gap-3 mb-6">
             <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
-              <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">
-                {totalGovernmentOpportunities ? 'Total Gov. RFQs' : 'Live & Accepting'}
-              </p>
-              <p className="text-xl font-bold text-[#1a3a2a] mt-1">
-                {totalGovernmentOpportunities
-                  ? totalGovernmentOpportunities.toLocaleString()
-                  : totalOpportunities.toLocaleString()}
+              <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Live & Accepting</p>
+              <p className="text-2xl font-bold text-[#1a3a2a] mt-1">
+                {totalOpportunities.toLocaleString()}
               </p>
               {totalGovernmentOpportunities && (
                 <p className="text-xs text-[#7a7066] mt-1.5">
-                  {totalOpportunities.toLocaleString()} live & accepting
+                  {totalGovernmentOpportunities.toLocaleString()} total gov
                 </p>
               )}
             </div>
@@ -258,13 +258,19 @@ export default function RegionalInsightsMap({
           {/* Province Cards Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '2rem' }}>
             {rankedProvinces.map((province) => {
-              // Color scheme by rank - muted blue and grey
-              const rankColors = {
-                1: { primary: '#6b7280', accent: '#374151', gold: '#1f2937' },
-                2: { primary: '#9ca3af', accent: '#4b5563', gold: '#374151' },
-                3: { primary: '#d1d5db', accent: '#6b7280', gold: '#4b5563' },
+              // Color palette for provinces - unique color per province
+              const provinceColors: Record<string, { accent: string; border: string }> = {
+                'Gauteng': { accent: '#1a3a2a', border: '#1a3a2a' },
+                'Western Cape': { accent: '#c8a060', border: '#c8a060' },
+                'KwaZulu-Natal': { accent: '#6b7280', border: '#6b7280' },
+                'Northern Cape': { accent: '#4b5563', border: '#4b5563' },
+                'Mpumalanga': { accent: '#d4a843', border: '#d4a843' },
+                'Limpopo': { accent: '#5DCAA5', border: '#5DCAA5' },
+                'Eastern Cape': { accent: '#4b7a7a', border: '#4b7a7a' },
+                'North West': { accent: '#8497A6', border: '#8497A6' },
+                'Free State': { accent: '#b8860b', border: '#b8860b' },
               }
-              const colors = rankColors[province.rank as keyof typeof rankColors] || rankColors[3]
+              const colors = provinceColors[province.name] || { accent: '#6b7280', border: '#6b7280' }
               const closingCount = activeMetric === 'total' ? province.closing : (activeMetric === 'closing' ? 0 : 0)
               const recentCount = activeMetric === 'total' ? province.recent : (activeMetric === 'closing' ? 0 : province.recent)
 
@@ -275,6 +281,7 @@ export default function RegionalInsightsMap({
                   style={{
                     background: 'white',
                     border: '1px solid #e5e5e7',
+                    borderLeft: `4px solid ${colors.border}`,
                     borderRadius: '0',
                     padding: '0',
                     transition: 'all 160ms ease-out',
@@ -282,10 +289,12 @@ export default function RegionalInsightsMap({
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = '#d4d0c4'
+                    e.currentTarget.style.borderLeftColor = colors.border
                     e.currentTarget.style.background = '#fafafa'
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = '#e5e5e7'
+                    e.currentTarget.style.borderLeftColor = colors.border
                     e.currentTarget.style.background = 'white'
                   }}
                 >
@@ -293,14 +302,14 @@ export default function RegionalInsightsMap({
                   <div style={{
                     background: 'white',
                     padding: '0.75rem',
-                    borderBottom: '2px solid #2c3e50',
+                    borderBottom: 'none',
                   }}>
                     {/* Header Row: Rank + Icon */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                       <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.05em', color: '#6b7280', textTransform: 'uppercase' }}>
                         {province.abbreviation} #{province.rank}
                       </span>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                         <circle cx="12" cy="10" r="3"></circle>
                       </svg>
@@ -312,7 +321,7 @@ export default function RegionalInsightsMap({
                     </p>
 
                     {/* Big Number */}
-                    <p style={{ fontSize: '18px', fontWeight: 600, color: colors.primary, margin: '0.35rem 0 0', lineHeight: 1 }}>
+                    <p style={{ fontSize: '18px', fontWeight: 600, color: colors.accent, margin: '0.35rem 0 0', lineHeight: 1 }}>
                       {province.metricValue}
                     </p>
                   </div>
