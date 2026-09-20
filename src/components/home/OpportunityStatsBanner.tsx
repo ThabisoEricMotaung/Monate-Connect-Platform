@@ -212,7 +212,8 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
     {
       icon: <SparkleIcon />,
       value: stats.totalOpenRfqs.toLocaleString(formatLocale),
-      label: "Total Open RFQs",
+      label: "Live & Accepting",
+      secondary: "2,087 total gov",
     },
     { icon: <CalendarIcon />, value: stats.closingThisWeek.toLocaleString(formatLocale), label: "Closing Soon" },
     { icon: <ClockIcon />, value: stats.newIn48Hours.toLocaleString(formatLocale), label: "New in 48H" },
@@ -289,6 +290,11 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
                 <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#5a6a5a", marginTop: 4 }}>
                   {item.label}
                 </p>
+                {item.secondary && (
+                  <p style={{ fontSize: 11, fontWeight: 400, color: "#7a7066", marginTop: 4 }}>
+                    {item.secondary}
+                  </p>
+                )}
               </div>
             </div>
           ))}
