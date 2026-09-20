@@ -199,7 +199,7 @@ export default async function Home() {
       <main className="min-h-screen bg-white text-primary">
         <IncompleteRegistrationBanner />
         <HeroSection />
-        <OpportunityStatsBanner />
+        <OpportunityStatsBanner opportunities={opportunities} />
         <RegionalInsightsMap opportunities={opportunities} totalGovernmentOpportunities={2087} />
         <LiveOpportunitiesSection />
         <MakersMark />
