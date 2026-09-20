@@ -164,10 +164,13 @@ export default function ThusoWidget({
       {displayMode === "floating" && !isOpen && (
         <button
           onClick={handleOpen}
-          className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#123c2b] text-white shadow-lg transition hover:bg-[#0f2e21] active:scale-95"
+          className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-black text-white shadow-2xl transition hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] active:scale-95 border border-white/10"
           aria-label="Open chat"
+          style={{
+            background: 'linear-gradient(135deg, #1a1a1a 0%, #000000 100%)',
+          }}
         >
-          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         </button>
