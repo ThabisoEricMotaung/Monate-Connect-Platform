@@ -183,6 +183,7 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
     let live = 0
     let closing = 0
     let newIn48 = 0
+    let underEval = 0
 
     opportunities.forEach((opp) => {
       const closingDate = opp.closing_date ? new Date(opp.closing_date) : null
@@ -193,6 +194,7 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
       live++
       if (closingDate && closingDate <= sevenDaysFromNow && closingDate > now) closing++
       if (publishedDate && publishedDate >= twoDaysAgo && !isNaN(publishedDate.getTime())) newIn48++
+      if (closingDate && closingDate < now) underEval++
     })
 
     return {
@@ -200,7 +202,7 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
       liveOpportunities: live,
       closingThisWeek: closing,
       newIn48Hours: newIn48,
-      underEvaluation: 0,
+      underEvaluation: underEval,
       screenedPercent: null,
     }
   }, [opportunities, apiStats])
@@ -277,8 +279,8 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
                   width: 44,
                   height: 44,
                   borderRadius: 0,
-                  background: "transparent",
-                  border: "2px solid #1a3a2a",
+                  background: "#1a3a2a",
+                  boxShadow: "0 2px 8px rgba(26,58,42,0.25)",
                 }}
               >
                 {item.icon}
