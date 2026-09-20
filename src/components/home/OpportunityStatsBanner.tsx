@@ -185,18 +185,6 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
     let newIn48 = 0
 
     opportunities.forEach((opp) => {
-      // Only count opportunities that have at least one valid province (match RegionalInsightsMap logic)
-      let provs = opp.provinces || (opp.province ? [opp.province] : [])
-      const PROVINCE_IDS = {
-        'Gauteng': 'GP', 'Western Cape': 'WC', 'Eastern Cape': 'EC',
-        'Northern Cape': 'NC', 'Free State': 'FS', 'KwaZulu-Natal': 'KZN',
-        'Limpopo': 'LP', 'Mpumalanga': 'MP', 'North West': 'NW'
-      }
-      provs = provs.filter(p => Object.keys(PROVINCE_IDS).includes(p))
-
-      // Skip if no valid provinces
-      if (provs.length === 0) return
-
       const closingDate = opp.closing_date ? new Date(opp.closing_date) : null
       const publishedDate = opp.published_date
         ? (typeof opp.published_date === 'string' ? new Date(opp.published_date) : opp.published_date)
@@ -208,7 +196,7 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
     })
 
     return {
-      totalOpenRfqs: live,
+      totalOpenRfqs: opportunities.length,
       liveOpportunities: live,
       closingThisWeek: closing,
       newIn48Hours: newIn48,
