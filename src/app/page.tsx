@@ -13,7 +13,7 @@ import LiveOpportunitiesSection from "@/components/home/LiveOpportunitiesSection
 import AccountDeletedNotice from "@/components/AccountDeletedNotice"
 import IncompleteRegistrationBanner from "@/components/IncompleteRegistrationBanner"
 import DigestSignupForm from "@/app/opportunities/DigestSignupForm"
-import { fetchPublicOpportunities } from "@/lib/publicOpportunities"
+import { fetchPublicOpportunities, fetchRecentlyClosedOpportunities } from "@/lib/publicOpportunities"
 import type { Metadata } from "next"
 
 // Enable ISR with 5-minute revalidation instead of force-dynamic
@@ -179,7 +179,14 @@ function MakersMark() {
 }
 
 export default async function Home() {
-  const opportunities = await fetchPublicOpportunities().catch(() => [])
+  const [liveOpportunities, recentlyClosedOpportunities] = await Promise.all([
+    fetchPublicOpportunities().catch(() => []),
+    fetchRecentlyClosedOpportunities(30).catch(() => []),
+  ])
+
+  // Merge live and recently-closed opportunities for stats calculation
+  // (OpportunityStatsBanner will count "underEvaluation" from closed ones)
+  const opportunities = [...liveOpportunities, ...recentlyClosedOpportunities]
 
   return (
     <>

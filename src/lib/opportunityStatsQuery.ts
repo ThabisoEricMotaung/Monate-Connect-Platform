@@ -23,6 +23,17 @@ export function applyLivePublicOpportunityFilters(query: any, now = new Date()) 
     .gt("closing_date", now.toISOString())
 }
 
+/** Filter for recently-closed opportunities (under evaluation). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function applyRecentlyClosedOpportunityFilters(query: any, now = new Date(), daysAgo = 30) {
+  const thirtyDaysAgo = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000)
+  return query
+    .eq("is_public", true)
+    .in("status", ["open", "active"])
+    .lte("closing_date", now.toISOString())
+    .gte("closing_date", thirtyDaysAgo.toISOString())
+}
+
 export function getSastAdjustedNow(now = new Date()): Date {
   return new Date(now.getTime() + SOUTH_AFRICA_UTC_OFFSET_MS)
 }
