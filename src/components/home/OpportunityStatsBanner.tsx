@@ -277,8 +277,8 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
                   width: 44,
                   height: 44,
                   borderRadius: 0,
-                  background: "#1a3a2a",
-                  boxShadow: "0 2px 8px rgba(26,58,42,0.25)",
+                  background: "transparent",
+                  border: "2px solid #1a3a2a",
                 }}
               >
                 {item.icon}
