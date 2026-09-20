@@ -115,12 +115,12 @@ export default function PublicFooter() {
             </a>
             <a href="https://www.tiktok.com" className="footer-social-button" aria-label="TikTok" title="TikTok">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12.525.02C7.1.02 2.735 5.384 2.735 10.9c0 5.514 4.365 10.88 9.765 10.88 5.401 0 9.766-5.366 9.766-10.88C21.77 5.384 17.405.02 12.525.02zm0 3.96c1.305 0 2.35 1.045 2.35 2.35s-1.045 2.35-2.35 2.35-2.35-1.045-2.35-2.35 1.045-2.35 2.35-2.35zm0 14.035c-3.29 0-6.075-2.31-6.075-5.16 0-2.85 2.785-5.16 6.075-5.16s6.075 2.31 6.075 5.16c0 2.85-2.785 5.16-6.075 5.16z" />
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.1 1.75 2.9 2.9 0 0 1 2.31-4.64 2.84 2.84 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-.54-.05z" />
               </svg>
             </a>
             <a href="https://substack.com" className="footer-social-button" aria-label="Substack" title="Substack">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <rect x="2" y="3" width="20" height="4"/><polygon points="2,9 2,21 14,18 14,9"/><polygon points="16,9 16,18 22,16 22,9"/>
+                <path d="M22.539 8.242H1.46V10.88h21.079V8.242zM1.46 13.404V24h21.079V13.404H1.46zm10.54 9.947h-3.635v-4.126h3.635v4.126zM22.539 0H1.46v2.471h21.079V0z" />
               </svg>
             </a>
             <button
@@ -137,12 +137,6 @@ export default function PublicFooter() {
           </div>
         </div>
 
-        <div className="mt-3 flex items-center gap-2 text-[0.75rem] text-white/50">
-          <span>Questions? Email us:</span>
-          <a href="mailto:aiformstudio@gmail.com" className="font-semibold text-[#c8a060] hover:underline">
-            aiformstudio@gmail.com
-          </a>
-        </div>
       </div>
 
       <style jsx global>{`

@@ -288,7 +288,7 @@ export default function ThusoWidget({
                 </button>
               </div>
               <a
-                href="mailto:aiformstudio@gmail.com?subject=Question about AiForm Procure"
+                href="/contact"
                 className="block w-full rounded-none border border-[#d4d0c4] bg-white px-3 py-2 text-xs font-semibold text-[#123c2b] transition hover:bg-[#f3f4f6] text-center"
               >
                 📧 Contact Support Team
