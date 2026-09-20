@@ -183,6 +183,16 @@ export default async function Home() {
 
   return (
     <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            .glow-card, .glow-tile { box-shadow: 0 0 0 0px rgba(24, 95, 165, 0); cursor: pointer; }
+            .glow-card:hover, .glow-tile:hover {
+              box-shadow: 0 0 20px 2px rgba(24, 95, 165, 0.4), 0 0 40px 4px rgba(24, 95, 165, 0.2);
+            }
+          `,
+        }}
+      />
       <AccountDeletedNotice />
       <GazetteHeader />
       <PublicHeader />
@@ -206,19 +216,7 @@ export default async function Home() {
               {audienceCards.map((card) => (
                 <article
                   key={card.title}
-                  className={`rounded-none border border-[#e8e0cc] ${card.className} p-4 transition`}
-                  style={{
-                    boxShadow: '0 0 0 0px rgba(24, 95, 165, 0)',
-                    cursor: 'pointer',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = '0 0 20px 2px rgba(24, 95, 165, 0.4), 0 0 40px 4px rgba(24, 95, 165, 0.2)'
-                    e.currentTarget.style.borderColor = '#e8e0cc'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = '0 0 0 0px rgba(24, 95, 165, 0)'
-                    e.currentTarget.style.borderColor = '#e8e0cc'
-                  }}
+                  className={`glow-card rounded-none border border-[#e8e0cc] ${card.className} p-4 transition`}
                 >
                   <div className={`flex h-10 w-10 items-center justify-center rounded-none ${card.badgeClassName}`}>
                     <EntryIcon icon={card.icon} />
@@ -256,16 +254,7 @@ export default async function Home() {
                 <Link
                   key={tile.href}
                   href={tile.href}
-                  className="rounded-none border border-[#e5e5e7] bg-white p-5 text-primary transition"
-                  style={{
-                    boxShadow: '0 0 0 0px rgba(24, 95, 165, 0)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = '0 0 20px 2px rgba(24, 95, 165, 0.4), 0 0 40px 4px rgba(24, 95, 165, 0.2)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = '0 0 0 0px rgba(24, 95, 165, 0)'
-                  }}
+                  className="glow-tile rounded-none border border-[#e5e5e7] bg-white p-5 text-primary transition"
                 >
                   <div className={`flex h-12 w-12 items-center justify-center rounded-none ${tile.badgeClassName} mb-3`}>
                     <EntryIcon icon={tile.icon} />
