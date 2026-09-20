@@ -49,7 +49,7 @@ export default function RegionalInsightsMap({
     let opportunitiesWithoutProvince = 0
 
     opportunities.forEach((opp, idx) => {
-      let provs = opp.provinces || (opp.province ? [opp.province] : [])
+      let provs = (opp.provinces && opp.provinces.length > 0) ? opp.provinces : (opp.province ? [opp.province] : [])
 
       // Filter out invalid provinces like "National" that don't match SA provinces
       provs = provs.filter(p => Object.keys(PROVINCE_IDS).includes(p))
