@@ -28,33 +28,17 @@ export default function ThusoWidget({
   const [internalIsOpen, setInternalIsOpen] = useState(false)
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
   const getInitialMessages = () => {
-    if (context === "rfq") {
-      return [
-        {
-          id: "1",
-          type: "bot" as const,
-          text: "Hi! 👋 I'm Thuso. I'm here to help you analyze RFQs, evaluate supplier responses, and manage your procurement workflow.",
-          timestamp: new Date(),
-        },
-        {
-          id: "2",
-          type: "bot" as const,
-          text: "Ask me about: RFQ requirements, supplier evaluation, bid analysis, compliance checks, or next steps.",
-          timestamp: new Date(),
-        },
-      ]
-    }
     return [
       {
         id: "1",
         type: "bot" as const,
-        text: "Hi! 👋 I'm Thuso. I can help answer questions about procurement, opportunities, and how to use AiForm Procure.",
+        text: "Hi! 👋 I'm Thuso. I can help with procurement questions, opportunities, supplier verification, RFQ analysis, and how to use AiForm Procure.",
         timestamp: new Date(),
       },
       {
         id: "2",
         type: "bot" as const,
-        text: "Ask me about: finding opportunities, supplier verification, getting started, pricing, or general procurement topics.",
+        text: "Ask me about: finding opportunities, RFQs, supplier verification, bid analysis, compliance, pricing, or getting started.",
         timestamp: new Date(),
       },
     ]
@@ -191,7 +175,7 @@ export default function ThusoWidget({
 
       {/* Chat Modal/Panel */}
       {isOpen && (
-        <div className={displayMode === "modal" ? "fixed inset-0 z-50 flex items-end justify-end p-4 sm:items-center sm:justify-center" : "fixed bottom-6 right-6 z-40"}>
+        <div className={displayMode === "modal" ? "fixed inset-0 z-50 flex items-end justify-end p-4 sm:items-center sm:justify-center" : "fixed bottom-20 right-6 z-40 flex flex-col"}>
           {/* Backdrop - only for modal mode */}
           {displayMode === "modal" && (
             <div
@@ -201,7 +185,7 @@ export default function ThusoWidget({
           )}
 
           {/* Chat Box */}
-          <div className="relative w-full max-w-sm rounded-none border border-[#e5e5e7] bg-white shadow-xl sm:max-h-[600px] flex flex-col" style={displayMode === "floating" ? { width: "360px" } : {}}>
+          <div className="w-full max-w-sm rounded-none border border-[#e5e5e7] bg-white shadow-xl sm:max-h-[600px] flex flex-col" style={displayMode === "floating" ? { width: "360px", maxHeight: "500px" } : {}}>
             {/* Header */}
             <div className="flex items-center justify-between border-b border-[#e5e5e7] bg-[#f9f9fa] p-4 flex-shrink-0">
               <div className="flex items-center gap-3">
