@@ -37,7 +37,8 @@ export async function GET(request: Request) {
     }
 
     // Group by source
-    data?.forEach((metric) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data?.forEach((metric: any) => {
       if (!summary.bySource[metric.source_name]) {
         summary.bySource[metric.source_name] = {
           imported: 0,

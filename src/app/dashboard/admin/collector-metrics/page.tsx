@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 
 interface CollectorMetric {
   id: number
@@ -15,6 +15,15 @@ interface CollectorMetric {
   created_at: string
 }
 
+interface SourceStats {
+  imported: number
+  rejected: number
+  incomplete: number
+  runs: number
+  lastRun: string | null
+  status: string
+}
+
 interface Summary {
   totalRuns: number
   successfulRuns: number
@@ -22,7 +31,7 @@ interface Summary {
   totalImported: number
   totalRejected: number
   totalIncomplete: number
-  bySource: Record<string, any>
+  bySource: Record<string, SourceStats>
 }
 
 export default function CollectorMetricsDashboard() {
@@ -52,11 +61,15 @@ export default function CollectorMetricsDashboard() {
     return <div className="p-8 text-center">Loading collector metrics...</div>
   }
 
-  const colors = ["#185fa5", "#4CAF50", "#FF9800", "#F44336", "#9C27B0"]
+  interface TrendDataPoint {
+    date: string
+    imported: number
+    rejected: number
+  }
 
   // Group data by date for trend chart
   const trendData = data.reduce(
-    (acc, metric) => {
+    (acc: TrendDataPoint[], metric) => {
       const date = new Date(metric.created_at).toLocaleDateString()
       const existing = acc.find((d) => d.date === date)
       if (existing) {
@@ -67,7 +80,7 @@ export default function CollectorMetricsDashboard() {
       }
       return acc
     },
-    [] as any[]
+    []
   )
 
   return (
