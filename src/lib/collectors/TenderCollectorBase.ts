@@ -14,6 +14,8 @@ export interface RawTender {
   source_url: string
   buyer?: string
   estimated_budget?: number | null
+  category?: string | null
+  province?: string | null
 }
 
 export interface NormalizedTender {
@@ -29,6 +31,8 @@ export interface NormalizedTender {
   is_public: boolean
   status: "active" | "closed"
   estimated_budget?: number | null
+  category?: string | null
+  province?: string | null
 }
 
 export abstract class TenderCollectorBase {
@@ -77,6 +81,8 @@ export abstract class TenderCollectorBase {
       is_public: true,
       status,
       estimated_budget: raw.estimated_budget || null,
+      category: raw.category || null,
+      province: raw.province || null,
     }
   }
 

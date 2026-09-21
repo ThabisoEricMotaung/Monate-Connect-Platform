@@ -47,9 +47,14 @@ export class CapeownCollector extends TenderCollectorBase {
           // Extract cell values
           const ref = cells[0]?.replace(/<[^>]*>/g, "").trim() || ""
           const desc = cells[1]?.replace(/<[^>]*>/g, "").trim() || ""
+          const dept = cells[2]?.replace(/<[^>]*>/g, "").trim() || ""
+          const subDept = cells[3]?.replace(/<[^>]*>/g, "").trim() || ""
           const dateStr = cells[4]?.replace(/<[^>]*>/g, "").trim() || ""
 
           if (!ref || !desc) continue
+
+          // Combine department and sub-department as category
+          const category = subDept || dept || "Government Services"
 
           tenders.push({
             reference_number: ref,
@@ -58,6 +63,8 @@ export class CapeownCollector extends TenderCollectorBase {
             closing_date: this.parseDate(dateStr),
             source_url: url,
             buyer: "City of Cape Town Metropolitan Municipality",
+            category, // Add category
+            province: "Western Cape", // All City of Cape Town tenders are in Western Cape
           })
         } catch (rowError) {
           continue
