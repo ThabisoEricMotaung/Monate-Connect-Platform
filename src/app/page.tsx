@@ -188,6 +188,8 @@ export default async function Home() {
   // (OpportunityStatsBanner will count "underEvaluation" from closed ones)
   const opportunities = [...liveOpportunities, ...recentlyClosedOpportunities]
 
+  console.log(`[Home] Live: ${liveOpportunities.length}, Recently closed: ${recentlyClosedOpportunities.length}, Total: ${opportunities.length}`)
+
   return (
     <>
       <style
