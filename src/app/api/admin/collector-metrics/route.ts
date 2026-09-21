@@ -25,6 +25,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    interface SourceSummary {
+      imported: number
+      rejected: number
+      incomplete: number
+      runs: number
+      lastRun: string | null
+      status: string
+    }
+
     // Calculate summary stats
     const summary = {
       totalRuns: data?.length || 0,
@@ -33,12 +42,11 @@ export async function GET(request: Request) {
       totalImported: data?.reduce((sum, m) => sum + (m.imported || 0), 0) || 0,
       totalRejected: data?.reduce((sum, m) => sum + (m.rejected || 0), 0) || 0,
       totalIncomplete: data?.reduce((sum, m) => sum + (m.incomplete || 0), 0) || 0,
-      bySource: {} as Record<string, any>,
+      bySource: {} as Record<string, SourceSummary>,
     }
 
     // Group by source
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data?.forEach((metric: any) => {
+    data?.forEach((metric) => {
       if (!summary.bySource[metric.source_name]) {
         summary.bySource[metric.source_name] = {
           imported: 0,
