@@ -154,10 +154,17 @@ export abstract class TenderCollectorBase {
         const count = data?.length || 0
         console.log(`[${this.sourceName}] Inserted/updated ${count} tenders, skipped ${skipped} closed`)
 
+        // Log metrics
+        await this.logMetrics(count, 0, 0, openTenders.length - uniqueTenders.length, skipped)
+
         return { inserted: count, updated: 0, skipped }
       } catch (dbError) {
         const errorObj = this.serializeError(dbError)
         console.error(`[${this.sourceName}] database-upsert failed: ${JSON.stringify(errorObj)}`)
+
+        // Log failure metrics
+        await this.logMetrics(0, openTenders.length, 0, 0, skipped, errorObj.message)
+
         return {
           inserted: 0,
           updated: 0,
@@ -176,6 +183,36 @@ export abstract class TenderCollectorBase {
         stage: "unknown",
         error: errorObj,
       }
+    }
+  }
+
+  /**
+   * Log collection metrics to database
+   */
+  protected async logMetrics(
+    imported: number,
+    rejected: number,
+    incomplete: number,
+    duplicated: number,
+    stale: number,
+    errorMessage?: string,
+    durationMs?: number
+  ): Promise<void> {
+    try {
+      await this.supabase.from("collector_metrics").insert({
+        source_name: this.sourceName,
+        imported,
+        rejected,
+        incomplete,
+        duplicated,
+        stale,
+        error_message: errorMessage || null,
+        duration_ms: durationMs,
+        status: errorMessage ? "failed" : "success",
+      })
+    } catch (error) {
+      console.error(`[${this.sourceName}] Failed to log metrics:`, error)
+      // Don't throw - metrics logging failure shouldn't break collection
     }
   }
 
