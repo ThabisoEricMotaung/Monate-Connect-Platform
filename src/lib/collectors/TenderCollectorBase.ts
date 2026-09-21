@@ -199,7 +199,8 @@ export abstract class TenderCollectorBase {
     durationMs?: number
   ): Promise<void> {
     try {
-      await this.supabase.from("collector_metrics").insert({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (this.supabase.from("collector_metrics") as any).insert({
         source_name: this.sourceName,
         imported,
         rejected,
