@@ -178,7 +178,10 @@ export default function RegionalInsightsMap({
             <div className="flex-1">
               <h2 className="text-lg font-semibold text-[#1a3a2a]">Regional Insights</h2>
               <p className="text-sm text-[#7a7066] mt-1">
-                {isExpanded ? 'Procurement activity by province' : 'Click to view province breakdown'}
+                {isExpanded ? 'Procurement activity by province (showing available regional data)' : 'Click to view province breakdown'}
+              </p>
+              <p className="text-xs text-[#a89a88] mt-0.5">
+                Note: Regional totals reflect the dataset available for provincial analysis; see Live Feed banner for overall opportunity count.
               </p>
             </div>
             <svg
