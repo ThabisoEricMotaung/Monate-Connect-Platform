@@ -4,6 +4,7 @@ import { CapeownCollector } from "@/lib/collectors/CapeownCollector"
 import { CojCollector } from "@/lib/collectors/CojCollector"
 import { HealthCollector } from "@/lib/collectors/HealthCollector"
 import { DBSACollector } from "@/lib/collectors/DBSACollector"
+import { TCTACollector } from "@/lib/collectors/TCTACollector"
 
 function cronAuthorized(request: Request): boolean {
   const secret = process.env.CRON_SECRET
@@ -46,8 +47,8 @@ export async function GET(request: Request) {
       { name: "City of Johannesburg", collector: new CojCollector() },
       { name: "Department of Health", collector: new HealthCollector() },
       { name: "DBSA", collector: new DBSACollector() },
+      { name: "TCTA", collector: new TCTACollector() },
       // TODO: Add other collectors as they're built
-      // { name: "TCTA", collector: new TCTACollector() },
       // { name: "Eskom", collector: new EskomCollector() },
       // { name: "SANRAL", collector: new SANRALCollector() },
     ]
