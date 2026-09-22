@@ -1,0 +1,310 @@
+================================================================================
+ESKOM TENDER PORTAL - QUICK REFERENCE CARD
+================================================================================
+
+PORTAL INFORMATION
+==================
+Name:           Eskom Tender Bulletin
+URL:            https://tenderbulletin.eskom.co.za/
+Status:         PUBLIC - No registration required to view tenders
+Buyer:          Eskom Holdings SOC Ltd
+Contact:        086 00 ESKOM (086 00 37566)
+
+
+KEY METRICS
+===========
+Active Tenders:         ~340
+Total Pages:            68
+Default Page Size:      5 (configurable up to 25+)
+Estimated Update Rate:  Daily
+
+
+DATA FIELDS AVAILABLE
+=====================
+Core:
+  - Reference Number       (e.g., "ERI/2022/BMS/08")
+  - Tender ID             (numeric, e.g., "73478")
+  - Title                 (full tender name)
+  - Description           (full text)
+
+Classification:
+  - Division              (DISTRIBUTION, GENERATION, etc.)
+  - Status               (Active, Cancelled, TEAP PROCESS, etc.)
+  - Category             (RFP, RFB, RFQ, RFI)
+
+Location:
+  - Tender Location       (e.g., "Eskom Holdings SOC Limited Megawatt Park...")
+
+Dates:
+  - Published Date        (format: YYYY-MMM-DD HH:MM:SS)
+  - Closing Date         (format: YYYY-MMM-DD HH:MM:SS)
+
+Documents:
+  - Download Link         (direct access, no auth required)
+  - Document Package      (archive with all tender docs)
+
+
+URL PATTERNS
+============
+Listings:
+  https://tenderbulletin.eskom.co.za/?pageNumber={1-68}&pageSize=10
+
+Detail:
+  https://tenderbulletin.eskom.co.za/tender/{id}
+
+Downloads:
+  https://tenderbulletin.eskom.co.za/webapi/api/Files/DownloadAll?TENDER_ID={id}
+
+Search:
+  https://tenderbulletin.eskom.co.za/search?pageSize=5&page=1
+
+
+HTML STRUCTURE
+==============
+Framework:    React/Vue SPA (Client-side rendering)
+Main Section: <region> containing <ul> of <article> elements
+No Tables:    Uses semantic HTML, not <table> elements
+Key Elements:
+  - article: Contains one tender listing
+  - heading: Reference number
+  - generic: Description fields, dates, location
+  - links: Download and detail page links
+
+
+API ENDPOINTS
+=============
+PUBLIC ENDPOINTS:
+  GET https://tenderbulletin.eskom.co.za/webapi/api/Files/DownloadAll?TENDER_ID={id}
+    Returns: Tender documents (archive)
+    Auth: Not required
+    Status: Working ✓
+
+PARTIAL ENDPOINTS:
+  https://tenderbulletin.eskom.co.za/api/tenders
+    Status: 405 (Method Not Allowed - endpoint exists but restricted)
+    Note: May work with specific headers or later release
+
+
+EXTRACTION LOGIC
+================
+1. Navigate to pagination URL with page number
+2. Wait for React/Vue to render content
+3. Find all <article> elements
+4. For each article:
+   - Extract reference from <heading>
+   - Extract description from <generic> elements
+   - Extract dates matching format YYYY-MMM-DD HH:MM:SS
+   - Extract tender ID from link href="/tender/{id}"
+   - Extract location from labeled generic element
+5. Parse dates to ISO format
+6. Normalize and deduplicate
+7. Insert into database
+
+
+SCRAPING REQUIREMENTS
+=====================
+Browser Engine:  Puppeteer or Playwright
+  Reason: Client-side rendering required
+  Alternative: Wait for public API
+
+Language:        TypeScript (following project pattern)
+Framework:       Next.js Node.js backend
+Database:        Supabase (upsert to rfqs table)
+
+Performance:
+  Pages to scrape: 68
+  Time per page: 3-5 seconds (with browser)
+  Total time: ~5-6 minutes
+  Recommended frequency: Daily
+
+
+IMPLEMENTATION PATTERN
+======================
+Base class: TenderCollectorBase
+  - Abstract method: scrapeListings()
+  - Implementation: collect() (handles normalization, DB insert)
+  - Methods: normalizeTender(), parseDate(), parseBudget()
+
+For Eskom:
+  class EskomCollector extends TenderCollectorBase {
+    constructor() { super("Eskom", "https://tenderbulletin.eskom.co.za") }
+    async scrapeListings(): Promise<RawTender[]> { ... }
+  }
+
+
+EXAMPLE TENDER
+==============
+Reference:     ERI/2022/BMS/08
+Title:         The Provision of cleaning services for the Ash and Coal
+               plant at Medupi and Kusile power station for Eskom Rotek
+               Industries, for a period of 48 months on an as and when
+               required basis
+Division:      ESKOM ENTERPRISES
+Location:      ERI GERMISTON
+Published:     2023-05-22 13:35:12
+Closing:       2027-02-22 13:33:00
+Tender ID:     73478
+Download:      https://tenderbulletin.eskom.co.za/webapi/api/Files/DownloadAll?TENDER_ID=73478
+
+
+COMMON STATUS VALUES
+====================
+Active              (normal tender)
+Cancellation       (cancelled tender)
+TEAP PROCESS       (Technical Evaluation phase)
+Regret letter      (unsuccessful bidders notification)
+
+
+DIVISIONS FOUND
+===============
+DISTRIBUTION
+GENERATION
+ESKOM ENTERPRISES
+TRANSMISSION
+CORPORATE
+[Various regional/functional divisions]
+
+
+RATE LIMITING GUIDELINES
+========================
+Requests per second: <5
+Delay between pages: 500ms minimum
+Browser instance: 1 (reuse across pages)
+Retry on 429: Exponential backoff (2^n seconds)
+User-Agent: Standard Mozilla/5.0 string
+
+
+DOCUMENT PACKAGE CONTENTS
+=========================
+Typical files included in download:
+  - Technical Specifications (PDF/Word)
+  - Commercial Terms (PDF/Word)
+  - Financial/Pricing Template (Excel/Word)
+  - General Conditions of Contract (PDF)
+  - Bid Instructions (PDF)
+  - Evaluation Criteria (PDF)
+  - Amendments/Addendums (if applicable)
+
+
+TESTING CHECKLIST
+=================
+[ ] Scraper successfully loads 1st page
+[ ] Extracts all fields from article
+[ ] Parses dates correctly
+[ ] Handles pagination (pages 1-5)
+[ ] Extracts tender IDs correctly
+[ ] Download links are valid
+[ ] Normalization produces valid records
+[ ] Database upsert succeeds
+[ ] Duplicate detection works
+[ ] Error handling catches failures
+[ ] Performance is acceptable (<6 min)
+
+
+TROUBLESHOOTING
+===============
+Page not rendering?
+  - Check browser engine is running
+  - Increase timeout (try 30s)
+  - Check network connectivity
+
+Empty results?
+  - Verify URL is correct
+  - Check page selector paths match current DOM
+  - Ensure React/Vue has finished rendering
+  - Check browser console for JS errors
+
+Rate limited?
+  - Reduce requests per second
+  - Add longer delays between pages
+  - Check if IP is blocked (try later)
+  - Add User-Agent header
+
+Dates won't parse?
+  - Verify format (YYYY-MMM-DD HH:MM:SS)
+  - Check for leading/trailing spaces
+  - Handle 12-hour vs 24-hour formats
+  - Validate month abbreviations
+
+
+RELATED PLATFORMS
+=================
+eTendering Portal:  https://etendering.eskom.co.za/
+  Purpose: Formal bid submission (requires login)
+  Use case: For suppliers responding to tenders
+
+eAuction Platform:  https://eauction.eskom.co.za/
+  Purpose: Online auction process
+  Status: Limited information available
+
+NTCSA Tenders:     https://tenderbulletin.ntcsa.co.za/
+  Purpose: National Transmission Company tenders
+  Type: Eskom subsidiary tenders
+
+
+DOCUMENTATION LINKS
+===================
+Main Procurement:     https://www.eskom.co.za/procurement/
+Tender Process:       https://www.eskom.co.za/procurement-tenderprocess/
+eTendering Guide:     https://www.eskom.co.za/wp-content/uploads/2026/03/eTendering-External-User-Guide-Final.pdf
+eAuction Process:     https://www.eskom.co.za/procurement-eauction-process/
+Vendor Management:    https://www.eskom.co.za/procurement-vendor-management-process/
+
+
+NOTES
+=====
+- Portal is fully public and accessible without authentication
+- Data freshness: Current (updated regularly)
+- Historical data available: From ~2023 onwards
+- No API for listing retrieval (browser rendering required)
+- Document downloads via WebAPI (no auth needed)
+- Eskom is South Africa's primary electricity utility
+- Operates nationally with regional divisions
+
+
+COMPARISON TO DBSA & TCTA
+==========================
+DBSA:
+  - Simpler HTML table structure
+  - ~50-100 active tenders
+  - No API
+  - Direct HTML parsing possible
+
+TCTA:
+  - Semantic HTML with regions
+  - ~100-150 active tenders
+  - No API
+  - Direct HTML parsing possible
+
+Eskom:
+  - React/Vue SPA (complex rendering)
+  - ~340 active tenders (3-4x larger)
+  - No public API (partial internal API found)
+  - Browser automation required
+  - More challenging implementation
+
+
+IMPLEMENTATION EFFORT ESTIMATE
+===============================
+Setup & scaffolding:        1-2 hours
+Parser implementation:      3-4 hours
+Testing & debugging:        2-3 hours
+Database integration:       1-2 hours
+Scheduling setup:          30 minutes
+Documentation:             1-2 hours
+TOTAL:                     8-14 hours
+
+
+VERSION INFO
+============
+Created: 2026-09-22
+Updated: 2026-09-22
+Data Current As Of: 2026-09-22
+Framework Version: Next.js
+TypeScript: 4.9+
+
+================================================================================
+For detailed information, see:
+  - ESKOM_TENDER_PORTAL_RESEARCH.md (comprehensive analysis)
+  - ESKOM_COLLECTOR_TECHNICAL_SPEC.md (implementation details)
+================================================================================
