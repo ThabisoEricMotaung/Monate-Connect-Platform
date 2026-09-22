@@ -194,7 +194,7 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
       live++
       if (closingDate && closingDate <= sevenDaysFromNow && closingDate > now) closing++
       if (publishedDate && publishedDate >= twoDaysAgo && !isNaN(publishedDate.getTime())) newIn48++
-      if (closingDate && closingDate < now && !["awarded", "closed"].includes(opp.status)) underEval++
+      if (closingDate && closingDate < now && !["awarded", "closed"].includes(opp.status?.toLowerCase() ?? "")) underEval++
     })
 
     return {
