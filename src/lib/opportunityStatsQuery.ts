@@ -23,15 +23,15 @@ export function applyLivePublicOpportunityFilters(query: any, now = new Date()) 
     .gt("closing_date", now.toISOString())
 }
 
-/** Filter for recently-closed opportunities (under evaluation). */
+/** Filter for under-evaluation opportunities (closed but not awarded/closed). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function applyRecentlyClosedOpportunityFilters(query: any, now = new Date(), daysAgo = 30) {
-  const thirtyDaysAgo = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000)
+export function applyRecentlyClosedOpportunityFilters(query: any, now = new Date(), _daysAgo = 30) {
+  // Matches publicOpportunityStats.ts logic: all past opportunities with status NOT IN ["awarded", "closed"]
+  // Ignores _daysAgo parameter to ensure home page uses same logic as tenders page
   return query
     .eq("is_public", true)
-    .in("status", ["open", "active"])
     .lte("closing_date", now.toISOString())
-    .gte("closing_date", thirtyDaysAgo.toISOString())
+    .not("status", "in", "(awarded,closed)")
 }
 
 export function getSastAdjustedNow(now = new Date()): Date {
