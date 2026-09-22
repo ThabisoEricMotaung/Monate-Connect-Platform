@@ -219,11 +219,6 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
     },
     { icon: <CalendarIcon />, value: stats.closingThisWeek.toLocaleString(formatLocale), label: "Closing Soon" },
     { icon: <ClockIcon />, value: stats.newIn48Hours.toLocaleString(formatLocale), label: "New in 48H" },
-    {
-      icon: <ShieldCheckIcon />,
-      value: stats.underEvaluation.toLocaleString(formatLocale),
-      label: "Under evaluation",
-    },
   ]
 
   return (

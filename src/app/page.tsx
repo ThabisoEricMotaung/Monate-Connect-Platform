@@ -5,6 +5,7 @@ import PublicFooter from "@/components/PublicFooter"
 import PublicHeader from "@/components/PublicHeader"
 import GazetteHeader from "@/components/home/GazetteHeader"
 import HeroSection from "@/components/home/HeroSection"
+import OpportunityStatsBanner from "@/components/home/OpportunityStatsBanner"
 import RegionalInsightsMap from "@/components/home/RegionalInsightsMap"
 import CTASection from "@/components/home/CTASection"
 import TrustStrip from "@/components/home/TrustStrip"
@@ -204,6 +205,7 @@ export default async function Home() {
       <main className="min-h-screen bg-white text-primary">
         <IncompleteRegistrationBanner />
         <HeroSection />
+        <OpportunityStatsBanner />
         <RegionalInsightsMap opportunities={opportunities} totalGovernmentOpportunities={2087} />
         <LiveOpportunitiesSection />
         <MakersMark />
