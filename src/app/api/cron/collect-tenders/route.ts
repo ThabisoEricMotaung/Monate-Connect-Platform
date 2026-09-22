@@ -6,6 +6,7 @@ import { HealthCollector } from "@/lib/collectors/HealthCollector"
 import { DBSACollector } from "@/lib/collectors/DBSACollector"
 import { TCTACollector } from "@/lib/collectors/TCTACollector"
 import { EskomCollector } from "@/lib/collectors/EskomCollector"
+import { SANRALCollector } from "@/lib/collectors/SANRALCollector"
 
 function cronAuthorized(request: Request): boolean {
   const secret = process.env.CRON_SECRET
@@ -50,8 +51,7 @@ export async function GET(request: Request) {
       { name: "DBSA", collector: new DBSACollector() },
       { name: "TCTA", collector: new TCTACollector() },
       { name: "Eskom", collector: new EskomCollector() },
-      // TODO: Add other collectors as they're built
-      // { name: "SANRAL", collector: new SANRALCollector() },
+      { name: "SANRAL", collector: new SANRALCollector() },
     ]
 
     for (const { name, collector } of collectors) {

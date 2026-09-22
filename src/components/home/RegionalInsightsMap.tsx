@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import type { PublicRFQ } from "@/lib/publicOpportunities"
+import { useOpportunityStats } from "@/components/home/OpportunityStatsBanner"
 import { PROVINCE_IDS } from '@/data/province-meta'
 
 type Metric = 'total' | 'closing' | 'recent'
@@ -31,6 +32,9 @@ export default function RegionalInsightsMap({
   const router = useRouter()
   const [activeMetric, setActiveMetric] = useState<Metric>('total')
   const [isExpanded, setIsExpanded] = useState(false)
+
+  // Fetch accurate stats from API (instead of calculating from limited array)
+  const apiStats = useOpportunityStats()
 
   // Calculate province data with ranking
   const rankedProvinces = useMemo(() => {
@@ -198,12 +202,12 @@ export default function RegionalInsightsMap({
                 }
               `}</style>
 
-          {/* Stats Banner */}
+          {/* Stats Banner - use API for accuracy */}
           <div className="grid grid-cols-4 gap-3 mb-6">
             <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
               <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Live & Accepting</p>
               <p className="text-2xl font-bold text-[#1a3a2a] mt-1">
-                {totalOpportunities.toLocaleString()}
+                {(apiStats?.liveOpportunities ?? totalOpportunities).toLocaleString()}
               </p>
               {totalGovernmentOpportunities && (
                 <p className="text-xs text-[#7a7066] mt-1.5">
@@ -213,11 +217,11 @@ export default function RegionalInsightsMap({
             </div>
             <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
               <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Closing Soon</p>
-              <p className="text-xl font-bold text-[#1a3a2a] mt-1">{closingCount.toLocaleString()}</p>
+              <p className="text-xl font-bold text-[#1a3a2a] mt-1">{(apiStats?.closingThisWeek ?? closingCount).toLocaleString()}</p>
             </div>
             <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
               <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">New in 48h</p>
-              <p className="text-xl font-bold text-[#1a3a2a] mt-1">{recentCount.toLocaleString()}</p>
+              <p className="text-xl font-bold text-[#1a3a2a] mt-1">{(apiStats?.newIn48Hours ?? recentCount).toLocaleString()}</p>
             </div>
             <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
               <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Tracked by Province</p>
