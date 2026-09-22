@@ -54,6 +54,7 @@ export async function fetchPublicOpportunities(): Promise<PublicRFQ[]> {
   const query = supabase
     .from("rfqs")
     .select(PUBLIC_RFQ_COLUMNS)
+    .limit(10000) // Override Supabase default 1,000 row limit
   const { data, error } = await applyLivePublicOpportunityFilters(query)
     .order("closing_date", { ascending: true, nullsFirst: false })
 
@@ -71,8 +72,10 @@ export async function fetchRecentlyClosedOpportunities(daysAgo = 30): Promise<Pu
   const query = supabase
     .from("rfqs")
     .select(PUBLIC_RFQ_COLUMNS)
+    .limit(10000) // Supabase default is 1,000; override to fetch all under-evaluation opportunities
   const { data, error } = await applyRecentlyClosedOpportunityFilters(query, new Date(), daysAgo)
     .order("closing_date", { ascending: false, nullsFirst: false })
+
 
   if (error) {
     console.warn("Recently closed opportunities fetch failed:", error.message)
