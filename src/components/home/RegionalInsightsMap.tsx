@@ -208,9 +208,9 @@ export default function RegionalInsightsMap({
           {/* Stats Banner - use API for accuracy */}
           <div className="grid grid-cols-4 gap-3 mb-6">
             <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
-              <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Live & Accepting</p>
+              <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Regional Coverage</p>
               <p className="text-2xl font-bold text-[#1a3a2a] mt-1">
-                {(apiStats?.liveOpportunities ?? totalOpportunities).toLocaleString()}
+                {totalOpportunities.toLocaleString()}
               </p>
               {totalGovernmentOpportunities && (
                 <p className="text-xs text-[#7a7066] mt-1.5">

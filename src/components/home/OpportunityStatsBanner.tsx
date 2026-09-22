@@ -214,7 +214,7 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
     {
       icon: <SparkleIcon />,
       value: stats.totalOpenRfqs.toLocaleString(formatLocale),
-      label: "Live & Accepting",
+      label: "Total Live & Accepting",
       secondary: "2,087 total gov",
     },
     { icon: <CalendarIcon />, value: stats.closingThisWeek.toLocaleString(formatLocale), label: "Closing Soon" },
