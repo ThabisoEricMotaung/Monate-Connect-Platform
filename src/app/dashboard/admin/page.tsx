@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { ProfileImage } from "@/components/ProfileImage"
 import QuickActions from "@/components/admin/QuickActions"
+import CollectorMetricsWire from "@/components/home/CollectorMetricsWire"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { formatRand, parseMoney } from "@/lib/format"
 import { supabase } from "@/lib/supabase"
@@ -553,6 +554,12 @@ export default function AdminOverviewPage() {
               unreviewedQuotes={derived.awaitingQuotes.length}
               shortlistedSuppliers={dashboardData.suppliers.length}
             />
+          </div>
+
+          <div className="mb-8">
+            <div className="max-w-2xl">
+              <CollectorMetricsWire regionalCount={217} />
+            </div>
           </div>
 
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

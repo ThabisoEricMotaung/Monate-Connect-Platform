@@ -7,7 +7,6 @@ import GazetteHeader from "@/components/home/GazetteHeader"
 import HeroSection from "@/components/home/HeroSection"
 import OpportunityStatsBanner from "@/components/home/OpportunityStatsBanner"
 import RegionalInsightsMap from "@/components/home/RegionalInsightsMap"
-import CollectorMetricsWire from "@/components/home/CollectorMetricsWire"
 import CTASection from "@/components/home/CTASection"
 import TrustStrip from "@/components/home/TrustStrip"
 import LiveOpportunitiesSection from "@/components/home/LiveOpportunitiesSection"
@@ -207,11 +206,6 @@ export default async function Home() {
         <IncompleteRegistrationBanner />
         <HeroSection />
         <OpportunityStatsBanner />
-        <section className="border-y border-[#e3d8c5] bg-[#f9f9fa] px-6 py-8">
-          <div className="mx-auto max-w-2xl">
-            <CollectorMetricsWire regionalCount={217} />
-          </div>
-        </section>
         <RegionalInsightsMap opportunities={opportunities} totalGovernmentOpportunities={2087} />
         <LiveOpportunitiesSection />
         <MakersMark />
