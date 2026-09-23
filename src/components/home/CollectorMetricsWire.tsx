@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useOpportunityStats } from './OpportunityStatsBanner'
 
 interface CollectorMetric {
   id: string
@@ -16,18 +15,28 @@ interface CollectorMetric {
 
 interface WireState {
   lastRunTime: string | null
+  lastRunDate: string | null
   regionalCount: number
+  liveCount: number
   loading: boolean
 }
 
-export default function CollectorMetricsWire({ regionalCount = 217 }: { regionalCount?: number }) {
+export default function CollectorMetricsWire({
+  regionalCount = 217,
+  liveCount = 239,
+  compact = false
+}: {
+  regionalCount?: number
+  liveCount?: number
+  compact?: boolean
+}) {
   const [wireState, setWireState] = useState<WireState>({
     lastRunTime: null,
+    lastRunDate: null,
     regionalCount,
+    liveCount,
     loading: true,
   })
-
-  const apiStats = useOpportunityStats()
 
   useEffect(() => {
     async function fetchLastRun() {
@@ -38,15 +47,18 @@ export default function CollectorMetricsWire({ regionalCount = 217 }: { regional
         const data = (await response.json()) as CollectorMetric[]
         if (data.length > 0) {
           const lastRun = new Date(data[0].run_date)
+          const timeStr = lastRun.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })
+          const dateStr = lastRun.toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' })
           setWireState(prev => ({
             ...prev,
-            lastRunTime: lastRun.toLocaleString(),
+            lastRunTime: timeStr,
+            lastRunDate: dateStr,
             loading: false,
           }))
         } else {
           setWireState(prev => ({
             ...prev,
-            lastRunTime: 'Never',
+            lastRunDate: 'Never run',
             loading: false,
           }))
         }
@@ -54,7 +66,7 @@ export default function CollectorMetricsWire({ regionalCount = 217 }: { regional
         console.error('Error fetching collector metrics:', error)
         setWireState(prev => ({
           ...prev,
-          lastRunTime: 'Unable to load',
+          lastRunDate: 'Unable to load',
           loading: false,
         }))
       }
@@ -63,11 +75,48 @@ export default function CollectorMetricsWire({ regionalCount = 217 }: { regional
     fetchLastRun()
   }, [])
 
+  if (compact) {
+    // Compact card format for grid
+    return (
+      <Link href="/dashboard/admin/collector-metrics" className="block h-full">
+        <div className="rounded-xl border border-panel bg-card p-5 shadow-panel h-full hover:shadow-lg transition-shadow">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <p className="text-sm uppercase tracking-widest text-secondary font-semibold">Collector Status</p>
+              </div>
+              <div className="mt-4">
+                <p className="text-xs text-secondary/75">Last run</p>
+                <p className="text-lg font-bold text-heading mt-1">
+                  {wireState.loading ? '...' : `${wireState.lastRunDate}, ${wireState.lastRunTime}`}
+                </p>
+              </div>
+              <div className="mt-4 flex gap-4 text-sm">
+                <div>
+                  <p className="text-xs text-secondary/75">Live</p>
+                  <p className="font-bold text-heading">{wireState.liveCount}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-secondary/75">Regional</p>
+                  <p className="font-bold text-heading">{wireState.regionalCount}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Link>
+    )
+  }
+
+  // Original full-width format (if needed)
   return (
     <Link href="/dashboard/admin/collector-metrics" className="block">
       <button
         type="button"
-        className="w-full rounded-none bg-[#1a3a2a] px-4 py-3 text-white hover:bg-[#1a3a2a]/90 transition-colors flex items-center justify-center gap-2"
+        className="w-full rounded-md bg-[#1a3a2a] px-4 py-3 text-white hover:bg-[#1a3a2a]/90 transition-colors flex items-center justify-center gap-2"
       >
         <svg
           className="w-5 h-5"
@@ -79,25 +128,9 @@ export default function CollectorMetricsWire({ regionalCount = 217 }: { regional
         </svg>
         <span className="font-semibold">Procurement Activity</span>
         <span className="text-xs opacity-75 ml-auto">
-          {wireState.loading ? 'Loading...' : `Last run: ${wireState.lastRunTime}`}
+          {wireState.loading ? 'Loading...' : `Last run: ${wireState.lastRunDate}, ${wireState.lastRunTime}`}
         </span>
       </button>
-
-      {/* Stats below the wire */}
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <div className="rounded-none bg-white border border-[#d4d0c4] p-3">
-          <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Total Live & Accepting</p>
-          <p className="text-xl font-bold text-[#1a3a2a] mt-1">
-            {(apiStats?.liveOpportunities ?? 0).toLocaleString()}
-          </p>
-        </div>
-        <div className="rounded-none bg-white border border-[#d4d0c4] p-3">
-          <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Regional Coverage</p>
-          <p className="text-xl font-bold text-[#1a3a2a] mt-1">
-            {wireState.regionalCount.toLocaleString()}
-          </p>
-        </div>
-      </div>
     </Link>
   )
 }

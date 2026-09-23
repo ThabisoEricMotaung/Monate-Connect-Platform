@@ -556,13 +556,8 @@ export default function AdminOverviewPage() {
             />
           </div>
 
-          <div className="mb-8">
-            <div className="max-w-2xl">
-              <CollectorMetricsWire regionalCount={217} />
-            </div>
-          </div>
-
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <CollectorMetricsWire compact={true} regionalCount={217} liveCount={239} />
             {[
               {
                 label: "Engaged suppliers",
