@@ -28,7 +28,6 @@ import BrandMark from "@/components/BrandMark"
 import Breadcrumbs from "@/components/layout/Breadcrumbs"
 import NotificationBell from "@/components/NotificationBell"
 import PhoneVerificationBanner from "@/components/PhoneVerificationBanner"
-import ProcurementWire from "@/components/ProcurementWire"
 import { usePageTracking } from "@/hooks/useSessionTracking"
 import { hasAdminOrBuyerAccess } from "@/lib/auth"
 import { getAdminNavGroups, getBuyerNavGroups } from "@/lib/dashboardNavigation"
@@ -410,7 +409,6 @@ export default function DashboardLayout({
       <>
         {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}
         {children}
-        <ProcurementWire scope="dashboard" />
       </>
     )
   }
@@ -420,7 +418,6 @@ export default function DashboardLayout({
       <>
         {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}
         {children}
-        <ProcurementWire scope="dashboard" />
       </>
     )
   }
@@ -429,7 +426,6 @@ export default function DashboardLayout({
       <>
         {phoneGraceExpiresAt && <PhoneVerificationBanner graceExpiresAt={phoneGraceExpiresAt} />}
         {children}
-        <ProcurementWire scope="dashboard" />
       </>
     )
   }
@@ -641,8 +637,6 @@ export default function DashboardLayout({
           </button>
         </footer>
       </section>
-
-      <ProcurementWire scope="dashboard" />
     </main>
   )
 }
