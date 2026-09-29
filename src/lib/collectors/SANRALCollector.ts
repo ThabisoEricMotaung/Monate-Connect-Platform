@@ -5,6 +5,7 @@
  */
 
 import { TenderCollectorBase, type RawTender } from "./TenderCollectorBase"
+import { cleanText } from "@/lib/htmlUtils"
 
 export class SANRALCollector extends TenderCollectorBase {
   constructor() {
@@ -80,12 +81,9 @@ export class SANRALCollector extends TenderCollectorBase {
 
     // Helper to extract clean text from cell
     const cleanCell = (cellHtml: string): string => {
-      return cellHtml
-        .replace(/<[^>]*>/g, "")
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .trim()
-        .replace(/\s+/g, " ")
+      // Remove HTML tags first, then clean entities and whitespace
+      const textOnly = cellHtml.replace(/<[^>]*>/g, "")
+      return cleanText(textOnly)
     }
 
     // Column 0: Tender Reference Number (e.g., "NRA2026/0752" or "R.352-020-2025/1F")
@@ -147,12 +145,12 @@ export class SANRALCollector extends TenderCollectorBase {
 
     return {
       reference_number: referenceNumber,
-      title,
+      title: cleanText(title), // Ensure title is clean
       description: `${referenceNumber} - ${description}`,
       closing_date: closingDate,
       published_date: publishedDate,
       source_url: sourceUrl,
-      buyer: "South African National Roads Agency Limited",
+      buyer: "South African National Roads Agency Limited", // Will be cleaned by base class
       category,
       province,
     }

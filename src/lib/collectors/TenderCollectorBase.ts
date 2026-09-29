@@ -4,6 +4,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js"
+import { cleanText, cleanTitle, extractOrganizationFromTitle } from "@/lib/htmlUtils"
 
 export interface RawTender {
   reference_number: string
@@ -68,14 +69,27 @@ export abstract class TenderCollectorBase {
     const closingDate = raw.closing_date ? new Date(raw.closing_date) : null
     const status = closingDate && closingDate < now ? "closed" : "active"
 
+    // Clean and decode title
+    const cleanedTitle = cleanTitle(raw.title, 200)
+
+    // Clean and decode description
+    const cleanedDescription = raw.description
+      ? cleanText(raw.description).substring(0, 2000)
+      : null
+
+    // Extract or determine buyer name
+    const buyerNormalized = raw.buyer
+      ? cleanText(raw.buyer)
+      : extractOrganizationFromTitle(raw.title, this.sourceName)
+
     return {
       external_ocid: raw.reference_number,
-      title: raw.title.substring(0, 200),
-      description: raw.description?.substring(0, 2000) || null,
+      title: cleanedTitle,
+      description: cleanedDescription,
       closing_date: closingDate?.toISOString() || null,
       published_date: raw.published_date?.toISOString() || null,
       original_source_url: raw.source_url,
-      buyer_normalized: raw.buyer || "Unknown",
+      buyer_normalized: buyerNormalized,
       source_name: this.sourceName,
       is_external_opportunity: true,
       is_public: true,
