@@ -36,8 +36,12 @@ export function TenderCard({ tender }: TenderCardProps) {
     }`}>
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-mono text-gray-600 bg-gray-100 px-2 py-1 rounded">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">
+            {tender.title}
+          </h3>
+
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
               {tender.reference_number}
             </span>
             {isUrgent && !isClosed && (
@@ -51,10 +55,6 @@ export function TenderCard({ tender }: TenderCardProps) {
               </span>
             )}
           </div>
-
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {tender.title}
-          </h3>
 
           {tender.description && (
             <p className="text-sm text-gray-600 mb-2 line-clamp-2">
