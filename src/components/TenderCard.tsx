@@ -31,12 +31,12 @@ export function TenderCard({ tender }: TenderCardProps) {
   const isClosed = daysUntil < 0;
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm p-6 border-l-4 ${
+    <div className={`bg-white p-6 border-l-4 ${
       isClosed ? 'border-gray-300' : isUrgent ? 'border-red-500' : 'border-blue-500'
     }`}>
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">
+          <h3 className="text-base font-bold text-gray-900 mb-3 uppercase tracking-tight">
             {tender.title}
           </h3>
 
@@ -69,7 +69,7 @@ export function TenderCard({ tender }: TenderCardProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-300">
         <div>
           <p className="text-xs text-gray-500 uppercase tracking-wide">Closes</p>
           <p className="text-sm font-medium text-gray-900">
