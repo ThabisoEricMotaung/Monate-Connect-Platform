@@ -378,9 +378,41 @@ function ReviewChecklist({
   checklistState: Record<string, boolean>
   onToggleItem: (itemKey: string) => void
 }) {
+  const checkedCount = items.filter(
+    (item) => checklistState[`${profileId}:${step}:${item.key}`],
+  ).length
+  const allChecked = checkedCount === items.length
+
+  function selectAll() {
+    items.forEach((item) => {
+      const itemKey = `${profileId}:${step}:${item.key}`
+      if (!checklistState[itemKey]) {
+        onToggleItem(itemKey)
+      }
+    })
+  }
+
+  function deselectAll() {
+    items.forEach((item) => {
+      const itemKey = `${profileId}:${step}:${item.key}`
+      if (checklistState[itemKey]) {
+        onToggleItem(itemKey)
+      }
+    })
+  }
+
   return (
     <div className="mt-3 rounded-lg border border-panel bg-card p-3">
-      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted">Review checklist</p>
+      <div className="flex items-center justify-between">
+        <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-muted">Review checklist ({checkedCount}/{items.length})</p>
+        <button
+          type="button"
+          onClick={allChecked ? deselectAll : selectAll}
+          className="text-xs font-semibold text-accent underline-offset-2 transition hover:text-accent-strong hover:underline"
+        >
+          {allChecked ? "Deselect all" : "Select all"}
+        </button>
+      </div>
       <ul className="mt-2 space-y-2">
         {items.map((item) => {
           const itemKey = `${profileId}:${step}:${item.key}`
