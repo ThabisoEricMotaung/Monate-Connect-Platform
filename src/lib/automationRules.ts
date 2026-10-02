@@ -3,6 +3,8 @@ import { createNotification, createNotificationsForRoles } from "./notifications
 import { createRFQWhatsAppMessage, createWhatsAppLink, type WhatsAppAlertType } from "./whatsapp"
 import { supabase } from "./supabase"
 import { hasComplianceExpiryNotificationBeenSent, recordComplianceExpiryNotification } from "./complianceExpiryNotifications"
+import { sendEmail, generateSupplierWelcomeEmailHTML } from "./emailService"
+import { getCanonicalSupplierSmartScore } from "./supplierScoring"
 
 type RFQAutomation = {
   id?: number | string | null
@@ -607,5 +609,46 @@ export async function runContractExpiryCheck(client: SupabaseClient | null = sup
   }
 
   return { processed: contracts.length, errors }
+}
+
+export async function sendSupplierWelcomeEmail(
+  supplier: SupplierAutomation & { smart_score?: number | null },
+  client: SupabaseClient | null = supabase
+): Promise<void> {
+  if (!supplier.email || supplier.role !== "supplier") return
+
+  try {
+    // Get SmartScore if not provided
+    let smartScore = Number(supplier.smart_score ?? 0)
+    if (!smartScore && supplier.id) {
+      const scoreRecord = await getCanonicalSupplierSmartScore(supplier.id, client)
+      smartScore = scoreRecord?.result.score ?? 0
+    }
+
+    // Determine outstanding items based on score
+    const outstandingItems = []
+    if (smartScore < 70) {
+      outstandingItems.push({ label: "Add banking verification letter", points: 10 })
+    }
+    if (smartScore < 75) {
+      outstandingItems.push({ label: "Complete business profile fields", points: 5 })
+    }
+
+    const html = generateSupplierWelcomeEmailHTML(
+      supplier.business_name || supplier.email,
+      Math.round(smartScore),
+      outstandingItems
+    )
+
+    await sendEmail({
+      to: supplier.email,
+      subject: `Welcome to AiForm Procure - Your SmartScore is ${Math.round(smartScore)}`,
+      html,
+    })
+
+    console.log(`Welcome email sent to ${supplier.email}`)
+  } catch (error) {
+    warnAutomationFailure("supplier.welcome_email", error)
+  }
 }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
+import { sendSupplierWelcomeEmail } from "@/lib/automationRules"
 
 export async function POST(request: Request) {
   const supabase = await createSupabaseServerClient()
@@ -18,5 +19,16 @@ export async function POST(request: Request) {
     p_payload: payload,
   })
   if (error) return NextResponse.json({ error: error.message }, { status: error.code === "42501" ? 403 : 400 })
+
+  // Send welcome email to new suppliers (non-blocking)
+  if (data === "supplier") {
+    sendSupplierWelcomeEmail(
+      { id: user.id, email: user.email, role: "supplier" },
+      supabase
+    ).catch((err) => {
+      console.error("Failed to send welcome email:", err)
+    })
+  }
+
   return NextResponse.json({ ok: true, role: data })
 }

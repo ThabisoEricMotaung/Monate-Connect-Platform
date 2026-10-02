@@ -1809,10 +1809,26 @@ function DocumentsTab({
   const [uploadError, setUploadError] = useState("")
   const [uploadSuccess, setUploadSuccess] = useState("")
   const [expiryDate, setExpiryDate] = useState("")
+  const [expiryDateByCategory, setExpiryDateByCategory] = useState<Record<string, string>>({})
+  const [previousCategory, setPreviousCategory] = useState("bbbee")
 
   const activeDocuments = activeSupplierDocuments(documents)
   const selectedOption =
     DOCUMENT_UPLOAD_OPTIONS.find((option) => option.value === uploadCategory) ?? DOCUMENT_UPLOAD_OPTIONS[0]
+
+  // When category changes, save the previous category's expiry date and load the new one
+  useEffect(() => {
+    if (uploadCategory !== previousCategory) {
+      // Save the current expiry date for the previous category
+      if (expiryDate) {
+        setExpiryDateByCategory((prev) => ({ ...prev, [previousCategory]: expiryDate }))
+      }
+      // Load the saved expiry date for the new category, or use default
+      const savedDate = expiryDateByCategory[uploadCategory]
+      setExpiryDate(savedDate || defaultExpiryDate(selectedOption))
+      setPreviousCategory(uploadCategory)
+    }
+  }, [uploadCategory, previousCategory, expiryDate, expiryDateByCategory, selectedOption])
 
   function chooseDocumentFile(file: File | null) {
     setUploadError("")
@@ -1931,13 +1947,10 @@ function DocumentsTab({
             id="doc-category"
             value={uploadCategory}
             onChange={(e) => {
-              const nextOption =
-                DOCUMENT_UPLOAD_OPTIONS.find((option) => option.value === e.target.value) ?? DOCUMENT_UPLOAD_OPTIONS[0]
               setUploadCategory(e.target.value)
               setConfirmedDocumentType(false)
               setUploadSuccess("")
               setUploadError("")
-              setExpiryDate(defaultExpiryDate(nextOption))
             }}
             className={inputCls}
           >
