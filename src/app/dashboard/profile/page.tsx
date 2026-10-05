@@ -8,6 +8,9 @@ import type { Crop, PixelCrop } from "react-image-crop"
 import { ProfileImage, initialsFromName } from "@/components/ProfileImage"
 
 import SignedDocumentLink from "@/components/SignedDocumentLink"
+import LinkEntitiesForm from "@/components/LinkEntitiesForm"
+import LinkEntitiesGallery from "@/components/LinkEntitiesGallery"
+import { getSupplierRelatedEntities } from "@/lib/supplierRelatedEntities"
 import { logEvent } from "@/hooks/useSessionTracking"
 import { logActivity } from "@/lib/activity"
 import { OFFICIAL_INDUSTRY_OPTIONS, displayIndustry, industryFormValue } from "@/lib/industries"
@@ -64,7 +67,7 @@ import {
 
 // --- Types ---
 
-type Tab = "profile" | "verification" | "documents" | "banking" | "passport"
+type Tab = "profile" | "verification" | "documents" | "linked-enterprises" | "banking" | "passport"
 
 type Profile = {
   id: string
@@ -196,6 +199,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "profile", label: "Profile" },
   { key: "verification", label: "Verification" },
   { key: "documents", label: "Documents" },
+  { key: "linked-enterprises", label: "Linked Enterprises" },
   { key: "banking", label: "Banking details" },
   { key: "passport", label: "Passport" },
 ]
@@ -3314,6 +3318,33 @@ function ProfilePageInner() {
           )}
           {profile && activeTab === "documents" && (
             <DocumentsTab profile={profile} docUrls={docUrls} documents={supplierDocuments} userId={userId} onDocUploaded={handleDocUploaded} />
+          )}
+          {profile && activeTab === "linked-enterprises" && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="mb-2 text-lg font-bold text-heading">Linked Enterprises</h2>
+                <p className="mb-6 text-sm text-secondary">
+                  Disclose your directors, beneficial owners, and related companies. Transparency builds trust with procurement bodies.
+                </p>
+              </div>
+              <LinkEntitiesForm supplierId={profile.id} onSuccess={() => {
+                // Refresh entities list
+                getSupplierRelatedEntities(supabase, profile.id)
+              }} />
+              <div>
+                <h3 className="mb-4 text-base font-semibold text-heading">Your Disclosed Entities</h3>
+                {supabase && <LinkEntitiesGallery supplierId={profile.id} supabase={supabase} />}
+              </div>
+              <div className="rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
+                <strong>Why disclose?</strong>
+                <ul className="mt-2 list-inside list-disc space-y-1 text-xs">
+                  <li>Prevent conflicts of interest and ensure transparency</li>
+                  <li>Meet beneficial-ownership compliance requirements</li>
+                  <li>Strengthen your SmartScore (transparency bonus)</li>
+                  <li>Give procurement bodies full context about your company structure</li>
+                </ul>
+              </div>
+            </div>
           )}
           {activeTab === "banking" && (
             <BankingTab userId={userId} bank={bank} businessName={profile?.business_name ?? null} onBankSaved={handleBankSaved} onDirtyChange={setHasUnsaved} />
