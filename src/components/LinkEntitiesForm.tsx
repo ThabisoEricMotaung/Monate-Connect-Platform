@@ -56,6 +56,12 @@ export default function LinkEntitiesForm({ supplierId, onSuccess }: LinkEntities
         return
       }
 
+      if (!supabase) {
+        setError("Supabase client is not configured")
+        setLoading(false)
+        return
+      }
+
       let evidenceUrl: string | null = null
 
       // Upload evidence file if provided

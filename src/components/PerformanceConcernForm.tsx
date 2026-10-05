@@ -65,6 +65,12 @@ export default function PerformanceConcernForm({ buyerId, supplierId, onSuccess 
         return
       }
 
+      if (!supabase) {
+        setError("Supabase client is not configured")
+        setLoading(false)
+        return
+      }
+
       let evidenceUrl: string | null = null
 
       // Upload evidence file if provided
