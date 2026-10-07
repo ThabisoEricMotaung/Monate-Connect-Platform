@@ -52,7 +52,7 @@ export default function SupplierPerformanceConcernsPage() {
       const concernsWithResponses = await Promise.all(
         records.map(async (record) => {
           const detail = await getPerformanceRecordDetail(client, record.id)
-          if ("ok" in detail && !detail.ok) {
+          if (!("response" in detail)) {
             return record as ConcernWithResponse
           }
           return {

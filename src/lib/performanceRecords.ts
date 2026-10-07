@@ -304,7 +304,14 @@ export async function resolvePerformanceRecord(
     await supabase.from("supplier_performance_records").update({ status: newStatus }).eq("id", recordId)
 
     // Log audit
-    await logPerformanceAudit(supabase, recordId, "resolved", "admin", newStatus, resolution.final_assessment)
+    await logPerformanceAudit(
+      supabase,
+      recordId,
+      "resolved",
+      "admin",
+      newStatus,
+      resolution.final_assessment ?? undefined
+    )
 
     return { ok: true, resolution: data as PerformanceResolution }
   } catch (error) {

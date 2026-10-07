@@ -69,7 +69,7 @@ export type EnterpriseLink = {
 export async function addSupplierRelatedEntity(
   supabase: SupabaseClient,
   supplierId: string,
-  entity: Omit<SupplierRelatedEntity, "id" | "created_at" | "updated_at" | "verified" | "verified_by" | "verified_at">
+  entity: Omit<SupplierRelatedEntity, "id" | "supplier_id" | "created_at" | "updated_at" | "verified" | "verified_by" | "verified_at">
 ): Promise<{ ok: true; entity: SupplierRelatedEntity } | { ok: false; error: string }> {
   try {
     const { data, error } = await supabase
