@@ -35,7 +35,9 @@ export default function SupplierPerformanceConcernsPage() {
         return
       }
 
-      const { data: { user } } = await supabase.auth.getUser()
+      const client = supabase
+
+      const { data: { user } } = await client.auth.getUser()
       if (!user) {
         router.push("/auth/signin")
         return
@@ -44,12 +46,12 @@ export default function SupplierPerformanceConcernsPage() {
       setUserId(user.id)
 
       // Fetch all performance records for this supplier
-      const records = await getSupplierPerformanceRecords(supabase, user.id)
+      const records = await getSupplierPerformanceRecords(client, user.id)
 
       // Fetch response details for each record
       const concernsWithResponses = await Promise.all(
         records.map(async (record) => {
-          const detail = await getPerformanceRecordDetail(supabase, record.id)
+          const detail = await getPerformanceRecordDetail(client, record.id)
           if ("ok" in detail && !detail.ok) {
             return record as ConcernWithResponse
           }
@@ -164,7 +166,9 @@ export default function SupplierPerformanceConcernsPage() {
                             concernDescription={concern.description}
                             onSuccess={() => {
                               // Refresh concerns
-                              getSupplierPerformanceRecords(supabase, userId).then(setConcerns)
+                              if (supabase) {
+                                getSupplierPerformanceRecords(supabase, userId).then(setConcerns)
+                              }
                               setSelectedConcernId(null)
                             }}
                           />
