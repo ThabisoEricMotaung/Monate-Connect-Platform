@@ -3329,7 +3329,9 @@ function ProfilePageInner() {
               </div>
               <LinkEntitiesForm supplierId={profile.id} onSuccess={() => {
                 // Refresh entities list
-                getSupplierRelatedEntities(supabase, profile.id)
+                if (supabase) {
+                  getSupplierRelatedEntities(supabase, profile.id)
+                }
               }} />
               <div>
                 <h3 className="mb-4 text-base font-semibold text-heading">Your Disclosed Entities</h3>
