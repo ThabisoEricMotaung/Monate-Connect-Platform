@@ -140,7 +140,7 @@ export function normalizeOpportunityTitleCase(value: string): string {
 
 function cleanETendersTitle(rawTitle: string): string | null {
   // Remove "Tender Notice:" prefix and common patterns
-  let cleaned = rawTitle
+  const cleaned = rawTitle
     .replace(/^[A-Z0-9\/\.\-\s]+?\s*-\s*Tender Notice:\s*/i, "") // Remove "REFERENCE - Tender Notice:"
     .replace(/^[A-Z0-9\/\.\-\s]+?\s*-\s*/i, "") // Remove "REFERENCE -"
     .replace(/\s+/g, " ") // Normalize whitespace
