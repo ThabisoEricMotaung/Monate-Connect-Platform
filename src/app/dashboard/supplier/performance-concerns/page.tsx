@@ -151,7 +151,7 @@ export default function SupplierPerformanceConcernsPage() {
                       {concern.documented_evidence_url && (
                         <p className="text-xs">
                           <a href={concern.documented_evidence_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
-                            📎 View buyer's evidence
+                            📎 View buyer&apos;s evidence
                           </a>
                         </p>
                       )}
@@ -210,7 +210,7 @@ export default function SupplierPerformanceConcernsPage() {
         {concerns.length === 0 && (
           <div className="rounded-md border border-dashed border-panel bg-surface p-8 text-center">
             <p className="text-sm text-secondary">No performance concerns at this time.</p>
-            <p className="mt-1 text-xs text-muted">You're all clear! Keep up the good work.</p>
+            <p className="mt-1 text-xs text-muted">You&apos;re all clear! Keep up the good work.</p>
           </div>
         )}
       </div>

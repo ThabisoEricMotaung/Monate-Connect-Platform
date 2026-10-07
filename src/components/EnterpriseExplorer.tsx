@@ -133,7 +133,7 @@ export default function EnterpriseExplorer({ supabase }: EnterpriseExplorerProps
                     name="direction"
                     value={opt.value}
                     checked={state.direction === opt.value}
-                    onChange={(e) => setState((prev) => ({ ...prev, direction: e.target.value as any }))}
+                    onChange={(e) => setState((prev) => ({ ...prev, direction: e.target.value as string }))}
                     className="h-4 w-4"
                   />
                   <span className="text-xs text-secondary">{opt.label}</span>
