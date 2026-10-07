@@ -2,18 +2,9 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
-import { Libre_Franklin, Playfair_Display } from "next/font/google";
+import { Playfair_Display } from "next/font/google";
 import "../globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
-
-// Critical path font: UI interactions
-const libreFranklin = Libre_Franklin({
-  variable: "--font-ui",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  preload: true,
-});
 
 // Display font: Hero headings
 const playfair = Playfair_Display({
@@ -77,7 +68,7 @@ export default async function InsightsLayout({
       data-reading-mode="off"
       data-low-data="off"
       suppressHydrationWarning
-      className={`${playfair.variable} ${libreFranklin.variable} h-full antialiased`}
+      className={`${playfair.variable} h-full antialiased`}
     >
       <head>
         <Script
