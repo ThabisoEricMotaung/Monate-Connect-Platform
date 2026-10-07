@@ -98,7 +98,9 @@ export default function PerformanceConcernsPage() {
             buyerId={buyerId}
             supplierId={supplierId}
             onSuccess={() => {
-              getSupplierPerformanceRecords(supabase, supplierId).then(setConcerns)
+              if (supabase) {
+                getSupplierPerformanceRecords(supabase, supplierId).then(setConcerns)
+              }
             }}
           />
         </div>
