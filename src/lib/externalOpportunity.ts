@@ -113,7 +113,8 @@ export function normalizeOpportunityTitleCase(value: string): string {
   if (letters.length < 12) return value
 
   const uppercaseLetters = letters.filter((letter) => letter === letter.toUpperCase()).length
-  if (uppercaseLetters / letters.length < 0.8) return value
+  // Normalize if more than 60% uppercase (was 80%) to catch mixed-case all-caps titles
+  if (uppercaseLetters / letters.length < 0.6) return value
 
   let wordIndex = 0
   const normalized = value.replace(/[A-Za-z]+/g, (word) => {
@@ -137,6 +138,20 @@ export function normalizeOpportunityTitleCase(value: string): string {
   )
 }
 
+function cleanETendersTitle(rawTitle: string): string | null {
+  // Remove "Tender Notice:" prefix and common patterns
+  let cleaned = rawTitle
+    .replace(/^[A-Z0-9\/\.\-\s]+?\s*-\s*Tender Notice:\s*/i, "") // Remove "REFERENCE - Tender Notice:"
+    .replace(/^[A-Z0-9\/\.\-\s]+?\s*-\s*/i, "") // Remove "REFERENCE -"
+    .replace(/\s+/g, " ") // Normalize whitespace
+    .trim()
+
+  // If result is empty or still looks like reference, return null
+  if (!cleaned || /^[A-Z0-9\/\.\-]+$/.test(cleaned)) return null
+
+  return truncateAtWord(cleaned, 200)
+}
+
 export function resolveExternalOpportunityTitle(
   reference: string | null | undefined,
   description: string | null | undefined,
@@ -152,6 +167,12 @@ export function resolveExternalOpportunityTitle(
     .find(Boolean)
 
   if (firstParagraph) return normalizeOpportunityTitleCase(truncateAtWord(firstParagraph, 180))
+
+  // Try to clean up eTenders-style titles
+  if (reference) {
+    const cleaned = cleanETendersTitle(reference)
+    if (cleaned) return normalizeOpportunityTitleCase(cleaned)
+  }
 
   const cleanReference = reference?.replace(/\s+/g, " ").trim()
   return cleanReference || null

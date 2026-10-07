@@ -36,7 +36,7 @@ export function TenderCard({ tender }: TenderCardProps) {
     }`}>
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
-          <h3 className="text-base font-bold text-gray-900 mb-3 uppercase tracking-tight">
+          <h3 className="text-base font-bold text-gray-900 mb-3 tracking-tight">
             {tender.title}
           </h3>
 
@@ -57,9 +57,9 @@ export function TenderCard({ tender }: TenderCardProps) {
           </div>
 
           {tender.description && (
-            <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-              {tender.description.substring(0, 150)}
-              {tender.description.length > 150 ? '...' : ''}
+            <p className="text-sm text-gray-600 mb-2 line-clamp-3">
+              {tender.description.substring(0, 250)}
+              {tender.description.length > 250 ? '...' : ''}
             </p>
           )}
 
