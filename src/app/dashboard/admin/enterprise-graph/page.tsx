@@ -125,13 +125,15 @@ export default function EnterpriseGraphPage() {
                       </div>
                     )}
 
-                    <VerificationWorkflow
-                      entity={entity}
-                      supabase={supabase}
-                      onVerified={() => {
-                        setPendingEntities(pendingEntities.filter((e) => e.id !== entity.id))
-                      }}
-                    />
+                    {supabase && (
+                      <VerificationWorkflow
+                        entity={entity}
+                        supabase={supabase}
+                        onVerified={() => {
+                          setPendingEntities(pendingEntities.filter((e) => e.id !== entity.id))
+                        }}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
