@@ -29,12 +29,14 @@ async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunitySta
         .from("rfqs")
         .select("id", { count: "exact", head: true })
         .eq("is_public", true)
+        .neq("curation_status", "quarantined")
         .in("status", ["open", "active"]),
       buildBaseOpportunityQuery(supabase, { now, countOnly: true }),
       supabase
         .from("rfqs")
         .select("id", { count: "exact", head: true })
         .eq("is_public", true)
+        .neq("curation_status", "quarantined")
         .in("status", ["open", "active"])
         .gte("closing_date", now.toISOString())
         .lte("closing_date", sevenDaysFromNowIso),
@@ -42,11 +44,13 @@ async function getPublicOpportunityStatsUncached(): Promise<PublicOpportunitySta
         .from("rfqs")
         .select("id", { count: "exact", head: true })
         .eq("is_public", true)
+        .neq("curation_status", "quarantined")
         .gte("created_at", ago48HoursIso),
       supabase
         .from("rfqs")
         .select("id", { count: "exact", head: true })
         .eq("is_public", true)
+        .neq("curation_status", "quarantined")
         .lte("closing_date", now.toISOString())
         .not("status", "in", "(awarded,closed)"),
       supabase

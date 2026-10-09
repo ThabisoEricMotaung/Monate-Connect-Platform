@@ -41,9 +41,9 @@ const TITLE_LOWERCASE_WORDS = new Set([
 ])
 
 const TITLE_ACRONYMS = new Set([
-  "BBBEE", "CCTV", "CIDB", "CSD", "EC", "GTL", "HVAC", "ICT", "IT", "LNB",
-  "MHATC", "OEM", "PPE", "QLIK", "RFP", "RFQ", "SANRAL", "SCM", "SMME", "SOC",
-  "UMEDA", "VAT",
+  "BBBEE", "CCTV", "CIDB", "CSD", "EC", "GTL", "HVAC", "ICT", "IT", "JV", "KZN",
+  "LNB", "MHATC", "NRA", "OEM", "PPE", "QLIK", "RFI", "RFP", "RFQ", "SANRAL",
+  "SBD", "SCM", "SMME", "SNR", "SOC", "UMEDA", "VAT",
 ])
 
 const TITLE_BRANDS: Record<string, string> = {
@@ -117,7 +117,13 @@ export function normalizeOpportunityTitleCase(value: string): string {
   if (uppercaseLetters / letters.length < 0.6) return value
 
   let wordIndex = 0
-  const normalized = value.replace(/[A-Za-z]+/g, (word) => {
+  const normalized = value.replace(/[A-Za-z0-9]+/g, (word) => {
+    // Route numbers, sections, gradings and chainages (N2, 21X, 9CE, KM44) are
+    // codes, not words, so their case is kept as published.
+    if (/\d/.test(word)) {
+      wordIndex += 1
+      return word
+    }
     const upper = word.toUpperCase()
     const isMixedCase = /[A-Z]/.test(word) && /[a-z]/.test(word)
     const isFirstWord = wordIndex === 0

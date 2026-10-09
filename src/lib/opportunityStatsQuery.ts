@@ -1,13 +1,16 @@
 import "server-only"
 
 import { SupabaseClient } from "@supabase/supabase-js"
+import { excludeQuarantined } from "@/lib/opportunityVisibility"
 
 /**
  * Unified query builder for opportunity stats.
  * Used by both homepage stats and tenders API to ensure consistent counts.
  *
  * Key design decisions:
- * - NO curation_status filtering (tenders page is source of truth)
+ * - No approval filtering (pending/approved both count when public); only
+ *   quarantined records are excluded, whatever is_public says
+ *   (see opportunityVisibility.ts)
  * - Uses consistent SAST timezone handling
  * - Base query includes all public, active opportunities with closing_date in future
  */
@@ -17,10 +20,10 @@ const SOUTH_AFRICA_UTC_OFFSET_MS = 2 * 60 * 60 * 1000
 /** The canonical definition of a live public opportunity. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function applyLivePublicOpportunityFilters(query: any, now = new Date()) {
-  return query
+  return excludeQuarantined(query
     .eq("is_public", true)
     .in("status", ["open", "active"])
-    .gt("closing_date", now.toISOString())
+    .gt("closing_date", now.toISOString()))
 }
 
 /** Filter for under-evaluation opportunities (closed but not awarded/closed). */
@@ -28,10 +31,10 @@ export function applyLivePublicOpportunityFilters(query: any, now = new Date()) 
 export function applyRecentlyClosedOpportunityFilters(query: any, now = new Date(), _daysAgo = 30) {
   // Matches publicOpportunityStats.ts logic: all past opportunities with status NOT IN ["awarded", "closed"]
   // Ignores _daysAgo parameter to ensure home page uses same logic as tenders page
-  return query
+  return excludeQuarantined(query
     .eq("is_public", true)
     .lte("closing_date", now.toISOString())
-    .not("status", "in", "(awarded,closed)")
+    .not("status", "in", "(awarded,closed)"))
 }
 
 export function getSastAdjustedNow(now = new Date()): Date {
@@ -97,20 +100,20 @@ export function buildDateRangeOpportunityQuery(
   const { fromDate, toDate, countOnly } = options
 
   if (countOnly) {
-    return supabase
+    return excludeQuarantined(supabase
       .from("rfqs")
       .select("id", { count: "exact", head: true })
       .eq("is_public", true)
       .eq("status", "active")
       .gte("closing_date", fromDate.toISOString())
-      .lte("closing_date", toDate.toISOString())
+      .lte("closing_date", toDate.toISOString()))
   }
 
-  return supabase
+  return excludeQuarantined(supabase
     .from("rfqs")
     .select("*")
     .eq("is_public", true)
     .eq("status", "active")
     .gte("closing_date", fromDate.toISOString())
-    .lte("closing_date", toDate.toISOString())
+    .lte("closing_date", toDate.toISOString()))
 }

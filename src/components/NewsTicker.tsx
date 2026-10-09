@@ -183,6 +183,7 @@ export default function NewsTicker() {
         .select("id,title,buyer_org,industry,published_date,created_at")
         .eq("status", "active")
         .eq("is_public", true)
+        .neq("curation_status", "quarantined")
         .gt("closing_date", new Date().toISOString())
         .not("title", "ilike", "%SMOKE TEST%")
         .not("title", "ilike", "%[TEST]%")

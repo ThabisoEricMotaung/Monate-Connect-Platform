@@ -3,6 +3,10 @@ Daily tender collection scheduler.
 Runs all collectors on a schedule (default: daily at 6 AM).
 """
 
+from legacy_collectors_guard import exit_unless_legacy_collectors_enabled
+
+exit_unless_legacy_collectors_enabled("scheduler_daily.py")
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime

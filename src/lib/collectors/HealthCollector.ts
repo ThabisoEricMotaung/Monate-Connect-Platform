@@ -1,9 +1,13 @@
 /**
  * Department of Health tender collector (TypeScript)
- * Fetches from https://www.health.gov.za/tenders/ and parses HTML table
+ * Fetches https://www.health.gov.za/tenders/ and parses its TablePress tender
+ * tables (NDoH Tenders and Pharmaceutical Tenders) with healthParser.
  */
 
 import { TenderCollectorBase, type RawTender } from "./TenderCollectorBase"
+import { parseHealthTenders } from "./healthParser"
+
+const LISTING_URL = "https://www.health.gov.za/tenders/"
 
 export class HealthCollector extends TenderCollectorBase {
   constructor() {
@@ -11,14 +15,10 @@ export class HealthCollector extends TenderCollectorBase {
   }
 
   async scrapeListings(): Promise<RawTender[]> {
-    const url = "https://www.health.gov.za/tenders/"
-    console.log(`[Health] Starting from ${url}`)
-
-    const tenders: RawTender[] = []
+    console.log(`[Health] Starting from ${LISTING_URL}`)
 
     try {
-      // Fetch page
-      const response = await fetch(url, {
+      const response = await this.fetchSource(LISTING_URL, {
         headers: {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
@@ -32,51 +32,31 @@ export class HealthCollector extends TenderCollectorBase {
 
       if (!html || html.length === 0) {
         console.warn(`[Health] Empty response`)
-        return tenders
+        return []
       }
 
-      // Parse tender entries - they appear as structured text with NDOH/DOH prefix
-      // Pattern: Reference (e.g., NDOH 35-2023-2024) followed by title, dates, and links
-      const referenceRegex = /([A-Z]+\s+\d+[-\/]\d{4}[\/-]\d{4})/g
-      const matches = html.matchAll(referenceRegex)
-
-      for (const match of matches) {
-        try {
-          const reference = match[0].trim()
-          const index = match.index!
-
-          // Extract surrounding context (500 chars after reference)
-          const context = html.substring(index, index + 1000)
-
-          // Extract title: look for text between reference and opening date
-          // Usually the title is on next line
-          const titleMatch = context.match(/\]\s*([^[\]<>]*?)(?:\d{1,2}\s+\w+\s+\d{4}|Closing Date|Opening|Enquiries)/i)
-          const title = titleMatch
-            ? titleMatch[1]
-                .replace(/<[^>]*>/g, "")
-                .trim()
-                .substring(0, 200)
-            : reference
-
-          // Extract dates: look for patterns like "19 January 2024" or "29 February 2024"
-          const dateRegex = /(\d{1,2}\s+\w+\s+\d{4})/
-          const dates = context.match(dateRegex)
-          const closingDateStr = dates ? dates[1] : null
-
-          if (!reference || !title) continue
-
-          tenders.push({
-            reference_number: reference,
-            title: title,
-            description: `Tender from National Department of Health. Reference: ${reference}`,
-            closing_date: this.parseDate(closingDateStr),
-            source_url: url,
-            buyer: "National Department of Health",
-          })
-        } catch (rowError) {
-          // Skip problematic entries
+      const rows = parseHealthTenders(html, LISTING_URL)
+      const tenders: RawTender[] = []
+      for (const row of rows) {
+        // Without a closing date the base class would store the row as "active"
+        // forever; on this page that only happens for archived rows with typos
+        // ("08 Decenber 2023", "N/A"), so skip them.
+        if (!row.closingDate) {
+          console.warn(`[Health] ${row.reference}: skipped, unparseable closing date "${row.closingDateText}"`)
           continue
         }
+        tenders.push({
+          // The "Tender No" column is the genuine tender/RFQ number.
+          reference_number: row.reference,
+          title: row.title,
+          // The rest of the description cell is briefing-session details and
+          // document links, not additional scope.
+          description: null,
+          closing_date: row.closingDate,
+          published_date: row.bulletinDate,
+          source_url: row.documentUrl ?? LISTING_URL,
+          buyer: "National Department of Health",
+        })
       }
 
       console.log(`[Health] Extracted ${tenders.length} tenders`)

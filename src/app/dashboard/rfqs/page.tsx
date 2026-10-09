@@ -426,6 +426,7 @@ export default function RFQsPage() {
         )
         .eq("status", "active")
         .eq("is_public", true)
+        .neq("curation_status", "quarantined")
         .gt("closing_date", new Date().toISOString())
         .not("title", "ilike", "%SMOKE TEST%")
         .not("title", "ilike", "%[TEST]%")

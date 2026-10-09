@@ -7,6 +7,11 @@ Runs all collectors every day at a specified time
 import os
 import logging
 import sys
+
+from legacy_collectors_guard import exit_unless_legacy_collectors_enabled
+
+exit_unless_legacy_collectors_enabled("scheduler_daily_collectors.py")
+
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger

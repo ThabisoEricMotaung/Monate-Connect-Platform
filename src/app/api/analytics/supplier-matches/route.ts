@@ -188,6 +188,7 @@ export async function GET(request: NextRequest) {
       .from('rfqs')
       .select('id, title, category, province, provinces, bbbee_requirement, require_csd, require_tax_clearance, estimated_value_min, estimated_value_max, closing_date, buyer_org')
       .eq('is_public', true)
+      .neq('curation_status', 'quarantined')
       .eq('status', 'open')
       .gt('closing_date', new Date().toISOString())
       .limit(100);

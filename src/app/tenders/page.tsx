@@ -13,10 +13,15 @@ import type { User } from '@supabase/supabase-js';
 
 interface Tender {
   id: number;
-  reference_number: string;
+  reference_number: string | null;
   title: string;
-  buyer_normalized: string;
-  closing_date: string;
+  display_title?: string | null;
+  description?: string | null;
+  description_is_partial?: boolean;
+  has_further_requirements?: boolean;
+  buyer_normalized: string | null;
+  closing_date: string | null;
+  created_at?: string | null;
   sources: string;
   estimated_budget?: number;
   status?: string | null;
@@ -34,8 +39,8 @@ const EXPORT_OPTIONS: Array<{ format: ExportFormat; label: string }> = [
 
 function toExportableOpportunities(tenders: Tender[]): ExportableOpportunity[] {
   return tenders.map((tender) => ({
-    title: tender.title,
-    buyer: tender.buyer_normalized,
+    title: tender.display_title || tender.title,
+    buyer: tender.buyer_normalized || 'Issuing organisation not provided',
     closingDate: tender.closing_date,
     budget: tender.estimated_budget ?? null,
     status: tender.status ?? null,

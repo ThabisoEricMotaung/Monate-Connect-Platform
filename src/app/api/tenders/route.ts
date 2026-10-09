@@ -1,24 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { applyLivePublicOpportunityFilters } from '@/lib/opportunityStatsQuery';
+import { TENDER_LISTING_COLUMNS, toTenderListing, type TenderListingRecord } from '@/lib/tenderListing';
 
 export const dynamic = 'force-dynamic';
-
-interface RFQRecord {
-  id: string;
-  title: string;
-  buyer_org: string | null;
-  closing_date: string;
-  published_date: string;
-  is_public: boolean;
-  source_name: string | null;
-  estimated_budget: number | null;
-  description: string | null;
-  created_at: string;
-  status: string | null;
-  province: string | null;
-  category: string | null;
-}
 
 const SORT_VALUES = ['recent', 'closing-soon', 'closing-later'] as const;
 type TenderSort = (typeof SORT_VALUES)[number];
@@ -62,7 +47,7 @@ export async function GET(request: NextRequest) {
     // Build base query with unified filters
     let baseQuery = supabase
       .from('rfqs')
-      .select('id, title, buyer_org, closing_date, published_date, created_at, is_public, source_name, estimated_budget, description, closing_soon, status, province, category');
+      .select(TENDER_LISTING_COLUMNS);
 
     baseQuery = applyLivePublicOpportunityFilters(baseQuery, now);
     if (targetDate) baseQuery = baseQuery.lte('closing_date', targetDate.toISOString());
@@ -153,22 +138,7 @@ export async function GET(request: NextRequest) {
       throw rfqError;
     }
 
-    // Transform RFQs to match tender format
-    const tenders = (rfqs || []).map((rfq: RFQRecord) => ({
-      id: rfq.id,
-      reference_number: rfq.id.toString(),
-      title: rfq.title,
-      description: rfq.description,
-      buyer_normalized: rfq.buyer_org || 'Unknown',
-      closing_date: rfq.closing_date || new Date().toISOString(),
-      created_at: rfq.created_at,
-      source_count: 1,
-      sources: rfq.source_name || 'AiForm Platform',
-      estimated_budget: rfq.estimated_budget,
-      status: rfq.status,
-      province: rfq.province,
-      category: rfq.category,
-    }));
+    const tenders = ((rfqs || []) as TenderListingRecord[]).map(toTenderListing);
 
     return NextResponse.json({
       success: true,

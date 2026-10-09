@@ -13,6 +13,7 @@ import PublicHeader from "@/components/PublicHeader"
 import OpportunityComplianceChecklist from "@/components/OpportunityComplianceChecklist"
 import CopyLinkButton from "./CopyLinkButton"
 import { normalizeOpportunityTitleCase } from "@/lib/externalOpportunity"
+import { parseTenderDescription } from "@/lib/tenderDescription"
 import {
   buildOpportunityJsonLd,
   buildOpportunitySearchActionJsonLd,
@@ -91,6 +92,7 @@ async function getOpportunity(id: string): Promise<PublicRFQDetail | null> {
     )
     .eq("id", numericId)
     .eq("is_public", true)
+    .neq("curation_status", "quarantined")
     .maybeSingle()
 
   if (error || !data) return null
@@ -117,7 +119,8 @@ function formatDate(value: string | null | undefined, locale: string, unavailabl
   if (!value) return unavailable
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })
+  // Tender dates are South African; don't let the server's zone (UTC) shift the day.
+  return d.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Johannesburg" })
 }
 
 function daysUntil(value: string | null | undefined): number | null {
@@ -144,7 +147,8 @@ function buyerLabel(rfq: PublicRFQDetail): string {
 }
 
 function plainSummary(rfq: PublicRFQDetail): string {
-  const raw = (rfq.description ?? "").replace(/\s+/g, " ").trim()
+  // Attachment links and sourcing notes don't belong in link previews.
+  const raw = parseTenderDescription(rfq.description).body.replace(/\s+/g, " ").trim()
   const base = raw || `${industryLabel(rfq)} opportunity in ${provinceLabel(rfq)}.`
   return base.length > 155 ? `${base.slice(0, 152)}...` : base
 }
@@ -183,6 +187,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
   const { id } = await params
   const rfq = await getOpportunity(id)
   if (!rfq) notFound()
+  const description = parseTenderDescription(rfq.description)
   const [locale, t, tChrome] = await Promise.all([
     getLocale(),
     getTranslations("opportunityDetail"),
@@ -306,9 +311,33 @@ export default async function OpportunityDetailPage({ params }: Props) {
 
           <div className="mb-8 rounded-md border border-panel bg-card p-5 shadow-panel">
             <p className="mb-3 text-xs font-semibold text-muted">{t("sourceNotice")}</p>
+            {/* The full stored description, with its attachment list shown as links. */}
             <p className="whitespace-pre-line text-sm leading-relaxed text-secondary">
-              {rfq.description || t("noDescription")}
+              {description.body || (description.attachments.length ? null : t("noDescription"))}
             </p>
+            {description.attachments.length > 0 && (
+              <div className="mt-4">
+                <p className="mb-2 text-xs font-semibold text-muted">Tender documents</p>
+                <ul className="space-y-1.5 text-sm">
+                  {description.attachments.map((attachment) => (
+                    <li key={attachment.url}>
+                      <a
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-accent underline underline-offset-2 hover:decoration-2"
+                      >
+                        {attachment.name}
+                      </a>
+                      {attachment.fileType && <span className="ml-1.5 text-xs text-muted">({attachment.fileType})</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {description.notes.map((note) => (
+              <p key={note} className="mt-4 text-xs leading-relaxed text-muted">{note}</p>
+            ))}
           </div>
 
           <div className="mb-8 rounded-lg border border-accent/20 bg-accent/5 p-5">

@@ -116,6 +116,7 @@ export default function ProcurementWire({ scope = "public" }: { scope?: Procurem
           .select("id,title,budget,deadline,created_at")
           .eq("status", "active")
           .eq("is_public", true)
+          .neq("curation_status", "quarantined")
           .gt("closing_date", new Date().toISOString())
           .not("title", "ilike", "%SMOKE TEST%")
           .not("title", "ilike", "%[TEST]%")
@@ -132,6 +133,7 @@ export default function ProcurementWire({ scope = "public" }: { scope?: Procurem
           .select("id", { count: "exact", head: true })
           .eq("status", "active")
           .eq("is_public", true)
+          .neq("curation_status", "quarantined")
           .gt("closing_date", new Date().toISOString())
           .not("title", "ilike", "%SMOKE TEST%")
           .not("title", "ilike", "%[TEST]%"),

@@ -42,7 +42,8 @@ async function preserveExistingLifecycle(payloads: RfqUpsertPayload[]) {
       const existing = existingByOcid.get(payload.external_ocid)
       if (!existing) continue
       payload.status = existing.status ?? payload.status
-      payload.is_public = existing.is_public ?? payload.is_public
+      // A quarantined row is never public, whatever its stored flag says.
+      payload.is_public = existing.curation_status === "quarantined" ? false : existing.is_public ?? payload.is_public
       payload.curation_status = existing.curation_status ?? payload.curation_status
       payload.curation_reason = existing.curation_reason ?? payload.curation_reason
     }

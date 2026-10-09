@@ -1,4 +1,5 @@
 import {
+  normalizeOpportunityTitleCase,
   resolveExternalBuyerName,
   resolveExternalOpportunityTitle,
 } from "@/lib/externalOpportunity"
@@ -100,6 +101,84 @@ function isOpenTender(tender: OcdsTender, now: Date): boolean {
   return Boolean(closingDate && new Date(closingDate).getTime() > now.getTime())
 }
 
+// Listing titles are cut at a word boundary only after the work description
+// has been extracted, so the scope is never lost to a mid-sentence cut.
+export const ETENDERS_TITLE_MAX_LENGTH = 300
+// A first sentence shorter than this is usually a fragment ("Bid No. 4."), so
+// the whole first paragraph is used instead.
+const MIN_SENTENCE_TITLE_LENGTH = 40
+const NON_TERMINAL_ABBREVIATIONS = new Set([
+  "co", "dr", "etc", "inc", "ltd", "mr", "mrs", "ms", "no", "nr", "pty", "ref", "st", "vol", "vs",
+])
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+function stripLeadingReference(text: string, reference: string): string {
+  const ref = reference.replace(/\s+/g, " ").trim()
+  if (!ref) return text
+  const pattern = new RegExp(`^${escapeRegExp(ref).replace(/ /g, "\\s+")}(?:\\s*[-–:]\\s*|\\s+)`, "i")
+  return text.replace(pattern, "").trim() || text
+}
+
+function firstSentence(paragraph: string): string {
+  const boundary = /\.\s+(?=[A-Z])/g
+  for (let match = boundary.exec(paragraph); match; match = boundary.exec(paragraph)) {
+    const before = paragraph.slice(0, match.index)
+    const lastWord = before.match(/[A-Za-z]+$/)?.[0]?.toLowerCase()
+    // Initials ("S.A.") and abbreviations ("Pty. Ltd") do not end a sentence.
+    if (lastWord && (lastWord.length === 1 || NON_TERMINAL_ABBREVIATIONS.has(lastWord))) continue
+    if (before.length >= MIN_SENTENCE_TITLE_LENGTH) return before
+    break
+  }
+  return paragraph.replace(/\.$/, "")
+}
+
+function truncateAtWord(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value
+  const shortened = value.slice(0, maxLength + 1)
+  const lastSpace = shortened.lastIndexOf(" ")
+  return `${shortened.slice(0, lastSpace > maxLength * 0.6 ? lastSpace : maxLength).trim()}…`
+}
+
+// Title-casing an ALL-CAPS notice lowers short bracketed acronyms ("(AIS)" ->
+// "(Ais)"). Casing only changes letters in place, so they can be restored by
+// position from the source text.
+function titleCaseKeepingBracketedAcronyms(value: string): string {
+  const normalized = normalizeOpportunityTitleCase(value)
+  if (normalized.length !== value.length) return normalized
+  let result = normalized
+  for (const match of value.matchAll(/\(([A-Z]{2,5})\)/g)) {
+    const start = match.index! + 1
+    result = `${result.slice(0, start)}${match[1]}${result.slice(start + match[1].length)}`
+  }
+  return result
+}
+
+/**
+ * eTenders publishes the bid number as `tender.title` and the work as
+ * `tender.description`, which often repeats the bid number and adds detail
+ * after the first sentence. The title is the first sentence of the work
+ * description without the bid number; the reference is kept separately.
+ */
+export function resolveETendersTitle(tender: OcdsTender | null | undefined): string | null {
+  const reference = tender?.title?.replace(/\s+/g, " ").trim() ?? ""
+  const source = tender?.description?.trim()
+    || tender?.items?.find((item) => item.description?.trim())?.description?.trim()
+    || ""
+  const paragraph = source
+    .replace(/\r/g, "")
+    .split(/\n\s*\n/)
+    .map((part) => part.replace(/\s+/g, " ").trim())
+    .find(Boolean)
+
+  if (!paragraph) return resolveExternalOpportunityTitle(reference, null)
+
+  const work = firstSentence(stripLeadingReference(paragraph, reference))
+  return titleCaseKeepingBracketedAcronyms(truncateAtWord(work, ETENDERS_TITLE_MAX_LENGTH))
+}
+
 function buildDescription(tender: OcdsTender, documents: ExtractedDocument[]): string {
   const parts: string[] = []
   if (tender.description?.trim()) parts.push(tender.description.trim())
@@ -131,7 +210,7 @@ export function toRfqPayload(
   const tender = release?.tender
   const ocid = release?.ocid?.trim()
   const externalReference = tender?.title?.trim()
-  const title = resolveExternalOpportunityTitle(externalReference, tender?.description)
+  const title = resolveETendersTitle(tender)
   const closingDate = validDate(tender?.tenderPeriod?.endDate)
   if (!release || !tender || !ocid || !externalReference || !title || !closingDate || !isOpenTender(tender, now)) {
     return null

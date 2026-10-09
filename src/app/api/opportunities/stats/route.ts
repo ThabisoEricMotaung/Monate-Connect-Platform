@@ -63,6 +63,7 @@ async function getFilteredPublicOpportunityStats(
           .from("rfqs")
           .select("id", { count: "exact", head: true })
           .eq("is_public", true)
+          .neq("curation_status", "quarantined")
           .in("status", ["open", "active"]),
         queryFilters,
       ),
@@ -78,6 +79,7 @@ async function getFilteredPublicOpportunityStats(
           .from("rfqs")
           .select("id", { count: "exact", head: true })
           .eq("is_public", true)
+          .neq("curation_status", "quarantined")
           .in("status", ["open", "active"])
           .gte("closing_date", now.toISOString())
           .lte("closing_date", sevenDaysFromNowIso),
@@ -88,6 +90,7 @@ async function getFilteredPublicOpportunityStats(
           .from("rfqs")
           .select("id", { count: "exact", head: true })
           .eq("is_public", true)
+          .neq("curation_status", "quarantined")
           .gte("created_at", ago48HoursIso),
         queryFilters,
       ),
@@ -96,6 +99,7 @@ async function getFilteredPublicOpportunityStats(
           .from("rfqs")
           .select("id", { count: "exact", head: true })
           .eq("is_public", true)
+          .neq("curation_status", "quarantined")
           .lte("closing_date", now.toISOString())
           .not("status", "in", "(awarded,closed)"),
         queryFilters,

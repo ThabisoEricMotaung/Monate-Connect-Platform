@@ -2,6 +2,7 @@ import {
   getOpportunityReference,
   getProcurementTypeLabel,
 } from "@/lib/externalOpportunity"
+import { parseTenderDescription } from "@/lib/tenderDescription"
 
 const SITE_URL = "https://www.aiformprocure.co.za"
 
@@ -43,7 +44,8 @@ export function buildOpportunityJsonLd(
     "@context": "https://schema.org",
     "@type": rfq.is_external_opportunity ? "GovernmentService" : "Service",
     name: rfq.title,
-    description: rfq.description,
+    // Search snippets get the description text, not its attachment URLs.
+    description: rfq.description == null ? rfq.description : parseTenderDescription(rfq.description).body,
     url: `${SITE_URL}/tenders/${rfq.id}`,
     identifier: getOpportunityReference(rfq),
     provider: {

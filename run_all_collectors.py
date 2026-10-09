@@ -5,6 +5,11 @@ Run all tender collectors and populate Supabase
 
 import os
 import logging
+
+from legacy_collectors_guard import exit_unless_legacy_collectors_enabled
+
+exit_unless_legacy_collectors_enabled("run_all_collectors.py")
+
 from collector_ekurhuleni import EkurhuleniCollector
 from collector_dbsa import DBSACollector
 from collector_tcta import TCTACollector

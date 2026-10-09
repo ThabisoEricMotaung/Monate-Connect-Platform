@@ -39,7 +39,7 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
 
 interface Tender {
   title: string;
-  buyer_normalized: string;
+  buyer_normalized: string | null;
   closing_date: string;
   estimated_budget: number | null;
 }
@@ -56,7 +56,7 @@ export function generateTenderEmailHTML(
     <tr>
       <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
         <p style="margin: 0 0 4px 0; font-weight: 600; color: #111827;">${tender.title}</p>
-        <p style="margin: 0; font-size: 13px; color: #6b7280;">${tender.buyer_normalized}</p>
+        <p style="margin: 0; font-size: 13px; color: #6b7280;">${tender.buyer_normalized || 'Issuing organisation not provided'}</p>
       </td>
       <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">
         ${tender.closing_date ? new Date(tender.closing_date).toLocaleDateString() : 'N/A'}

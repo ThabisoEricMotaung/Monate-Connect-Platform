@@ -1,158 +1,107 @@
 /**
  * SANRAL (South African National Roads Agency Limited) tender collector
  * Scrapes public tender listings from https://www.nra.co.za/sanral-tenders/list/open-tenders
- * Note: Requires JavaScript rendering (React SPA)
+ *
+ * The listing's description column is a cut-off preview, not a title (see
+ * sanralParser.ts), so each row's detail page is fetched for the official
+ * title, the notice text and the award-results fields.
  */
 
 import { TenderCollectorBase, type RawTender } from "./TenderCollectorBase"
-import { cleanText } from "@/lib/htmlUtils"
+import { parseSanralDetail, parseSanralListing, type SanralListingRow } from "./sanralParser"
+
+const ORIGIN = "https://www.nra.co.za"
+const LISTING_URL = `${ORIGIN}/sanral-tenders/list/open-tenders`
+const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+const PROVINCE_MAP: Record<string, string> = {
+  WC: "Western Cape",
+  EC: "Eastern Cape",
+  NC: "Northern Cape",
+  FS: "Free State",
+  KZN: "KwaZulu-Natal",
+  GP: "Gauteng",
+  LP: "Limpopo",
+  MP: "Mpumalanga",
+  NW: "North West",
+  ZA: "South Africa",
+}
+
+function toCategory(projectType: string): string {
+  if (projectType.includes("Construction")) return "Construction Projects"
+  if (projectType.includes("Consulting")) return "Consulting Services"
+  if (projectType.includes("Services")) return "Services"
+  if (projectType.includes("Supply")) return "Supply & Delivery"
+  return "Tender"
+}
 
 export class SANRALCollector extends TenderCollectorBase {
   constructor() {
-    super("SANRAL", "https://www.nra.co.za")
+    super("SANRAL", ORIGIN)
+  }
+
+  private async fetchHtml(url: string): Promise<string> {
+    const response = await this.fetchSource(url, { headers: { "User-Agent": USER_AGENT } })
+    if (!response.ok) throw new Error(`HTTP ${response.status} for ${url}`)
+    return response.text()
   }
 
   async scrapeListings(): Promise<RawTender[]> {
-    const url = "https://www.nra.co.za/sanral-tenders/list/open-tenders"
-    console.log(`[SANRAL] Starting from ${url}`)
+    console.log(`[SANRAL] Starting from ${LISTING_URL}`)
+
+    let html: string
+    try {
+      html = await this.fetchHtml(LISTING_URL)
+    } catch (fetchError) {
+      console.error(`[SANRAL] Fetch error:`, fetchError instanceof Error ? fetchError.message : String(fetchError))
+      throw fetchError
+    }
+
+    // Only the newest rows are rendered server-side; the page ignores ?page=N.
+    const rows = parseSanralListing(html, ORIGIN)
+    console.log(`[SANRAL] Found ${rows.length} listing rows`)
 
     const tenders: RawTender[] = []
-
-    try {
-      // Fetch the tenders listing page
-      let html = ""
+    for (const row of rows) {
       try {
-        const response = await fetch(url, {
-          headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
-        })
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        html = await response.text()
-      } catch (fetchError) {
-        console.error(`[SANRAL] Fetch error:`, fetchError instanceof Error ? fetchError.message : String(fetchError))
-        throw fetchError
+        const tender = await this.buildTender(row)
+        if (tender) tenders.push(tender)
+      } catch (rowError) {
+        console.warn(`[SANRAL] Skipped ${row.reference}:`, rowError instanceof Error ? rowError.message : String(rowError))
       }
-
-      if (!html || html.length === 0) {
-        console.warn(`[SANRAL] Empty response`)
-        return tenders
-      }
-
-      // Extract table rows from the main tenders table
-      // SANRAL uses an HTML table with multiple columns for tender information
-      const tableMatch = html.match(/<table[^>]*class="[^"]*tenders[^"]*"[^>]*>[\s\S]*?<\/table>/i)
-      if (!tableMatch) {
-        // Try alternative: generic table in main content area
-        const altTableMatch = html.match(/<table[^>]*>[\s\S]*?<\/table>/i)
-        if (!altTableMatch) {
-          console.warn(`[SANRAL] No tender table found`)
-          return tenders
-        }
-      }
-
-      const tableHtml = tableMatch ? tableMatch[0] : html
-      const rows = tableHtml.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || []
-      console.log(`[SANRAL] Found ${rows.length} rows`)
-
-      // Skip header row (first row)
-      for (let i = 1; i < rows.length; i++) {
-        try {
-          const tender = this.parseTenderRow(rows[i], url)
-          if (tender) tenders.push(tender)
-        } catch (e) {
-          continue
-        }
-      }
-
-      console.log(`[SANRAL] Extracted ${tenders.length} tenders`)
-      return tenders
-    } catch (error) {
-      console.error(`[SANRAL] Failed:`, error instanceof Error ? error.message : String(error))
-      throw error
     }
+
+    console.log(`[SANRAL] Extracted ${tenders.length} tenders`)
+    return tenders
   }
 
-  /**
-   * Parse a tender table row
-   * Columns: Reference #, Project Type, Province, Description, Contact, Closing Date
-   */
-  private parseTenderRow(rowHtml: string, baseUrl: string): RawTender | null {
-    const cells = rowHtml.match(/<td[^>]*>([\s\S]*?)<\/td>/gi) || []
-    if (cells.length < 5) return null
+  private async buildTender(row: SanralListingRow): Promise<RawTender | null> {
+    const detail = parseSanralDetail(await this.fetchHtml(row.detailUrl), row.reference)
 
-    // Helper to extract clean text from cell
-    const cleanCell = (cellHtml: string): string => {
-      // Remove HTML tags first, then clean entities and whitespace
-      const textOnly = cellHtml.replace(/<[^>]*>/g, "")
-      return cleanText(textOnly)
+    // The award-results table is on every detail page; it only signals an
+    // award when the "Awarded To" value is actually filled in. Such a tender
+    // is held for curator review rather than listed as open or discarded.
+    if (detail.hasAwardResult) {
+      console.log(`[SANRAL] ${row.reference}: award result published (Awarded To: ${detail.awardFields["Awarded To"]}); held for review`)
     }
 
-    // Column 0: Tender Reference Number (e.g., "NRA2026/0752" or "R.352-020-2025/1F")
-    const referenceNumber = cleanCell(cells[0] || "")
-    if (!referenceNumber) return null
-
-    // Column 1: Project Type (Construction Projects, Consulting Services, etc.)
-    const projectType = cleanCell(cells[1] || "")
-    let category = "Tender"
-    if (projectType.includes("Construction")) category = "Construction Projects"
-    else if (projectType.includes("Consulting")) category = "Consulting Services"
-    else if (projectType.includes("Services")) category = "Services"
-    else if (projectType.includes("Supply")) category = "Supply & Delivery"
-
-    // Column 2: Province
-    let province = cleanCell(cells[2] || "South Africa")
-    // Normalize province names
-    const provinceMap: { [key: string]: string } = {
-      "WC": "Western Cape",
-      "EC": "Eastern Cape",
-      "NC": "Northern Cape",
-      "FS": "Free State",
-      "KZN": "KwaZulu-Natal",
-      "GP": "Gauteng",
-      "LP": "Limpopo",
-      "MP": "Mpumalanga",
-      "NW": "North West",
-      "ZA": "South Africa",
-    }
-    if (provinceMap[province]) province = provinceMap[province]
-
-    // Column 3: Description (Project description)
-    const description = cleanCell(cells[3] || "")
-    if (!description) return null
-
-    // Create title from reference + description combo
-    const title = `${referenceNumber} - ${description}`.substring(0, 200)
-
-    // Column 4: Contact Email (queries@sanral.co.za typically)
-    // Column 5: Closing Date (format: YYYY/MM/DD HH:MM in SAST)
-    let closingDate = null
-    if (cells.length > 5) {
-      const dateStr = cleanCell(cells[5] || "")
-      // Parse date format: YYYY/MM/DD HH:MM
-      closingDate = this.parseDate(dateStr)
-    }
-
-    // SANRAL closing time is standardized to 12:00 noon SAST
-    // If time not parsed, use 12:00
-    if (closingDate) {
-      closingDate.setHours(12, 0, 0, 0)
-    }
-
-    // Published date: assume today if not available
-    const publishedDate = new Date()
-
-    // Build source URL linking to tender detail
-    const sourceUrl = `${baseUrl}/sanral-tenders/list/open-tenders?ref=${encodeURIComponent(referenceNumber)}`
+    // Store the official heading verbatim (listings derive a readable title
+    // from it). With no heading, store the reference rather than the listing
+    // preview, so listings say the title is unavailable instead of showing
+    // boilerplate.
+    const title = detail.officialTitle ?? row.reference
 
     return {
-      reference_number: referenceNumber,
-      title: cleanText(title), // Ensure title is clean
-      description: `${referenceNumber} - ${description}`,
-      closing_date: closingDate,
-      published_date: publishedDate,
-      source_url: sourceUrl,
-      buyer: "South African National Roads Agency Limited", // Will be cleaned by base class
-      category,
-      province,
+      reference_number: row.reference,
+      title,
+      description: detail.scope,
+      closing_date: row.closingDate,
+      published_date: detail.createdDate,
+      source_url: row.detailUrl,
+      buyer: "South African National Roads Agency Limited",
+      category: toCategory(row.projectType),
+      province: PROVINCE_MAP[row.province] ?? (row.province || "South Africa"),
+      review_reason: detail.hasAwardResult ? "award_result_published" : null,
     }
   }
 }

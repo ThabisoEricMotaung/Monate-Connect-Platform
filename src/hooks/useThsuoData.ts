@@ -62,7 +62,7 @@ export function useThsuoData(rfqId?: number) {
         // Fetch RFQ data
         const rfqQuery = rfqId
           ? configuredClient.from("rfqs").select("*").eq("id", rfqId)
-          : configuredClient.from("rfqs").select("*").eq("is_public", true).limit(50)
+          : configuredClient.from("rfqs").select("*").eq("is_public", true).neq("curation_status", "quarantined").limit(50)
 
         const { data: rfqData, error: rfqError } = await rfqQuery
 

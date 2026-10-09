@@ -4,7 +4,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js"
-import { cleanText, cleanTitle, extractOrganizationFromTitle } from "@/lib/htmlUtils"
+import { cleanText, extractOrganizationFromTitle } from "@/lib/htmlUtils"
 
 export interface RawTender {
   reference_number: string
@@ -17,20 +17,38 @@ export interface RawTender {
   estimated_budget?: number | null
   category?: string | null
   province?: string | null
+  /**
+   * Set when the item may not be an open opportunity (e.g. it reads like a
+   * cancellation or award notice) and a curator should decide. The item is
+   * stored as a non-public draft pending review with this reason, never
+   * discarded and never published automatically.
+   */
+  review_reason?: string | null
 }
 
+type CurationStatus = "not_required" | "pending" | "approved" | "quarantined"
+
+/** Longest any single request to a tender source may take. */
+export const SOURCE_FETCH_TIMEOUT_MS = 30_000
+
 export interface NormalizedTender {
-  external_ocid: string // reference_number
+  external_ocid: string // reference_number, dedupe key
+  external_reference: string // reference_number, displayed as the tender reference
   title: string
   description?: string | null
   closing_date?: string | null // ISO string
   published_date?: string | null // ISO string
   original_source_url: string
-  buyer_normalized: string
+  // rfqs stores the issuing organisation in buyer_org (see etendersTransform.ts
+  // and the /api/tenders mapping); no migration defines rfqs.buyer_normalized.
+  buyer_org: string
   source_name: string
   is_external_opportunity: boolean
   is_public: boolean
-  status: "active" | "closed"
+  // "draft" = held for curator review (admin RFQs page lists external drafts).
+  status: "active" | "closed" | "draft"
+  curation_status: CurationStatus
+  curation_reason: string | null
   estimated_budget?: number | null
   category?: string | null
   province?: string | null
@@ -40,6 +58,11 @@ export abstract class TenderCollectorBase {
   protected sourceName: string
   protected baseUrl: string
   protected supabase: ReturnType<typeof createClient>
+  /**
+   * Epoch milliseconds after which source requests are refused (set by the
+   * cron route so a run fits its time limit). Null means no run-wide limit.
+   */
+  deadline: number | null = null
 
   constructor(sourceName: string, baseUrl: string) {
     this.sourceName = sourceName
@@ -62,15 +85,30 @@ export abstract class TenderCollectorBase {
   abstract scrapeListings(): Promise<RawTender[]>
 
   /**
+   * fetch() for source pages: aborted after SOURCE_FETCH_TIMEOUT_MS, or
+   * sooner if the run's deadline is nearer, so one slow or hanging site
+   * cannot use up the time the other collectors need.
+   */
+  protected fetchSource(url: string, init: RequestInit = {}): Promise<Response> {
+    const remaining = this.deadline === null ? SOURCE_FETCH_TIMEOUT_MS : this.deadline - Date.now()
+    if (remaining <= 0) {
+      return Promise.reject(new Error(`[${this.sourceName}] time budget exhausted before fetching ${url}`))
+    }
+    return fetch(url, { ...init, signal: AbortSignal.timeout(Math.min(SOURCE_FETCH_TIMEOUT_MS, remaining)) })
+  }
+
+  /**
    * Normalize raw tender to standard format
    */
   protected normalizeTender(raw: RawTender): NormalizedTender {
     const now = new Date()
     const closingDate = raw.closing_date ? new Date(raw.closing_date) : null
-    const status = closingDate && closingDate < now ? "closed" : "active"
+    const isClosed = Boolean(closingDate && closingDate < now)
+    const needsReview = !isClosed && Boolean(raw.review_reason)
 
-    // Clean and decode title
-    const cleanedTitle = cleanTitle(raw.title, 200)
+    // Clean and decode title. Not truncated: rfqs.title is TEXT, and cutting
+    // official titles loses the work description (listings clamp visually).
+    const cleanedTitle = cleanText(raw.title)
 
     // Clean and decode description
     const cleanedDescription = raw.description
@@ -84,16 +122,19 @@ export abstract class TenderCollectorBase {
 
     return {
       external_ocid: raw.reference_number,
+      external_reference: raw.reference_number,
       title: cleanedTitle,
       description: cleanedDescription,
       closing_date: closingDate?.toISOString() || null,
       published_date: raw.published_date?.toISOString() || null,
       original_source_url: raw.source_url,
-      buyer_normalized: buyerNormalized,
+      buyer_org: buyerNormalized,
       source_name: this.sourceName,
       is_external_opportunity: true,
-      is_public: true,
-      status,
+      is_public: !needsReview,
+      status: isClosed ? "closed" : needsReview ? "draft" : "active",
+      curation_status: needsReview ? "pending" : "not_required",
+      curation_reason: needsReview ? raw.review_reason! : null,
       estimated_budget: raw.estimated_budget || null,
       category: raw.category || null,
       province: raw.province || null,
@@ -135,12 +176,15 @@ export abstract class TenderCollectorBase {
       console.log(`[${this.sourceName}] Stage: normalize`)
       const normalized = rawTenders.map((t) => this.normalizeTender(t))
 
-      // Skip closed tenders
-      const openTenders = normalized.filter((t) => t.status === "active")
+      // Skip closed tenders (drafts held for review are kept)
+      const openTenders = normalized.filter((t) => t.status !== "closed")
       const skipped = normalized.length - openTenders.length
 
       if (openTenders.length === 0) {
         console.log(`[${this.sourceName}] No open tenders to insert`)
+        // Record empty runs too: a scraper that silently finds nothing must be
+        // distinguishable from one that has not run.
+        await this.logMetrics(0, 0, 0, 0, skipped)
         return { inserted: 0, updated: 0, skipped }
       }
 
@@ -155,6 +199,10 @@ export abstract class TenderCollectorBase {
         }
         const uniqueTenders = Array.from(uniqueMap.values())
         console.log(`[${this.sourceName}] Deduped ${openTenders.length} to ${uniqueTenders.length} unique tenders`)
+
+        await this.preserveCurationDecisions(uniqueTenders)
+        const heldForReview = uniqueTenders.filter((t) => t.curation_status === "pending").length
+        if (heldForReview) console.log(`[${this.sourceName}] ${heldForReview} held as non-public drafts pending review`)
 
         const { data, error } = await this.supabase
           .from("rfqs")
@@ -196,6 +244,41 @@ export abstract class TenderCollectorBase {
         skipped: 0,
         stage: "unknown",
         error: errorObj,
+      }
+    }
+  }
+
+  /**
+   * A curation state already recorded on a row (pending review, approved or
+   * quarantined) outlives re-collection: the upsert keeps the row's existing
+   * visibility, status and curation fields instead of the freshly computed
+   * ones. Rows without a curation state ("not_required") are updated as before.
+   */
+  protected async preserveCurationDecisions(tenders: NormalizedTender[]): Promise<void> {
+    for (let offset = 0; offset < tenders.length; offset += 200) {
+      const batch = tenders.slice(offset, offset + 200)
+      const { data, error } = await this.supabase
+        .from("rfqs")
+        .select("external_ocid, status, is_public, curation_status, curation_reason")
+        .in("external_ocid", batch.map((tender) => tender.external_ocid))
+      if (error) throw error
+
+      type Existing = Pick<NormalizedTender, "external_ocid" | "is_public" | "curation_status" | "curation_reason"> & { status: string | null }
+      const existingByOcid = new Map(((data ?? []) as Existing[]).map((row) => [row.external_ocid, row]))
+      for (const tender of batch) {
+        const existing = existingByOcid.get(tender.external_ocid)
+        if (!existing?.curation_status || existing.curation_status === "not_required") continue
+        // A quarantined row is never public, whatever its stored flag says.
+        tender.is_public = existing.curation_status === "quarantined" ? false : existing.is_public
+        tender.curation_status = existing.curation_status
+        tender.curation_reason = existing.curation_reason
+        if (existing.curation_status === "approved") {
+          // Approved stays listed while open, even if the item now reads like a notice.
+          if (tender.status === "draft") tender.status = "active"
+        } else if (existing.status) {
+          // Pending and quarantined rows keep their status (a draft stays in the review queue).
+          tender.status = existing.status as NormalizedTender["status"]
+        }
       }
     }
   }

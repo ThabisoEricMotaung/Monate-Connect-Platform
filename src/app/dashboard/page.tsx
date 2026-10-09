@@ -121,6 +121,7 @@ export default function DashboardPage() {
             .select("id", { count: "exact", head: true })
             .eq("status", "active")
             .eq("is_public", true)
+            .neq("curation_status", "quarantined")
             .gt("closing_date", now.toISOString())
             .not("title", "ilike", "%SMOKE TEST%")
             .not("title", "ilike", "%[TEST]%"),
@@ -129,6 +130,7 @@ export default function DashboardPage() {
             .select("id", { count: "exact", head: true })
             .eq("status", "active")
             .eq("is_public", true)
+            .neq("curation_status", "quarantined")
             .gt("closing_date", now.toISOString())
             .not("title", "ilike", "%SMOKE TEST%")
             .not("title", "ilike", "%[TEST]%")
