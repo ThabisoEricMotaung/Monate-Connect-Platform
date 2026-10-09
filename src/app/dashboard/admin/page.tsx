@@ -8,6 +8,7 @@ import QuickActions from "@/components/admin/QuickActions"
 import CollectorMetricsWire from "@/components/home/CollectorMetricsWire"
 import { requireAdminOrBuyer } from "@/lib/auth"
 import { formatRand, parseMoney } from "@/lib/format"
+import type { PublicOpportunityStats, SourceSplit } from "@/lib/publicOpportunityStats"
 import { supabase } from "@/lib/supabase"
 import ProvinceMap from "../intelligence/regions/province-map"
 
@@ -92,12 +93,11 @@ type DashboardData = {
   suppliers: SupplierProfile[]
 }
 
-type PublicOpportunityStats = {
-  totalOpenRfqs: number
-  liveOpportunities: number
-  closingThisWeek: number
-  newIn48Hours: number
-  underEvaluation: number
+
+/** "12 external tenders · 3 platform RFQs": keeps the two origins distinct. */
+function splitText(split: SourceSplit | undefined): string {
+  if (!split) return "Origin split unavailable"
+  return `${split.externalTenders.toLocaleString()} external tenders · ${split.platformRfqs.toLocaleString()} platform RFQs`
 }
 
 type PipelineStage = "Draft" | "Open" | "Evaluation" | "Expired" | "Awarded" | "Closed"
@@ -605,27 +605,35 @@ export default function AdminOverviewPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#1E3A2B]">Public procurement</p>
               <h2 id="public-procurement-metrics" className="text-xl font-semibold text-heading">Opportunity overview</h2>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               {[
+                // Same live rule and snapshot as the homepage and /tenders.
                 {
-                  label: "Total open RFQs",
+                  label: "Live opportunities",
+                  value: publicOpportunityStats?.liveOpportunities,
+                  description: `${splitText(publicOpportunityStats?.bySource?.live)}; closing date still ahead`,
+                },
+                {
+                  // Status only: includes listings whose closing date has passed. Not a live count.
+                  label: "Open status, any deadline",
                   value: publicOpportunityStats?.totalOpenRfqs,
-                  description: `${publicOpportunityStats?.liveOpportunities ?? "—"} live and accepting bids`,
+                  description: `${splitText(publicOpportunityStats?.bySource?.openStatusAnyDeadline)}; includes listings past their closing date`,
                 },
                 {
-                  label: "Recently posted",
-                  value: publicOpportunityStats?.newIn48Hours,
-                  description: "Published in the last 48 hours",
-                },
-                {
-                  label: "Closing this week",
+                  label: "Closing in 7 days",
                   value: publicOpportunityStats?.closingThisWeek,
-                  description: "Closing within the next 7 days",
+                  description: "Live, closing within the next 7 days",
                 },
                 {
-                  label: "Under evaluation",
+                  label: "New in 48 hours",
+                  value: publicOpportunityStats?.newIn48Hours,
+                  description: "Live, added to the platform in the last 48 hours",
+                },
+                {
+                  // A passed closing date alone does not show evaluation is under way.
+                  label: "Past closing date",
                   value: publicOpportunityStats?.underEvaluation,
-                  description: "Evaluation in progress",
+                  description: `${splitText(publicOpportunityStats?.bySource?.pastClosingNoOutcome)}; no award or cancellation recorded`,
                 },
               ].map((metric) => (
                 <article

@@ -13,12 +13,12 @@ import LiveOpportunitiesSection from "@/components/home/LiveOpportunitiesSection
 import AccountDeletedNotice from "@/components/AccountDeletedNotice"
 import IncompleteRegistrationBanner from "@/components/IncompleteRegistrationBanner"
 import DigestSignupForm from "@/app/opportunities/DigestSignupForm"
-import { fetchPublicOpportunities, fetchRecentlyClosedOpportunities } from "@/lib/publicOpportunities"
+import { getLiveOpportunitySnapshot } from "@/lib/liveOpportunitySnapshot.server"
 import type { Metadata } from "next"
 
-// Enable ISR with 5-minute revalidation instead of force-dynamic
-// Stats will be cached and page regenerated every 5 minutes
-export const revalidate = 300
+// Same cycle as the shared live snapshot (SNAPSHOT_REVALIDATE_SECONDS), so the
+// banner, the map and /tenders show the same figures. Must be a literal here.
+export const revalidate = 60
 
 const title = "AiForm Procure | Verified Supplier Directory & Government Procurement Platform"
 const description = "Discover verified suppliers & live government tenders on South Africa's trusted procurement platform. Search 500+ opportunities, verify compliance, get matched instantly."
@@ -179,13 +179,8 @@ function MakersMark() {
 }
 
 export default async function Home() {
-  const [liveOpportunities, recentlyClosedOpportunities] = await Promise.all([
-    fetchPublicOpportunities().catch(() => []),
-    fetchRecentlyClosedOpportunities(30).catch(() => []),
-  ])
-
-  // Merge live and recently-closed opportunities for map visualization
-  const opportunities = [...liveOpportunities, ...recentlyClosedOpportunities]
+  // One snapshot of live opportunities feeds every homepage figure.
+  const snapshot = await getLiveOpportunitySnapshot()
 
   return (
     <>
@@ -205,8 +200,8 @@ export default async function Home() {
       <main className="min-h-screen bg-white text-primary">
         <IncompleteRegistrationBanner />
         <HeroSection />
-        <OpportunityStatsBanner />
-        <RegionalInsightsMap opportunities={opportunities} totalGovernmentOpportunities={2087} />
+        <OpportunityStatsBanner snapshot={snapshot} />
+        <RegionalInsightsMap snapshot={snapshot} />
         <LiveOpportunitiesSection />
         <MakersMark />
         <CTASection />

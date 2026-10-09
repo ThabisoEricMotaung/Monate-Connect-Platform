@@ -2,9 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import type { PublicRFQ } from "@/lib/publicOpportunities"
-import { useOpportunityStats } from "@/components/home/OpportunityStatsBanner"
-import { PROVINCE_IDS } from '@/data/province-meta'
+import type { LiveOpportunitySnapshot, RegionCounts } from "@/lib/liveOpportunitySnapshot"
 
 type Metric = 'total' | 'closing' | 'recent'
 
@@ -21,150 +19,52 @@ interface ProvinceStats {
 }
 
 interface RegionalInsightsMapProps {
-  opportunities: PublicRFQ[]
-  totalGovernmentOpportunities?: number
+  /** The shared live snapshot; the banner and /tenders read the same one. */
+  snapshot: LiveOpportunitySnapshot | null
 }
 
-export default function RegionalInsightsMap({
-  opportunities,
-  totalGovernmentOpportunities
-}: RegionalInsightsMapProps) {
+function metricOf(counts: RegionCounts, metric: Metric): number {
+  return metric === 'total' ? counts.live : metric === 'closing' ? counts.closingSoon : counts.newIn48Hours
+}
+
+export default function RegionalInsightsMap({ snapshot }: RegionalInsightsMapProps) {
   const router = useRouter()
   const [activeMetric, setActiveMetric] = useState<Metric>('total')
   const [isExpanded, setIsExpanded] = useState(false)
 
-  // Fetch accurate stats from API (instead of calculating from limited array)
-  const apiStats = useOpportunityStats()
-
-  // Calculate province data with ranking
+  // Province figures come straight from the snapshot: live listings only, no
+  // estimated or redistributed provinces.
   const rankedProvinces = useMemo(() => {
-    const now = new Date()
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-
-    const data: Record<string, { name: string; total: number; closing: number; recent: number }> = {}
-
-    // Initialize all provinces
-    Object.entries(PROVINCE_IDS).forEach(([name, id]) => {
-      data[id] = { name, total: 0, closing: 0, recent: 0 }
-    })
-
-    // Aggregate opportunities - ensure every opportunity is counted exactly once
-    let opportunitiesWithoutProvince = 0
-
-    opportunities.forEach((opp, idx) => {
-      let provs = (opp.provinces && opp.provinces.length > 0) ? opp.provinces : (opp.province ? [opp.province] : [])
-
-      // Filter out invalid provinces like "National" that don't match SA provinces
-      provs = provs.filter(p => Object.keys(PROVINCE_IDS).includes(p))
-
-      // Mock: if no province data, distribute for demo
-      if (provs.length === 0) {
-        opportunitiesWithoutProvince++
-        const provinceNames = Object.keys(PROVINCE_IDS)
-        provs = [provinceNames[idx % provinceNames.length]]
-      }
-
-      const isRecent = opp.published_date ? new Date(opp.published_date) >= sevenDaysAgo : false
-      const isClosing = opp.closing_date ? new Date(opp.closing_date) <= sevenDaysFromNow && new Date(opp.closing_date) > now : false
-
-      provs.forEach((prov) => {
-        const provId = Object.entries(PROVINCE_IDS).find(([name]) => name === prov)?.[1]
-
-        if (provId && data[provId]) {
-          data[provId].total += 1
-          if (isRecent) data[provId].recent += 1
-          if (isClosing) data[provId].closing += 1
-        } else if (!provId) {
-          console.warn(`⚠️ Unknown province: "${prov}" for opportunity ${opp.id}`)
-        }
-      })
-    })
-
-    if (opportunitiesWithoutProvince > 0) {
-      console.log(`ℹ️ ${opportunitiesWithoutProvince} opportunities had no province - distributed via mock`)
-    }
-
-    // Convert to array with ranking
-    const maxVal = Math.max(...Object.values(data).map(d => d.total), 1)
-    const abbreviations: Record<string, string> = {
-      WC: 'WC', EC: 'EC', NC: 'NC', FS: 'FS', KZN: 'KZN', GP: 'GP', MP: 'MP', LP: 'LP', NW: 'NW'
-    }
-
-    const array: ProvinceStats[] = Object.entries(data).map(([id, d]) => ({
-      id,
-      name: d.name,
-      abbreviation: abbreviations[id] || id,
-      total: d.total,
-      closing: d.closing,
-      recent: d.recent,
+    if (!snapshot) return []
+    const maxVal = Math.max(...snapshot.provinces.map((p) => p.live), 1)
+    const array: ProvinceStats[] = snapshot.provinces.map((p) => ({
+      id: p.id,
+      name: p.name,
+      abbreviation: p.id,
+      total: p.live,
+      closing: p.closingSoon,
+      recent: p.newIn48Hours,
       rank: 0,
-      relativeActivity: d.total / maxVal,
-      metricValue: 0,
+      relativeActivity: p.live / maxVal,
+      metricValue: metricOf(p, activeMetric),
     }))
-
-    // Sort by active metric descending
-    array.sort((a, b) => {
-      const aVal = activeMetric === 'total' ? a.total : activeMetric === 'closing' ? a.closing : a.recent
-      const bVal = activeMetric === 'total' ? b.total : activeMetric === 'closing' ? b.closing : b.recent
-      return bVal - aVal
-    })
-
-    // Assign ranks and metric values
-    array.forEach((p, idx) => {
-      p.rank = idx + 1
-      p.metricValue = activeMetric === 'total' ? p.total : activeMetric === 'closing' ? p.closing : p.recent
-    })
-
+    array.sort((a, b) => b.metricValue - a.metricValue)
+    array.forEach((p, idx) => { p.rank = idx + 1 })
     return array
-  }, [opportunities, activeMetric])
+  }, [snapshot, activeMetric])
 
-  // Calculate top 3 insight
   const topThreeInsight = useMemo(() => {
-    const top3 = rankedProvinces.slice(0, 3)
-    const top3Total = top3.reduce((sum, p) => sum + p.total, 0)
-    const totalAll = rankedProvinces.reduce((sum, p) => sum + p.total, 0)
-    const percentage = totalAll > 0 ? ((top3Total / totalAll) * 100).toFixed(1) : '0.0'
-    return { percentage }
-  }, [rankedProvinces])
+    const top3Total = rankedProvinces.slice(0, 3).reduce((sum, p) => sum + p.total, 0)
+    const live = snapshot?.live ?? 0
+    return { percentage: live > 0 ? ((top3Total / live) * 100).toFixed(1) : '0.0' }
+  }, [rankedProvinces, snapshot])
 
-  // Overall stats
-  const totalOpportunities = opportunities.length
-  const closingCount = useMemo(() => {
-    const now = new Date()
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-    return opportunities.filter(opp => {
-      const closingDate = opp.closing_date ? new Date(opp.closing_date) : null
-      return closingDate && closingDate <= sevenDaysFromNow && closingDate > now
-    }).length
-  }, [opportunities])
+  if (!snapshot) return null
 
-  const recentCount = useMemo(() => {
-    const now = new Date()
-    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
-    return opportunities.filter(opp => {
-      if (!opp.published_date) return false
-      const publishedDate = typeof opp.published_date === 'string'
-        ? new Date(opp.published_date)
-        : opp.published_date
-      return publishedDate && publishedDate >= twoDaysAgo && !isNaN(publishedDate.getTime())
-    }).length
-  }, [opportunities])
-
-  const maxMetricValue = Math.max(...rankedProvinces.map(p => p.metricValue), 1)
-
-  // Verify numbers match API stats
-  useMemo(() => {
-    const sumProvinces = rankedProvinces.reduce((sum, p) => sum + p.total, 0)
-    const match = totalOpportunities === sumProvinces
-    console.log('📊 RegionalInsightsMap Stats Verification:')
-    console.log(`  Total Gov. Opportunities: ${totalGovernmentOpportunities}`)
-    console.log(`  Live & Accepting: ${totalOpportunities}`)
-    console.log(`  Closing This Week: ${closingCount}`)
-    console.log(`  New in 48h: ${recentCount}`)
-    console.log(`  Sum of provinces (total): ${sumProvinces}`)
-    console.log(`  Match: ${match ? '✅' : '❌ MISMATCH'}`)
-  }, [totalOpportunities, closingCount, recentCount, rankedProvinces, totalGovernmentOpportunities])
+  const otherRegions = [
+    { key: 'national', name: 'National', detail: 'Published for the whole country', counts: snapshot.national },
+    { key: 'not-specified', name: 'Province not specified', detail: 'The source gives no province', counts: snapshot.notSpecified },
+  ]
 
   return (
     <section className="border-y border-[#e3d8c5] bg-[#f9f9fa] px-6 py-16 sm:py-20">
@@ -178,10 +78,10 @@ export default function RegionalInsightsMap({
             <div className="flex-1">
               <h2 className="text-lg font-semibold text-[#1a3a2a]">Regional Insights</h2>
               <p className="text-sm text-[#7a7066] mt-1">
-                {isExpanded ? 'Procurement activity by province (showing available regional data)' : 'Click to view province breakdown'}
+                {isExpanded ? 'Live opportunities by province' : 'Click to view province breakdown'}
               </p>
               <p className="text-xs text-[#a89a88] mt-0.5">
-                Note: Regional totals reflect the dataset available for provincial analysis; see Live Feed banner for overall opportunity count.
+                Same live opportunities as the Live Feed banner and the tenders list, counted by the province each one names.
               </p>
             </div>
             <svg
@@ -205,26 +105,21 @@ export default function RegionalInsightsMap({
                 }
               `}</style>
 
-          {/* Stats Banner - use API for accuracy */}
+          {/* Stats Banner - same snapshot as the Live Feed banner */}
           <div className="grid grid-cols-4 gap-3 mb-6">
             <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
-              <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Regional Coverage</p>
+              <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Live & Accepting</p>
               <p className="text-2xl font-bold text-[#1a3a2a] mt-1">
-                {totalOpportunities.toLocaleString()}
+                {snapshot.live.toLocaleString()}
               </p>
-              {totalGovernmentOpportunities && (
-                <p className="text-xs text-[#7a7066] mt-1.5">
-                  {totalGovernmentOpportunities.toLocaleString()} total gov
-                </p>
-              )}
             </div>
             <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
               <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Closing Soon</p>
-              <p className="text-xl font-bold text-[#1a3a2a] mt-1">{(apiStats?.closingThisWeek ?? closingCount).toLocaleString()}</p>
+              <p className="text-xl font-bold text-[#1a3a2a] mt-1">{snapshot.closingSoon.toLocaleString()}</p>
             </div>
             <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
               <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">New in 48h</p>
-              <p className="text-xl font-bold text-[#1a3a2a] mt-1">{(apiStats?.newIn48Hours ?? recentCount).toLocaleString()}</p>
+              <p className="text-xl font-bold text-[#1a3a2a] mt-1">{snapshot.newIn48Hours.toLocaleString()}</p>
             </div>
             <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
               <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Tracked by Province</p>
@@ -235,9 +130,9 @@ export default function RegionalInsightsMap({
           {/* Metric Tabs */}
           <div className="flex gap-2 mb-8">
             {[
-              { key: 'total' as const, label: 'All Opportunities' },
+              { key: 'total' as const, label: 'All Live' },
               { key: 'closing' as const, label: 'Closing Soon' },
-              { key: 'recent' as const, label: 'Recently Available' },
+              { key: 'recent' as const, label: 'New in 48h' },
             ].map(m => (
               <button
                 key={m.key}
@@ -257,7 +152,7 @@ export default function RegionalInsightsMap({
           <div className="mb-4 flex justify-between items-baseline">
             <div>
               <p className="text-sm font-semibold text-[#1a3a2a]">Province activity</p>
-              <p className="text-xs text-[#5a6a5a] mt-0.5">Ranked by {activeMetric === 'total' ? 'open opportunities' : activeMetric === 'closing' ? 'closing soon' : 'recently available'}</p>
+              <p className="text-xs text-[#5a6a5a] mt-0.5">Ranked by {activeMetric === 'total' ? 'live opportunities' : activeMetric === 'closing' ? 'closing soon' : 'new in 48h'}</p>
             </div>
             <p className="text-xs text-[#5a6a5a] font-medium">9 provinces</p>
           </div>
@@ -267,8 +162,6 @@ export default function RegionalInsightsMap({
             {rankedProvinces.map((province) => {
               // Blue color palette for all provinces
               const colors = { accent: '#185fa5', label: '#4b7a7a', secondary: '#378add', border: '#185fa5' }
-              const closingCount = activeMetric === 'total' ? province.closing : (activeMetric === 'closing' ? 0 : 0)
-              const recentCount = activeMetric === 'total' ? province.recent : (activeMetric === 'closing' ? 0 : province.recent)
 
               return (
                 <div
@@ -366,6 +259,33 @@ export default function RegionalInsightsMap({
             })}
           </div>
 
+          {/* Opportunities not tied to a single province, shown as published */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '2rem' }}>
+            {otherRegions.map((region) => (
+              <div key={region.key} style={{ background: 'white', border: '1px solid #e5e5e7', borderRadius: '0' }}>
+                <div style={{ padding: '0.75rem' }}>
+                  <p style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.05em', color: '#4b7a7a', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>
+                    {region.detail}
+                  </p>
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#1f2937', margin: '0', lineHeight: 1.1 }}>{region.name}</p>
+                  <p style={{ fontSize: '18px', fontWeight: 600, color: '#185fa5', margin: '0.35rem 0 0', lineHeight: 1 }}>
+                    {metricOf(region.counts, activeMetric)}
+                  </p>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', padding: '0.5rem 0.75rem' }}>
+                  <div>
+                    <p style={{ fontSize: '8px', color: '#4b7a7a', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>Closing</p>
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#378add', margin: '0.25rem 0 0', lineHeight: 1 }}>{region.counts.closingSoon}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '8px', color: '#4b7a7a', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>New</p>
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#378add', margin: '0.25rem 0 0', lineHeight: 1 }}>{region.counts.newIn48Hours}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
           {/* Insight Strip */}
           <div style={{
             background: '#faf9f5',
@@ -376,7 +296,10 @@ export default function RegionalInsightsMap({
             color: '#5a6a5a',
             lineHeight: 1.5,
           }}>
-            <span style={{ fontWeight: 600, color: '#1a3a2a' }}>Top 3 provinces</span> account for {topThreeInsight.percentage}% of currently tracked opportunities.
+            <span style={{ fontWeight: 600, color: '#1a3a2a' }}>Top 3 provinces</span> account for {topThreeInsight.percentage}% of the {snapshot.live.toLocaleString()} live opportunities.{' '}
+            {snapshot.multiRegionListings > 0
+              ? `${snapshot.multiRegionListings.toLocaleString()} ${snapshot.multiRegionListings === 1 ? 'opportunity names' : 'opportunities name'} more than one region and ${snapshot.multiRegionListings === 1 ? 'is' : 'are'} counted in each, so the regional figures add up to ${snapshot.regionalTotal.toLocaleString()}.`
+              : 'Each live opportunity is counted in exactly one region.'}
           </div>
             </div>
           )}

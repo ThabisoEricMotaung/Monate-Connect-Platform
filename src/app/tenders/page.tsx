@@ -263,25 +263,27 @@ function TendersPageContent() {
           {/* Shared public procurement metrics */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
+              // Live, closing and new use the same live rule as the list below.
               {
-                label: 'Total Open RFQs',
-                value: opportunityStats?.totalOpenRfqs,
-                detail: `${opportunityStats?.liveOpportunities ?? '—'} live and accepting bids`,
+                label: 'Live opportunities',
+                value: opportunityStats?.liveOpportunities,
+                detail: 'Open and accepting bids',
               },
               {
-                label: 'Closing this week',
+                label: 'Closing in 7 days',
                 value: opportunityStats?.closingThisWeek,
-                detail: 'Closing within the next 7 days',
+                detail: 'Live, closing within the next 7 days',
               },
               {
                 label: 'New in 48 hours',
                 value: opportunityStats?.newIn48Hours,
-                detail: 'Recently posted opportunities',
+                detail: 'Live, added in the last 48 hours',
               },
               {
-                label: 'Under evaluation',
+                // A passed closing date alone does not show evaluation is under way.
+                label: 'Past closing date',
                 value: opportunityStats?.underEvaluation,
-                detail: 'Evaluation in progress',
+                detail: 'No award or cancellation published yet',
               },
             ].map((metric) => (
               <article key={metric.label} className="rounded-lg border border-gray-200 border-t-4 border-t-[#1E3A2B] bg-white p-5 shadow-sm">
