@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation"
 import { getCurrentProfile } from "@/lib/auth"
 import { getSupplierMatches } from "@/lib/matchingEngine"
 import { supabase } from "@/lib/supabase"
-import { ThsuoWorkspace, ErrorBoundary, LoadingState } from "@/components/thuso"
-import "@/styles/thuso-animations.css"
+import ThusoHandoff from "@/components/thuso/assistant/ThusoHandoff"
+import { rfqIdFromSearch } from "@/lib/thuso/session"
 
 type Role = "buyer" | "admin" | "supplier"
 
@@ -68,7 +68,6 @@ export default function HelpPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [role, setRole] = useState<Role | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
   const [activeRfq, setActiveRfq] = useState<ActiveRfq | null>(null)
 
   useEffect(() => {
@@ -95,11 +94,10 @@ export default function HelpPage() {
         const isBuyerSide = resolvedRole === "buyer" || resolvedRole === "admin"
 
         if (cancelled) return
-        setUserId(profile.id)
         setRole(resolvedRole)
 
-        const params = new URLSearchParams(window.location.search)
-        const rfqIdParam = params.get("rfqId")
+        // Display only: the Thuso server re-checks access to whichever RFQ is chosen.
+        const rfqIdParam = rfqIdFromSearch(window.location.search)
 
         let resolved: ActiveRfq | null = null
 
@@ -225,11 +223,13 @@ export default function HelpPage() {
         </div>
       </div>
 
-      <ErrorBoundary>
-        <LoadingState isLoading={loading} error={loadError} loadingMessage="Loading your workspace...">
-          <ThsuoWorkspace rfqId={activeRfq?.id} userId={userId ?? undefined} />
-        </LoadingState>
-      </ErrorBoundary>
+      {loadError ? (
+        <p className="mb-4 rounded-md border border-warning/35 bg-warning-soft px-4 py-3 text-sm text-secondary">{loadError}</p>
+      ) : null}
+      <ThusoHandoff
+        ready={!loading}
+        context={activeRfq ? { type: "rfq", id: activeRfq.id, label: activeRfq.title } : null}
+      />
     </div>
   )
 }

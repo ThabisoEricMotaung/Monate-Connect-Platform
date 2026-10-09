@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { IconArrowRight, IconCalendarDue, IconListDetails, IconMessage2, IconSparkles } from "@tabler/icons-react"
+import AskThusoButton from "./assistant/AskThusoButton"
 
 interface RFQCopilotHeroProps {
   activeRfqCount: number
@@ -87,6 +88,9 @@ export default function RFQCopilotHero({
             Create RFQ
             <IconArrowRight className="h-4 w-4" stroke={2} aria-hidden="true" />
           </Link>
+          <AskThusoButton className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#E5C98F]/60 bg-transparent px-5 py-3 text-sm font-semibold text-[#E5C98F] transition-colors duration-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E5C98F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E3A2B]">
+            Ask Thuso
+          </AskThusoButton>
         </div>
       </div>
     </section>

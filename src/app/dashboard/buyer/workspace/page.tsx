@@ -1,101 +1,29 @@
 "use client"
 
-import React, { useState, useCallback } from "react"
-import { useBuyerWorkspace } from "@/hooks/useThsuoData"
-import { generateAIResponse } from "@/lib/thuso/chatIntegration"
-import {
-  ThsuoWorkspace,
-  ErrorBoundary,
-  LoadingState,
-} from "@/components/thuso"
-import "@/styles/thuso-animations.css"
-
-interface ChatMessage {
-  role: "user" | "assistant"
-  content: string
-  timestamp: Date
-}
+import { useEffect, useState } from "react"
+import ThusoHandoff from "@/components/thuso/assistant/ThusoHandoff"
+import { rfqIdFromSearch } from "@/lib/thuso/session"
 
 /**
- * Buyer Workspace Page
- * Full procurement workflow for buyers evaluating supplier responses
+ * Legacy entry point for the buyer Thuso workspace. Accepts ?rfqId= and the
+ * older ?rfq_id= and hands over to the shared Thuso panel; the server only
+ * discusses RFQs this buyer owns or that are public.
  */
 export default function BuyerWorkspacePage() {
-  // Get RFQ ID from URL params
-  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null
-  const rfqId = searchParams ? parseInt(searchParams.get("rfqId") || "0") : 0
+  const [rfqId, setRfqId] = useState<number | null | undefined>(undefined)
 
-  // Data layer
-  const { activeRfq, rfqs, supplierResponses, smartScores, loading, error } =
-    useBuyerWorkspace(rfqId)
-
-  // Chat state
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [inputValue, setInputValue] = useState("")
-  const [isLoadingResponse, setIsLoadingResponse] = useState(false)
-
-  // Handle chat message
-  const handleSendMessage = useCallback(async () => {
-    if (!inputValue.trim() || !activeRfq) return
-
-    try {
-      setIsLoadingResponse(true)
-
-      // Add user message
-      const userMessage: ChatMessage = {
-        role: "user",
-        content: inputValue,
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, userMessage])
-      setInputValue("")
-
-      // Extract supplier scores for context
-      const supplierScores = Object.entries(smartScores || {}).map(([key, score]) => ({
-        name: `Supplier ${key}`,
-        score: score.score,
-      }))
-
-      // Generate AI response
-      const aiResponse = await generateAIResponse(
-        inputValue,
-        {
-          rfqId,
-          userRole: "buyer",
-          rfqTitle: activeRfq.title,
-          supplierScores,
-        },
-        [...messages, userMessage]
-      )
-
-      // Add AI message
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: aiResponse,
-          timestamp: new Date(),
-        },
-      ])
-    } catch (err) {
-      console.error("Chat error:", err)
-      alert("Failed to get response")
-    } finally {
-      setIsLoadingResponse(false)
-    }
-  }, [inputValue, activeRfq, rfqId, messages, smartScores])
+  useEffect(() => {
+    setRfqId(rfqIdFromSearch(window.location.search))
+  }, [])
 
   return (
-    <ErrorBoundary>
-      <LoadingState
-        isLoading={loading}
-        error={error}
-        loadingMessage="Loading supplier responses..."
-      >
-        <div className="min-w-0 px-2 py-4 sm:px-4 lg:px-6">
-          <ThsuoWorkspace rfqId={rfqId} userId="current-user-id" />
-        </div>
-      </LoadingState>
-    </ErrorBoundary>
+    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
+      <ThusoHandoff
+        ready={rfqId !== undefined}
+        context={rfqId ? { type: "rfq", id: rfqId, label: `RFQ #${rfqId}` } : null}
+        backHref={rfqId ? `/dashboard/buyer/rfqs/${rfqId}` : "/dashboard/buyer/rfqs"}
+        backLabel={rfqId ? "View RFQ details" : "View your RFQs"}
+      />
+    </div>
   )
 }

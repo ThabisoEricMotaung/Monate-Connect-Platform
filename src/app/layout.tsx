@@ -6,7 +6,8 @@ import { Libre_Franklin, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import AppChrome from "@/components/layout/AppChrome";
-import ThusoWidget from "@/components/ThusoWidget";
+import { ThusoProvider } from "@/components/thuso/assistant/ThusoProvider";
+import AccessibilitySettingsDialog from "@/components/AccessibilitySettingsDialog";
 
 // Critical path font: UI interactions
 // Preload to prevent blocking render
@@ -119,8 +120,11 @@ export default async function RootLayout({
       <body className="min-h-full bg-page text-primary font-sans" suppressHydrationWarning>
         <ThemeProvider>
           <NextIntlClientProvider locale={locale} messages={messages} timeZone="Africa/Johannesburg">
-            <AppChrome>{children}</AppChrome>
-            <ThusoWidget />
+            {/* The only Thuso instance: one conversation, launcher and panel for every route. */}
+            <ThusoProvider>
+              <AppChrome>{children}</AppChrome>
+            </ThusoProvider>
+            <AccessibilitySettingsDialog />
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>

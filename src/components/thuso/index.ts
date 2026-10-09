@@ -1,12 +1,8 @@
 // Thuso Command & AI Workspace Components
 // Full-lifecycle procurement management for suppliers and buyers
 
-// Main Workspace
-export { default as ThsuoWorkspace } from "./ThsuoWorkspace"
-
-// Shared Components
-export { default as ChatInterface } from "./ChatInterface"
-export { default as InputBar } from "./InputBar"
+// The assistant itself is the shared panel in ./assistant (ThusoProvider,
+// AskThusoButton). Do not add embedded chat components here.
 
 // Supplier Workflow
 export { default as SupplierSidebar } from "./SupplierSidebar"

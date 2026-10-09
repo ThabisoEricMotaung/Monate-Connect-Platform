@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import AskThusoButton from "@/components/thuso/assistant/AskThusoButton"
 import { useEffect, useState } from "react"
 import { getCurrentProfile } from "@/lib/auth"
 import { getSupplierMatches, type SupplierMatchResult } from "@/lib/matchingEngine"
@@ -362,9 +363,8 @@ export default function DashboardPage() {
 
       {/* Thuso AI Assistant - Premium Hero Section */}
       <section className="mb-8 rounded-3xl border border-[#1E3A2B]/20 bg-gradient-to-br from-[#1E3A2B]/3 via-white to-[#F4F0E7]/40 overflow-hidden">
-        <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-2 lg:gap-12 lg:items-center">
-          {/* Left Content */}
-          <div>
+        <div className="p-6 sm:p-10">
+          <div className="max-w-3xl">
             <p className="text-xs uppercase tracking-[0.35em] text-[#A67832] font-semibold">AI PROCUREMENT GUIDE</p>
             <h2 className="mt-4 text-3xl sm:text-4xl font-bold text-[#1E3A2B] leading-tight">
               Thuso RFQ Assistant
@@ -417,55 +417,24 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* CTA Button */}
-            <div className="mt-8">
+            {/* CTA: opens the shared Thuso panel (no embedded chat here) */}
+            <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
               {recommendedOpportunities.length > 0 ? (
-                <Link
-                  href={`/dashboard/supplier/workspace?rfq_id=${recommendedOpportunities[0].rfq.id}`}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1E3A2B] px-8 py-3.5 font-semibold text-white transition-all hover:bg-[#294D39] hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E3A2B]"
+                <AskThusoButton
+                  context={{
+                    type: "rfq",
+                    id: Number(recommendedOpportunities[0].rfq.id),
+                    label: recommendedOpportunities[0].rfq.title ?? `RFQ-${recommendedOpportunities[0].rfq.id}`,
+                  }}
                 >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  Launch Thuso
-                </Link>
+                  Ask Thuso about your top match
+                </AskThusoButton>
               ) : (
-                <div className="rounded-lg bg-[#F4F0E7] border border-[#D8D2C5] p-4">
-                  <p className="text-sm font-semibold text-[#1E3A2B]">No active RFQs matched yet</p>
-                  <p className="mt-1 text-sm leading-6 text-[#6F6A61]">
-                    When you&apos;re matched to RFQs, you can use Thuso to analyze requirements and strengthen your bid. Check back soon or{' '}
-                    <Link href="/dashboard/rfqs" className="font-semibold text-[#1E3A2B] underline hover:text-[#294D39]">
-                      browse available opportunities
-                    </Link>.
-                  </p>
-                </div>
+                <AskThusoButton>Ask Thuso</AskThusoButton>
               )}
-            </div>
-          </div>
-
-          {/* Right Side - Visual Element */}
-          <div className="relative hidden lg:block">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A2B]/5 to-[#A67832]/5 rounded-2xl" />
-            <div className="relative rounded-2xl border border-[#1E3A2B]/10 bg-white p-6 shadow-xl">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#A67832]/20">
-                  <span className="text-xs font-bold text-[#A67832]">✨</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-[#1E3A2B]">Hi, I&apos;m Thuso</p>
-                  <p className="mt-1 text-sm text-[#6F6A61] leading-5">
-                    Ask me anything about tenders, compliance, or responding to RFQs.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#A67832]">
-                  <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <p className="text-xs font-medium text-[#6F6A61]">Smarter procurement. Faster decisions.</p>
-              </div>
+              <Link href="/dashboard/rfqs" className="text-sm font-semibold text-[#1E3A2B] underline-offset-4 hover:underline">
+                Browse available opportunities
+              </Link>
             </div>
           </div>
         </div>
