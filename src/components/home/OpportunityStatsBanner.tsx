@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { localeFormatTag, normalizeLocale } from "@/i18n/config"
-import type { PublicRFQ } from "@/lib/publicOpportunities"
+import type { LiveOpportunitySnapshot } from "@/lib/liveOpportunitySnapshot"
 
 export type OpportunityStatsFilters = {
   source?: string
@@ -18,22 +18,27 @@ export type PublicOpportunityStats = {
   liveOpportunities: number
   closingThisWeek: number
   newIn48Hours: number
+  /** Past closing date with no outcome recorded; not evidence of evaluation. */
   underEvaluation: number
   screenedPercent: number | null
+  asOf?: string
 }
 
 /**
  * Fetches /api/opportunities/stats, narrowed by the given filters, and
  * re-fetches whenever any of them change. Passing no filters (or all-empty
- * ones) reproduces the original global stats.
+ * ones) reproduces the original global stats. `skip` avoids the request when
+ * the caller already has the server-rendered snapshot.
  */
-export function useOpportunityStats(filters?: OpportunityStatsFilters): PublicOpportunityStats | null {
+export function useOpportunityStats(filters?: OpportunityStatsFilters, options?: { skip?: boolean }): PublicOpportunityStats | null {
   const [stats, setStats] = useState<PublicOpportunityStats | null>(null)
   const source = filters?.source || ""
   const budget = filters?.budget || ""
   const closing = filters?.closing || ""
+  const skip = options?.skip ?? false
 
   useEffect(() => {
+    if (skip) return
     let cancelled = false
 
     const params = new URLSearchParams()
@@ -54,7 +59,7 @@ export function useOpportunityStats(filters?: OpportunityStatsFilters): PublicOp
     return () => {
       cancelled = true
     }
-  }, [source, budget, closing])
+  }, [source, budget, closing, skip])
 
   return stats
 }
@@ -163,61 +168,31 @@ const STAT_STYLES = `
 interface OpportunityStatsBannerProps {
   /** Optional filters (e.g. from /tenders' Source/Budget/Closing-in controls). */
   filters?: OpportunityStatsFilters
-  /** Optional opportunities data to calculate stats from. */
-  opportunities?: PublicRFQ[]
+  /**
+   * The shared live snapshot, rendered on the server. When given, the banner
+   * shows exactly the figures the map shows; otherwise it asks the stats API,
+   * which reads the same snapshot.
+   */
+  snapshot?: LiveOpportunitySnapshot | null
 }
 
-export default function OpportunityStatsBanner({ filters, opportunities }: OpportunityStatsBannerProps) {
-  const apiStats = useOpportunityStats(filters)
+export default function OpportunityStatsBanner({ filters, snapshot }: OpportunityStatsBannerProps) {
+  const apiStats = useOpportunityStats(filters, { skip: Boolean(snapshot) })
   const locale = useLocale()
   const t = useTranslations("home")
 
-  // Calculate stats from opportunities data if provided, otherwise use API stats
   const stats = useMemo(() => {
-    if (!opportunities) return apiStats
-
-    const now = new Date()
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
-
-    let live = 0
-    let closing = 0
-    let newIn48 = 0
-    let underEval = 0
-
-    opportunities.forEach((opp) => {
-      const closingDate = opp.closing_date ? new Date(opp.closing_date) : null
-      const publishedDate = opp.published_date
-        ? (typeof opp.published_date === 'string' ? new Date(opp.published_date) : opp.published_date)
-        : null
-
-      live++
-      if (closingDate && closingDate <= sevenDaysFromNow && closingDate > now) closing++
-      if (publishedDate && publishedDate >= twoDaysAgo && !isNaN(publishedDate.getTime())) newIn48++
-      if (closingDate && closingDate < now && !["awarded", "closed"].includes(opp.status?.toLowerCase() ?? "")) underEval++
-    })
-
-    return {
-      totalOpenRfqs: opportunities.length,
-      liveOpportunities: live,
-      closingThisWeek: closing,
-      newIn48Hours: newIn48,
-      underEvaluation: underEval,
-      screenedPercent: null,
-    }
-  }, [opportunities, apiStats])
+    if (snapshot) return { live: snapshot.live, closingSoon: snapshot.closingSoon, newIn48Hours: snapshot.newIn48Hours }
+    if (apiStats) return { live: apiStats.liveOpportunities, closingSoon: apiStats.closingThisWeek, newIn48Hours: apiStats.newIn48Hours }
+    return null
+  }, [snapshot, apiStats])
 
   if (!stats) return null
   const formatLocale = localeFormatTag(normalizeLocale(locale))
 
   const items = [
-    {
-      icon: <SparkleIcon />,
-      value: stats.totalOpenRfqs.toLocaleString(formatLocale),
-      label: "Total Live & Accepting",
-      secondary: "2,087 total gov",
-    },
-    { icon: <CalendarIcon />, value: stats.closingThisWeek.toLocaleString(formatLocale), label: "Closing Soon" },
+    { icon: <SparkleIcon />, value: stats.live.toLocaleString(formatLocale), label: "Total Live & Accepting" },
+    { icon: <CalendarIcon />, value: stats.closingSoon.toLocaleString(formatLocale), label: "Closing Soon" },
     { icon: <ClockIcon />, value: stats.newIn48Hours.toLocaleString(formatLocale), label: "New in 48H" },
   ]
 
@@ -287,11 +262,6 @@ export default function OpportunityStatsBanner({ filters, opportunities }: Oppor
                 <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#5a6a5a", marginTop: 4 }}>
                   {item.label}
                 </p>
-                {item.secondary && (
-                  <p style={{ fontSize: 11, fontWeight: 400, color: "#7a7066", marginTop: 4 }}>
-                    {item.secondary}
-                  </p>
-                )}
               </div>
             </div>
           ))}

@@ -40,8 +40,9 @@ function applyOptionalFilters(query: any, { source, budget, closingDays, now = n
   return query
 }
 
-// Mirrors getPublicOpportunityStatsUncached in src/lib/publicOpportunityStats.ts,
-// with source/budget/closing narrowing layered on top of each metric. Intentionally
+// Same definitions as getPublicOpportunityStats in src/lib/publicOpportunityStats.ts
+// (live rule; closing soon and new are subsets of live), with source/budget/closing
+// narrowing layered on top of each metric. Intentionally
 // not cached (unlike the no-filter path below) — the number of filter combinations
 // makes a shared cache key impractical, and these are cheap head-count queries.
 async function getFilteredPublicOpportunityStats(
@@ -74,24 +75,19 @@ async function getFilteredPublicOpportunityStats(
         ),
         queryFilters,
       ),
+      // Closing soon and new are subsets of live, as in the shared snapshot.
       applyOptionalFilters(
-        supabase
-          .from("rfqs")
-          .select("id", { count: "exact", head: true })
-          .eq("is_public", true)
-          .neq("curation_status", "quarantined")
-          .in("status", ["open", "active"])
-          .gte("closing_date", now.toISOString())
-          .lte("closing_date", sevenDaysFromNowIso),
+        applyLivePublicOpportunityFilters(
+          supabase.from("rfqs").select("id", { count: "exact", head: true }),
+          now,
+        ).lte("closing_date", sevenDaysFromNowIso),
         queryFilters,
       ),
       applyOptionalFilters(
-        supabase
-          .from("rfqs")
-          .select("id", { count: "exact", head: true })
-          .eq("is_public", true)
-          .neq("curation_status", "quarantined")
-          .gte("created_at", ago48HoursIso),
+        applyLivePublicOpportunityFilters(
+          supabase.from("rfqs").select("id", { count: "exact", head: true }),
+          now,
+        ).gte("created_at", ago48HoursIso),
         queryFilters,
       ),
       applyOptionalFilters(
