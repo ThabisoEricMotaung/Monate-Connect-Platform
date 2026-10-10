@@ -76,7 +76,7 @@ export default function RegionalInsightsMap({ snapshot }: RegionalInsightsMapPro
             onClick={() => setIsExpanded(!isExpanded)}
           >
             <div className="flex-1">
-              <h2 className="text-lg font-semibold text-[#1a3a2a]">Regional Insights</h2>
+              <h2 className="text-lg font-semibold text-[#1a3a2a]">By province</h2>
               <p className="text-sm text-[#7a7066] mt-1">
                 {isExpanded ? 'Live opportunities by province' : 'Click to view province breakdown'}
               </p>
@@ -108,7 +108,7 @@ export default function RegionalInsightsMap({ snapshot }: RegionalInsightsMapPro
           {/* Stats Banner - same snapshot as the Live Feed banner */}
           <div className="grid grid-cols-4 gap-3 mb-6">
             <div className="rounded-none bg-white p-3 border border-[#d4d0c4]">
-              <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Live & Accepting</p>
+              <p className="text-xs text-[#5a6a5a] uppercase font-semibold tracking-wider">Accepting bids now</p>
               <p className="text-2xl font-bold text-[#1a3a2a] mt-1">
                 {snapshot.live.toLocaleString()}
               </p>

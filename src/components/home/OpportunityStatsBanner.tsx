@@ -191,7 +191,7 @@ export default function OpportunityStatsBanner({ filters, snapshot }: Opportunit
   const formatLocale = localeFormatTag(normalizeLocale(locale))
 
   const items = [
-    { icon: <SparkleIcon />, value: stats.live.toLocaleString(formatLocale), label: "Total Live & Accepting" },
+    { icon: <SparkleIcon />, value: stats.live.toLocaleString(formatLocale), label: "Accepting bids now" },
     { icon: <CalendarIcon />, value: stats.closingSoon.toLocaleString(formatLocale), label: "Closing Soon" },
     { icon: <ClockIcon />, value: stats.newIn48Hours.toLocaleString(formatLocale), label: "New in 48H" },
   ]
